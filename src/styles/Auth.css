@@ -1,0 +1,373 @@
+/* ===================================
+   AUTH PAGES - GRADIENT BACKGROUND
+   =================================== */
+.gradient-container {
+  min-height: 100vh;
+  background: linear-gradient(
+    to bottom,
+    #7db9e8 0%,
+    #5da9dd 30%,
+    #4dd4ac 70%,
+    #44c9a0 100%
+  );
+  position: relative;
+}
+
+/* ===================================
+   AUTH PAGES - CONTENT CARD
+   =================================== */
+.content-card {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 20px !important;
+  max-width: 520px;
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  backdrop-filter: blur(10px);
+}
+
+.logo-circle {
+  width: 64px;
+  height: 64px;
+  background: linear-gradient(135deg, #5da9dd 0%, #4a9fd5 100%);
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 4px 12px rgba(93, 169, 221, 0.3);
+}
+
+.app-title {
+  font-size: 32px;
+  font-weight: 600;
+  color: #5da9dd;
+}
+
+.title-green {
+  color: #44c9a0;
+}
+
+.subtitle {
+  font-size: 14px;
+  color: #666;
+  font-weight: 400;
+}
+
+/* ===================================
+   AUTH PAGES - FORM STYLES
+   =================================== */
+.form-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 8px;
+}
+
+.form-control,
+.form-select {
+  padding: 12px 16px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  background: white;
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: #5da9dd;
+  box-shadow: 0 0 0 3px rgba(93, 169, 221, 0.1);
+}
+
+.form-control::placeholder {
+  color: #aaa;
+}
+
+.password-input-wrapper {
+  position: relative;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #aaa;
+  cursor: pointer;
+  padding: 4px;
+  transition: color 0.3s ease;
+}
+
+.password-toggle:hover {
+  color: #5da9dd;
+}
+
+.btn-primary {
+  background: linear-gradient(to right, #5da9dd 0%, #44c9a0 100%);
+  border: none;
+  border-radius: 8px;
+  padding: 0.5rem 2rem;
+  font-size: 16px;
+  font-weight: 600;
+  color: white;
+  transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(to right, #4a9fd5 0%, #3bb890 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(93, 169, 221, 0.3);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+/* ===================================
+   AUTH PAGES - RADIO PILLS (Account Type)
+   =================================== */
+.radio-pill-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.radio-pill {
+  position: relative;
+  cursor: pointer;
+}
+
+.radio-pill input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+}
+
+.radio-pill-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  background: white;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.radio-pill input[type="radio"]:checked + .radio-pill-label {
+  border-color: #5da9dd;
+  background: rgba(93, 169, 221, 0.05);
+}
+
+.radio-pill-label:hover {
+  border-color: #5da9dd;
+}
+
+.radio-pill-title {
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 2px;
+}
+
+.radio-pill-desc {
+  font-size: 13px;
+  color: #666;
+}
+
+.radio-pill-indicator {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #e0e0e0;
+  border-radius: 50%;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.radio-pill input[type="radio"]:checked + .radio-pill-label .radio-pill-indicator {
+  border-color: #5da9dd;
+  background: #5da9dd;
+}
+
+.radio-pill input[type="radio"]:checked + .radio-pill-label .radio-pill-indicator::after {
+  content: '';
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: white;
+  border-radius: 50%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+/* ===================================
+   AUTH PAGES - LINKS
+   =================================== */
+.link {
+  color: #5da9dd;
+  transition: color 0.3s ease;
+}
+
+.link:hover {
+  color: #4a9fd5;
+  text-decoration: underline;
+}
+
+.back-link {
+  font-size: 14px;
+  color: #666;
+  transition: color 0.3s ease;
+}
+
+.back-link:hover {
+  color: #5da9dd;
+}
+
+/* ===================================
+   AUTH PAGES - ABOUT CONTENT
+   =================================== */
+.about-content {
+  margin-top: 20px;
+}
+
+.about-section {
+  margin-bottom: 24px;
+}
+
+.section-text {
+  line-height: 1.6;
+  color: #666;
+}
+
+.feature-item {
+  background: rgba(93, 169, 221, 0.03);
+  border-radius: 12px;
+  border: 1px solid rgba(93, 169, 221, 0.1);
+  transition: all 0.3s ease;
+}
+
+.feature-item:hover {
+  background: rgba(93, 169, 221, 0.08);
+  border-color: rgba(93, 169, 221, 0.2);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(93, 169, 221, 0.1);
+}
+
+/* ===================================
+   AUTH PAGES - PROFESSIONAL DETAILS
+   =================================== */
+.professional-details {
+  background: rgba(68, 201, 160, 0.05);
+  border: 1px solid rgba(68, 201, 160, 0.2);
+  border-radius: 12px;
+  padding: 20px;
+  margin-top: 20px;
+}
+
+.professional-details h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 16px;
+}
+
+.skill-input-group {
+  display: flex;
+  gap: 8px;
+}
+
+.skill-input-group .form-control {
+  flex: 1;
+}
+
+.add-skill-btn {
+  background: #44c9a0;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.add-skill-btn:hover {
+  background: #3bb890;
+  transform: scale(1.05);
+}
+
+.skill-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.skill-tag {
+  background: #44c9a0;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.skill-tag-remove {
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  padding: 0;
+  margin-left: 4px;
+}
+
+.skill-tag-remove:hover {
+  opacity: 0.8;
+}
+
+.footer-text {
+  text-align: center;
+  font-size: 14px;
+  color: #666;
+}
+
+/* ===================================
+   AUTH PAGES RESPONSIVE
+   =================================== */
+@media (max-width: 768px) {
+  .content-card {
+    margin: 20px;
+  }
+  
+  .app-title {
+    font-size: 28px;
+  }
+  
+  .feature-item {
+    margin-bottom: 12px;
+  }
+}
+
+@media (max-width: 576px) {
+  .logo-circle {
+    width: 56px;
+    height: 56px;
+  }
+  
+  .app-title {
+    font-size: 24px;
+  }
+  
+  .content-card .card-body {
+    padding: 24px !important;
+  }
+}
