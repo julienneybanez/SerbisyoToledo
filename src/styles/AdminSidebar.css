@@ -1,0 +1,192 @@
+/* ===================================
+   ADMIN SIDEBAR STYLES (CoreUI)
+   =================================== */
+
+/* CoreUI Sidebar Customization */
+.admin-sidebar-coreui {
+  position: fixed !important;
+  left: 0;
+  top: 0;
+  width: 260px !important;
+  height: 100vh;
+  background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%) !important;
+  border-right: none !important;
+  z-index: 1050;
+  transition: transform 0.3s ease;
+}
+
+.admin-sidebar-coreui .sidebar-nav {
+  background: transparent !important;
+  height: calc(100vh - 70px);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+/* Brand Section */
+.sidebar-brand-custom {
+  padding: 1rem !important;
+  background: transparent !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  height: auto !important;
+  min-height: 70px;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Override CoreUI brand hiding behavior */
+.admin-sidebar-coreui .sidebar-brand-custom * {
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.brand-logo-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+}
+
+.brand-logo-img {
+  width: 90px;
+  height: auto;
+  object-fit: contain;
+}
+
+.sidebar-close-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  border-radius: 6px;
+  padding: 0.5rem;
+  color: #94a3b8;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sidebar-close-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+/* Navigation Styles */
+.admin-sidebar-coreui .sidebar-nav .nav-title {
+  color: #64748b !important;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 1rem 1rem 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.admin-sidebar-coreui .sidebar-nav .nav-link:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: white !important;
+}
+
+.admin-sidebar-coreui .sidebar-nav .nav-link.active {
+  background: linear-gradient(135deg, #4A9FF5 0%, #3a8fd5 100%) !important;
+  color: white !important;
+  box-shadow: 0 4px 12px rgba(74, 159, 245, 0.3);
+}
+
+.admin-sidebar-coreui .nav-icon {
+  width: 20px;
+  height: 20px;
+  margin-right: 0.75rem;
+  flex-shrink: 0;
+}
+
+/* Ensure nav items are clickable */
+.admin-sidebar-coreui .nav-item {
+  pointer-events: auto;
+}
+
+.admin-sidebar-coreui .sidebar-nav .nav-link {
+  color: #94a3b8 !important;
+  padding: 0.75rem 1rem;
+  margin: 0.15rem 0.75rem;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  font-weight: 500;
+  text-decoration: none;
+  pointer-events: auto;
+  cursor: pointer;
+  position: relative;
+  z-index: 1;
+}
+
+/* Badge Styles */
+.admin-sidebar-coreui .badge {
+  font-size: 0.7rem;
+  padding: 0.35em 0.65em;
+}
+
+/* Footer Section */
+.sidebar-footer-section {
+  margin-top: auto;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.logout-btn {
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #ef4444 !important;
+}
+
+.logout-btn:hover {
+  background: rgba(239, 68, 68, 0.1) !important;
+  color: #f87171 !important;
+}
+
+/* Mobile Overlay */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1040;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+  pointer-events: none;
+}
+
+.sidebar-overlay.show {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+/* Responsive */
+@media (max-width: 991.98px) {
+  .admin-sidebar-coreui {
+    transform: translateX(-100%);
+    z-index: 1050 !important;
+    pointer-events: none;
+  }
+
+  .admin-sidebar-coreui.show {
+    transform: translateX(0);
+    pointer-events: auto;
+  }
+
+  .admin-sidebar-coreui.show * {
+    pointer-events: auto;
+  }
+
+  .sidebar-overlay {
+    display: block;
+  }
+
+  .sidebar-close-btn {
+    display: flex !important;
+  }
+}

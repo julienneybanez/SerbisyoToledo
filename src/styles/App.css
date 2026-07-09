@@ -1,0 +1,20 @@
+/* ===================================
+   SERBISYOTOLEDO - MASTER CSS FILE
+   This file imports all component-specific CSS files
+   =================================== */
+
+/* Global styles and resets */
+@import './global.css';
+
+/* Layout components */
+@import './Navbar.css';
+@import './Footer.css';
+
+/* Page-specific styles */
+@import './Home.css';
+@import './Auth.css';
+@import './Feed.css';
+@import './Portfolio.css';
+
+/* Component styles */
+@import '../components/common/BookingModal.css';

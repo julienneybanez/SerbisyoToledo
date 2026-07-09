@@ -1,0 +1,505 @@
+/* Service Provider Dashboard Styles */
+
+.dashboard-container {
+  min-height: calc(100vh - 120px);
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  padding: 40px 20px;
+}
+
+.dashboard-wrapper {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Welcome Section */
+.welcome-section {
+  background: white;
+  border-radius: 12px;
+  padding: 40px;
+  margin-bottom: 40px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 30px;
+}
+
+.welcome-content h1 {
+  font-size: 32px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0 0 10px 0;
+}
+
+.welcome-content p {
+  font-size: 15px;
+  color: #666;
+  margin: 0 0 25px 0;
+  line-height: 1.6;
+}
+
+.btn-post-service {
+  background: linear-gradient(120deg, #1a74ff 0%, #20b87a 100%);
+  color: white;
+  border: none;
+  padding: 12px 30px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.btn-post-service:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(32, 184, 122, 0.3);
+}
+
+/* Weekly Tips Section */
+.tips-section {
+  margin-bottom: 40px;
+}
+
+.section-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0 0 25px 0;
+}
+
+.tips-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 25px;
+}
+
+.tip-card {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.tip-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+}
+
+.tip-image {
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.tip-content {
+  padding: 20px;
+}
+
+.tip-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0 0 10px 0;
+}
+
+.tip-description {
+  font-size: 13px;
+  color: #666;
+  margin: 0 0 15px 0;
+  line-height: 1.6;
+}
+
+.tip-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: #999;
+}
+
+.read-time {
+  color: #667eea;
+  font-weight: 500;
+}
+
+/* Ongoing Jobs Section */
+.jobs-section {
+  margin-bottom: 40px;
+}
+
+.jobs-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+}
+
+.jobs-header h2 {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0;
+}
+
+.view-all-link {
+  color: #667eea;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.view-all-link:hover {
+  color: #764ba2;
+  text-decoration: underline;
+}
+
+.jobs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 25px;
+}
+
+.job-card {
+  background: #E3F2FD;
+  border-radius: 12px;
+  padding: 25px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+  transition: all 0.3s ease;
+}
+
+.job-card:hover {
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
+}
+
+.job-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 15px;
+  gap: 10px;
+}
+
+.job-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0;
+}
+
+.job-status {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.status-pending {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.status-active {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.status-completed {
+  background-color: #e2e3e5;
+  color: #383d41;
+}
+
+.status-cancelled {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.job-client {
+  font-size: 13px;
+  color: #666;
+  margin: 0 0 10px 0;
+}
+
+.job-description {
+  font-size: 13px;
+  color: #777;
+  margin: 0 0 15px 0;
+  line-height: 1.5;
+}
+
+.job-meta {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 15px;
+  margin-bottom: 15px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #eee;
+}
+
+.meta-item {
+  font-size: 12px;
+}
+
+.meta-label {
+  color: #999;
+  margin-bottom: 4px;
+}
+
+.meta-value {
+  color: #1a1a1a;
+  font-weight: 600;
+}
+
+.job-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.job-btn {
+  flex: 1;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.job-btn-primary {
+  background-color: #0078D4;
+  color: white;
+}
+
+.job-btn-primary:hover {
+  background-color: #006BA6;
+}
+
+.job-btn-secondary {
+  background-color: #f0f0f0;
+  color: #666;
+  border: 1px solid #ddd;
+}
+
+.job-btn-secondary:hover {
+  background-color: #e8e8e8;
+}
+
+.job-btn-accept {
+  background-color: #20b87a;
+  color: white;
+}
+
+.job-btn-accept:hover {
+  background-color: #1a9e68;
+}
+
+.job-btn-decline {
+  background-color: #e74c3c;
+  color: white;
+}
+
+.job-btn-decline:hover {
+  background-color: #c0392b;
+}
+
+.job-btn-on-way {
+  background-color: #f39c12;
+  color: white;
+}
+
+.job-btn-on-way:hover {
+  background-color: #d68910;
+}
+
+.job-btn-complete {
+  background-color: #20b87a;
+  color: white;
+}
+
+.job-btn-complete:hover {
+  background-color: #1a9e68;
+}
+
+.job-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Loading and Empty States */
+.jobs-loading,
+.jobs-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  color: #666;
+}
+
+.jobs-loading .spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #f0f0f0;
+  border-top-color: #0078D4;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 15px;
+}
+
+.spinner-small {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.jobs-empty .empty-icon {
+  font-size: 48px;
+  margin-bottom: 15px;
+  opacity: 0.5;
+}
+
+.jobs-empty p {
+  font-size: 15px;
+  margin: 0;
+}
+
+/* Additional Status Badges */
+.status-accepted {
+  background-color: rgba(32, 184, 122, 0.1);
+  color: #20b87a;
+}
+
+.status-on-the-way {
+  background-color: rgba(243, 156, 18, 0.1);
+  color: #f39c12;
+}
+
+.status-declined {
+  background-color: rgba(231, 76, 60, 0.1);
+  color: #e74c3c;
+}
+
+/* Level Up Banner */
+.level-up-banner {
+  background: linear-gradient(135deg, #0078D4 0%, #00BCD4 100%);
+  border-radius: 12px;
+  padding: 40px;
+  color: white;
+  text-align: center;
+  box-shadow: 0 8px 24px rgba(0, 120, 212, 0.3);
+  margin-bottom: 40px;
+}
+
+.level-up-banner h2 {
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0 0 10px 0;
+}
+
+.level-up-banner p {
+  font-size: 15px;
+  margin: 0 0 20px 0;
+  opacity: 0.95;
+  line-height: 1.6;
+}
+
+.btn-get-verified {
+  background-color: white;
+  color: #20b87a;
+  border: none;
+  padding: 12px 30px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-get-verified:hover {
+  background-color: #f0f0f0;
+  transform: translateY(-2px);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .dashboard-container {
+    padding: 20px 10px;
+  }
+
+  .welcome-section {
+    flex-direction: column;
+    text-align: center;
+    padding: 30px 20px;
+  }
+
+  .welcome-content h1 {
+    font-size: 24px;
+  }
+
+  .tips-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .jobs-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .section-title {
+    font-size: 18px;
+  }
+
+  .level-up-banner {
+    padding: 30px 20px;
+  }
+
+  .level-up-banner h2 {
+    font-size: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .welcome-section {
+    padding: 20px;
+  }
+
+  .welcome-content h1 {
+    font-size: 20px;
+  }
+
+  .welcome-content p {
+    font-size: 13px;
+  }
+
+  .btn-post-service {
+    width: 100%;
+  }
+
+  .section-title {
+    font-size: 16px;
+  }
+
+  .job-meta {
+    grid-template-columns: 1fr;
+  }
+
+  .tip-image {
+    height: 120px;
+  }
+}

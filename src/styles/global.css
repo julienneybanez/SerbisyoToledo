@@ -1,0 +1,35 @@
+/* ===================================
+   GLOBAL STYLES
+   =================================== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.app {
+  min-height: 100vh;
+}
+
+/* ===================================
+   UTILITY CLASSES
+   =================================== */
+.text-primary-custom {
+  color: #5da9dd !important;
+}
+
+.text-success-custom {
+  color: #44c9a0 !important;
+}
+
+.bg-light-custom {
+  background-color: rgba(93, 169, 221, 0.05) !important;
+}

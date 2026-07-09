@@ -1,0 +1,821 @@
+/* ===================================
+   PORTFOLIO PAGE - SHELL & NAVBAR
+   =================================== */
+.portfolio-shell {
+  background: #f4f7fb;
+  min-height: 100vh;
+}
+
+.portfolio-navbar {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.brand-icon {
+  width: 54px;
+  height: 54px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #3689ff, #24d37b);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  box-shadow: 0 12px 24px rgba(54, 137, 255, 0.3);
+}
+
+.nav-links {
+  display: flex;
+  gap: 1.5rem;
+  font-weight: 600;
+  color: #1a3d5d;
+}
+
+.nav-link-custom {
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.nav-link-custom:hover {
+  color: #1a74ff;
+}
+
+.user-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: #dce9ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  color: #1a74ff;
+}
+
+/* ===================================
+   PORTFOLIO PAGE - CONTAINER
+   =================================== */
+.portfolio-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem 3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+}
+
+.provider-section {
+  background: #fff;
+  border-radius: 20px;
+  padding: 2rem;
+  box-shadow: 0 30px 50px rgba(26, 61, 93, 0.08);
+}
+
+/* ===================================
+   PORTFOLIO PAGE - PROFILE HEADER
+   =================================== */
+.profile-header {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.profile-avatar-large {
+  width: 80px;
+  height: 80px;
+  border-radius: 20px;
+  background: #1a74ff;
+  color: #fff;
+  font-size: 1.75rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.profile-details h1 {
+  font-size: 1.75rem;
+  margin-bottom: 0.2rem;
+}
+
+.profile-profession {
+  color: #1a74ff;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+}
+
+.profile-stats {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.stat-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: #4f6480;
+  font-weight: 600;
+}
+
+/* ===================================
+   PORTFOLIO PAGE - ABOUT & SKILLS SECTIONS
+   =================================== */
+.about-section,
+.skills-section,
+.contact-section {
+  margin-top: 1.5rem;
+  background: #f4f7fb;
+  padding: 1.25rem 1.5rem;
+  border-radius: 16px;
+}
+
+.about-title,
+.skills-title,
+.contact-title {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+}
+
+.about-text {
+  color: #4f6480;
+  line-height: 1.6;
+}
+
+.skills-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.75rem;
+}
+
+/* Note: .skill-tag is also defined in Auth.css for professional registration
+   This version is for portfolio display, slightly different styling */
+.portfolio-shell .skill-tag {
+  background: #d3e6ff;
+  padding: 0.6rem 0.9rem;
+  border-radius: 12px;
+  font-weight: 600;
+  color: #1a3d5d;
+}
+
+/* ===================================
+   PORTFOLIO PAGE - TABS & PORTFOLIO GRID
+   =================================== */
+.portfolio-tabs {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.tab-btn {
+  border: none;
+  border-radius: 12px;
+  padding: 0.75rem 1.5rem;
+  background: #e6ecf5;
+  font-weight: 600;
+  color: #4f6480;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.tab-btn.active {
+  background: linear-gradient(120deg, #1a74ff, #18c27f);
+  color: #fff;
+  box-shadow: 0 10px 25px rgba(26, 116, 255, 0.35);
+}
+
+.portfolio-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.25rem;
+  margin-top: 1.5rem;
+}
+
+.portfolio-item {
+  background: #f7f9fc;
+  border-radius: 16px;
+  padding: 0.75rem;
+  box-shadow: inset 0 0 0 1px rgba(26, 61, 93, 0.05);
+  display: flex;
+  flex-direction: column;
+}
+
+.portfolio-item.clickable {
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.portfolio-item.clickable:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(26, 61, 93, 0.15);
+}
+
+.portfolio-item.clickable:hover .portfolio-image {
+  filter: brightness(1.05);
+}
+
+.portfolio-image {
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+  border-radius: 12px;
+}
+
+.portfolio-caption {
+  margin-top: 0.5rem;
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: #1a3d5d;
+  text-align: center;
+  padding: 0.5rem 0.25rem;
+  background: rgba(26, 61, 93, 0.04);
+  border-radius: 8px;
+  line-height: 1.4;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+/* ===================================
+   PORTFOLIO PAGE - REVIEWS PANEL
+   =================================== */
+.reviews-panel {
+  background: #fff;
+  border-radius: 16px;
+  margin-top: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.rating-summary {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+  background: #f4f7fb;
+  border-radius: 16px;
+  padding: 1.5rem;
+}
+
+.rating-score {
+  min-width: 180px;
+}
+
+.rating-number {
+  font-size: 3rem;
+  font-weight: 700;
+  color: #1a3d5d;
+}
+
+.rating-label {
+  color: #4f6480;
+}
+
+.rating-stars .star {
+  color: #dce2ee;
+  font-size: 1.25rem;
+}
+
+.rating-stars .filled {
+  color: #f4a100;
+}
+
+.rating-stars .half-filled {
+  background: linear-gradient(90deg, #f4a100 50%, #dce2ee 50%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-size: 1.25rem;
+}
+
+.rating-bars {
+  flex: 1;
+  min-width: 240px;
+}
+
+.rating-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.4rem;
+}
+
+.bar-label {
+  width: 32px;
+  font-weight: 600;
+  color: #4f6480;
+}
+
+.bar-track {
+  flex: 1;
+  height: 8px;
+  background: #e0e6f0;
+  border-radius: 999px;
+}
+
+.bar-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(120deg, #f4a100, #ffd057);
+}
+
+/* ===================================
+   PORTFOLIO PAGE - REVIEW LIST
+   =================================== */
+.review-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.review-card {
+  border: 1px solid rgba(26, 61, 93, 0.08);
+  border-radius: 16px;
+  padding: 1.25rem;
+  background: #fff;
+}
+
+.review-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.reviewer-name {
+  font-weight: 700;
+}
+
+.review-date {
+  color: #7b8ba7;
+  font-size: 0.9rem;
+}
+
+.review-rating {
+  color: #f4a100;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+}
+
+.review-rating .star {
+  color: #dce2ee;
+  font-size: 1rem;
+}
+
+.review-rating .star.filled {
+  color: #f4a100;
+}
+
+.review-rating .star.half-filled {
+  background: linear-gradient(90deg, #f4a100 50%, #dce2ee 50%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.review-rating .rating-value {
+  font-size: 0.85rem;
+  color: #7b8ba7;
+  margin-left: 0.35rem;
+  -webkit-text-fill-color: #7b8ba7;
+}
+
+.review-text {
+  color: #4f6480;
+  line-height: 1.6;
+  margin-bottom: 0.75rem;
+}
+
+.review-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.chip-outline {
+  border: 1px solid #cfd8ea;
+  border-radius: 999px;
+  padding: 0.3rem 0.9rem;
+  background: transparent;
+  font-weight: 600;
+  color: #4f6480;
+}
+
+/* ===================================
+   PORTFOLIO PAGE - PRICING & CONTACT
+   =================================== */
+.pricing-section {
+  margin-top: 1.5rem;
+  padding: 1.25rem 1.5rem;
+  background: #f4f7fb;
+  border-radius: 16px;
+  display: inline-flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.price-display {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1a3d5d;
+}
+
+.price-currency {
+  font-size: 1.25rem;
+  margin-right: 0.25rem;
+}
+
+.price-unit {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #4f6480;
+}
+
+.btn-request-service {
+  margin-top: 1rem;
+  width: 100%;
+  border: none;
+  border-radius: 999px;
+  padding: 0.9rem;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(120deg, #1a74ff, #1bd18f);
+  box-shadow: 0 18px 35px rgba(27, 209, 143, 0.35);
+  cursor: pointer;
+}
+
+.contact-item {
+  display: flex;
+  gap: 0.9rem;
+  padding: 0.85rem 0;
+  border-top: 1px solid rgba(26, 61, 93, 0.08);
+}
+
+.contact-item:first-of-type {
+  border-top: none;
+}
+
+.contact-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: inset 0 0 0 1px rgba(26, 61, 93, 0.08);
+}
+
+.contact-label {
+  font-weight: 700;
+  color: #1a3d5d;
+}
+
+.contact-value {
+  color: #4f6480;
+  margin: 0;
+}
+
+/* ===================================
+   PORTFOLIO PAGE RESPONSIVE
+   =================================== */
+@media (max-width: 768px) {
+  .portfolio-navbar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .provider-section {
+    padding: 1.5rem;
+  }
+
+  .rating-summary {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 576px) {
+  .profile-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .skills-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .portfolio-tabs {
+    flex-direction: column;
+  }
+}
+
+/* ===================================
+   LOADING STATE
+   =================================== */
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  text-align: center;
+}
+
+.loading-state .spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid #e0e0e0;
+  border-top-color: #4A9FF5;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading-state p {
+  color: #666;
+  font-size: 1rem;
+}
+
+/* ===================================
+   EMPTY STATES
+   =================================== */
+.about-empty,
+.skills-empty {
+  padding: 1.5rem;
+  background: #f8f9fa;
+  border-radius: 12px;
+  border: 2px dashed #e0e0e0;
+}
+
+.empty-text {
+  color: #888;
+  font-style: italic;
+  text-align: center;
+  margin: 0;
+}
+
+.portfolio-empty {
+  padding: 2rem;
+  text-align: center;
+}
+
+.empty-portfolio-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.portfolio-placeholder {
+  aspect-ratio: 4/3;
+  background: linear-gradient(135deg, #f0f0f0 0%, #e8e8e8 100%);
+  border-radius: 12px;
+  border: 2px dashed #d0d0d0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  color: #aaa;
+}
+
+.portfolio-placeholder i {
+  font-size: 2rem;
+}
+
+.portfolio-placeholder span {
+  font-size: 0.85rem;
+}
+
+.no-reviews {
+  text-align: center;
+  padding: 3rem 2rem;
+  background: #f8f9fa;
+  border-radius: 12px;
+  border: 2px dashed #e0e0e0;
+}
+
+.no-reviews i {
+  font-size: 3rem;
+  color: #ccc;
+  margin-bottom: 1rem;
+  display: block;
+}
+
+.no-reviews p {
+  color: #888;
+  font-size: 1rem;
+  margin: 0;
+}
+
+/* ===================================
+   LOGIN PROMPT MODAL
+   =================================== */
+.login-prompt-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(7, 22, 43, 0.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  z-index: 1200;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.login-prompt-modal {
+  background: #fff;
+  border-radius: 24px;
+  padding: 2.5rem;
+  max-width: 400px;
+  width: 100%;
+  text-align: center;
+  position: relative;
+  animation: slideUp 0.3s ease;
+  box-shadow: 0 25px 50px rgba(9, 24, 66, 0.2);
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.login-prompt-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: transparent;
+  border: none;
+  font-size: 1.5rem;
+  color: #94a3b8;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.login-prompt-close:hover {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.login-prompt-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(26, 116, 255, 0.1), rgba(32, 184, 122, 0.1));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.5rem;
+}
+
+.login-prompt-icon i {
+  font-size: 2.5rem;
+  background: linear-gradient(135deg, #1a74ff, #20b87a);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.login-prompt-modal h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1a3d5d;
+  margin-bottom: 0.75rem;
+}
+
+.login-prompt-modal p {
+  color: #64748b;
+  font-size: 0.95rem;
+  margin-bottom: 1.75rem;
+  line-height: 1.5;
+}
+
+.login-prompt-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.btn-login-prompt {
+  background: linear-gradient(135deg, #1a74ff, #20b87a);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 0.9rem 1.5rem;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 8px 20px rgba(26, 116, 255, 0.3);
+}
+
+.btn-login-prompt:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(26, 116, 255, 0.4);
+}
+
+.btn-register-prompt {
+  background: transparent;
+  color: #1a74ff;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 0.85rem 1.5rem;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-register-prompt:hover {
+  background: #f8fafc;
+  border-color: #1a74ff;
+}
+
+/* ===================================
+   IMAGE LIGHTBOX
+   =================================== */
+.image-lightbox-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  padding: 2rem;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.lightbox-close {
+  position: absolute;
+  top: 1.5rem;
+  right: 1.5rem;
+  background: rgba(255, 255, 255, 0.15);
+  border: none;
+  color: white;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  font-size: 1.25rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.lightbox-close:hover {
+  background: rgba(255, 255, 255, 0.25);
+  transform: scale(1.1);
+}
+
+.lightbox-image {
+  max-width: 90vw;
+  max-height: 85vh;
+  object-fit: contain;
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  animation: scaleIn 0.25s ease;
+}
+
+@keyframes scaleIn {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
