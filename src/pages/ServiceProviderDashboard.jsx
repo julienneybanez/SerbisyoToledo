@@ -2,12 +2,14 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { getUser, serviceRequestAPI } from '../services/api';
 import ServiceProfileModal from '../components/common/ServiceProfileModal';
+import VerificationRequestModal from '../components/common/VerificationRequestModal';
 import './ServiceProviderDashboard.css';
 
 export default function ServiceProviderDashboard() {
   const navigate = useNavigate();
   const user = getUser();
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [showVerificationRequest, setShowVerificationRequest] = useState(false);
   const [requests, setRequests] = useState([]);
   const [loadingRequests, setLoadingRequests] = useState(true);
   const [actionLoading, setActionLoading] = useState(null);
@@ -217,11 +219,15 @@ export default function ServiceProviderDashboard() {
         <section className="level-up-banner">
           <h2>Ready to Level Up?</h2>
           <p>Complete your profile and get verified to increase your reliability to clients and unlock more opportunities.</p>
-          <button className="btn-get-verified">GET VERIFIED NOW</button>
+          <button className="btn-get-verified" onClick={() => setShowVerificationRequest(true)}>GET VERIFIED NOW</button>
         </section>
 
         {showProfileModal && (
           <ServiceProfileModal onClose={() => setShowProfileModal(false)} />
+        )}
+
+        {showVerificationRequest && (
+          <VerificationRequestModal onClose={() => setShowVerificationRequest(false)} />
         )}
       </div>
     </div>

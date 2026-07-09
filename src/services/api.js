@@ -1,5 +1,5 @@
 // API Configuration
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 // Helper function to handle API responses
 const handleResponse = async (response) => {
@@ -252,6 +252,103 @@ export const adminAPI = {
     return handleResponse(response);
   },
 
+  // Get user activity summary
+  getUserActivity: async (id) => {
+    const token = getToken();
+
+    if (!token) {
+      throw { message: 'No authentication token found' };
+    }
+
+    const response = await fetch(`${API_BASE_URL}/admin/users/${id}/activity`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    return handleResponse(response);
+  },
+
+  // Get all verification requests
+  getVerificationRequests: async () => {
+    const token = getToken();
+
+    if (!token) {
+      throw { message: 'No authentication token found' };
+    }
+
+    const response = await fetch(`${API_BASE_URL}/admin/verification-requests`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    return handleResponse(response);
+  },
+
+  // Review verification request
+  reviewVerificationRequest: async (id, reviewData) => {
+    const token = getToken();
+
+    if (!token) {
+      throw { message: 'No authentication token found' };
+    }
+
+    const response = await fetch(`${API_BASE_URL}/admin/verification-requests/${id}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify(reviewData),
+    });
+
+    return handleResponse(response);
+  },
+
+  // Get all reports
+  getReports: async () => {
+    const token = getToken();
+
+    if (!token) {
+      throw { message: 'No authentication token found' };
+    }
+
+    const response = await fetch(`${API_BASE_URL}/admin/reports`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    return handleResponse(response);
+  },
+
+  // Update report status
+  updateReportStatus: async (id, updateData) => {
+    const token = getToken();
+
+    if (!token) {
+      throw { message: 'No authentication token found' };
+    }
+
+    const response = await fetch(`${API_BASE_URL}/admin/reports/${id}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify(updateData),
+    });
+
+    return handleResponse(response);
+  },
+
   // Delete user
   deleteUser: async (id) => {
     const token = getToken();
@@ -296,6 +393,7 @@ export const serviceProfileAPI = {
     if (filters.location) params.append('location', filters.location);
     if (filters.minPrice) params.append('minPrice', filters.minPrice);
     if (filters.maxPrice) params.append('maxPrice', filters.maxPrice);
+    if (filters.minRating) params.append('minRating', filters.minRating);
     if (filters.search) params.append('search', filters.search);
 
     const response = await fetch(`${API_BASE_URL}/service-profiles/all?${params}`, {
@@ -511,6 +609,20 @@ export const serviceRequestAPI = {
     });
     return handleResponse(response);
   },
+
+  // Report user for a request interaction
+  createReport: async (requestId, formData) => {
+    const token = getToken();
+    const response = await fetch(`${API_BASE_URL}/service-requests/${requestId}/report`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+      body: formData,
+    });
+
+    return handleResponse(response);
+  },
 };
 
 // Notification API calls
@@ -662,6 +774,20 @@ export const userProfileAPI = {
     }
     
     return data;
+  },
+
+  // Submit verification request (service provider)
+  submitVerificationRequest: async (formData) => {
+    const token = getToken();
+    const response = await fetch(`${API_BASE_URL}/user/verification-request`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+      body: formData,
+    });
+
+    return handleResponse(response);
   },
 };
 

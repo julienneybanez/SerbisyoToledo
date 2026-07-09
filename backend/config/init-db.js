@@ -3,27 +3,50 @@ const dotenv = require('dotenv');
 
 dotenv.config();
 
+const getConnectionConfig = () => {
+  const databaseUrl = process.env.DATABASE_URL || process.env.MYSQL_URL || process.env.DB_URL;
+
+  if (databaseUrl) {
+    try {
+      const parsedUrl = new URL(databaseUrl);
+      return {
+        host: parsedUrl.hostname,
+        port: parsedUrl.port ? Number(parsedUrl.port) : 3306,
+        user: decodeURIComponent(parsedUrl.username || ''),
+        password: decodeURIComponent(parsedUrl.password || ''),
+      };
+    } catch (error) {
+      console.warn('⚠️  Invalid DATABASE_URL provided for DB initialization. Falling back to local config.', error.message);
+    }
+  }
+
+  return {
+    host: process.env.DB_HOST || 'localhost',
+    port: process.env.DB_PORT ? Number(process.env.DB_PORT) : 3306,
+    user: process.env.DB_USER || 'root',
+    password: process.env.DB_PASSWORD || ''
+  };
+};
+
 async function initializeDatabase() {
   let connection;
   
   try {
+    const databaseName = process.env.DB_NAME || 'serbisyo_toledo';
+
     // First, connect without specifying a database
-    connection = await mysql.createConnection({
-      host: process.env.DB_HOST || 'localhost',
-      user: process.env.DB_USER || 'root',
-      password: process.env.DB_PASSWORD || ''
-    });
+    connection = await mysql.createConnection(getConnectionConfig());
 
     console.log('Connected to MySQL server');
 
     // Create database if it doesn't exist
     await connection.query(
-      `CREATE DATABASE IF NOT EXISTS ${process.env.DB_NAME || 'serbisyo_toledo'}`
+      `CREATE DATABASE IF NOT EXISTS ${databaseName}`
     );
     console.log('✅ Database created/verified');
 
     // Use the database
-    await connection.query(`USE ${process.env.DB_NAME || 'serbisyo_toledo'}`);
+    await connection.query(`USE ${databaseName}`);
 
     // Create users table
     await connection.query(`
@@ -199,6 +222,65 @@ async function initializeDatabase() {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
     console.log('✅ Reviews table created/verified');
+
+    // Create verification_requests table for provider verification workflow
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS verification_requests (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        user_id INT NOT NULL,
+        full_name VARCHAR(255) NOT NULL,
+        phone_number VARCHAR(50) NOT NULL,
+        address TEXT NOT NULL,
+        service_description TEXT NOT NULL,
+        government_id_data LONGBLOB NOT NULL,
+        government_id_mime VARCHAR(100) DEFAULT 'application/octet-stream',
+        certifications_data LONGBLOB NOT NULL,
+        certifications_mime VARCHAR(100) DEFAULT 'application/octet-stream',
+        status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
+        rejection_reason TEXT DEFAULT NULL,
+        admin_notes TEXT DEFAULT NULL,
+        reviewed_by INT DEFAULT NULL,
+        reviewed_at TIMESTAMP NULL DEFAULT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+        FOREIGN KEY (reviewed_by) REFERENCES users(id) ON DELETE SET NULL,
+        INDEX idx_verification_user_id (user_id),
+        INDEX idx_verification_status (status),
+        UNIQUE KEY uniq_user_pending_request (user_id, status)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+    console.log('✅ Verification requests table created/verified');
+
+    // Create user_reports table for complaint workflow
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS user_reports (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        request_id INT NOT NULL,
+        reporter_id INT NOT NULL,
+        reported_user_id INT NOT NULL,
+        reason VARCHAR(255) NOT NULL,
+        description TEXT NOT NULL,
+        screenshot_data LONGBLOB DEFAULT NULL,
+        screenshot_mime VARCHAR(100) DEFAULT NULL,
+        status ENUM('pending', 'under_review', 'dismissed', 'resolved', 'banned') DEFAULT 'pending',
+        priority ENUM('low', 'medium', 'high') DEFAULT 'medium',
+        resolution_notes TEXT DEFAULT NULL,
+        handled_by INT DEFAULT NULL,
+        handled_at TIMESTAMP NULL DEFAULT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (request_id) REFERENCES service_requests(id) ON DELETE CASCADE,
+        FOREIGN KEY (reporter_id) REFERENCES users(id) ON DELETE CASCADE,
+        FOREIGN KEY (reported_user_id) REFERENCES users(id) ON DELETE CASCADE,
+        FOREIGN KEY (handled_by) REFERENCES users(id) ON DELETE SET NULL,
+        INDEX idx_report_status (status),
+        INDEX idx_report_reporter (reporter_id),
+        INDEX idx_report_reported_user (reported_user_id),
+        UNIQUE KEY uniq_request_reporter_reported (request_id, reporter_id, reported_user_id)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+    console.log('✅ User reports table created/verified');
 
     // Add about_me column to service_profiles if it doesn't exist
     try {

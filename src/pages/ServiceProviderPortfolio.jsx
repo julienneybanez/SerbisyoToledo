@@ -265,8 +265,8 @@ const ProviderCard = ({ provider, profile, onBack }) => {
       {showLoginPrompt && (
         <div className="login-prompt-overlay" onClick={() => setShowLoginPrompt(false)}>
           <div className="login-prompt-modal" onClick={(e) => e.stopPropagation()}>
-            <button className="login-prompt-close" onClick={() => setShowLoginPrompt(false)}>
-              ÁE
+            <button className="login-prompt-close" type="button" onClick={() => setShowLoginPrompt(false)}>
+              <i className="bi bi-x-lg"></i>
             </button>
             <div className="login-prompt-icon">
               <i className="bi bi-person-lock"></i>

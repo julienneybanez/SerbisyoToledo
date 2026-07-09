@@ -8,10 +8,10 @@ const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
   fileFilter: (req, file, cb) => {
-    if (file.mimetype.startsWith('image/')) {
+    if (file.mimetype.startsWith('image/') || file.mimetype === 'application/pdf') {
       cb(null, true);
     } else {
-      cb(new Error('Only image files are allowed'), false);
+      cb(new Error('Only image or PDF files are allowed'), false);
     }
   }
 });
@@ -27,5 +27,15 @@ router.patch('/profile', upload.single('profilePhoto'), userController.updatePro
 
 // Remove profile photo
 router.delete('/profile/photo', userController.removeProfilePhoto);
+
+// Submit verification request (service provider)
+router.post(
+  '/verification-request',
+  upload.fields([
+    { name: 'governmentId', maxCount: 1 },
+    { name: 'certifications', maxCount: 1 },
+  ]),
+  userController.submitVerificationRequest
+);
 
 module.exports = router;

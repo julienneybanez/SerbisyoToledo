@@ -1,115 +1,78 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { adminAPI } from '../../services/api';
 import '../../styles/AdminPages.css';
 
 function AdminReports() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
+  const [reports, setReports] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [actionLoading, setActionLoading] = useState('');
+  const [expandedReportId, setExpandedReportId] = useState(null);
 
-  // Mock data - replace with API calls
-  const reports = [
-    {
-      id: 1,
-      reportedUser: 'Carlos Yulo',
-      reportedUserType: 'tradesperson',
-      status: 'Pending',
-      reportedBy: 'Ana Lopez',
-      reporterType: 'client',
-      reason: 'Did not complete the service',
-      description: 'Service provider did not show up for schedule appointment',
-      date: '2026-01-10',
-      priority: 'high'
-    },
-    {
-      id: 2,
-      reportedUser: 'Jose Reyes',
-      reportedUserType: 'tradesperson',
-      status: 'Under Review',
-      reportedBy: 'Linda Garcia',
-      reporterType: 'client',
-      reason: 'Poor quality work',
-      description: 'Work complete but quality was below expectation',
-      date: '2026-02-22',
-      priority: 'medium'
-    },
-    {
-      id: 3,
-      reportedUser: 'Miguel Torres',
-      reportedUserType: 'tradesperson',
-      status: 'Pending',
-      reportedBy: 'Sofia The First',
-      reporterType: 'client',
-      reason: 'Unprofessional behavior',
-      description: 'Service provider was rude and unprofessional',
-      date: '2026-03-20',
-      priority: 'high'
-    },
-    {
-      id: 4,
-      reportedUser: 'Mark Villanueva',
-      reportedUserType: 'tradesperson',
-      status: 'Resolved',
-      reportedBy: 'Juan Santos',
-      reporterType: 'client',
-      reason: 'Overcharging',
-      description: 'Charged more than the agreed amount',
-      date: '2026-01-05',
-      priority: 'medium',
-      resolution: 'Refund issued to client'
-    },
-    {
-      id: 5,
-      reportedUser: 'Elena Cruz',
-      reportedUserType: 'client',
-      status: 'Dismissed',
-      reportedBy: 'Pedro Painter',
-      reporterType: 'tradesperson',
-      reason: 'False complaint',
-      description: 'Client made false claims about service',
-      date: '2025-12-28',
-      priority: 'low',
-      resolution: 'Report found to be unfounded'
+  const fetchReports = async () => {
+    try {
+      setLoading(true);
+      setError('');
+      const response = await adminAPI.getReports();
+      if (response.success) {
+        setReports(response.data || []);
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to load reports');
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
 
-  const filteredReports = reports.filter(report => {
-    const matchesSearch = report.reportedUser.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         report.reportedBy.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         report.reason.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = filterStatus === 'all' || report.status.toLowerCase().replace(' ', '-') === filterStatus;
+  useEffect(() => {
+    fetchReports();
+  }, []);
+
+  const handleReportAction = async (reportId, action) => {
+    try {
+      setActionLoading(`${reportId}-${action}`);
+      const notes = window.prompt('Optional admin notes:') || '';
+      const response = await adminAPI.updateReportStatus(reportId, {
+        action,
+        resolutionNotes: notes,
+      });
+      if (response.success) {
+        await fetchReports();
+      }
+    } catch (err) {
+      alert(err.message || 'Failed to update report');
+    } finally {
+      setActionLoading('');
+    }
+  };
+
+  const filteredReports = reports.filter((report) => {
+    const query = searchTerm.trim().toLowerCase();
+    const matchesSearch =
+      !query ||
+      report.reportedUser.toLowerCase().includes(query) ||
+      report.reportedBy.toLowerCase().includes(query) ||
+      report.reason.toLowerCase().includes(query);
+
+    const normalized = report.status.toLowerCase();
+    const matchesStatus = filterStatus === 'all' || normalized === filterStatus;
+
     return matchesSearch && matchesStatus;
   });
 
-  const getStatusClass = (status) => {
-    switch (status.toLowerCase()) {
-      case 'pending': return 'status-pending';
-      case 'under review': return 'status-review';
-      case 'resolved': return 'status-verified';
-      case 'dismissed': return 'status-dismissed';
-      default: return '';
-    }
-  };
-
-  const getPriorityClass = (priority) => {
-    switch (priority) {
-      case 'high': return 'priority-high';
-      case 'medium': return 'priority-medium';
-      case 'low': return 'priority-low';
-      default: return '';
-    }
-  };
-
-  const pendingCount = reports.filter(r => r.status === 'Pending').length;
-  const reviewCount = reports.filter(r => r.status === 'Under Review').length;
-  const resolvedCount = reports.filter(r => r.status === 'Resolved').length;
+  const pendingCount = reports.filter((r) => r.status === 'pending').length;
+  const reviewCount = reports.filter((r) => r.status === 'under_review').length;
+  const resolvedCount = reports.filter((r) => ['resolved', 'dismissed', 'banned'].includes(r.status)).length;
 
   return (
     <div className="admin-page">
-      <div className="page-header">
-        <h1 className="page-title">User Reports</h1>
-        <p className="page-subtitle">Review and manage user complaints and reports</p>
+      <div className="admin-page-header">
+        <h1 className="admin-page-title">User Reports</h1>
+        <p className="admin-page-subtitle">Review and manage user complaints and reports</p>
       </div>
 
-      {/* Stats Summary */}
       <div className="mini-stats">
         <div className="mini-stat">
           <span className="mini-stat-value text-warning">{pendingCount}</span>
@@ -121,11 +84,10 @@ function AdminReports() {
         </div>
         <div className="mini-stat">
           <span className="mini-stat-value text-success">{resolvedCount}</span>
-          <span className="mini-stat-label">Resolved</span>
+          <span className="mini-stat-label">Processed</span>
         </div>
       </div>
 
-      {/* Filters */}
       <div className="filters-bar">
         <div className="search-box">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -144,71 +106,97 @@ function AdminReports() {
           <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
             <option value="all">All Status</option>
             <option value="pending">Pending</option>
-            <option value="under-review">Under Review</option>
-            <option value="resolved">Resolved</option>
+            <option value="under_review">Under Review</option>
             <option value="dismissed">Dismissed</option>
+            <option value="resolved">Resolved</option>
+            <option value="banned">Banned</option>
           </select>
         </div>
       </div>
 
-      {/* Reports List */}
+      {error && <div className="alert alert-danger mt-3">{error}</div>}
+
       <div className="requests-list">
-        {filteredReports.map((report) => (
-          <div key={report.id} className={`request-card report-card ${report.status === 'Resolved' || report.status === 'Dismissed' ? 'processed' : ''}`}>
-            <div className="request-avatar report-avatar">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-              </svg>
-            </div>
-            
-            <div className="request-info">
-              <div className="request-header">
-                <h4 className="request-name">{report.reportedUser}</h4>
-                <span className={`status-badge ${getStatusClass(report.status)}`}>
-                  {report.status}
-                </span>
-                <span className={`priority-badge ${getPriorityClass(report.priority)}`}>
-                  {report.priority}
-                </span>
+        {loading ? (
+          <div className="text-center py-4">Loading reports...</div>
+        ) : (
+          filteredReports.map((report) => (
+            <div key={report.id} className={`request-card report-card ${['dismissed', 'resolved', 'banned'].includes(report.status) ? 'processed' : ''}`}>
+              <div className="request-avatar report-avatar">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                </svg>
               </div>
-              <p className="request-detail">Reported by: {report.reportedBy} ({report.reporterType})</p>
-              <p className="request-detail">Reason: {report.reason}</p>
-              <p className="report-description">{report.description}</p>
-              {report.resolution && (
-                <p className="resolution-text">
-                  <strong>Resolution:</strong> {report.resolution}
-                </p>
-              )}
-            </div>
 
-            <div className="request-contact">
-              <p>Date: {report.date}</p>
-              <p>Reported: {report.reportedUserType}</p>
-            </div>
+              <div className="request-info">
+                <div className="request-header">
+                  <h4 className="request-name">{report.reportedUser}</h4>
+                  <span className="document-tag">{report.reportedUserType}</span>
+                  <span className={`status-badge ${report.status === 'pending' ? 'status-pending' : report.status === 'under_review' ? 'status-review' : report.status === 'dismissed' ? 'status-dismissed' : 'status-verified'}`}>
+                    {report.status.replace('_', ' ')}
+                  </span>
+                </div>
 
-            <div className="request-actions report-actions">
-              {report.status === 'Pending' || report.status === 'Under Review' ? (
-                <>
-                  <button className="btn-investigate">Investigate</button>
-                  <button className="btn-dismiss">DISMISS</button>
-                  <button className="btn-ban">Ban User</button>
-                </>
-              ) : (
-                <button className="btn-view-details">View Details</button>
-              )}
+                <p className="request-detail">Reported by: {report.reportedBy} ({report.reporterType})</p>
+                <p className="request-detail">Reason: {report.reason}</p>
+                <p className="report-description">{report.description}</p>
+                <p className="request-detail">Request: {report.jobTitle}</p>
+                <p className="request-detail">Date: {new Date(report.date).toLocaleString()}</p>
+
+                {expandedReportId === report.id && (
+                  <div className="admin-inline-details">
+                    {report.screenshot ? (
+                      <img src={report.screenshot} alt="Reported evidence" className="admin-report-screenshot" />
+                    ) : (
+                      <p className="request-detail">No screenshot attached.</p>
+                    )}
+                    {report.resolution && (
+                      <p className="resolution-text"><strong>Resolution:</strong> {report.resolution}</p>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <div className="request-actions report-actions">
+                {['pending', 'under_review'].includes(report.status) ? (
+                  <>
+                    <button
+                      className="btn-investigate"
+                      disabled={actionLoading === `${report.id}-investigate`}
+                      onClick={() => handleReportAction(report.id, 'investigate')}
+                    >
+                      {actionLoading === `${report.id}-investigate` ? 'Working...' : 'Investigate'}
+                    </button>
+                    <button
+                      className="btn-dismiss"
+                      disabled={actionLoading === `${report.id}-dismiss`}
+                      onClick={() => handleReportAction(report.id, 'dismiss')}
+                    >
+                      {actionLoading === `${report.id}-dismiss` ? 'Working...' : 'Dismiss'}
+                    </button>
+                    <button
+                      className="btn-ban"
+                      disabled={actionLoading === `${report.id}-ban`}
+                      onClick={() => handleReportAction(report.id, 'ban')}
+                    >
+                      {actionLoading === `${report.id}-ban` ? 'Working...' : 'Ban User'}
+                    </button>
+                  </>
+                ) : null}
+                <button
+                  className="btn-view-details"
+                  onClick={() => setExpandedReportId((prev) => (prev === report.id ? null : report.id))}
+                >
+                  {expandedReportId === report.id ? 'Hide Details' : 'View Details'}
+                </button>
+              </div>
             </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
 
-      {filteredReports.length === 0 && (
+      {!loading && filteredReports.length === 0 && (
         <div className="empty-state">
-          <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-            <polyline points="14 2 14 8 20 8"></polyline>
-            <line x1="16" y1="13" x2="8" y2="13"></line>
-            <line x1="16" y1="17" x2="8" y2="17"></line>
-          </svg>
           <h3>No reports found</h3>
           <p>Try adjusting your search or filter criteria</p>
         </div>

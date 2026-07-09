@@ -499,21 +499,8 @@
 }
 
 /* ===================================
-   COMPLETION & REVIEW (MODAL)
+   REVIEW (MODAL)
    =================================== */
-.modal-actions .completion-pending-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.6rem 1.2rem;
-  background: #fff3cd;
-  color: #856404;
-  border: 1px solid #ffc107;
-  border-radius: 25px;
-  font-size: 0.85rem;
-  font-weight: 600;
-}
-
 .modal-actions .btn-review {
   display: flex;
   align-items: center;

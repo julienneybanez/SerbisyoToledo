@@ -8,11 +8,12 @@
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+  font-family: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto',
+    'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  color: var(--brand-text, #1e293b);
 }
 
 .app {
@@ -23,11 +24,11 @@ body {
    UTILITY CLASSES
    =================================== */
 .text-primary-custom {
-  color: #5da9dd !important;
+  color: var(--brand-primary, #5da9dd) !important;
 }
 
 .text-success-custom {
-  color: #44c9a0 !important;
+  color: var(--brand-accent, #44c9a0) !important;
 }
 
 .bg-light-custom {

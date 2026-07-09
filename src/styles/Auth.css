@@ -112,7 +112,7 @@
   color: #5da9dd;
 }
 
-.btn-primary {
+.gradient-container .btn-primary {
   background: linear-gradient(to right, #5da9dd 0%, #44c9a0 100%);
   border: none;
   border-radius: 8px;
@@ -123,13 +123,13 @@
   transition: all 0.3s ease;
 }
 
-.btn-primary:hover {
+.gradient-container .btn-primary:hover {
   background: linear-gradient(to right, #4a9fd5 0%, #3bb890 100%);
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(93, 169, 221, 0.3);
 }
 
-.btn-primary:active {
+.gradient-container .btn-primary:active {
   transform: translateY(0);
 }
 

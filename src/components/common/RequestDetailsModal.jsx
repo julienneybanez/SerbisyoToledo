@@ -1,6 +1,6 @@
 import './RequestDetailsModal.css';
 
-export default function RequestDetailsModal({ request, isProvider, onClose, onStatusUpdate, onRequestDiscussion, onAcceptDiscussion, onOpenReview, actionLoading }) {
+export default function RequestDetailsModal({ request, isProvider, onClose, onStatusUpdate, onRequestDiscussion, onAcceptDiscussion, onOpenReview, onOpenReport, actionLoading }) {
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       weekday: 'long',
@@ -215,6 +215,13 @@ export default function RequestDetailsModal({ request, isProvider, onClose, onSt
 
         {/* Action Buttons */}
         <div className="modal-actions">
+          <button
+            className="action-btn btn-decline"
+            onClick={() => onOpenReport && onOpenReport(request)}
+          >
+            <i className="bi bi-flag"></i> Report User
+          </button>
+
           {/* Provider-only: pending actions */}
           {isProvider && request.status === 'pending' && (
             <>
@@ -268,11 +275,6 @@ export default function RequestDetailsModal({ request, isProvider, onClose, onSt
               )}
             </button>
           )}
-          {isProvider && ['on_the_way', 'in_progress'].includes(request.status) && request.provider_completed && !request.client_completed && (
-            <span className="completion-pending-badge">
-              <i className="bi bi-hourglass-split"></i> Waiting for client to confirm
-            </span>
-          )}
 
           {/* Two-way completion: Client confirm */}
           {!isProvider && ['on_the_way', 'in_progress'].includes(request.status) && !request.client_completed && (
@@ -287,11 +289,6 @@ export default function RequestDetailsModal({ request, isProvider, onClose, onSt
                 <><i className="bi bi-check-circle"></i> Confirm Completed</>
               )}
             </button>
-          )}
-          {!isProvider && ['on_the_way', 'in_progress'].includes(request.status) && request.client_completed && !request.provider_completed && (
-            <span className="completion-pending-badge">
-              <i className="bi bi-hourglass-split"></i> Waiting for provider to confirm
-            </span>
           )}
 
           {/* Client: Leave a review on completed request */}

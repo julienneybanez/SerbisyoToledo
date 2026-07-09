@@ -9,7 +9,9 @@
   top: 0;
   width: 260px !important;
   height: 100vh;
-  background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%) !important;
+  background:
+    radial-gradient(circle at top, rgba(93, 169, 221, 0.16), transparent 46%),
+    linear-gradient(180deg, #1e293b 0%, #0f172a 100%) !important;
   border-right: none !important;
   z-index: 1050;
   transition: transform 0.3s ease;
@@ -86,9 +88,9 @@
 }
 
 .admin-sidebar-coreui .sidebar-nav .nav-link.active {
-  background: linear-gradient(135deg, #4A9FF5 0%, #3a8fd5 100%) !important;
+  background: linear-gradient(135deg, var(--brand-primary, #5da9dd) 0%, var(--brand-primary-dark, #4a9fd5) 100%) !important;
   color: white !important;
-  box-shadow: 0 4px 12px rgba(74, 159, 245, 0.3);
+  box-shadow: 0 8px 18px rgba(93, 169, 221, 0.35);
 }
 
 .admin-sidebar-coreui .nav-icon {
@@ -105,9 +107,10 @@
 
 .admin-sidebar-coreui .sidebar-nav .nav-link {
   color: #94a3b8 !important;
-  padding: 0.75rem 1rem;
+  padding: 0.78rem 1rem;
   margin: 0.15rem 0.75rem;
-  border-radius: 8px;
+  border-radius: 10px;
+  border: 1px solid transparent;
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
@@ -119,10 +122,16 @@
   z-index: 1;
 }
 
+.admin-sidebar-coreui .sidebar-nav .nav-link:hover {
+  border-color: rgba(148, 163, 184, 0.2);
+}
+
 /* Badge Styles */
 .admin-sidebar-coreui .badge {
-  font-size: 0.7rem;
-  padding: 0.35em 0.65em;
+  font-size: 0.69rem;
+  font-weight: 700;
+  padding: 0.35em 0.68em;
+  border-radius: 999px;
 }
 
 /* Footer Section */

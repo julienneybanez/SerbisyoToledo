@@ -19,6 +19,21 @@ router.get('/users/:id', adminController.getUserById);
 // PUT /api/admin/users/:id/status - Update user status
 router.put('/users/:id/status', adminController.updateUserStatus);
 
+// GET /api/admin/users/:id/activity - Get user activity summary
+router.get('/users/:id/activity', adminController.getUserActivity);
+
+// GET /api/admin/verification-requests - Get verification requests
+router.get('/verification-requests', adminController.getVerificationRequests);
+
+// PATCH /api/admin/verification-requests/:id - Approve/reject verification request
+router.patch('/verification-requests/:id', adminController.reviewVerificationRequest);
+
+// GET /api/admin/reports - Get reports
+router.get('/reports', adminController.getReports);
+
+// PATCH /api/admin/reports/:id - Update report moderation status
+router.patch('/reports/:id', adminController.updateReportStatus);
+
 // DELETE /api/admin/users/:id - Delete user
 router.delete('/users/:id', adminController.deleteUser);
 

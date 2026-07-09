@@ -5,9 +5,15 @@ const db = require('../config/database');
 
 // Generate JWT token
 const generateToken = (userId) => {
+  const secret = process.env.JWT_SECRET || 'dev-secret-change-me';
+
+  if (!process.env.JWT_SECRET) {
+    console.warn('⚠️  JWT_SECRET is not set. Falling back to a development secret.');
+  }
+
   return jwt.sign(
     { userId },
-    process.env.JWT_SECRET,
+    secret,
     { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
   );
 };

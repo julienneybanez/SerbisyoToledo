@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { getUser, serviceRequestAPI } from '../services/api';
 import RequestDetailsModal from '../components/common/RequestDetailsModal';
 import ReviewModal from '../components/common/ReviewModal';
+import ReportUserModal from '../components/common/ReportUserModal';
 import './Requests.css';
 
 export default function Requests() {
@@ -15,6 +16,7 @@ export default function Requests() {
   const [actionLoading, setActionLoading] = useState(null);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [reviewRequest, setReviewRequest] = useState(null);
+  const [reportRequest, setReportRequest] = useState(null);
   const [reviewLoading, setReviewLoading] = useState(false);
 
   useEffect(() => {
@@ -193,6 +195,13 @@ export default function Requests() {
       day: 'numeric',
       year: 'numeric',
     });
+  };
+
+  const filterCounts = {
+    all: requests.length,
+    active: requests.filter(req => ['pending', 'accepted', 'on_the_way', 'in_progress'].includes(req.status)).length,
+    completed: requests.filter(req => req.status === 'completed').length,
+    cancelled: requests.filter(req => ['declined', 'cancelled'].includes(req.status)).length,
   };
 
   const filteredRequests = requests.filter(req => {
@@ -417,12 +426,6 @@ export default function Requests() {
                           <i className="bi bi-check-lg"></i> Confirm Completed
                         </button>
                       )}
-                      {['on_the_way', 'in_progress'].includes(request.status) && request.provider_completed && !request.client_completed && (
-                        <div className="completion-pending-badge">
-                          <i className="bi bi-hourglass-split"></i>
-                          <span>Waiting for client to confirm completion</span>
-                        </div>
-                      )}
                     </>
                   ) : (
                     // Client actions
@@ -444,12 +447,6 @@ export default function Requests() {
                         >
                           <i className="bi bi-check-lg"></i> Confirm Completed
                         </button>
-                      )}
-                      {['on_the_way', 'in_progress'].includes(request.status) && request.client_completed && !request.provider_completed && (
-                        <div className="completion-pending-badge">
-                          <i className="bi bi-hourglass-split"></i>
-                          <span>Waiting for provider to confirm completion</span>
-                        </div>
                       )}
                       {request.status === 'completed' && !request.has_review && (
                         <button
@@ -492,6 +489,9 @@ export default function Requests() {
           onOpenReview={(request) => {
             setReviewRequest(request);
           }}
+          onOpenReport={(request) => {
+            setReportRequest(request);
+          }}
           actionLoading={actionLoading}
         />
       )}
@@ -503,6 +503,18 @@ export default function Requests() {
           onClose={() => setReviewRequest(null)}
           onSubmit={handleSubmitReview}
           loading={reviewLoading}
+        />
+      )}
+
+      {/* Report Modal */}
+      {reportRequest && (
+        <ReportUserModal
+          request={reportRequest}
+          isProvider={isProvider}
+          onClose={() => setReportRequest(null)}
+          onSubmitted={() => {
+            setReportRequest(null);
+          }}
         />
       )}
     </div>

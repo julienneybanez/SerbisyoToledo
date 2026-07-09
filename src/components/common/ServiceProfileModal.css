@@ -39,11 +39,12 @@
 .modal-content {
   background-color: #ffffff !important;
   background: #ffffff !important;
-  border-radius: 20px;
+  border-radius: 28px !important;
   max-width: 700px;
   width: 100%;
   max-height: 90vh;
   overflow-y: auto;
+  overflow-x: hidden;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   position: relative;
   z-index: 10000;
@@ -104,6 +105,7 @@
   padding: 30px;
   background-color: #ffffff;
   width: 100%;
+  border-radius: 28px !important;
 }
 
 .form-section {
@@ -151,7 +153,7 @@
   width: 100%;
   padding: 10px 12px;
   border: 1px solid #ddd;
-  border-radius: 6px;
+  border-radius: 14px !important;
   font-size: 14px;
   font-family: inherit;
   transition: all 0.3s ease;
@@ -217,7 +219,7 @@
 .upload-area {
   position: relative;
   border: 2px dashed #ddd;
-  border-radius: 8px;
+  border-radius: 16px;
   overflow: hidden;
   transition: all 0.3s ease;
 }
@@ -268,7 +270,7 @@
 .important-notes {
   background-color: #E3F2FD;
   padding: 16px;
-  border-radius: 8px;
+  border-radius: 16px;
   border-left: 4px solid #0078D4;
 }
 
@@ -303,7 +305,7 @@
   background: linear-gradient(120deg, #1a74ff 0%, #20b87a 100%);
   color: white;
   border: none;
-  border-radius: 25px;
+  border-radius: 999px !important;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
@@ -358,20 +360,13 @@
 
 /* Scrollbar Styling for Modal Content */
 .modal-content::-webkit-scrollbar {
-  width: 6px;
+  width: 0;
+  height: 0;
 }
 
-.modal-content::-webkit-scrollbar-track {
-  background: #f1f1f1;
-}
-
-.modal-content::-webkit-scrollbar-thumb {
-  background: #ddd;
-  border-radius: 3px;
-}
-
-.modal-content::-webkit-scrollbar-thumb:hover {
-  background: #999;
+.modal-content {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 /* Responsive Design */

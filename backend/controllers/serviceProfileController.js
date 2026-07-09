@@ -1,4 +1,5 @@
 const db = require('../config/database');
+const { parseJsonArray } = require('../utils/jsonHelpers');
 
 // Create or update service profile
 exports.createOrUpdateProfile = async (req, res) => {
@@ -115,7 +116,7 @@ exports.createOrUpdateProfile = async (req, res) => {
 // Get all published service profiles
 exports.getAllProfiles = async (req, res) => {
   try {
-    const { category, location, minPrice, maxPrice, search } = req.query;
+    const { category, location, minPrice, maxPrice, minRating, search } = req.query;
 
     let query = `
       SELECT 
@@ -156,6 +157,11 @@ exports.getAllProfiles = async (req, res) => {
       params.push(parseFloat(maxPrice));
     }
 
+    if (minRating) {
+      query += ' AND sp.rating >= ?';
+      params.push(parseFloat(minRating));
+    }
+
     if (search) {
       query += ' AND (sp.full_name LIKE ? OR u.profession LIKE ? OR u.skills LIKE ?)';
       params.push(`%${search}%`, `%${search}%`, `%${search}%`);
@@ -171,22 +177,27 @@ exports.getAllProfiles = async (req, res) => {
     const [profiles] = await db.query(query, params);
 
     // Format response
-    const formattedProfiles = profiles.map(profile => ({
-      id: profile.id,
-      userId: profile.user_id,
-      name: profile.full_name,
-      location: profile.barangay_address,
-      startingPrice: parseFloat(profile.starting_price),
-      description: profile.description,
-      image: profile.banner_image ? `data:image/jpeg;base64,${Buffer.from(profile.banner_image).toString('base64')}` : null,
-      tags: JSON.parse(profile.skills || '[]').concat(Array.isArray(JSON.parse(profile.service_categories)) ? JSON.parse(profile.service_categories) : []),
-      rating: parseFloat(profile.rating),
-      reviews: profile.reviews_count,
-      online: profile.online,
-      verified: false, // Can add verification logic later
-      profession: profile.profession,
-      categories: JSON.parse(profile.service_categories)
-    }));
+    const formattedProfiles = profiles.map(profile => {
+      const categories = parseJsonArray(profile.service_categories, []);
+      const skills = parseJsonArray(profile.skills, []);
+
+      return {
+        id: profile.id,
+        userId: profile.user_id,
+        name: profile.full_name,
+        location: profile.barangay_address,
+        startingPrice: parseFloat(profile.starting_price),
+        description: profile.description,
+        image: profile.banner_image ? `data:image/jpeg;base64,${Buffer.from(profile.banner_image).toString('base64')}` : null,
+        tags: [...skills, ...categories],
+        rating: parseFloat(profile.rating),
+        reviews: profile.reviews_count,
+        online: profile.online,
+        verified: false,
+        profession: profile.profession,
+        categories,
+      };
+    });
 
     res.json({
       success: true,
@@ -265,6 +276,9 @@ exports.getProfileById = async (req, res) => {
       comment: review.comment
     }));
 
+    const categories = parseJsonArray(profile.service_categories, []);
+    const skills = parseJsonArray(profile.skills, []);
+
     const formattedProfile = {
       id: profile.id,
       userId: profile.user_id,
@@ -276,13 +290,13 @@ exports.getProfileById = async (req, res) => {
       responseTime: profile.response_time || 'Within 24 hours',
       jobsCompleted: profile.jobs_completed || 0,
       image: profile.banner_image ? `data:image/jpeg;base64,${Buffer.from(profile.banner_image).toString('base64')}` : null,
-      tags: JSON.parse(profile.skills || '[]').concat(Array.isArray(JSON.parse(profile.service_categories)) ? JSON.parse(profile.service_categories) : []),
+      tags: [...skills, ...categories],
       rating: parseFloat(profile.rating),
       reviewsCount: profile.reviews_count,
       online: profile.online,
       verified: false,
       profession: profile.profession,
-      categories: JSON.parse(profile.service_categories),
+      categories,
       email: profile.email,
       phone: profile.phone,
       createdAt: profile.created_at,
@@ -337,6 +351,9 @@ exports.getMyProfile = async (req, res) => {
     }
 
     const profile = profiles[0];
+    const categories = parseJsonArray(profile.service_categories, []);
+    const skills = parseJsonArray(profile.skills, []);
+
     const formattedProfile = {
       id: profile.id,
       userId: profile.user_id,
@@ -345,13 +362,13 @@ exports.getMyProfile = async (req, res) => {
       startingPrice: parseFloat(profile.starting_price),
       description: profile.description,
       image: profile.banner_image ? `data:image/jpeg;base64,${Buffer.from(profile.banner_image).toString('base64')}` : null,
-      tags: JSON.parse(profile.skills || '[]').concat(Array.isArray(JSON.parse(profile.service_categories)) ? JSON.parse(profile.service_categories) : []),
+      tags: [...skills, ...categories],
       rating: parseFloat(profile.rating),
       reviews: profile.reviews_count,
       online: profile.online,
       verified: false,
       profession: profile.profession,
-      categories: JSON.parse(profile.service_categories),
+      categories,
       email: profile.email,
       phone: profile.phone,
       createdAt: profile.created_at

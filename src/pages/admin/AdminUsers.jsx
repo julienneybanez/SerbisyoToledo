@@ -1,49 +1,135 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { adminAPI } from '../../services/api';
 import '../../styles/AdminPages.css';
 
 function AdminUsers() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [actionLoading, setActionLoading] = useState('');
 
-  // Mock data - replace with API calls
-  const users = [
-    { id: 1, name: 'Juan Dela Cruz', email: 'juan@example.com', type: 'tradesperson', profession: 'Electrician', status: 'verified', joinDate: '2025-06-15' },
-    { id: 2, name: 'Maria Santos', email: 'maria@example.com', type: 'tradesperson', profession: 'Plumber', status: 'pending', joinDate: '2025-08-20' },
-    { id: 3, name: 'Ana Lopez', email: 'ana@example.com', type: 'client', profession: null, status: 'active', joinDate: '2025-09-10' },
-    { id: 4, name: 'Carlos Yulo', email: 'carlos@example.com', type: 'tradesperson', profession: 'Carpenter', status: 'verified', joinDate: '2025-07-05' },
-    { id: 5, name: 'Sofia Garcia', email: 'sofia@example.com', type: 'client', profession: null, status: 'active', joinDate: '2025-10-12' },
-    { id: 6, name: 'Miguel Torres', email: 'miguel@example.com', type: 'tradesperson', profession: 'Painter', status: 'suspended', joinDate: '2025-05-22' },
-    { id: 7, name: 'Linda Reyes', email: 'linda@example.com', type: 'client', profession: null, status: 'active', joinDate: '2025-11-08' },
-    { id: 8, name: 'Jose Mendoza', email: 'jose@example.com', type: 'tradesperson', profession: 'Mason', status: 'verified', joinDate: '2025-04-18' },
-  ];
-
-  const filteredUsers = users.filter(user => {
-    const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesType = filterType === 'all' || user.type === filterType;
-    const matchesStatus = filterStatus === 'all' || user.status === filterStatus;
-    return matchesSearch && matchesType && matchesStatus;
-  });
-
-  const getStatusClass = (status) => {
-    switch (status) {
-      case 'verified': return 'status-verified';
-      case 'active': return 'status-active';
-      case 'pending': return 'status-pending';
-      case 'suspended': return 'status-suspended';
-      default: return '';
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+      setError('');
+      const response = await adminAPI.getAllUsers();
+      if (response.success) {
+        setUsers(response.data || []);
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to load users');
+    } finally {
+      setLoading(false);
     }
   };
 
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  const handleViewDetails = async (userId) => {
+    try {
+      const response = await adminAPI.getUserById(userId);
+      if (response.success) {
+        const u = response.data;
+        alert(
+          [
+            `Name: ${u.name}`,
+            `Email: ${u.email}`,
+            `Type: ${u.type}`,
+            `Profession: ${u.profession || 'N/A'}`,
+            `Phone: ${u.phone || 'N/A'}`,
+            `Address: ${u.address || 'N/A'}`,
+            `Verified: ${u.isVerified ? 'Yes' : 'No'}`,
+            `Active: ${u.isActive ? 'Yes' : 'No'}`,
+          ].join('\n')
+        );
+      }
+    } catch (err) {
+      alert(err.message || 'Failed to fetch user details');
+    }
+  };
+
+  const handleToggleActive = async (user) => {
+    try {
+      setActionLoading(`active-${user.id}`);
+      const response = await adminAPI.updateUserStatus(user.id, { isActive: !user.isActive });
+      if (response.success) {
+        await fetchUsers();
+      }
+    } catch (err) {
+      alert(err.message || 'Failed to update user status');
+    } finally {
+      setActionLoading('');
+    }
+  };
+
+  const handleToggleVerification = async (user) => {
+    if (user.type !== 'tradesperson') return;
+
+    try {
+      setActionLoading(`verify-${user.id}`);
+      const response = await adminAPI.updateUserStatus(user.id, { isVerified: !user.isVerified });
+      if (response.success) {
+        await fetchUsers();
+      }
+    } catch (err) {
+      alert(err.message || 'Failed to update verification status');
+    } finally {
+      setActionLoading('');
+    }
+  };
+
+  const handleViewActivity = async (userId) => {
+    try {
+      const response = await adminAPI.getUserActivity(userId);
+      if (response.success) {
+        const summary = response.data.summary;
+        alert(
+          [
+            `Total Requests: ${summary.totalRequests}`,
+            `Completed Requests: ${summary.completedRequests}`,
+            `Active Requests: ${summary.activeRequests}`,
+            `Reports Submitted: ${summary.reportsSubmitted}`,
+            `Reports Received: ${summary.reportsReceived}`,
+            `Last Request Activity: ${summary.lastRequestActivity || 'N/A'}`,
+            `Last Report Activity: ${summary.lastReportActivity || 'N/A'}`,
+          ].join('\n')
+        );
+      }
+    } catch (err) {
+      alert(err.message || 'Failed to fetch user activity');
+    }
+  };
+
+  const filteredUsers = users.filter((user) => {
+    const query = searchTerm.trim().toLowerCase();
+    const matchesSearch =
+      !query ||
+      user.name.toLowerCase().includes(query) ||
+      user.email.toLowerCase().includes(query);
+
+    const matchesType = filterType === 'all' || user.type === filterType;
+    const matchesStatus =
+      filterStatus === 'all' ||
+      (filterStatus === 'active' && user.isActive && !user.isVerified) ||
+      (filterStatus === 'verified' && user.isVerified) ||
+      (filterStatus === 'pending' && !user.isVerified && user.isActive) ||
+      (filterStatus === 'suspended' && !user.isActive);
+
+    return matchesSearch && matchesType && matchesStatus;
+  });
+
   return (
     <div className="admin-page">
-      <div className="page-header">
-        <h1 className="page-title">Users Management</h1>
-        <p className="page-subtitle">Manage all users in the system</p>
+      <div className="admin-page-header">
+        <h1 className="admin-page-title">Users Management</h1>
+        <p className="admin-page-subtitle">Manage all users in the system</p>
       </div>
 
-      {/* Filters */}
       <div className="filters-bar">
         <div className="search-box">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -63,6 +149,7 @@ function AdminUsers() {
             <option value="all">All Types</option>
             <option value="client">Clients</option>
             <option value="tradesperson">Service Providers</option>
+            <option value="admin">Admins</option>
           </select>
 
           <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
@@ -75,84 +162,88 @@ function AdminUsers() {
         </div>
       </div>
 
-      {/* Users Table */}
-      <div className="table-container">
-        <table className="admin-table">
-          <thead>
-            <tr>
-              <th>User</th>
-              <th>Type</th>
-              <th>Profession</th>
-              <th>Status</th>
-              <th>Join Date</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredUsers.map(user => (
-              <tr key={user.id}>
-                <td>
-                  <div className="user-cell">
-                    <div className="user-avatar-small">
-                      {user.name.split(' ').map(n => n[0]).join('')}
-                    </div>
-                    <div className="user-info-cell">
-                      <span className="user-name">{user.name}</span>
-                      <span className="user-email">{user.email}</span>
-                    </div>
-                  </div>
-                </td>
-                <td>
-                  <span className={`type-badge ${user.type}`}>
-                    {user.type === 'tradesperson' ? 'Provider' : 'Client'}
-                  </span>
-                </td>
-                <td>{user.profession || '—'}</td>
-                <td>
-                  <span className={`status-badge ${getStatusClass(user.status)}`}>
-                    {user.status}
-                  </span>
-                </td>
-                <td>{user.joinDate}</td>
-                <td>
-                  <div className="table-actions">
-                    <button className="action-btn view" title="View">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                        <circle cx="12" cy="12" r="3"></circle>
-                      </svg>
-                    </button>
-                    <button className="action-btn edit" title="Edit">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                      </svg>
-                    </button>
-                    <button className="action-btn delete" title="Suspend">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>
-                      </svg>
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      {error && <div className="alert alert-danger mt-3">{error}</div>}
 
-      {/* Pagination */}
-      <div className="pagination">
-        <button className="pagination-btn" disabled>&lt; Previous</button>
-        <div className="pagination-pages">
-          <button className="pagination-page active">1</button>
-          <button className="pagination-page">2</button>
-          <button className="pagination-page">3</button>
-          <span>...</span>
-          <button className="pagination-page">10</button>
-        </div>
-        <button className="pagination-btn">Next &gt;</button>
+      <div className="table-container">
+        {loading ? (
+          <div className="text-center py-4">Loading users...</div>
+        ) : (
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th>User</th>
+                <th>Type</th>
+                <th>Profession</th>
+                <th>Status</th>
+                <th>Join Date</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredUsers.map((user) => (
+                <tr key={user.id}>
+                  <td>
+                    <div className="user-cell">
+                      <div className="user-avatar-small">
+                        {user.name.split(' ').map((n) => n[0]).join('').slice(0, 2)}
+                      </div>
+                      <div className="user-info-cell">
+                        <span className="user-name">{user.name}</span>
+                        <span className="user-email">{user.email}</span>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <span className={`type-badge ${user.type}`}>
+                      {user.type === 'tradesperson' ? 'Provider' : user.type}
+                    </span>
+                  </td>
+                  <td>{user.profession || '—'}</td>
+                  <td>
+                    <span className={`status-badge ${!user.isActive ? 'status-suspended' : user.isVerified ? 'status-verified' : 'status-pending'}`}>
+                      {!user.isActive ? 'suspended' : user.isVerified ? 'verified' : 'active'}
+                    </span>
+                  </td>
+                  <td>{new Date(user.joinDate).toLocaleDateString()}</td>
+                  <td>
+                    <div className="table-actions table-actions-stack">
+                      <button className="btn-view-details btn-users-action" onClick={() => handleViewDetails(user.id)}>
+                        View Details
+                      </button>
+                      <button
+                        className="btn-dismiss btn-users-action"
+                        disabled={actionLoading === `active-${user.id}`}
+                        onClick={() => handleToggleActive(user)}
+                      >
+                        {actionLoading === `active-${user.id}`
+                          ? 'Updating...'
+                          : user.isActive
+                            ? 'Deactivate'
+                            : 'Reactivate'}
+                      </button>
+                      {user.type === 'tradesperson' && (
+                        <button
+                          className="btn-investigate"
+                          disabled={actionLoading === `verify-${user.id}`}
+                          onClick={() => handleToggleVerification(user)}
+                        >
+                          {actionLoading === `verify-${user.id}`
+                            ? 'Updating...'
+                            : user.isVerified
+                              ? 'Unverify Provider'
+                              : 'Verify Provider'}
+                        </button>
+                      )}
+                      <button className="btn-approve" onClick={() => handleViewActivity(user.id)}>
+                        View Activity
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   );

@@ -581,3 +581,84 @@ exports.createReview = async (req, res) => {
     });
   }
 };
+
+// Report a user involved in a service request
+exports.createReport = async (req, res) => {
+  try {
+    const { requestId } = req.params;
+    const reporterId = req.user.userId;
+    const { reportedUserId, reason, description } = req.body;
+
+    if (!reportedUserId || !reason || !description) {
+      return res.status(400).json({
+        success: false,
+        message: 'Reported user, reason, and description are required'
+      });
+    }
+
+    // Verify this request is a valid interaction between reporter and reported user
+    const [requests] = await db.query(
+      `SELECT id, client_id, provider_id, job_title
+       FROM service_requests
+       WHERE id = ?`,
+      [requestId]
+    );
+
+    if (requests.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Request not found'
+      });
+    }
+
+    const request = requests[0];
+    const reporterIsParticipant = request.client_id === reporterId || request.provider_id === reporterId;
+    const reportedIdNum = Number(reportedUserId);
+    const validCounterparty =
+      (request.client_id === reporterId && request.provider_id === reportedIdNum) ||
+      (request.provider_id === reporterId && request.client_id === reportedIdNum);
+
+    if (!reporterIsParticipant || !validCounterparty) {
+      return res.status(403).json({
+        success: false,
+        message: 'You can only report users you had a valid service request interaction with'
+      });
+    }
+
+    const screenshotFile = req.file;
+
+    await db.query(
+      `INSERT INTO user_reports
+       (request_id, reporter_id, reported_user_id, reason, description, screenshot_data, screenshot_mime, status, priority)
+       VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', 'medium')`,
+      [
+        requestId,
+        reporterId,
+        reportedIdNum,
+        reason,
+        description,
+        screenshotFile ? screenshotFile.buffer : null,
+        screenshotFile ? (screenshotFile.mimetype || 'application/octet-stream') : null,
+      ]
+    );
+
+    res.status(201).json({
+      success: true,
+      message: 'Report submitted successfully'
+    });
+  } catch (error) {
+    console.error('Create report error:', error);
+
+    if (error.code === 'ER_DUP_ENTRY') {
+      return res.status(400).json({
+        success: false,
+        message: 'You already submitted a report for this user on this request'
+      });
+    }
+
+    res.status(500).json({
+      success: false,
+      message: 'Failed to submit report'
+    });
+  }
+};

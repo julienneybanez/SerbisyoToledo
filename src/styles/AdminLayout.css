@@ -4,7 +4,7 @@
 .admin-layout {
   display: flex;
   min-height: 100vh;
-  background: linear-gradient(135deg, #87CEEB 0%, #E0F7FA 50%, #B2EBF2 100%);
+  background: linear-gradient(135deg, #f2f8fe 0%, #eaf5ff 45%, #ecfbf6 100%);
 }
 
 .admin-main {

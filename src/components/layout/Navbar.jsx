@@ -4,6 +4,7 @@ import { isAuthenticated, getUser, removeToken } from '../../services/api';
 import NotificationDropdown from '../common/NotificationDropdown';
 import EditProfileModal from '../common/EditProfileModal';
 import EditPortfolioModal from '../common/EditPortfolioModal';
+import VerificationRequestModal from '../common/VerificationRequestModal';
 import logo from '../../assets/logo.png';
 
 function Navbar() {
@@ -15,6 +16,7 @@ function Navbar() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [showEditProfile, setShowEditProfile] = useState(false);
   const [showServiceProfile, setShowServiceProfile] = useState(false);
+  const [showVerificationRequest, setShowVerificationRequest] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -171,6 +173,18 @@ function Navbar() {
                         <i className="bi bi-pencil-square"></i>
                         Edit Profile
                       </button>
+                      {user?.userType === 'tradesperson' && (
+                        <button
+                          className="dropdown-item"
+                          onClick={() => {
+                            setDropdownOpen(false);
+                            setShowVerificationRequest(true);
+                          }}
+                        >
+                          <i className="bi bi-shield-check"></i>
+                          Request Verification
+                        </button>
+                      )}
                       <Link 
                         to={user?.userType === 'tradesperson' ? '/provider-settings' : '/client-settings'} 
                         className="dropdown-item"
@@ -226,6 +240,12 @@ function Navbar() {
       {showServiceProfile && (
         <EditPortfolioModal 
           onClose={() => setShowServiceProfile(false)}
+        />
+      )}
+
+      {showVerificationRequest && (
+        <VerificationRequestModal
+          onClose={() => setShowVerificationRequest(false)}
         />
       )}
     </nav>

@@ -33,9 +33,9 @@ function AdminSettings() {
 
   return (
     <div className="admin-page">
-      <div className="page-header">
-        <h1 className="page-title">Settings</h1>
-        <p className="page-subtitle">Manage system configuration and preferences</p>
+      <div className="admin-page-header">
+        <h1 className="admin-page-title">Settings</h1>
+        <p className="admin-page-subtitle">Manage system configuration and preferences</p>
       </div>
 
       <div className="settings-layout">

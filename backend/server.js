@@ -17,10 +17,11 @@ const userRoutes = require('./routes/user');
 const db = require('./config/database');
 
 const app = express();
+const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:5173,http://localhost:5174,http://localhost:5175').split(',').map(origin => origin.trim());
 
 // Middleware
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175'],
+  origin: allowedOrigins,
   credentials: true
 }));
 app.use(express.json());
@@ -29,6 +30,24 @@ app.use(express.urlencoded({ extended: true }));
 // Test route
 app.get('/', (req, res) => {
   res.json({ message: 'Welcome to SerbisyoToledo API' });
+});
+
+app.get('/api/health', async (req, res) => {
+  try {
+    const [rows] = await db.query('SELECT 1 AS ok');
+    res.json({
+      success: true,
+      message: 'API is healthy',
+      database: rows[0]?.ok === 1 ? 'connected' : 'unknown'
+    });
+  } catch (error) {
+    res.status(503).json({
+      success: false,
+      message: 'API is unavailable',
+      database: 'disconnected',
+      error: error.message
+    });
+  }
 });
 
 // API Routes

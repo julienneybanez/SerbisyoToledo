@@ -514,26 +514,8 @@
 }
 
 /* ===================================
-   COMPLETION & REVIEW BADGES
+   REVIEW BADGES
    =================================== */
-.completion-pending-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.4rem 0.85rem;
-  background: #fff3cd;
-  color: #856404;
-  border: 1px solid #ffc107;
-  border-radius: 20px;
-  font-size: 0.78rem;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.completion-pending-badge i {
-  font-size: 0.85rem;
-}
-
 .btn-review {
   display: flex;
   align-items: center;

@@ -14,14 +14,14 @@
 /* ===================================
    FEED PAGE - HEADER & SEARCH
    =================================== */
-.page-header {
+.feed-page-header {
   padding: 2rem 0;
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
 }
 
-.page-title {
+.feed-page-title {
   font-size: 2rem;
   font-weight: 700;
   background: linear-gradient(120deg, #1a74ff 0%, #20b87a 100%);
@@ -169,20 +169,20 @@
   gap: 1rem;
 }
 
-.filter-group {
+.feed-filter-group {
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
 }
 
-.filter-label {
+.feed-filter-label {
   font-size: 0.8rem;
   color: #64748b;
   font-weight: 500;
 }
 
-.filter-input,
-.filter-select {
+.feed-filter-input,
+.feed-filter-select {
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   padding: 0.65rem 0.9rem;
@@ -193,18 +193,18 @@
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.filter-input:focus,
-.filter-select:focus {
+.feed-filter-input:focus,
+.feed-filter-select:focus {
   border-color: #4a9ff5;
   box-shadow: 0 0 0 3px rgba(74, 159, 245, 0.1);
   background: white;
 }
 
-.filter-input::placeholder {
+.feed-filter-input::placeholder {
   color: #94a3b8;
 }
 
-.filter-select {
+.feed-filter-select {
   cursor: pointer;
   appearance: none;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='%2364748b'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
@@ -316,19 +316,19 @@
   color: #1a74ff;
 }
 
-.status-badge {
+.provider-status-badge {
   padding: 0.2rem 0.6rem;
   border-radius: 999px;
   font-size: 0.72rem;
   font-weight: 600;
 }
 
-.status-badge.online {
+.provider-status-badge.online {
   background: rgba(32, 184, 122, 0.15);
   color: #18895b;
 }
 
-.status-badge.offline {
+.provider-status-badge.offline {
   background: rgba(79, 100, 128, 0.12);
   color: #4f6480;
 }
@@ -431,7 +431,7 @@
    FEED PAGE RESPONSIVE
    =================================== */
 @media (max-width: 768px) {
-  .page-title {
+  .feed-page-title {
     font-size: 1.6rem;
   }
 

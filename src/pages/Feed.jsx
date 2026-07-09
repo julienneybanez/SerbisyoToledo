@@ -17,6 +17,7 @@ export default function Feed() {
   const [serviceProviders, setServiceProviders] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState({
     location: "",
     minPrice: "",
@@ -37,6 +38,8 @@ export default function Feed() {
           location: filters.location,
           minPrice: filters.minPrice,
           maxPrice: filters.maxPrice,
+          minRating: filters.minRating,
+          search: searchTerm,
         };
 
         const result = await serviceProfileAPI.getAllProfiles(filterParams);
@@ -59,7 +62,7 @@ export default function Feed() {
     // Listen for profile created event
     window.addEventListener('profileCreated', fetchProfiles);
     return () => window.removeEventListener('profileCreated', fetchProfiles);
-  }, [activeCategory, filters]);
+  }, [activeCategory, filters, searchTerm]);
 
   const clearFilters = () => {
     setFilters({
@@ -85,13 +88,17 @@ export default function Feed() {
   return (
     <div className="feed-shell">
       <div className="feed-container">
-        <div className="page-header">
-          <h2 className="page-title">Browse Service Providers</h2>
+        <div className="feed-page-header">
+          <h2 className="feed-page-title">Browse Service Providers</h2>
 
           <div className="search-filter-row">
             <div className="search-input-large">
               <SearchIcon />
-              <input placeholder="Search by name or skills..." />
+              <input
+                placeholder="Search by name or skills..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
             </div>
             <button 
               className={`btn-filter ${showFilters ? "active" : ""}`}
@@ -110,40 +117,40 @@ export default function Feed() {
                 </button>
               </div>
               <div className="filters-grid">
-                <div className="filter-group">
-                  <label className="filter-label">Location</label>
+                <div className="feed-filter-group">
+                  <label className="feed-filter-label">Location</label>
                   <input
                     type="text"
-                    className="filter-input"
+                    className="feed-filter-input"
                     placeholder="Enter location"
                     value={filters.location}
                     onChange={(e) => setFilters({ ...filters, location: e.target.value })}
                   />
                 </div>
-                <div className="filter-group">
-                  <label className="filter-label">Min. Price</label>
+                <div className="feed-filter-group">
+                  <label className="feed-filter-label">Min. Price</label>
                   <input
                     type="number"
-                    className="filter-input"
+                    className="feed-filter-input"
                     placeholder="0"
                     value={filters.minPrice}
                     onChange={(e) => setFilters({ ...filters, minPrice: e.target.value })}
                   />
                 </div>
-                <div className="filter-group">
-                  <label className="filter-label">Max. Price</label>
+                <div className="feed-filter-group">
+                  <label className="feed-filter-label">Max. Price</label>
                   <input
                     type="number"
-                    className="filter-input"
+                    className="feed-filter-input"
                     placeholder="1000"
                     value={filters.maxPrice}
                     onChange={(e) => setFilters({ ...filters, maxPrice: e.target.value })}
                   />
                 </div>
-                <div className="filter-group">
-                  <label className="filter-label">Minimum Rating</label>
+                <div className="feed-filter-group">
+                  <label className="feed-filter-label">Minimum Rating</label>
                   <select
-                    className="filter-select"
+                    className="feed-filter-select"
                     value={filters.minRating}
                     onChange={(e) => setFilters({ ...filters, minRating: e.target.value })}
                   >
@@ -215,7 +222,7 @@ export default function Feed() {
                     {p.location}
                   </span>
                   <span
-                    className={`status-badge ${p.online ? "online" : "offline"}`}
+                    className={`provider-status-badge ${p.online ? "online" : "offline"}`}
                   >
                     {p.online ? "Online now" : "Offline"}
                   </span>

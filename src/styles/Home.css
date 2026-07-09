@@ -6,11 +6,25 @@
   background-color: #f8f9fa;
 }
 
+.hero-content-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
 .hero-title {
   font-size: 2.5rem;
   font-weight: bold;
   color: #333;
   margin-bottom: 1rem;
+}
+
+.hero-subtitle {
+  margin: -0.5rem 0 0;
+  max-width: 520px;
+  color: #4b5b72;
+  font-size: 1rem;
+  line-height: 1.55;
 }
 
 .search-box {
@@ -88,6 +102,17 @@
   height: 150px;
   object-fit: cover;
   width: 100%;
+}
+
+@media (max-width: 991px) {
+  .hero-content-stack {
+    margin-bottom: 2.5rem;
+    gap: 1.75rem;
+  }
+
+  .image-grid {
+    margin-top: 0.5rem;
+  }
 }
 
 /* ===================================

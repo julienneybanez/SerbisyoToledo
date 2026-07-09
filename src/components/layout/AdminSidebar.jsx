@@ -1,4 +1,5 @@
-import { NavLink, useLocation } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import {
   CSidebar,
   CSidebarBrand,
@@ -17,19 +18,40 @@ import {
   cilAccountLogout,
   cilHome
 } from '@coreui/icons';
+import { adminAPI, authAPI } from '../../services/api';
 import '@coreui/coreui/dist/css/coreui.min.css';
 import '../../styles/AdminSidebar.css';
 import logo from '../../assets/logo.png';
 
 function AdminSidebar({ isOpen, onClose }) {
   const location = useLocation();
+  const navigate = useNavigate();
+  const [pendingVerifications, setPendingVerifications] = useState(0);
+  const [activeReports, setActiveReports] = useState(0);
 
   const isActive = (path) => location.pathname === path;
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    window.location.href = '/login';
+  useEffect(() => {
+    const fetchSidebarCounts = async () => {
+      try {
+        const response = await adminAPI.getDashboardStats();
+        if (response.success && response.data) {
+          setPendingVerifications(Number(response.data.pendingVerifications || 0));
+          setActiveReports(Number(response.data.activeReports || 0));
+        }
+      } catch {
+        setPendingVerifications(0);
+        setActiveReports(0);
+      }
+    };
+
+    fetchSidebarCounts();
+  }, []);
+
+  const handleLogout = async () => {
+    await authAPI.logout();
+    window.dispatchEvent(new Event('authChange'));
+    navigate('/login', { replace: true });
   };
 
   return (
@@ -91,7 +113,7 @@ function AdminSidebar({ isOpen, onClose }) {
             >
               <CIcon customClassName="nav-icon" icon={cilCheckCircle} />
               Verifications
-              <CBadge color="warning" className="ms-auto">3</CBadge>
+              <CBadge color="warning" className="ms-auto">{pendingVerifications}</CBadge>
             </NavLink>
           </CNavItem>
 
@@ -103,7 +125,7 @@ function AdminSidebar({ isOpen, onClose }) {
             >
               <CIcon customClassName="nav-icon" icon={cilFile} />
               Reports
-              <CBadge color="danger" className="ms-auto">3</CBadge>
+              <CBadge color="danger" className="ms-auto">{activeReports}</CBadge>
             </NavLink>
           </CNavItem>
 

@@ -2,12 +2,22 @@
    FOOTER STYLES
    =================================== */
 .footer {
-  background-color: #4A9FF5 !important;
+  background: linear-gradient(120deg, var(--brand-primary, #5da9dd) 0%, var(--brand-primary-dark, #4a9fd5) 45%, var(--brand-accent, #44c9a0) 100%) !important;
+  position: relative;
+  overflow: hidden;
+}
+
+.footer::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 15% 20%, rgba(255, 255, 255, 0.22), transparent 34%);
+  pointer-events: none;
 }
 
 .footer a {
   text-decoration: none;
-  transition: color 0.3s;
+  transition: color 0.3s, opacity 0.3s;
 }
 
 .footer a:hover {
@@ -18,7 +28,8 @@
   display: inline-block;
   width: 30px;
   height: 30px;
-  background-color: rgba(255,255,255,0.2);
+  background-color: rgba(255, 255, 255, 0.24);
+  border: 1px solid rgba(255, 255, 255, 0.28);
   border-radius: 50%;
   text-align: center;
   line-height: 30px;
@@ -33,17 +44,17 @@
   right: 2rem;
   width: 60px;
   height: 60px;
-  background-color: #4A9FF5;
+  background: linear-gradient(135deg, var(--brand-primary, #5da9dd) 0%, var(--brand-accent, #44c9a0) 100%);
   border: none;
   border-radius: 50%;
-  box-shadow: 0 4px 12px rgba(74, 159, 245, 0.4);
+  box-shadow: 0 8px 20px rgba(74, 159, 245, 0.35);
   cursor: pointer;
   transition: transform 0.3s;
   z-index: 1000;
 }
 
 .floating-btn:hover {
-  transform: scale(1.1);
+  transform: scale(1.08);
 }
 
 /* ===================================
