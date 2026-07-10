@@ -1,11 +1,13 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { authAPI } from '../services/api';
+import RoleSelectionCards from '../components/common/RoleSelectionCards';
 import logo from '../assets/logo.png';
 import '../styles/App.css';
 
 const Register = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [userType, setUserType] = useState('client');
   const [showPassword, setShowPassword] = useState(false);
   const [skills, setSkills] = useState([]);
@@ -21,6 +23,19 @@ const Register = () => {
     preferredServices: '',
     profession: '',
   });
+
+  useEffect(() => {
+    const requestedRole = (searchParams.get('role') || '').toLowerCase();
+
+    if (requestedRole === 'client') {
+      setUserType('client');
+      return;
+    }
+
+    if (requestedRole === 'provider') {
+      setUserType('tradesperson');
+    }
+  }, [searchParams]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -44,6 +59,12 @@ const Register = () => {
     setError('');
     setSuccess('');
     setIsLoading(true);
+
+    if (!['client', 'tradesperson'].includes(userType)) {
+      setError('Please select a valid account type.');
+      setIsLoading(false);
+      return;
+    }
 
     try {
       const registrationData = {
@@ -117,46 +138,7 @@ const Register = () => {
             )}
 
             <form onSubmit={handleSubmit}>
-              {/* User Type Selection */}
-              <div className="mb-3">
-                <label className="form-label">I want to</label>
-                <div className="radio-pill-group">
-                  <div className="radio-pill">
-                    <input
-                      type="radio"
-                      id="client"
-                      name="userType"
-                      value="client"
-                      checked={userType === 'client'}
-                      onChange={(e) => setUserType(e.target.value)}
-                    />
-                    <label htmlFor="client" className="radio-pill-label">
-                      <div>
-                        <div className="radio-pill-title">find service providers</div>
-                        <div className="radio-pill-desc">Register as a client</div>
-                      </div>
-                      <div className="radio-pill-indicator"></div>
-                    </label>
-                  </div>
-                  <div className="radio-pill">
-                    <input
-                      type="radio"
-                      id="tradesperson"
-                      name="userType"
-                      value="tradesperson"
-                      checked={userType === 'tradesperson'}
-                      onChange={(e) => setUserType(e.target.value)}
-                    />
-                    <label htmlFor="tradesperson" className="radio-pill-label">
-                      <div>
-                        <div className="radio-pill-title">offer my services</div>
-                        <div className="radio-pill-desc">Register as a service provider</div>
-                      </div>
-                      <div className="radio-pill-indicator"></div>
-                    </label>
-                  </div>
-                </div>
-              </div>
+              <RoleSelectionCards value={userType} onChange={setUserType} />
 
               {/* Full Name and Email */}
               <div className="row mb-3">

@@ -13,6 +13,8 @@ import gardening from '../assets/gardening.jpg';
 import locksmith from '../assets/locksmith.jpg';
 import laundry from '../assets/laundry.webp';
 import { useNavigate } from 'react-router-dom';
+import LandingSearch from '../components/common/LandingSearch';
+import HowItWorks from '../components/common/HowItWorks';
 
 function Home() {
   const navigate = useNavigate();
@@ -27,15 +29,7 @@ function Home() {
                 <p className="hero-subtitle">
                   Find trusted local service providers in Toledo City for repairs, home care, and other everyday needs.
                 </p>
-                <div className="search-box-home mt-2">
-                  <input type="text" placeholder="Browse local services" />
-                  <span className="search-divider"></span>
-                  <button className="btn-search-home">
-                    <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
-                      <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
-                    </svg>
-                  </button>
-                </div>
+                <LandingSearch />
               </div>
             </div>
             <div className="col-lg-7">
@@ -109,6 +103,8 @@ function Home() {
           </div>
         </div>
       </section>
+
+      <HowItWorks />
 
       <section className="trending-section py-5">
         <div className="container">

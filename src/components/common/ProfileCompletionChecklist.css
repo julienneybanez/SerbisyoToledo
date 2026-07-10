@@ -1,0 +1,23 @@
+.profile-checklist {
+  border-radius: 14px;
+}
+
+.profile-checklist .progress {
+  height: 0.6rem;
+  background: #e9f2fb;
+}
+
+.profile-checklist .progress-bar {
+  background: linear-gradient(120deg, var(--brand-primary) 0%, var(--brand-accent) 100%);
+}
+
+.checklist-loading {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: #475569;
+}
+
+.checklist-list .list-group-item {
+  border-color: #edf2f7;
+}

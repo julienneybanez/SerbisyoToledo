@@ -21,8 +21,8 @@ const registerValidation = [
     .isLength({ min: 6 })
     .withMessage('Password must be at least 6 characters long'),
   body('userType')
-    .isIn(['client', 'tradesperson', 'admin'])
-    .withMessage('User type must be client, tradesperson, or admin'),
+    .isIn(['client', 'tradesperson'])
+    .withMessage('User type must be client or tradesperson'),
   body('preferredServices')
     .optional({ nullable: true })
     .trim(),

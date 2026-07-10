@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { serviceProfileAPI } from '../../services/api';
 import './ServiceProfileModal.css';
@@ -29,8 +29,43 @@ export default function ServiceProfileModal({ onClose }) {
 
   const [bannerPreview, setBannerPreview] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isFetchingProfile, setIsFetchingProfile] = useState(true);
+  const [isEditMode, setIsEditMode] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
+
+  useEffect(() => {
+    const fetchExistingProfile = async () => {
+      setIsFetchingProfile(true);
+
+      try {
+        const response = await serviceProfileAPI.getMyProfile();
+
+        if (response.success && response.data) {
+          const profile = response.data;
+          setIsEditMode(true);
+          setFormData(prev => ({
+            ...prev,
+            fullName: profile.name || '',
+            barangayAddress: profile.location || '',
+            startingPrice: profile.startingPrice ? String(profile.startingPrice) : '',
+            serviceCategories: Array.isArray(profile.categories) ? profile.categories : [],
+            bannerImage: null,
+          }));
+
+          if (profile.image) {
+            setBannerPreview(profile.image);
+          }
+        }
+      } catch (err) {
+        // No existing profile is a normal state for first-time posting.
+      } finally {
+        setIsFetchingProfile(false);
+      }
+    };
+
+    fetchExistingProfile();
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -91,10 +126,10 @@ export default function ServiceProfileModal({ onClose }) {
           window.dispatchEvent(new Event('profileCreated'));
         }, 1500);
       } else {
-        setError(result.message || 'Failed to create service profile');
+        setError(result.message || 'Failed to save service profile');
       }
     } catch (err) {
-      setError(err.message || 'An error occurred while creating your profile');
+      setError(err.message || 'An error occurred while saving your service profile');
       console.error('Error submitting profile:', err);
     } finally {
       setIsLoading(false);
@@ -107,11 +142,21 @@ export default function ServiceProfileModal({ onClose }) {
         {/* Close Button */}
         <button className="modal-close" onClick={onClose}>×</button>
 
+        {isFetchingProfile ? (
+          <div className="edit-profile-loading">
+            <div className="spinner"></div>
+            <p>Loading service profile...</p>
+          </div>
+        ) : (
         <form onSubmit={handleSubmit} className="service-profile-form">
           {/* Modal Header */}
           <div className="modal-header">
-            <h2 className="modal-title">Service Profile</h2>
-            <p className="modal-subtitle">Create your service profile to connect with customers. Fill out the information below and showcase your services.</p>
+            <h2 className="modal-title">{isEditMode ? 'Edit Service Profile' : 'Post Service Profile'}</h2>
+            <p className="modal-subtitle">
+              {isEditMode
+                ? 'Update your posted service profile details below.'
+                : 'Create your service profile to connect with customers. Fill out the information below and showcase your services.'}
+            </p>
           </div>
 
           {/* Error Message */}
@@ -124,7 +169,7 @@ export default function ServiceProfileModal({ onClose }) {
           {/* Success Message */}
           {success && (
             <div className="alert alert-success">
-              ✓ Service profile created successfully!
+              ✓ Service profile saved successfully!
             </div>
           )}
           {/* Service Information Section */}
@@ -235,7 +280,7 @@ export default function ServiceProfileModal({ onClose }) {
             className="btn-submit"
             disabled={isLoading || success}
           >
-            {isLoading ? 'Creating Profile...' : 'Post Service Profile'}
+            {isLoading ? 'Saving Profile...' : isEditMode ? 'Save Service Profile' : 'Post Service Profile'}
           </button>
 
           {/* Terms Agreement */}
@@ -243,6 +288,7 @@ export default function ServiceProfileModal({ onClose }) {
             By posting this, you agree to our <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.
           </p>
         </form>
+        )}
       </div>
     </div>,
     document.body

@@ -741,6 +741,9 @@ export const userProfileAPI = {
         setUser({
           ...currentUser,
           fullName: data.data.fullName,
+          phone: data.data.phone,
+          address: data.data.address,
+          bio: data.data.bio,
           profileImage: data.data.profilePhoto
         });
         window.dispatchEvent(new Event('authChange'));

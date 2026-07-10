@@ -228,7 +228,7 @@ export default function Requests() {
     <div className="requests-container">
       <div className="requests-wrapper">
         <div className="requests-header">
-          <h1>{isProvider ? 'Service Requests' : 'My Requests'}</h1>
+          <h1 data-tour={isProvider ? 'incoming-requests' : undefined}>{isProvider ? 'Service Requests' : 'My Requests'}</h1>
           <p>{isProvider ? 'Manage incoming service requests from clients' : 'Track and manage your service requests'}</p>
         </div>
 

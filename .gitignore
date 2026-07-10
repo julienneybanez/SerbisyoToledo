@@ -14,6 +14,36 @@ dist-ssr
 .env
 .env.*
 !.env.example
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Secrets and certificates
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+*.cer
+*.jks
+*.keystore
+*.kdbx
+
+# Local databases and dumps
+*.sqlite
+*.sqlite3
+*.db
+*.db-journal
+*.sql
+*.sql.gz
+*.dump
+
+# Coverage and temp
+coverage/
+.nyc_output/
+tmp/
+temp/
 
 # Editor directories and files
 .vscode/*

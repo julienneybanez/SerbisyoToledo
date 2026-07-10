@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getUser } from '../services/api';
+import { getUser, userProfileAPI } from '../services/api';
 import '../styles/UserSettings.css';
 
 function ClientSettings() {
   const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState('account');
-  const [user, setUser] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   
   const [settings, setSettings] = useState({
     fullName: '',
@@ -29,27 +30,58 @@ function ClientSettings() {
       navigate('/');
       return;
     }
-    setUser(currentUser);
-    
-    setSettings(prev => ({
-      ...prev,
-      fullName: currentUser.fullName || '',
-      email: currentUser.email || '',
-      phone: currentUser.phone || '',
-      address: currentUser.address || '',
-      city: currentUser.city || '',
-      postalCode: currentUser.postalCode || ''
-    }));
+
+    const loadProfile = async () => {
+      setIsLoadingProfile(true);
+      try {
+        const response = await userProfileAPI.getProfile();
+        if (response.success) {
+          const profile = response.data;
+          setSettings(prev => ({
+            ...prev,
+            fullName: profile.fullName || '',
+            email: profile.email || currentUser.email || '',
+            phone: profile.phone || '',
+            address: profile.address || '',
+          }));
+        }
+      } catch (err) {
+        setSettings(prev => ({
+          ...prev,
+          fullName: currentUser.fullName || '',
+          email: currentUser.email || '',
+          phone: currentUser.phone || '',
+          address: currentUser.address || '',
+        }));
+      } finally {
+        setIsLoadingProfile(false);
+      }
+    };
+
+    loadProfile();
   }, [navigate]);
 
   const handleChange = (key, value) => {
     setSettings(prev => ({ ...prev, [key]: value }));
   };
 
-  const handleSave = () => {
-    // Save settings to API
-    console.log('Saving client settings:', settings);
-    alert('Settings saved successfully!');
+  const handleSave = async () => {
+    try {
+      setIsSaving(true);
+      const submitData = new FormData();
+      submitData.append('fullName', settings.fullName || '');
+      submitData.append('phone', settings.phone || '');
+      submitData.append('address', settings.address || '');
+
+      const response = await userProfileAPI.updateProfile(submitData);
+      if (response.success) {
+        alert('Settings saved successfully!');
+      }
+    } catch (err) {
+      alert(err.message || 'Failed to save settings');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -117,6 +149,7 @@ function ClientSettings() {
                   value={settings.fullName}
                   onChange={(e) => handleChange('fullName', e.target.value)}
                   placeholder="Your full name"
+                  disabled={isLoadingProfile || isSaving}
                 />
               </div>
 
@@ -126,8 +159,9 @@ function ClientSettings() {
                   type="email"
                   className="settings-input"
                   value={settings.email}
-                  onChange={(e) => handleChange('email', e.target.value)}
+                  readOnly
                   placeholder="your.email@example.com"
+                  disabled
                 />
                 <small className="settings-help">Your email address is used for login and notifications</small>
               </div>
@@ -140,6 +174,7 @@ function ClientSettings() {
                   value={settings.phone}
                   onChange={(e) => handleChange('phone', e.target.value)}
                   placeholder="+63 912 345 6789"
+                  disabled={isLoadingProfile || isSaving}
                 />
               </div>
 
@@ -165,6 +200,7 @@ function ClientSettings() {
                   value={settings.address}
                   onChange={(e) => handleChange('address', e.target.value)}
                   placeholder="123 Main Street"
+                  disabled={isLoadingProfile || isSaving}
                 />
               </div>
 
@@ -304,8 +340,8 @@ function ClientSettings() {
           )}
 
           <div className="settings-actions">
-            <button className="btn-save" onClick={handleSave}>
-              Save Changes
+            <button className="btn-save" onClick={handleSave} disabled={isSaving || isLoadingProfile}>
+              {isSaving ? 'Saving...' : 'Save Changes'}
             </button>
             <button className="btn-cancel" onClick={() => window.location.reload()}>
               Reset

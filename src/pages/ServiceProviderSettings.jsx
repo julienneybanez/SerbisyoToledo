@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getUser } from '../services/api';
+import { getUser, userProfileAPI } from '../services/api';
 import '../styles/UserSettings.css';
 
 function ServiceProviderSettings() {
   const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState('account');
-  const [user, setUser] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   
   const [settings, setSettings] = useState({
     fullName: '',
@@ -34,28 +35,58 @@ function ServiceProviderSettings() {
       navigate('/');
       return;
     }
-    setUser(currentUser);
-    
-    setSettings(prev => ({
-      ...prev,
-      fullName: currentUser.fullName || '',
-      email: currentUser.email || '',
-      phone: currentUser.phone || '',
-      businessName: currentUser.businessName || '',
-      businessAddress: currentUser.businessAddress || '',
-      businessCity: currentUser.businessCity || '',
-      businessPhone: currentUser.businessPhone || ''
-    }));
+
+    const loadProfile = async () => {
+      setIsLoadingProfile(true);
+      try {
+        const response = await userProfileAPI.getProfile();
+        if (response.success) {
+          const profile = response.data;
+          setSettings(prev => ({
+            ...prev,
+            fullName: profile.fullName || '',
+            email: profile.email || currentUser.email || '',
+            phone: profile.phone || '',
+            businessAddress: profile.address || '',
+          }));
+        }
+      } catch (err) {
+        setSettings(prev => ({
+          ...prev,
+          fullName: currentUser.fullName || '',
+          email: currentUser.email || '',
+          phone: currentUser.phone || '',
+          businessAddress: currentUser.address || '',
+        }));
+      } finally {
+        setIsLoadingProfile(false);
+      }
+    };
+
+    loadProfile();
   }, [navigate]);
 
   const handleChange = (key, value) => {
     setSettings(prev => ({ ...prev, [key]: value }));
   };
 
-  const handleSave = () => {
-    // Save settings to API
-    console.log('Saving service provider settings:', settings);
-    alert('Settings saved successfully!');
+  const handleSave = async () => {
+    try {
+      setIsSaving(true);
+      const submitData = new FormData();
+      submitData.append('fullName', settings.fullName || '');
+      submitData.append('phone', settings.phone || '');
+      submitData.append('address', settings.businessAddress || '');
+
+      const response = await userProfileAPI.updateProfile(submitData);
+      if (response.success) {
+        alert('Settings saved successfully!');
+      }
+    } catch (err) {
+      alert(err.message || 'Failed to save settings');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -80,6 +111,7 @@ function ServiceProviderSettings() {
           </button>
           <button 
             className={`settings-nav-item ${activeSection === 'business' ? 'active' : ''}`}
+            data-tour="provider-business-tab"
             onClick={() => setActiveSection('business')}
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -90,6 +122,7 @@ function ServiceProviderSettings() {
           </button>
           <button 
             className={`settings-nav-item ${activeSection === 'availability' ? 'active' : ''}`}
+            data-tour="provider-availability-tab"
             onClick={() => setActiveSection('availability')}
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -136,6 +169,7 @@ function ServiceProviderSettings() {
                   value={settings.fullName}
                   onChange={(e) => handleChange('fullName', e.target.value)}
                   placeholder="Your full name"
+                  disabled={isLoadingProfile || isSaving}
                 />
               </div>
 
@@ -145,8 +179,9 @@ function ServiceProviderSettings() {
                   type="email"
                   className="settings-input"
                   value={settings.email}
-                  onChange={(e) => handleChange('email', e.target.value)}
+                  readOnly
                   placeholder="your.email@example.com"
+                  disabled
                 />
                 <small className="settings-help">Your email address is used for login and service notifications</small>
               </div>
@@ -159,6 +194,7 @@ function ServiceProviderSettings() {
                   value={settings.phone}
                   onChange={(e) => handleChange('phone', e.target.value)}
                   placeholder="+63 912 345 6789"
+                  disabled={isLoadingProfile || isSaving}
                 />
               </div>
 
@@ -206,6 +242,7 @@ function ServiceProviderSettings() {
                   value={settings.businessAddress}
                   onChange={(e) => handleChange('businessAddress', e.target.value)}
                   placeholder="123 Business Street"
+                  disabled={isLoadingProfile || isSaving}
                 />
               </div>
 
@@ -396,8 +433,8 @@ function ServiceProviderSettings() {
           )}
 
           <div className="settings-actions">
-            <button className="btn-save" onClick={handleSave}>
-              Save Changes
+            <button className="btn-save" onClick={handleSave} disabled={isSaving || isLoadingProfile}>
+              {isSaving ? 'Saving...' : 'Save Changes'}
             </button>
             <button className="btn-cancel" onClick={() => window.location.reload()}>
               Reset

@@ -163,8 +163,8 @@ exports.getAllProfiles = async (req, res) => {
     }
 
     if (search) {
-      query += ' AND (sp.full_name LIKE ? OR u.profession LIKE ? OR u.skills LIKE ?)';
-      params.push(`%${search}%`, `%${search}%`, `%${search}%`);
+      query += ' AND (sp.full_name LIKE ? OR u.profession LIKE ? OR u.skills LIKE ? OR sp.barangay_address LIKE ? OR sp.description LIKE ? OR sp.service_categories LIKE ?)';
+      params.push(`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`);
     }
 
     if (category && category !== 'All') {

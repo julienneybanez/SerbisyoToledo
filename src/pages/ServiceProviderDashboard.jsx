@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { getUser, serviceRequestAPI } from '../services/api';
+import { getUser, serviceProfileAPI, serviceRequestAPI } from '../services/api';
+import ProfileCompletionChecklist from '../components/common/ProfileCompletionChecklist';
 import ServiceProfileModal from '../components/common/ServiceProfileModal';
 import VerificationRequestModal from '../components/common/VerificationRequestModal';
 import './ServiceProviderDashboard.css';
@@ -13,9 +14,14 @@ export default function ServiceProviderDashboard() {
   const [requests, setRequests] = useState([]);
   const [loadingRequests, setLoadingRequests] = useState(true);
   const [actionLoading, setActionLoading] = useState(null);
+  const [checklistLoading, setChecklistLoading] = useState(true);
+  const [checklistError, setChecklistError] = useState('');
+  const [myProfile, setMyProfile] = useState(null);
+  const [myPortfolio, setMyPortfolio] = useState(null);
 
   useEffect(() => {
     fetchRequests();
+    fetchChecklistData();
   }, []);
 
   const fetchRequests = async () => {
@@ -34,6 +40,100 @@ export default function ServiceProviderDashboard() {
       setLoadingRequests(false);
     }
   };
+
+  const fetchChecklistData = async () => {
+    setChecklistLoading(true);
+    setChecklistError('');
+
+    try {
+      const [profileResponse, portfolioResponse] = await Promise.allSettled([
+        serviceProfileAPI.getMyProfile(),
+        serviceProfileAPI.getMyPortfolio(),
+      ]);
+
+      if (profileResponse.status === 'fulfilled' && profileResponse.value.success) {
+        setMyProfile(profileResponse.value.data);
+      } else {
+        setMyProfile(null);
+      }
+
+      if (portfolioResponse.status === 'fulfilled' && portfolioResponse.value.success) {
+        setMyPortfolio(portfolioResponse.value.data);
+      } else {
+        setMyPortfolio(null);
+      }
+    } catch (err) {
+      setChecklistError('Unable to load some profile progress right now.');
+    } finally {
+      setChecklistLoading(false);
+    }
+  };
+
+  const providerChecklistTasks = [
+    {
+      key: 'service-category',
+      label: 'Add your service category',
+      description: 'Select at least one service category in your profile.',
+      completed: Boolean(myProfile?.categories?.length),
+      actionType: 'button',
+      actionLabel: 'Post Profile',
+      onAction: () => setShowProfileModal(true),
+    },
+    {
+      key: 'service-description',
+      label: 'Add your service description or experience',
+      description: 'Tell clients about your background and services.',
+      completed: Boolean((myProfile?.description || myPortfolio?.aboutMe || '').trim()),
+      actionType: 'button',
+      actionLabel: 'Edit Portfolio',
+      onAction: () => navigate('/provider-settings'),
+    },
+    {
+      key: 'starting-price',
+      label: 'Set your starting price',
+      description: 'Set a clear base rate for your services.',
+      completed: Number(myProfile?.startingPrice) > 0,
+      actionType: 'button',
+      actionLabel: 'Post Profile',
+      onAction: () => setShowProfileModal(true),
+    },
+    {
+      key: 'location',
+      label: 'Add your location',
+      description: 'Set your service barangay/address.',
+      completed: Boolean((myProfile?.location || '').trim()),
+      actionType: 'button',
+      actionLabel: 'Post Profile',
+      onAction: () => setShowProfileModal(true),
+    },
+    {
+      key: 'availability',
+      label: 'Set your availability',
+      description: 'Provide expected response/availability details.',
+      completed: Boolean((myPortfolio?.responseTime || '').trim()),
+      actionType: 'link',
+      to: '/provider-settings',
+      actionLabel: 'Availability',
+    },
+    {
+      key: 'portfolio',
+      label: 'Upload portfolio work',
+      description: 'Show previous work samples to build trust.',
+      completed: Boolean(myPortfolio?.portfolio?.length),
+      actionType: 'link',
+      to: '/provider-settings',
+      actionLabel: 'Add Work',
+    },
+    {
+      key: 'verification',
+      label: 'Complete provider verification',
+      description: 'Submit your verification request to increase trust.',
+      completed: Boolean(user?.isVerified),
+      actionType: 'button',
+      actionLabel: 'Verify',
+      onAction: () => setShowVerificationRequest(true),
+    },
+  ];
 
   const handleStatusUpdate = async (requestId, status) => {
     setActionLoading(requestId);
@@ -109,11 +209,20 @@ export default function ServiceProviderDashboard() {
           </div>
           <button 
             className="btn-post-service"
+            data-tour="provider-profile-setup"
             onClick={() => setShowProfileModal(true)}
           >
             Post Service Profile
           </button>
         </section>
+
+        <ProfileCompletionChecklist
+          title="Complete Your Profile"
+          tasks={providerChecklistTasks}
+          loading={checklistLoading}
+          error={checklistError}
+          initiallyCollapsed={false}
+        />
 
         <section className="tips-section">
           <h2 className="section-title">Weekly Tips for Service Providers</h2>

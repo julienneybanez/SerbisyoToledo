@@ -33,6 +33,13 @@ exports.register = async (req, res) => {
 
     const { fullName, email, password, userType, preferredServices, profession, skills } = req.body;
 
+    if (!['client', 'tradesperson'].includes(userType)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Public registration is only available for clients and service providers'
+      });
+    }
+
     // Check if user already exists
     const [existingUsers] = await db.query(
       'SELECT id FROM users WHERE email = ?',

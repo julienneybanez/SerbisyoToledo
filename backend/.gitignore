@@ -1,5 +1,26 @@
 node_modules/
 .env
+.env.*
+.env.local
 .DS_Store
 *.log
 npm-debug.log*
+
+# Secrets and certificates
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+*.cer
+*.jks
+*.keystore
+
+# Local databases and dumps
+*.sqlite
+*.sqlite3
+*.db
+*.db-journal
+*.sql
+*.sql.gz
+*.dump
