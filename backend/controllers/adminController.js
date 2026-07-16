@@ -13,9 +13,9 @@ exports.getDashboardStats = async (req, res) => {
     );
     const verifiedProviders = verifiedProvidersResult[0].count;
 
-    // Get pending verifications count (tradespersons who are not verified)
+    // Get pending verification requests count from verification workflow table
     const [pendingVerificationsResult] = await db.query(
-      "SELECT COUNT(*) as count FROM users WHERE user_type = 'tradesperson' AND is_verified = false"
+      "SELECT COUNT(*) as count FROM verification_requests WHERE status = 'pending'"
     );
     const pendingVerifications = pendingVerificationsResult[0].count;
 

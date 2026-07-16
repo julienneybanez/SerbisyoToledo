@@ -28,6 +28,20 @@ cp .env.example .env
 Edit `.env` and update:
 - `DB_PASSWORD` - Your MySQL root password (or user password)
 - `JWT_SECRET` - Change to a secure random string in production
+- `FRONTEND_URL` - Frontend URL used in password reset links (example: `http://localhost:5173`)
+- `PASSWORD_RESET_TOKEN_EXP_MINUTES` - Reset token expiry in minutes (recommended 15-30)
+- SMTP settings for email sending:
+  - `SMTP_HOST`
+  - `SMTP_PORT`
+  - `SMTP_SECURE` (`true` for SSL port 465, else `false`)
+  - `SMTP_USER`
+  - `SMTP_PASS`
+  - `SMTP_FROM_NAME`
+  - `SMTP_FROM_EMAIL`
+
+Optional (legacy) vars also supported:
+- `EMAIL_USER`
+- `EMAIL_PASS`
 
 ### 3. Initialize Database
 
@@ -41,6 +55,7 @@ This will:
 - Create the `serbisyo_toledo` database
 - Create the `users` table with all required fields
 - Create the `refresh_tokens` table
+- Create the `password_reset_tokens` table
 
 ### 4. Start the Server
 
@@ -64,6 +79,8 @@ The API will be available at `http://localhost:5000`
 |--------|----------|-------------|
 | POST | `/api/auth/register` | Register a new user |
 | POST | `/api/auth/login` | Login user |
+| POST | `/api/auth/forgot-password` | Request password reset link |
+| POST | `/api/auth/reset-password/:token` | Reset password using token |
 | GET | `/api/auth/me` | Get current user profile (protected) |
 | POST | `/api/auth/logout` | Logout user (protected) |
 | PUT | `/api/auth/update-profile` | Update user profile (protected) |

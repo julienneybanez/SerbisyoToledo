@@ -11,98 +11,73 @@ function AdminDashboard() {
     verifiedProviders: 0,
     totalUsers: 0
   });
+  const [verificationRequests, setVerificationRequests] = useState([]);
+  const [userReports, setUserReports] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [tabLoading, setTabLoading] = useState(true);
 
   useEffect(() => {
-    fetchDashboardStats();
+    fetchDashboardData();
   }, []);
 
-  const fetchDashboardStats = async () => {
+  const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      const response = await adminAPI.getDashboardStats();
-      if (response.success) {
+      setTabLoading(true);
+
+      const [statsResponse, verificationResponse, reportsResponse] = await Promise.all([
+        adminAPI.getDashboardStats(),
+        adminAPI.getVerificationRequests(),
+        adminAPI.getReports()
+      ]);
+
+      if (statsResponse.success) {
         setStats({
-          pendingVerifications: response.data.pendingVerifications,
-          activeReports: response.data.activeReports,
-          verifiedProviders: response.data.verifiedProviders,
-          totalUsers: response.data.totalUsers
+          pendingVerifications: Number(statsResponse.data.pendingVerifications || 0),
+          activeReports: Number(statsResponse.data.activeReports || 0),
+          verifiedProviders: Number(statsResponse.data.verifiedProviders || 0),
+          totalUsers: Number(statsResponse.data.totalUsers || 0)
         });
+      }
+
+      if (verificationResponse.success) {
+        const verificationRows = verificationResponse.data || [];
+        setVerificationRequests(verificationRows);
+        setStats((prev) => ({
+          ...prev,
+          pendingVerifications: verificationRows.filter((row) => row.status === 'pending').length
+        }));
+      }
+
+      if (reportsResponse.success) {
+        setUserReports(reportsResponse.data || []);
       }
     } catch (error) {
       console.error('Error fetching dashboard stats:', error);
+      setVerificationRequests([]);
+      setUserReports([]);
     } finally {
       setLoading(false);
+      setTabLoading(false);
     }
   };
 
-  const verificationRequests = [
-    {
-      id: 1,
-      name: 'Juan Dela Cruz',
-      profession: 'Electrician',
-      email: 'juan@example.com',
-      phone: '+63 987 523 312',
-      submittedDate: '2026-01-21',
-      documents: ['Valid ID', 'Certificate', 'Portfolio']
-    },
-    {
-      id: 2,
-      name: 'Maria Santos',
-      profession: 'Plumber',
-      email: 'maria@example.com',
-      phone: '+63 988 854 212',
-      submittedDate: '2026-01-22',
-      documents: ['Valid ID', 'License', 'Portfolio']
-    },
-    {
-      id: 3,
-      name: 'Marie Pando',
-      profession: 'Carpenter',
-      email: 'marie@example.com',
-      phone: '+63 957 834 092',
-      submittedDate: '2026-01-23',
-      documents: ['Valid ID', 'Certificate', 'Portfolio']
-    }
-  ];
-
-  const userReports = [
-    {
-      id: 1,
-      reportedUser: 'Carlos Yulo',
-      status: 'Pending',
-      reportedBy: 'Ana Lopez',
-      reason: 'Did not complete the service',
-      description: 'Service provider did not show up for schedule appointment',
-      date: '2026-01-10'
-    },
-    {
-      id: 2,
-      reportedUser: 'Jose Reyes',
-      status: 'Under Review',
-      reportedBy: 'Linda Garcia',
-      reason: 'Poor quality work',
-      description: 'Work complete but quality was below expectation',
-      date: '2026-02-22'
-    },
-    {
-      id: 3,
-      reportedUser: 'Miguel Torres',
-      status: 'Pending',
-      reportedBy: 'Sofia The First',
-      reason: 'Unprofessional behavior',
-      description: 'Service provider was rude and unprofessional',
-      date: '2026-03-20'
-    }
-  ];
+  const topVerificationRequests = verificationRequests.slice(0, 3);
+  const topUserReports = userReports.slice(0, 3);
 
   const getStatusClass = (status) => {
-    switch (status.toLowerCase()) {
+    switch ((status || '').toLowerCase()) {
       case 'pending': return 'status-pending';
+      case 'under_review': return 'status-review';
       case 'under review': return 'status-review';
       case 'resolved': return 'status-resolved';
       default: return '';
     }
+  };
+
+  const formatStatusLabel = (status) => {
+    if (!status) return 'pending';
+    return status.replace(/_/g, ' ');
   };
 
   const getProfessionClass = (profession) => {
@@ -164,7 +139,14 @@ function AdminDashboard() {
       <div className="admin-tab-content">
         {activeTab === 'verifications' ? (
           <div className="requests-list">
-            {verificationRequests.map((request) => (
+            {tabLoading ? (
+              <div className="text-center py-4">Loading verification requests...</div>
+            ) : topVerificationRequests.length === 0 ? (
+              <div className="empty-state">
+                <h3>No verification requests found</h3>
+                <p>There are currently no verification requests in the database.</p>
+              </div>
+            ) : topVerificationRequests.map((request) => (
               <div key={request.id} className="request-card verification-card">
                 <div className="request-avatar">
                   <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -175,45 +157,40 @@ function AdminDashboard() {
                 
                 <div className="request-info">
                   <div className="request-header">
-                    <h4 className="request-name">{request.name}</h4>
-                    <span className={`profession-badge ${getProfessionClass(request.profession)}`}>
-                      {request.profession}
-                    </span>
+                    <h4 className="request-name">{request.fullName}</h4>
+                    {request.profession && (
+                      <span className={`profession-badge ${getProfessionClass(request.profession)}`}>
+                        {request.profession}
+                      </span>
+                    )}
                   </div>
                   <p className="request-detail">Email: {request.email}</p>
-                  <p className="request-detail">Submitted: {request.submittedDate}</p>
-                  <div className="request-documents">
-                    {request.documents.map((doc, idx) => (
-                      <span key={idx} className="document-tag">{doc}</span>
-                    ))}
-                  </div>
+                  <p className="request-detail">Submitted: {new Date(request.createdAt).toLocaleString()}</p>
+                  <p className="request-detail">Status: {formatStatusLabel(request.status)}</p>
                 </div>
 
                 <div className="request-contact">
-                  <p>Phone: {request.phone}</p>
+                  <p>Phone: {request.phoneNumber || 'N/A'}</p>
                 </div>
 
                 <div className="request-actions">
-                  <button className="btn-approve">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <polyline points="20 6 9 17 4 12"></polyline>
-                    </svg>
-                    Approve
-                  </button>
-                  <button className="btn-reject">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <line x1="18" y1="6" x2="6" y2="18"></line>
-                      <line x1="6" y1="6" x2="18" y2="18"></line>
-                    </svg>
-                    Reject
-                  </button>
+                  <Link to="/admin/verifications" className="btn-view-details">
+                    Review Request
+                  </Link>
                 </div>
               </div>
             ))}
           </div>
         ) : (
           <div className="requests-list">
-            {userReports.map((report) => (
+            {tabLoading ? (
+              <div className="text-center py-4">Loading reports...</div>
+            ) : topUserReports.length === 0 ? (
+              <div className="empty-state">
+                <h3>No reports found</h3>
+                <p>There are currently no user reports in the database.</p>
+              </div>
+            ) : topUserReports.map((report) => (
               <div key={report.id} className="request-card report-card">
                 <div className="request-avatar report-avatar">
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -225,7 +202,7 @@ function AdminDashboard() {
                   <div className="request-header">
                     <h4 className="request-name">{report.reportedUser}</h4>
                     <span className={`status-badge ${getStatusClass(report.status)}`}>
-                      {report.status}
+                      {formatStatusLabel(report.status)}
                     </span>
                   </div>
                   <p className="request-detail">Reported by: {report.reportedBy}</p>
@@ -234,13 +211,11 @@ function AdminDashboard() {
                 </div>
 
                 <div className="request-contact">
-                  <p>Date: {report.date}</p>
+                  <p>Date: {new Date(report.date).toLocaleDateString()}</p>
                 </div>
 
                 <div className="request-actions report-actions">
-                  <button className="btn-investigate">Investigate</button>
-                  <button className="btn-dismiss">DISMISS</button>
-                  <button className="btn-ban">Ban User</button>
+                  <Link to="/admin/reports" className="btn-view-details">View Report</Link>
                 </div>
               </div>
             ))}

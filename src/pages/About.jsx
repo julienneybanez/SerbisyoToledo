@@ -31,8 +31,8 @@ const About = () => {
                 <h2 className="section-title h5 fw-bold mb-3">Contact Us</h2>
                 <p className="section-text text-secondary">
                   Have questions? Reach out to us at{' '}
-                  <a href="mailto:support@serbisyotoledo.com" className="link text-decoration-none">
-                    support@serbisyotoledo.com
+                  <a href="mailto:toledoserbisyo@gmail.com" className="link text-decoration-none">
+                    toledoserbisyo@gmail.com
                   </a>
                 </p>
               </div>

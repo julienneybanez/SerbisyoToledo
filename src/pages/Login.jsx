@@ -128,6 +128,10 @@ const Login = () => {
                 </div>
               </div>
 
+              <div className="text-end mb-3">
+                <a href="/forgot-password" className="link">Forgot Password?</a>
+              </div>
+
             
               <div className="mb-4">
                 <label className="form-label">Login as</label>

@@ -1,7 +1,16 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const { validationResult } = require('express-validator');
 const db = require('../config/database');
+const {
+  generateVerificationToken,
+  sendVerificationEmail,
+  sendWelcomeEmail,
+  sendPasswordResetEmail,
+} = require('../utils/emailService');
+
+const RESET_TOKEN_EXPIRY_MINUTES = Number(process.env.PASSWORD_RESET_TOKEN_EXP_MINUTES || 20);
 
 // Generate JWT token
 const generateToken = (userId) => {
@@ -84,13 +93,25 @@ exports.register = async (req, res) => {
       ]
     );
 
+    const welcomeEmailResult = await sendWelcomeEmail(
+      userData.email,
+      userData.full_name,
+      userData.user_type
+    );
+
+    if (!welcomeEmailResult.success) {
+      console.error('Welcome email was not sent:', welcomeEmailResult.error);
+    }
+
     // Generate token
     const token = generateToken(result.insertId);
 
     // Return success response
     res.status(201).json({
       success: true,
-      message: 'Registration successful! You can now log in.',
+      message: welcomeEmailResult.success
+        ? 'Registration successful! A confirmation email has been sent.'
+        : 'Registration successful! You can now log in.',
       data: {
         user: {
           id: result.insertId,
@@ -113,6 +134,180 @@ exports.register = async (req, res) => {
       message: 'Registration failed. Please try again.',
       error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
+  }
+};
+
+// Forgot password - always return a generic message
+exports.forgotPassword = async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation failed',
+        errors: errors.array()
+      });
+    }
+
+    const { email } = req.body;
+    const genericMessage = 'If this email is registered, a password reset link has been sent.';
+
+    const [users] = await db.query(
+      'SELECT id, full_name, email FROM users WHERE email = ?',
+      [email]
+    );
+
+    if (users.length === 0) {
+      return res.json({
+        success: true,
+        message: genericMessage
+      });
+    }
+
+    const user = users[0];
+    const rawToken = crypto.randomBytes(32).toString('hex');
+    const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
+    const expiresAt = new Date(Date.now() + RESET_TOKEN_EXPIRY_MINUTES * 60 * 1000);
+
+    await db.query('DELETE FROM password_reset_tokens WHERE user_id = ?', [user.id]);
+
+    await db.query(
+      'INSERT INTO password_reset_tokens (user_id, token_hash, expires_at) VALUES (?, ?, ?)',
+      [user.id, tokenHash, expiresAt]
+    );
+
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const resetUrl = `${frontendUrl}/reset-password/${rawToken}`;
+
+    const emailResult = await sendPasswordResetEmail(
+      user.email,
+      user.full_name,
+      resetUrl,
+      RESET_TOKEN_EXPIRY_MINUTES
+    );
+
+    if (!emailResult.success) {
+      console.error('Password reset email failed:', emailResult.error);
+      await db.query('DELETE FROM password_reset_tokens WHERE user_id = ?', [user.id]);
+    }
+
+    return res.json({
+      success: true,
+      message: genericMessage
+    });
+  } catch (error) {
+    console.error('Forgot password error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Unable to process forgot password request. Please try again later.',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
+
+// Reset password using one-time token
+exports.resetPassword = async (req, res) => {
+  let connection;
+
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation failed',
+        errors: errors.array()
+      });
+    }
+
+    const { token } = req.params;
+    const { password, confirmPassword } = req.body;
+
+    if (!token) {
+      return res.status(400).json({
+        success: false,
+        message: 'Reset token is required'
+      });
+    }
+
+    if (password !== confirmPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'Passwords do not match'
+      });
+    }
+
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+
+    const [tokens] = await db.query(
+      `SELECT id, user_id, expires_at
+       FROM password_reset_tokens
+       WHERE token_hash = ? AND used_at IS NULL
+       ORDER BY created_at DESC
+       LIMIT 1`,
+      [tokenHash]
+    );
+
+    if (tokens.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid or expired reset token'
+      });
+    }
+
+    const resetToken = tokens[0];
+    const now = new Date();
+    const tokenExpiry = new Date(resetToken.expires_at);
+
+    if (now > tokenExpiry) {
+      await db.query('DELETE FROM password_reset_tokens WHERE id = ?', [resetToken.id]);
+      return res.status(400).json({
+        success: false,
+        message: 'Reset token has expired. Please request a new one.'
+      });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    connection = await db.getConnection();
+    await connection.beginTransaction();
+
+    await connection.query(
+      'UPDATE users SET password = ? WHERE id = ?',
+      [hashedPassword, resetToken.user_id]
+    );
+
+    await connection.query(
+      'UPDATE password_reset_tokens SET used_at = NOW() WHERE id = ?',
+      [resetToken.id]
+    );
+
+    await connection.query(
+      'DELETE FROM password_reset_tokens WHERE user_id = ? AND id <> ?',
+      [resetToken.user_id, resetToken.id]
+    );
+
+    await connection.commit();
+
+    return res.json({
+      success: true,
+      message: 'Password reset successful. You can now log in with your new password.'
+    });
+  } catch (error) {
+    if (connection) {
+      await connection.rollback();
+    }
+
+    console.error('Reset password error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to reset password. Please try again.',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  } finally {
+    if (connection) {
+      connection.release();
+    }
   }
 };
 

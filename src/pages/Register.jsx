@@ -88,9 +88,9 @@ const Register = () => {
         }
       }
 
-      const response = await authAPI.register(registrationData);
+      await authAPI.register(registrationData);
       
-      setSuccess('Registration successful! Redirecting...');
+      setSuccess('Registration successful! A confirmation email was sent to your account. Redirecting...');
       
       // Auto-redirect to dashboard for service providers, feed for clients
       setTimeout(() => {

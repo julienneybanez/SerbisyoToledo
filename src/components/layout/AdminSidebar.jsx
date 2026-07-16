@@ -34,10 +34,23 @@ function AdminSidebar({ isOpen, onClose }) {
   useEffect(() => {
     const fetchSidebarCounts = async () => {
       try {
-        const response = await adminAPI.getDashboardStats();
-        if (response.success && response.data) {
-          setPendingVerifications(Number(response.data.pendingVerifications || 0));
-          setActiveReports(Number(response.data.activeReports || 0));
+        const [verificationResponse, reportsResponse] = await Promise.all([
+          adminAPI.getVerificationRequests(),
+          adminAPI.getReports()
+        ]);
+
+        if (verificationResponse.success) {
+          const pending = (verificationResponse.data || []).filter(
+            (request) => request.status === 'pending'
+          ).length;
+          setPendingVerifications(pending);
+        }
+
+        if (reportsResponse.success) {
+          const active = (reportsResponse.data || []).filter(
+            (report) => ['pending', 'under_review'].includes(report.status)
+          ).length;
+          setActiveReports(active);
         }
       } catch {
         setPendingVerifications(0);
@@ -46,7 +59,7 @@ function AdminSidebar({ isOpen, onClose }) {
     };
 
     fetchSidebarCounts();
-  }, []);
+  }, [location.pathname]);
 
   const handleLogout = async () => {
     await authAPI.logout();
@@ -113,7 +126,7 @@ function AdminSidebar({ isOpen, onClose }) {
             >
               <CIcon customClassName="nav-icon" icon={cilCheckCircle} />
               Verifications
-              <CBadge color="warning" className="ms-auto">{pendingVerifications}</CBadge>
+              <CBadge color="success" className="ms-auto">{pendingVerifications}</CBadge>
             </NavLink>
           </CNavItem>
 

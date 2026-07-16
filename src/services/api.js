@@ -97,6 +97,32 @@ export const authAPI = {
     return data;
   },
 
+  // Request password reset email
+  forgotPassword: async (payload) => {
+    const response = await fetch(`${API_BASE_URL}/auth/forgot-password`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    return handleResponse(response);
+  },
+
+  // Reset password with token
+  resetPassword: async (token, payload) => {
+    const response = await fetch(`${API_BASE_URL}/auth/reset-password/${token}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    return handleResponse(response);
+  },
+
   // Get current user profile
   getMe: async () => {
     const token = getToken();

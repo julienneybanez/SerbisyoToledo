@@ -1,15 +1,33 @@
 const nodemailer = require('nodemailer');
 const crypto = require('crypto');
 
+const getSmtpConfig = () => {
+  const user = process.env.SMTP_USER || process.env.EMAIL_USER;
+  const pass = process.env.SMTP_PASS || process.env.EMAIL_PASS;
+
+  if (process.env.SMTP_SERVICE) {
+    return {
+      service: process.env.SMTP_SERVICE,
+      auth: { user, pass }
+    };
+  }
+
+  return {
+    host: process.env.SMTP_HOST || 'smtp.gmail.com',
+    port: Number(process.env.SMTP_PORT || 587),
+    secure: String(process.env.SMTP_SECURE || 'false') === 'true',
+    auth: { user, pass }
+  };
+};
+
+const getFromAddress = () => ({
+  name: process.env.SMTP_FROM_NAME || 'SerbisyoToledo',
+  address: process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER || process.env.EMAIL_USER
+});
+
 // Create reusable transporter
 const createTransporter = () => {
-  return nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
-  });
+  return nodemailer.createTransport(getSmtpConfig());
 };
 
 // Generate a random verification token
@@ -28,10 +46,7 @@ const sendVerificationEmail = async (toEmail, fullName, verificationToken) => {
   console.log('Token in URL:', verificationToken.substring(0, 10) + '...');
 
   const mailOptions = {
-    from: {
-      name: 'SerbisyoToledo',
-      address: process.env.EMAIL_USER,
-    },
+    from: getFromAddress(),
     to: toEmail,
     subject: 'Verify Your SerbisyoToledo Account',
     html: `
@@ -178,7 +193,70 @@ const sendVerificationEmail = async (toEmail, fullName, verificationToken) => {
   }
 };
 
+const sendWelcomeEmail = async (toEmail, fullName, userType) => {
+  const transporter = createTransporter();
+  const roleLabel = userType === 'tradesperson' ? 'Service Provider' : 'Client';
+
+  const mailOptions = {
+    from: getFromAddress(),
+    to: toEmail,
+    subject: 'Welcome to SerbisyoToledo',
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
+        <h2 style="color: #2d7dd2;">Welcome to SerbisyoToledo</h2>
+        <p>Hello${fullName ? ` ${fullName}` : ''},</p>
+        <p>Thank you for signing up. Your account was created successfully.</p>
+        <p>You registered as: <strong>${roleLabel}</strong>.</p>
+        <p>You can now log in and start using SerbisyoToledo.</p>
+        <p style="margin-top: 24px;">Best regards,<br/>SerbisyoToledo Team</p>
+      </div>
+    `
+  };
+
+  try {
+    const info = await transporter.sendMail(mailOptions);
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error('Error sending welcome email:', error.message);
+    return { success: false, error: error.message };
+  }
+};
+
+const sendPasswordResetEmail = async (toEmail, fullName, resetUrl, expiryMinutes) => {
+  const transporter = createTransporter();
+
+  const mailOptions = {
+    from: getFromAddress(),
+    to: toEmail,
+    subject: 'Reset Your SerbisyoToledo Password',
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
+        <h2 style="color: #2d7dd2;">Reset Your SerbisyoToledo Password</h2>
+        <p>Hello${fullName ? ` ${fullName}` : ''},</p>
+        <p>We received a request to reset your password.</p>
+        <p>
+          Click this link to set a new password:<br/>
+          <a href="${resetUrl}" style="color: #2d7dd2; word-break: break-all;">${resetUrl}</a>
+        </p>
+        <p>This link will expire in ${expiryMinutes} minutes.</p>
+        <p>If you did not request a password reset, you can ignore this email.</p>
+        <p style="margin-top: 24px;">Best regards,<br/>SerbisyoToledo Team</p>
+      </div>
+    `
+  };
+
+  try {
+    const info = await transporter.sendMail(mailOptions);
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error('Error sending password reset email:', error.message);
+    return { success: false, error: error.message };
+  }
+};
+
 module.exports = {
   generateVerificationToken,
   sendVerificationEmail,
+  sendWelcomeEmail,
+  sendPasswordResetEmail,
 };

@@ -50,12 +50,41 @@ const loginValidation = [
     .withMessage('Password is required')
 ];
 
+const forgotPasswordValidation = [
+  body('email')
+    .trim()
+    .isEmail()
+    .withMessage('Please provide a valid email')
+    .normalizeEmail()
+];
+
+const resetPasswordValidation = [
+  body('password')
+    .isLength({ min: 6 })
+    .withMessage('Password must be at least 6 characters long'),
+  body('confirmPassword')
+    .notEmpty()
+    .withMessage('Please confirm your password')
+    .custom((value, { req }) => {
+      if (value !== req.body.password) {
+        throw new Error('Passwords do not match');
+      }
+      return true;
+    })
+];
+
 // Routes
 // POST /api/auth/register - Register a new user
 router.post('/register', registerValidation, authController.register);
 
 // POST /api/auth/login - Login user
 router.post('/login', loginValidation, authController.login);
+
+// POST /api/auth/forgot-password - Request a password reset
+router.post('/forgot-password', forgotPasswordValidation, authController.forgotPassword);
+
+// POST /api/auth/reset-password/:token - Reset password with token
+router.post('/reset-password/:token', resetPasswordValidation, authController.resetPassword);
 
 // GET /api/auth/me - Get current user profile (protected)
 router.get('/me', authenticateToken, authController.getMe);
