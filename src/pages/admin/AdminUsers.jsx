@@ -50,7 +50,7 @@ function AdminUsers() {
       if (response.success) {
         const u = response.data;
         openDialog({
-          title: 'User Details',
+          title: 'User Details Overview',
           lines: [
             `Name: ${u.name}`,
             `Email: ${u.email}`,
