@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { getUser, userProfileAPI } from '../services/api';
 import '../styles/UserSettings.css';
 
 function ClientSettings() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [activeSection, setActiveSection] = useState('account');
   const [isSaving, setIsSaving] = useState(false);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
@@ -60,6 +61,15 @@ function ClientSettings() {
 
     loadProfile();
   }, [navigate]);
+
+  useEffect(() => {
+    const section = searchParams.get('section');
+    const validSections = ['account', 'address', 'privacy', 'notifications'];
+
+    if (section && validSections.includes(section)) {
+      setActiveSection(section);
+    }
+  }, [searchParams]);
 
   const handleChange = (key, value) => {
     setSettings(prev => ({ ...prev, [key]: value }));

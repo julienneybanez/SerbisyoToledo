@@ -51,7 +51,7 @@ const CLIENT_TOUR_STEPS = [
     title: 'Request Service',
     description: 'Inside a provider profile, use Request Service to submit your booking details.',
     route: '/feed',
-    selector: '.btn-request-service',
+    selector: '.tour-provider-request-step',
   },
   {
     title: 'My Bookings',
@@ -206,21 +206,23 @@ function App() {
         <Route path="/*" element={
           <div className="app">
             <Navbar />
-            
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/about" element={<About />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/forgot-password" element={<ForgotPassword />} />
-              <Route path="/reset-password/:token" element={<ResetPassword />} />
-              <Route path="/feed" element={<Feed />} />
-              <Route path="/dashboard" element={<ServiceProviderDashboard />} />
-              <Route path="/provider/:id" element={<ServiceProviderPortfolio />} />
-              <Route path="/requests" element={<Requests />} />
-              <Route path="/client-settings" element={<ClientSettings />} />
-              <Route path="/provider-settings" element={<ServiceProviderSettings />} />
-            </Routes>
+
+            <main className="main-content">
+              <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/about" element={<About />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/reset-password/:token" element={<ResetPassword />} />
+                <Route path="/feed" element={<Feed />} />
+                <Route path="/dashboard" element={<ServiceProviderDashboard />} />
+                <Route path="/provider/:id" element={<ServiceProviderPortfolio />} />
+                <Route path="/requests" element={<Requests />} />
+                <Route path="/client-settings" element={<ClientSettings />} />
+                <Route path="/provider-settings" element={<ServiceProviderSettings />} />
+              </Routes>
+            </main>
             
             <Footer />
             

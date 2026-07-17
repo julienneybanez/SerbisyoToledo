@@ -135,7 +135,7 @@ export default function Feed() {
       description: 'Set your address to help with nearby service matching.',
       completed: Boolean(user?.address),
       actionType: 'link',
-      to: '/client-settings',
+      to: '/client-settings?section=address',
       actionLabel: 'Update Location',
     },
     {
@@ -152,8 +152,11 @@ export default function Feed() {
       label: 'Send your first booking request',
       description: 'Open a provider profile and submit a service request.',
       completed: hasClientRequest,
-      actionType: 'link',
-      to: '/feed',
+      actionType: 'button',
+      onAction: () => {
+        const providerList = document.getElementById('providers-list');
+        providerList?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      },
       actionLabel: 'Find Providers',
     },
   ];
@@ -285,7 +288,7 @@ export default function Feed() {
           </div>
         </div>
 
-        <div className="providers-grid">
+        <div className="providers-grid" id="providers-list">
           {isLoading && (
             <div className="loading-container">
               <div className="spinner"></div>
@@ -353,7 +356,7 @@ export default function Feed() {
                     <span className="price">₱{p.startingPrice}</span>
                   </div>
                   <button
-                    className="btn-view-profile"
+                    className="btn-view-profile tour-provider-request-step"
                     data-tour="provider-profile-trigger"
                     onClick={() =>
                       navigate(`/provider/${p.id}`)
