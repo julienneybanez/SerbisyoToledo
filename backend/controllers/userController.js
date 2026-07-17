@@ -1,4 +1,21 @@
 const db = require('../config/database');
+const {
+  hasCloudinaryConfig,
+  uploadImageBuffer,
+  deleteImageByPublicId,
+} = require('../utils/cloudinaryService');
+
+const formatProfilePhoto = (user) => {
+  if (user.profile_photo_url) {
+    return user.profile_photo_url;
+  }
+
+  if (user.profile_photo) {
+    return `data:image/jpeg;base64,${user.profile_photo.toString('base64')}`;
+  }
+
+  return null;
+};
 
 // Get current user profile
 exports.getProfile = async (req, res) => {
@@ -13,7 +30,7 @@ exports.getProfile = async (req, res) => {
     }
 
     const [users] = await db.query(
-      `SELECT id, full_name, email, user_type, phone, address, bio, profile_photo, created_at
+      `SELECT id, full_name, email, user_type, phone, address, bio, profile_photo, profile_photo_url, created_at
        FROM users WHERE id = ?`,
       [userId]
     );
@@ -27,12 +44,6 @@ exports.getProfile = async (req, res) => {
 
     const user = users[0];
     
-    // Convert profile_photo BLOB to base64 if exists
-    let profilePhotoBase64 = null;
-    if (user.profile_photo) {
-      profilePhotoBase64 = `data:image/jpeg;base64,${user.profile_photo.toString('base64')}`;
-    }
-
     res.json({
       success: true,
       data: {
@@ -43,7 +54,7 @@ exports.getProfile = async (req, res) => {
         phone: user.phone,
         address: user.address,
         bio: user.bio,
-        profilePhoto: profilePhotoBase64,
+        profilePhoto: formatProfilePhoto(user),
         createdAt: user.created_at
       }
     });
@@ -70,10 +81,30 @@ exports.updateProfile = async (req, res) => {
 
     const { fullName, phone, address, bio } = req.body;
     let profilePhoto = null;
+    let profilePhotoUrl = null;
+    let profilePhotoPublicId = null;
+
+    const [existingUsers] = await db.query(
+      'SELECT profile_photo_public_id FROM users WHERE id = ? LIMIT 1',
+      [userId]
+    );
+
+    const previousPublicId = existingUsers[0]?.profile_photo_public_id;
 
     // Handle profile photo upload if provided
     if (req.file) {
-      profilePhoto = req.file.buffer;
+      if (hasCloudinaryConfig()) {
+        const uploadResult = await uploadImageBuffer({
+          buffer: req.file.buffer,
+          mimeType: req.file.mimetype,
+          folder: 'serbisyo-toledo/profile-photos',
+        });
+
+        profilePhotoUrl = uploadResult.secure_url;
+        profilePhotoPublicId = uploadResult.public_id;
+      } else {
+        profilePhoto = req.file.buffer;
+      }
     }
 
     // Build dynamic update query
@@ -100,7 +131,15 @@ exports.updateProfile = async (req, res) => {
       params.push(bio || null);
     }
 
-    if (profilePhoto) {
+    if (profilePhotoUrl) {
+      updates.push('profile_photo_url = ?');
+      params.push(profilePhotoUrl);
+      updates.push('profile_photo_public_id = ?');
+      params.push(profilePhotoPublicId);
+      updates.push('profile_image = ?');
+      params.push(profilePhotoUrl);
+      updates.push('profile_photo = NULL');
+    } else if (profilePhoto) {
       updates.push('profile_photo = ?');
       params.push(profilePhoto);
     }
@@ -128,15 +167,15 @@ exports.updateProfile = async (req, res) => {
 
     // Fetch updated user data
     const [users] = await db.query(
-      `SELECT id, full_name, email, user_type, phone, address, bio, profile_photo
+      `SELECT id, full_name, email, user_type, phone, address, bio, profile_photo, profile_photo_url
        FROM users WHERE id = ?`,
       [userId]
     );
 
     const user = users[0];
-    let profilePhotoBase64 = null;
-    if (user.profile_photo) {
-      profilePhotoBase64 = `data:image/jpeg;base64,${user.profile_photo.toString('base64')}`;
+
+    if (profilePhotoPublicId && previousPublicId) {
+      await deleteImageByPublicId(previousPublicId);
     }
 
     res.json({
@@ -150,7 +189,7 @@ exports.updateProfile = async (req, res) => {
         phone: user.phone,
         address: user.address,
         bio: user.bio,
-        profilePhoto: profilePhotoBase64
+        profilePhoto: formatProfilePhoto(user)
       }
     });
   } catch (error) {
@@ -174,10 +213,21 @@ exports.removeProfilePhoto = async (req, res) => {
       });
     }
 
-    await db.query(
-      'UPDATE users SET profile_photo = NULL WHERE id = ?',
+    const [existingUsers] = await db.query(
+      'SELECT profile_photo_public_id FROM users WHERE id = ? LIMIT 1',
       [userId]
     );
+
+    const previousPublicId = existingUsers[0]?.profile_photo_public_id;
+
+    await db.query(
+      'UPDATE users SET profile_photo = NULL, profile_photo_url = NULL, profile_photo_public_id = NULL, profile_image = NULL WHERE id = ?',
+      [userId]
+    );
+
+    if (previousPublicId) {
+      await deleteImageByPublicId(previousPublicId);
+    }
 
     res.json({
       success: true,

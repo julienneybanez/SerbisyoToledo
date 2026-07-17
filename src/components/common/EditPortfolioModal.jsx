@@ -161,7 +161,7 @@ export default function EditPortfolioModal({ onClose }) {
         </button>
 
         <div className="edit-portfolio-header">
-          <h2>Edit Portfolio</h2>
+          <h2>Edit Profile</h2>
           <p>Update your profile details and showcase your work</p>
         </div>
 

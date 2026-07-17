@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { authAPI } from '../services/api';
 import logo from '../assets/logo.png';
 import '../styles/App.css';
@@ -129,7 +129,7 @@ const Login = () => {
               </div>
 
               <div className="text-end mb-3">
-                <a href="/forgot-password" className="link">Forgot Password?</a>
+                <Link to="/forgot-password" className="link">Forgot Password?</Link>
               </div>
 
             
@@ -210,16 +210,16 @@ const Login = () => {
               <div className="text-center">
                 <p className="footer-text mb-0">
                   Don't have an account?{' '}
-                  <a href="/register" className="link">Register here</a>
+                  <Link to="/register" className="link">Register here</Link>
                 </p>
               </div>
             </form>
 
             {/* Back to Home */}
             <div className="text-center mt-4">
-              <a href="/" className="back-link text-decoration-none">
+              <Link to="/" className="back-link text-decoration-none">
                 ← Back to home
-              </a>
+              </Link>
             </div>
           </div>
         </div>

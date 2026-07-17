@@ -1,5 +1,10 @@
 const db = require('../config/database');
 const { parseJsonArray } = require('../utils/jsonHelpers');
+const {
+  hasCloudinaryConfig,
+  uploadImageBuffer,
+  deleteImageByPublicId,
+} = require('../utils/cloudinaryService');
 
 // Create or update service profile
 exports.createOrUpdateProfile = async (req, res) => {
@@ -16,6 +21,8 @@ exports.createOrUpdateProfile = async (req, res) => {
     const { fullName, barangayAddress, startingPrice, description } = req.body;
     let serviceCategories = req.body.serviceCategories;
     let bannerImage = null;
+    let bannerImageUrl = null;
+    let bannerImagePublicId = null;
 
     // Parse serviceCategories if it's a JSON string (from FormData)
     if (typeof serviceCategories === 'string') {
@@ -36,29 +43,36 @@ exports.createOrUpdateProfile = async (req, res) => {
 
     // Handle banner image upload if provided
     if (req.file) {
-      bannerImage = req.file.buffer; // Assuming file is uploaded with multer memoryStorage
+      if (hasCloudinaryConfig()) {
+        const uploadResult = await uploadImageBuffer({
+          buffer: req.file.buffer,
+          mimeType: req.file.mimetype,
+          folder: 'serbisyo-toledo/service-banners',
+        });
+
+        bannerImageUrl = uploadResult.secure_url;
+        bannerImagePublicId = uploadResult.public_id;
+      } else {
+        bannerImage = req.file.buffer;
+      }
     }
 
     // Check if profile already exists for this user
     const [existingProfile] = await db.query(
-      'SELECT id FROM service_profiles WHERE user_id = ?',
+      'SELECT id, banner_image_public_id FROM service_profiles WHERE user_id = ?',
       [userId]
     );
 
     if (existingProfile.length > 0) {
       // Update existing profile
-      const query = `
-        UPDATE service_profiles 
-        SET 
-          full_name = ?,
-          barangay_address = ?,
-          starting_price = ?,
-          service_categories = ?,
-          description = ?
-          ${bannerImage ? ', banner_image = ?' : ''}
-        WHERE user_id = ?
-      `;
-      
+      const updates = [
+        'full_name = ?',
+        'barangay_address = ?',
+        'starting_price = ?',
+        'service_categories = ?',
+        'description = ?',
+      ];
+
       const params = [
         fullName,
         barangayAddress,
@@ -67,13 +81,27 @@ exports.createOrUpdateProfile = async (req, res) => {
         description || null
       ];
 
-      if (bannerImage) {
+      if (bannerImageUrl) {
+        updates.push('banner_image_url = ?');
+        params.push(bannerImageUrl);
+        updates.push('banner_image_public_id = ?');
+        params.push(bannerImagePublicId);
+        updates.push('banner_image = NULL');
+      } else if (bannerImage) {
+        updates.push('banner_image = ?');
         params.push(bannerImage);
       }
 
       params.push(userId);
 
-      const [result] = await db.query(query, params);
+      await db.query(
+        `UPDATE service_profiles SET ${updates.join(', ')} WHERE user_id = ?`,
+        params
+      );
+
+      if (bannerImagePublicId && existingProfile[0].banner_image_public_id) {
+        await deleteImageByPublicId(existingProfile[0].banner_image_public_id);
+      }
 
       return res.json({
         success: true,
@@ -84,8 +112,8 @@ exports.createOrUpdateProfile = async (req, res) => {
       // Create new profile
       const [result] = await db.query(
         `INSERT INTO service_profiles 
-         (user_id, full_name, barangay_address, starting_price, service_categories, description, banner_image) 
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+         (user_id, full_name, barangay_address, starting_price, service_categories, description, banner_image, banner_image_url, banner_image_public_id) 
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           userId,
           fullName,
@@ -93,7 +121,9 @@ exports.createOrUpdateProfile = async (req, res) => {
           parseFloat(startingPrice),
           JSON.stringify(serviceCategories),
           description || null,
-          bannerImage
+          bannerImage,
+          bannerImageUrl,
+          bannerImagePublicId,
         ]
       );
 
@@ -128,12 +158,14 @@ exports.getAllProfiles = async (req, res) => {
         sp.service_categories,
         sp.description,
         sp.banner_image,
+        sp.banner_image_url,
         sp.rating,
         sp.reviews_count,
         sp.online,
         sp.created_at,
         u.profession,
-        u.skills
+        u.skills,
+        u.is_verified
       FROM service_profiles sp
       JOIN users u ON sp.user_id = u.id
       WHERE sp.is_published = TRUE
@@ -188,12 +220,12 @@ exports.getAllProfiles = async (req, res) => {
         location: profile.barangay_address,
         startingPrice: parseFloat(profile.starting_price),
         description: profile.description,
-        image: profile.banner_image ? `data:image/jpeg;base64,${Buffer.from(profile.banner_image).toString('base64')}` : null,
+        image: profile.banner_image_url || (profile.banner_image ? `data:image/jpeg;base64,${Buffer.from(profile.banner_image).toString('base64')}` : null),
         tags: [...skills, ...categories],
         rating: parseFloat(profile.rating),
         reviews: profile.reviews_count,
         online: profile.online,
-        verified: false,
+        verified: Boolean(profile.is_verified),
         profession: profile.profession,
         categories,
       };
@@ -225,7 +257,8 @@ exports.getProfileById = async (req, res) => {
         u.profession,
         u.skills,
         u.email,
-        u.phone
+        u.phone,
+        u.is_verified
       FROM service_profiles sp
       JOIN users u ON sp.user_id = u.id
       WHERE sp.id = ? AND sp.is_published = TRUE`,
@@ -289,12 +322,12 @@ exports.getProfileById = async (req, res) => {
       aboutMe: profile.about_me,
       responseTime: profile.response_time || 'Within 24 hours',
       jobsCompleted: profile.jobs_completed || 0,
-      image: profile.banner_image ? `data:image/jpeg;base64,${Buffer.from(profile.banner_image).toString('base64')}` : null,
+      image: profile.banner_image_url || (profile.banner_image ? `data:image/jpeg;base64,${Buffer.from(profile.banner_image).toString('base64')}` : null),
       tags: [...skills, ...categories],
       rating: parseFloat(profile.rating),
       reviewsCount: profile.reviews_count,
       online: profile.online,
-      verified: false,
+      verified: Boolean(profile.is_verified),
       profession: profile.profession,
       categories,
       email: profile.email,
@@ -336,7 +369,8 @@ exports.getMyProfile = async (req, res) => {
         u.profession,
         u.skills,
         u.email,
-        u.phone
+        u.phone,
+        u.is_verified
       FROM service_profiles sp
       JOIN users u ON sp.user_id = u.id
       WHERE sp.user_id = ?`,
@@ -361,12 +395,12 @@ exports.getMyProfile = async (req, res) => {
       location: profile.barangay_address,
       startingPrice: parseFloat(profile.starting_price),
       description: profile.description,
-      image: profile.banner_image ? `data:image/jpeg;base64,${Buffer.from(profile.banner_image).toString('base64')}` : null,
+      image: profile.banner_image_url || (profile.banner_image ? `data:image/jpeg;base64,${Buffer.from(profile.banner_image).toString('base64')}` : null),
       tags: [...skills, ...categories],
       rating: parseFloat(profile.rating),
       reviews: profile.reviews_count,
       online: profile.online,
-      verified: false,
+      verified: Boolean(profile.is_verified),
       profession: profile.profession,
       categories,
       email: profile.email,
@@ -508,9 +542,22 @@ exports.addPortfolioImage = async (req, res) => {
 
     const { caption } = req.body;
     let imageData = null;
+    let imageUrl = null;
+    let imagePublicId = null;
 
     if (req.file) {
-      imageData = req.file.buffer;
+      if (hasCloudinaryConfig()) {
+        const uploadResult = await uploadImageBuffer({
+          buffer: req.file.buffer,
+          mimeType: req.file.mimetype,
+          folder: 'serbisyo-toledo/portfolio',
+        });
+
+        imageUrl = uploadResult.secure_url;
+        imagePublicId = uploadResult.public_id;
+      } else {
+        imageData = req.file.buffer;
+      }
     } else {
       return res.status(400).json({
         success: false,
@@ -540,9 +587,9 @@ exports.addPortfolioImage = async (req, res) => {
     );
 
     const [result] = await db.query(
-      `INSERT INTO portfolio_items (service_profile_id, image_data, caption, display_order)
-       VALUES (?, ?, ?, ?)`,
-      [serviceProfileId, imageData, caption || '', orderResult[0].nextOrder]
+      `INSERT INTO portfolio_items (service_profile_id, image_url, image_public_id, image_data, caption, display_order)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [serviceProfileId, imageUrl, imagePublicId, imageData, caption || '', orderResult[0].nextOrder]
     );
 
     res.status(201).json({
@@ -577,7 +624,7 @@ exports.deletePortfolioImage = async (req, res) => {
 
     // Verify ownership
     const [images] = await db.query(
-      `SELECT pi.id FROM portfolio_items pi
+      `SELECT pi.id, pi.image_public_id FROM portfolio_items pi
        JOIN service_profiles sp ON pi.service_profile_id = sp.id
        WHERE pi.id = ? AND sp.user_id = ?`,
       [imageId, userId]
@@ -588,6 +635,10 @@ exports.deletePortfolioImage = async (req, res) => {
         success: false,
         message: 'Image not found or not authorized'
       });
+    }
+
+    if (images[0].image_public_id) {
+      await deleteImageByPublicId(images[0].image_public_id);
     }
 
     await db.query('DELETE FROM portfolio_items WHERE id = ?', [imageId]);
@@ -639,13 +690,13 @@ exports.getMyPortfolio = async (req, res) => {
 
     // Get portfolio items
     const [portfolioItems] = await db.query(
-      'SELECT id, image_data, caption, display_order FROM portfolio_items WHERE service_profile_id = ? ORDER BY display_order',
+      'SELECT id, image_url, image_data, caption, display_order FROM portfolio_items WHERE service_profile_id = ? ORDER BY display_order',
       [profile.id]
     );
 
     const formattedPortfolio = portfolioItems.map(item => ({
       id: item.id,
-      src: item.image_data ? `data:image/jpeg;base64,${Buffer.from(item.image_data).toString('base64')}` : null,
+      src: item.image_url || (item.image_data ? `data:image/jpeg;base64,${Buffer.from(item.image_data).toString('base64')}` : null),
       caption: item.caption
     }));
 

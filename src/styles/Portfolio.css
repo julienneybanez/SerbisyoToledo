@@ -103,6 +103,23 @@
   margin-bottom: 0.2rem;
 }
 
+.profile-name-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.profile-verified-badge {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(68, 201, 160, 0.18);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #159a63;
+}
+
 .profile-profession {
   color: #1a74ff;
   font-weight: 600;
@@ -774,7 +791,7 @@
   align-items: center;
   justify-content: center;
   z-index: 10000;
-  padding: 2rem;
+  padding: 1rem;
   animation: fadeIn 0.2s ease;
 }
 
@@ -807,12 +824,19 @@
 }
 
 .lightbox-image {
-  max-width: 90vw;
-  max-height: 85vh;
+  max-width: 96vw;
+  max-height: 92vh;
   object-fit: contain;
   border-radius: 12px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
   animation: scaleIn 0.25s ease;
+}
+
+@media (max-width: 768px) {
+  .lightbox-image {
+    max-width: 98vw;
+    max-height: 88vh;
+  }
 }
 
 @keyframes scaleIn {

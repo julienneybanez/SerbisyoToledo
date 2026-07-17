@@ -5,10 +5,9 @@ import { serviceProfileAPI, isAuthenticated } from '../services/api';
 import {
   ArrowLeftIcon,
   StarIcon,
+  CheckIcon,
   BriefcaseIcon,
   CommentIcon,
-  PhoneIcon,
-  EmailIcon,
   LocationIcon,
   ClockIcon,
 } from '../components/common/Icons';
@@ -104,7 +103,14 @@ const ProviderCard = ({ provider, profile, onBack }) => {
       <div className="profile-header">
         <div className="profile-avatar-large">{initials}</div>
         <div className="profile-details">
-          <h1>{provider.name}</h1>
+          <div className="profile-name-row">
+            <h1>{provider.name}</h1>
+            {provider.verified && (
+              <span className="verified-badge profile-verified-badge" title="Verified provider" aria-label="Verified provider">
+                <CheckIcon />
+              </span>
+            )}
+          </div>
           <p className="profile-profession">{profile.profession || provider.tags?.[0] || 'Service Provider'}</p>
           <div className="profile-stats">
             <span className="stat-item">
@@ -242,16 +248,14 @@ const ProviderCard = ({ provider, profile, onBack }) => {
       </button>
 
       <div className="contact-section">
-        <h3 className="contact-title">Contact Information</h3>
-        {[{
-          icon: <PhoneIcon />, label: 'Phone', value: 'Book first to see contact details',
-        }, {
-          icon: <EmailIcon />, label: 'Email', value: 'Book first to see contact details',
-        }, {
+        <h3 className="contact-title">Additional Information</h3>
+        {[
+          {
           icon: <LocationIcon />, label: 'Location', value: profile.location,
-        }, {
+          }, {
           icon: <ClockIcon />, label: 'Typical response time', value: profile.response,
-        }].map((item) => (
+          }
+        ].map((item) => (
           <div key={item.label} className="contact-item">
             <div className="contact-icon">{item.icon}</div>
             <div>

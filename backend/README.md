@@ -43,6 +43,13 @@ Optional (legacy) vars also supported:
 - `EMAIL_USER`
 - `EMAIL_PASS`
 
+Optional (recommended for reliable image delivery):
+- `CLOUDINARY_CLOUD_NAME`
+- `CLOUDINARY_API_KEY`
+- `CLOUDINARY_API_SECRET`
+
+Important: Keep `CLOUDINARY_API_SECRET` in backend/server environment only. Never expose it in frontend code.
+
 ### 3. Initialize Database
 
 Make sure MySQL is running, then run:
@@ -56,6 +63,16 @@ This will:
 - Create the `users` table with all required fields
 - Create the `refresh_tokens` table
 - Create the `password_reset_tokens` table
+
+### 3.1 Migrate Existing Images to Cloudinary (optional)
+
+After setting Cloudinary backend env vars, run:
+
+```bash
+npm run migrate:cloudinary
+```
+
+This uploads existing DB-stored images (service banners, portfolio images, profile photos) to Cloudinary and stores secure URLs.
 
 ### 4. Start the Server
 

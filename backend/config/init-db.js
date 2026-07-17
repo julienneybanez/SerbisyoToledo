@@ -60,6 +60,8 @@ async function initializeDatabase() {
         profession VARCHAR(255) DEFAULT NULL,
         skills JSON DEFAULT NULL,
         profile_image VARCHAR(500) DEFAULT NULL,
+        profile_photo_url VARCHAR(500) DEFAULT NULL,
+        profile_photo_public_id VARCHAR(255) DEFAULT NULL,
         phone VARCHAR(20) DEFAULT NULL,
         address TEXT DEFAULT NULL,
         bio TEXT DEFAULT NULL,
@@ -143,6 +145,8 @@ async function initializeDatabase() {
         starting_price DECIMAL(10, 2) NOT NULL,
         service_categories JSON NOT NULL,
         banner_image LONGBLOB DEFAULT NULL,
+        banner_image_url VARCHAR(500) DEFAULT NULL,
+        banner_image_public_id VARCHAR(255) DEFAULT NULL,
         description TEXT DEFAULT NULL,
         rating DECIMAL(3, 1) DEFAULT 5.0,
         reviews_count INT DEFAULT 0,
@@ -211,6 +215,7 @@ async function initializeDatabase() {
         id INT PRIMARY KEY AUTO_INCREMENT,
         service_profile_id INT NOT NULL,
         image_url VARCHAR(500) DEFAULT NULL,
+        image_public_id VARCHAR(255) DEFAULT NULL,
         image_data LONGBLOB DEFAULT NULL,
         caption VARCHAR(255) NOT NULL,
         display_order INT DEFAULT 0,
@@ -326,6 +331,44 @@ async function initializeDatabase() {
     try {
       await connection.query(`ALTER TABLE users ADD COLUMN profile_photo LONGBLOB DEFAULT NULL`);
       console.log('✅ Added profile_photo column to users');
+    } catch (err) {
+      // Column already exists
+    }
+
+    // Add Cloudinary profile photo URL/public ID columns if they don't exist
+    try {
+      await connection.query(`ALTER TABLE users ADD COLUMN profile_photo_url VARCHAR(500) DEFAULT NULL`);
+      console.log('✅ Added profile_photo_url column to users');
+    } catch (err) {
+      // Column already exists
+    }
+
+    try {
+      await connection.query(`ALTER TABLE users ADD COLUMN profile_photo_public_id VARCHAR(255) DEFAULT NULL`);
+      console.log('✅ Added profile_photo_public_id column to users');
+    } catch (err) {
+      // Column already exists
+    }
+
+    // Add Cloudinary banner image URL/public ID columns if they don't exist
+    try {
+      await connection.query(`ALTER TABLE service_profiles ADD COLUMN banner_image_url VARCHAR(500) DEFAULT NULL`);
+      console.log('✅ Added banner_image_url column to service_profiles');
+    } catch (err) {
+      // Column already exists
+    }
+
+    try {
+      await connection.query(`ALTER TABLE service_profiles ADD COLUMN banner_image_public_id VARCHAR(255) DEFAULT NULL`);
+      console.log('✅ Added banner_image_public_id column to service_profiles');
+    } catch (err) {
+      // Column already exists
+    }
+
+    // Add Cloudinary portfolio image public ID column if it doesn't exist
+    try {
+      await connection.query(`ALTER TABLE portfolio_items ADD COLUMN image_public_id VARCHAR(255) DEFAULT NULL`);
+      console.log('✅ Added image_public_id column to portfolio_items');
     } catch (err) {
       // Column already exists
     }

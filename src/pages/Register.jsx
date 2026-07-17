@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { authAPI } from '../services/api';
 import RoleSelectionCards from '../components/common/RoleSelectionCards';
 import logo from '../assets/logo.png';
@@ -20,7 +20,6 @@ const Register = () => {
     fullName: '',
     email: '',
     password: '',
-    preferredServices: '',
     profession: '',
   });
 
@@ -74,12 +73,8 @@ const Register = () => {
         userType: userType,
       };
 
-      // Add fields based on user type
-      if (userType === 'client') {
-        if (formData.preferredServices) {
-          registrationData.preferredServices = formData.preferredServices;
-        }
-      } else {
+      // Add fields for service provider
+      if (userType === 'tradesperson') {
         if (formData.profession) {
           registrationData.profession = formData.profession;
         }
@@ -203,26 +198,7 @@ const Register = () => {
               </div>
 
               {/* Conditional Fields based on User Type */}
-              {userType === 'client' ? (
-                /* Preferred Services for Client */
-                <div className="mb-4">
-                  <label className="form-label">Preferred services</label>
-                  <select
-                    name="preferredServices"
-                    value={formData.preferredServices}
-                    onChange={handleInputChange}
-                    className="form-select"
-                  >
-                    <option value="">Optional</option>
-                    <option value="plumbing">Plumbing</option>
-                    <option value="electrical">Electrical</option>
-                    <option value="carpentry">Carpentry</option>
-                    <option value="painting">Painting</option>
-                    <option value="cleaning">Cleaning</option>
-                    <option value="gardening">Gardening</option>
-                  </select>
-                </div>
-              ) : (
+              {userType === 'tradesperson' && (
                 /* Professional Details for Service Provider */
                 <div className="professional-details mb-4">
                   <h3>Professional Details</h3>
@@ -304,16 +280,16 @@ const Register = () => {
               <div className="text-center">
                 <p className="footer-text mb-0">
                   Already have an account?{' '}
-                  <a href="/login" className="link">Login here</a>
+                  <Link to="/login" className="link">Login here</Link>
                 </p>
               </div>
             </form>
 
             {/* Back to Home */}
             <div className="text-center mt-4">
-              <a href="/" className="back-link text-decoration-none">
+              <Link to="/" className="back-link text-decoration-none">
                 ← Back to home
-              </a>
+              </Link>
             </div>
           </div>
         </div>

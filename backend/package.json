@@ -6,10 +6,12 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "seed:admin": "node config/seed-admin.js"
+    "seed:admin": "node config/seed-admin.js",
+    "migrate:cloudinary": "node config/migrate-images-to-cloudinary.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
+    "cloudinary": "^2.10.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.21.0",

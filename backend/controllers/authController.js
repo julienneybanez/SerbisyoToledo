@@ -12,6 +12,22 @@ const {
 
 const RESET_TOKEN_EXPIRY_MINUTES = Number(process.env.PASSWORD_RESET_TOKEN_EXP_MINUTES || 20);
 
+const resolveUserProfileImage = (user) => {
+  if (user.profile_photo_url) {
+    return user.profile_photo_url;
+  }
+
+  if (user.profile_image) {
+    return user.profile_image;
+  }
+
+  if (user.profile_photo) {
+    return `data:image/jpeg;base64,${user.profile_photo.toString('base64')}`;
+  }
+
+  return null;
+};
+
 // Generate JWT token
 const generateToken = (userId) => {
   const secret = process.env.JWT_SECRET || 'dev-secret-change-me';
@@ -392,7 +408,7 @@ exports.login = async (req, res) => {
           preferredServices: user.preferred_services,
           profession: user.profession,
           skills,
-          profileImage: user.profile_image,
+          profileImage: resolveUserProfileImage(user),
           phone: user.phone,
           address: user.address,
           bio: user.bio,
@@ -450,7 +466,7 @@ exports.getMe = async (req, res) => {
           preferredServices: user.preferred_services,
           profession: user.profession,
           skills,
-          profileImage: user.profile_image,
+          profileImage: resolveUserProfileImage(user),
           phone: user.phone,
           address: user.address,
           bio: user.bio,
@@ -571,7 +587,7 @@ exports.updateProfile = async (req, res) => {
           preferredServices: user.preferred_services,
           profession: user.profession,
           skills: parsedSkills,
-          profileImage: user.profile_image,
+          profileImage: resolveUserProfileImage(user),
           phone: user.phone,
           address: user.address,
           bio: user.bio,
