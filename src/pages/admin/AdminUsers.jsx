@@ -10,6 +10,20 @@ function AdminUsers() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [actionLoading, setActionLoading] = useState('');
+  const [dialog, setDialog] = useState({
+    open: false,
+    title: '',
+    lines: [],
+    tone: 'info',
+  });
+
+  const openDialog = ({ title, lines, tone = 'info' }) => {
+    setDialog({ open: true, title, lines: lines || [], tone });
+  };
+
+  const closeDialog = () => {
+    setDialog((prev) => ({ ...prev, open: false }));
+  };
 
   const fetchUsers = async () => {
     try {
@@ -35,8 +49,9 @@ function AdminUsers() {
       const response = await adminAPI.getUserById(userId);
       if (response.success) {
         const u = response.data;
-        alert(
-          [
+        openDialog({
+          title: 'User Details',
+          lines: [
             `Name: ${u.name}`,
             `Email: ${u.email}`,
             `Type: ${u.type}`,
@@ -45,11 +60,15 @@ function AdminUsers() {
             `Address: ${u.address || 'N/A'}`,
             `Verified: ${u.isVerified ? 'Yes' : 'No'}`,
             `Active: ${u.isActive ? 'Yes' : 'No'}`,
-          ].join('\n')
-        );
+          ],
+        });
       }
     } catch (err) {
-      alert(err.message || 'Failed to fetch user details');
+      openDialog({
+        title: 'Unable to Load Details',
+        lines: [err.message || 'Failed to fetch user details'],
+        tone: 'danger',
+      });
     }
   };
 
@@ -61,7 +80,11 @@ function AdminUsers() {
         await fetchUsers();
       }
     } catch (err) {
-      alert(err.message || 'Failed to update user status');
+      openDialog({
+        title: 'Update Failed',
+        lines: [err.message || 'Failed to update user status'],
+        tone: 'danger',
+      });
     } finally {
       setActionLoading('');
     }
@@ -77,7 +100,11 @@ function AdminUsers() {
         await fetchUsers();
       }
     } catch (err) {
-      alert(err.message || 'Failed to update verification status');
+      openDialog({
+        title: 'Update Failed',
+        lines: [err.message || 'Failed to update verification status'],
+        tone: 'danger',
+      });
     } finally {
       setActionLoading('');
     }
@@ -88,8 +115,9 @@ function AdminUsers() {
       const response = await adminAPI.getUserActivity(userId);
       if (response.success) {
         const summary = response.data.summary;
-        alert(
-          [
+        openDialog({
+          title: 'User Activity Summary',
+          lines: [
             `Total Requests: ${summary.totalRequests}`,
             `Completed Requests: ${summary.completedRequests}`,
             `Active Requests: ${summary.activeRequests}`,
@@ -97,11 +125,15 @@ function AdminUsers() {
             `Reports Received: ${summary.reportsReceived}`,
             `Last Request Activity: ${summary.lastRequestActivity || 'N/A'}`,
             `Last Report Activity: ${summary.lastReportActivity || 'N/A'}`,
-          ].join('\n')
-        );
+          ],
+        });
       }
     } catch (err) {
-      alert(err.message || 'Failed to fetch user activity');
+      openDialog({
+        title: 'Unable to Load Activity',
+        lines: [err.message || 'Failed to fetch user activity'],
+        tone: 'danger',
+      });
     }
   };
 
@@ -245,6 +277,36 @@ function AdminUsers() {
           </table>
         )}
       </div>
+
+      {dialog.open && (
+        <div className="admin-dialog-overlay" role="dialog" aria-modal="true" aria-labelledby="admin-dialog-title">
+          <div className={`admin-dialog-card ${dialog.tone === 'danger' ? 'danger' : ''}`}>
+            <div className="admin-dialog-header">
+              <h2 id="admin-dialog-title" className="admin-dialog-title">{dialog.title}</h2>
+              <button
+                type="button"
+                className="admin-dialog-close"
+                onClick={closeDialog}
+                aria-label="Close dialog"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="admin-dialog-body">
+              {dialog.lines.map((line) => (
+                <p key={line}>{line}</p>
+              ))}
+            </div>
+
+            <div className="admin-dialog-actions">
+              <button type="button" className="btn-approve" onClick={closeDialog}>
+                Okay
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
