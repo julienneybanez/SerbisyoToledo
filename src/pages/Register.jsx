@@ -85,11 +85,15 @@ const Register = () => {
 
       await authAPI.register(registrationData);
       
-      setSuccess('Registration successful! Check your email to verify your account. Redirecting to login...');
+      setSuccess('Registration successful! Redirecting you now...');
       
-      // Move new users to login so they can verify before accessing the app
+      // New users are already signed in after registration, so take them to their app entry point.
       setTimeout(() => {
-        navigate('/login');
+        if (userType === 'tradesperson') {
+          navigate('/dashboard');
+        } else {
+          navigate('/feed');
+        }
       }, 1500);
       
     } catch (err) {
