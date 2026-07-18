@@ -20,11 +20,19 @@ const handleResponse = async (response) => {
 
 // Get stored token
 export const getToken = () => {
-  return localStorage.getItem('authToken');
+  const token = localStorage.getItem('authToken');
+  if (!token || token === 'undefined' || token === 'null') {
+    return null;
+  }
+  return token;
 };
 
 // Set stored token
 export const setToken = (token) => {
+  if (!token) {
+    localStorage.removeItem('authToken');
+    return;
+  }
   localStorage.setItem('authToken', token);
 };
 
@@ -66,7 +74,9 @@ export const authAPI = {
     
     // Store token and user data
     if (data.success && data.data) {
-      setToken(data.data.token);
+      if (data.data.token) {
+        setToken(data.data.token);
+      }
       setUser(data.data.user);
       // Notify components of auth change
       window.dispatchEvent(new Event('authChange'));

@@ -110,6 +110,8 @@ exports.register = async (req, res) => {
       ]
     );
 
+    const token = generateToken(result.insertId);
+
     // Return success response
     res.status(201).json({
       success: true,
@@ -124,7 +126,8 @@ exports.register = async (req, res) => {
           profession: userData.profession,
           skills: skills || [],
           emailVerified: true
-        }
+        },
+        token
       }
     });
 
