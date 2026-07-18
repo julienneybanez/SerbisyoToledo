@@ -92,10 +92,7 @@ exports.register = async (req, res) => {
       skills: userType === 'tradesperson' && skills ? JSON.stringify(skills) : null
     };
 
-    const verificationToken = generateVerificationToken();
-    const verificationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
-
-    // Insert user into database and keep the account unverified until email confirmation
+    // Email verification is temporarily disabled in production, so new accounts are activated immediately.
     const [result] = await db.query(
       `INSERT INTO users (full_name, email, password, user_type, preferred_services, profession, skills, email_verified, verification_token, verification_token_expires) 
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -107,16 +104,16 @@ exports.register = async (req, res) => {
         userData.preferred_services,
         userData.profession,
         userData.skills,
-        false,
-        verificationToken,
-        verificationTokenExpires
+        true,
+        null,
+        null
       ]
     );
 
     // Return success response
     res.status(201).json({
       success: true,
-      message: 'Registration successful! Check your email to verify your account.',
+      message: 'Registration successful! You can now use your account.',
       data: {
         user: {
           id: result.insertId,
@@ -126,21 +123,9 @@ exports.register = async (req, res) => {
           preferredServices: userData.preferred_services,
           profession: userData.profession,
           skills: skills || [],
-          emailVerified: false
+          emailVerified: true
         }
       }
-    });
-
-    setImmediate(() => {
-      void sendVerificationEmail(userData.email, userData.full_name, verificationToken)
-        .then((emailResult) => {
-          if (!emailResult.success) {
-            console.error('Verification email was not sent:', emailResult.error);
-          }
-        })
-        .catch((emailError) => {
-          console.error('Verification email failed unexpectedly:', emailError);
-        });
     });
 
   } catch (error) {
@@ -379,14 +364,6 @@ exports.login = async (req, res) => {
       return res.status(401).json({
         success: false,
         message: `This account is registered as a ${user.user_type}, not as a ${loginAs}`
-      });
-    }
-
-    if (!user.email_verified) {
-      return res.status(403).json({
-        success: false,
-        code: 'EMAIL_NOT_VERIFIED',
-        message: 'Please verify your email address before logging in. Check your inbox or request a new verification email.'
       });
     }
 
