@@ -56,3 +56,9 @@ temp/
 *.sln
 *.sw?
 .vercel
+.railway/
+.envrc
+*.secret
+*.secrets
+*.token
+secrets/

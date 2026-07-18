@@ -85,15 +85,11 @@ const Register = () => {
 
       await authAPI.register(registrationData);
       
-      setSuccess('Registration successful! A confirmation email was sent to your account. Redirecting...');
+      setSuccess('Registration successful! Check your email to verify your account. Redirecting to login...');
       
-      // Auto-redirect to dashboard for service providers, feed for clients
+      // Move new users to login so they can verify before accessing the app
       setTimeout(() => {
-        if (userType === 'tradesperson') {
-          navigate('/dashboard');
-        } else {
-          navigate('/feed');
-        }
+        navigate('/login');
       }, 1500);
       
     } catch (err) {

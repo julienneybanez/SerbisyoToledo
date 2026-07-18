@@ -1,5 +1,8 @@
 const nodemailer = require('nodemailer');
 const crypto = require('crypto');
+const dns = require('dns');
+
+dns.setDefaultResultOrder('ipv4first');
 
 const getSmtpConfig = () => {
   const user = process.env.SMTP_USER || process.env.EMAIL_USER;
@@ -25,9 +28,35 @@ const getFromAddress = () => ({
   address: process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER || process.env.EMAIL_USER
 });
 
+const resolveSmtpHost = async () => {
+  if (process.env.SMTP_SERVICE) {
+    return null;
+  }
+
+  const configuredHost = process.env.SMTP_HOST || 'smtp.gmail.com';
+
+  if (/^\d+\.\d+\.\d+\.\d+$/.test(configuredHost)) {
+    return configuredHost;
+  }
+
+  const addresses = await dns.promises.resolve4(configuredHost);
+  return addresses[0] || 'smtp.gmail.com';
+};
+
 // Create reusable transporter
-const createTransporter = () => {
-  return nodemailer.createTransport(getSmtpConfig());
+const createTransporter = async () => {
+  const resolvedHost = await resolveSmtpHost();
+
+  return nodemailer.createTransport({
+    ...(resolvedHost ? { ...getSmtpConfig(), host: resolvedHost } : getSmtpConfig()),
+    family: 4,
+    tls: {
+      servername: 'smtp.gmail.com'
+    },
+    connectionTimeout: Number(process.env.SMTP_CONNECTION_TIMEOUT || 10000),
+    greetingTimeout: Number(process.env.SMTP_GREETING_TIMEOUT || 10000),
+    socketTimeout: Number(process.env.SMTP_SOCKET_TIMEOUT || 10000),
+  });
 };
 
 // Generate a random verification token
@@ -37,7 +66,7 @@ const generateVerificationToken = () => {
 
 // Send verification email
 const sendVerificationEmail = async (toEmail, fullName, verificationToken) => {
-  const transporter = createTransporter();
+  const transporter = await createTransporter();
   const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
   const verifyUrl = `${frontendUrl}/verify-email?token=${verificationToken}`;
 
@@ -194,7 +223,7 @@ const sendVerificationEmail = async (toEmail, fullName, verificationToken) => {
 };
 
 const sendWelcomeEmail = async (toEmail, fullName, userType) => {
-  const transporter = createTransporter();
+  const transporter = await createTransporter();
   const roleLabel = userType === 'tradesperson' ? 'Service Provider' : 'Client';
 
   const mailOptions = {
@@ -223,7 +252,7 @@ const sendWelcomeEmail = async (toEmail, fullName, userType) => {
 };
 
 const sendPasswordResetEmail = async (toEmail, fullName, resetUrl, expiryMinutes) => {
-  const transporter = createTransporter();
+  const transporter = await createTransporter();
 
   const mailOptions = {
     from: getFromAddress(),

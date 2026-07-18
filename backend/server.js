@@ -17,7 +17,30 @@ const userRoutes = require('./routes/user');
 const db = require('./config/database');
 
 const app = express();
-const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:5173,http://localhost:5174,http://localhost:5175').split(',').map(origin => origin.trim());
+const defaultOrigins = [
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'http://localhost:5175'
+];
+
+if (process.env.FRONTEND_URL) {
+  defaultOrigins.push(process.env.FRONTEND_URL.trim());
+}
+
+if (process.env.VERCEL_URL) {
+  defaultOrigins.push(`https://${process.env.VERCEL_URL.trim()}`);
+}
+
+if (process.env.RAILWAY_STATIC_URL) {
+  defaultOrigins.push(`https://${process.env.RAILWAY_STATIC_URL.trim()}`);
+}
+
+const allowedOrigins = Array.from(new Set(
+  (process.env.CORS_ORIGIN || defaultOrigins.join(','))
+    .split(',')
+    .map(origin => origin.trim())
+    .filter(Boolean)
+));
 
 // Middleware
 app.use(cors({

@@ -6,7 +6,6 @@ const db = require('../config/database');
 const {
   generateVerificationToken,
   sendVerificationEmail,
-  sendWelcomeEmail,
   sendPasswordResetEmail,
 } = require('../utils/emailService');
 
@@ -93,10 +92,13 @@ exports.register = async (req, res) => {
       skills: userType === 'tradesperson' && skills ? JSON.stringify(skills) : null
     };
 
-    // Insert user into database (email verified immediately)
+    const verificationToken = generateVerificationToken();
+    const verificationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+    // Insert user into database and keep the account unverified until email confirmation
     const [result] = await db.query(
-      `INSERT INTO users (full_name, email, password, user_type, preferred_services, profession, skills, email_verified) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO users (full_name, email, password, user_type, preferred_services, profession, skills, email_verified, verification_token, verification_token_expires) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         userData.full_name,
         userData.email,
@@ -105,29 +107,16 @@ exports.register = async (req, res) => {
         userData.preferred_services,
         userData.profession,
         userData.skills,
-        true
+        false,
+        verificationToken,
+        verificationTokenExpires
       ]
     );
-
-    const welcomeEmailResult = await sendWelcomeEmail(
-      userData.email,
-      userData.full_name,
-      userData.user_type
-    );
-
-    if (!welcomeEmailResult.success) {
-      console.error('Welcome email was not sent:', welcomeEmailResult.error);
-    }
-
-    // Generate token
-    const token = generateToken(result.insertId);
 
     // Return success response
     res.status(201).json({
       success: true,
-      message: welcomeEmailResult.success
-        ? 'Registration successful! A confirmation email has been sent.'
-        : 'Registration successful! You can now log in.',
+      message: 'Registration successful! Check your email to verify your account.',
       data: {
         user: {
           id: result.insertId,
@@ -137,10 +126,21 @@ exports.register = async (req, res) => {
           preferredServices: userData.preferred_services,
           profession: userData.profession,
           skills: skills || [],
-          emailVerified: true
-        },
-        token
+          emailVerified: false
+        }
       }
+    });
+
+    setImmediate(() => {
+      void sendVerificationEmail(userData.email, userData.full_name, verificationToken)
+        .then((emailResult) => {
+          if (!emailResult.success) {
+            console.error('Verification email was not sent:', emailResult.error);
+          }
+        })
+        .catch((emailError) => {
+          console.error('Verification email failed unexpectedly:', emailError);
+        });
     });
 
   } catch (error) {
@@ -379,6 +379,14 @@ exports.login = async (req, res) => {
       return res.status(401).json({
         success: false,
         message: `This account is registered as a ${user.user_type}, not as a ${loginAs}`
+      });
+    }
+
+    if (!user.email_verified) {
+      return res.status(403).json({
+        success: false,
+        code: 'EMAIL_NOT_VERIFIED',
+        message: 'Please verify your email address before logging in. Check your inbox or request a new verification email.'
       });
     }
 

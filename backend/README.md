@@ -28,7 +28,8 @@ cp .env.example .env
 Edit `.env` and update:
 - `DB_PASSWORD` - Your MySQL root password (or user password)
 - `JWT_SECRET` - Change to a secure random string in production
-- `FRONTEND_URL` - Frontend URL used in password reset links (example: `http://localhost:5173`)
+- `FRONTEND_URL` - Frontend URL used in verification and password reset links. Set this to the deployed Vercel URL in production.
+- `CORS_ORIGIN` - Comma-separated allowed frontend origins. Include your Vercel domain in production.
 - `PASSWORD_RESET_TOKEN_EXP_MINUTES` - Reset token expiry in minutes (recommended 15-30)
 - SMTP settings for email sending:
   - `SMTP_HOST`
@@ -47,6 +48,15 @@ Optional (recommended for reliable image delivery):
 - `CLOUDINARY_CLOUD_NAME`
 - `CLOUDINARY_API_KEY`
 - `CLOUDINARY_API_SECRET`
+
+### Deployment Notes
+
+For a Vercel frontend and Railway backend:
+
+- Set `VITE_API_URL` in Vercel to your Railway API base URL, for example `https://your-app.up.railway.app/api`.
+- Set `FRONTEND_URL` in Railway to your Vercel frontend URL, for example `https://your-app.vercel.app`.
+- Set `CORS_ORIGIN` in Railway to your Vercel origin so the browser can reach the API.
+- Keep the SMTP credentials only in Railway so email sending stays server-side.
 
 Important: Keep `CLOUDINARY_API_SECRET` in backend/server environment only. Never expose it in frontend code.
 
