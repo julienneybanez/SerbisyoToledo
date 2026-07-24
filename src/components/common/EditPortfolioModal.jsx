@@ -168,7 +168,7 @@ export default function EditPortfolioModal({ onClose }) {
         {isLoading ? (
           <div className="edit-portfolio-loading">
             <div className="spinner"></div>
-            <p>Loading portfolio...</p>
+            <p>Loading profile...</p>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="edit-portfolio-form">

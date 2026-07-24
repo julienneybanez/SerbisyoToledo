@@ -11,6 +11,10 @@
   margin: 0 auto;
 }
 
+.dashboard-wrapper > .profile-checklist {
+  margin-bottom: 40px;
+}
+
 /* Welcome Section */
 .welcome-section {
   background: white;
