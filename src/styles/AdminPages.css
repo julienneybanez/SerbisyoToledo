@@ -288,14 +288,24 @@
   margin-top: 0.75rem;
 }
 
+.admin-page .admin-evidence-label {
+  margin-bottom: 0.4rem;
+  font-weight: 600;
+  color: #334155;
+}
+
 .admin-page .admin-report-screenshot-button {
   display: inline-flex;
+  align-self: flex-start;
+  width: fit-content;
   padding: 0;
   border: none;
   background: transparent;
   cursor: zoom-in;
   text-align: left;
   border-radius: 12px;
+  overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .admin-page .admin-report-screenshot-button:hover .admin-report-screenshot,
@@ -311,12 +321,14 @@
 }
 
 .admin-page .admin-report-screenshot {
-  width: 100%;
+  display: block;
+  width: min(100%, 320px);
+  height: auto;
   max-width: 320px;
   border-radius: 10px;
   border: 1px solid #e2e8f0;
-  display: block;
   transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  pointer-events: auto;
 }
 
 .admin-page .admin-report-preview-overlay {

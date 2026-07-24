@@ -538,6 +538,16 @@
   color: #f59e0b;
 }
 
+/* Hide the scrollbar but keep the modal scrollable */
+.request-details-modal {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.request-details-modal::-webkit-scrollbar {
+  display: none;
+}
+
 /* ===================================
    RESPONSIVE
    =================================== */
