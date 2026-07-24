@@ -159,27 +159,26 @@ function AdminReports() {
                 <p className="request-detail">Request: {report.jobTitle}</p>
                 <p className="request-detail">Date: {new Date(report.date).toLocaleString()}</p>
 
-                {report.screenshot ? (
-                  <div className="admin-inline-details">
-                    <p className="request-detail admin-evidence-label">Evidence image:</p>
-                    <button
-                      type="button"
-                      className="admin-report-screenshot-button"
-                      onClick={() => setPreviewScreenshot(report.screenshot)}
-                      aria-label="View attached evidence image"
-                    >
-                      <img
-                        src={report.screenshot}
-                        alt="Reported evidence"
-                        className="admin-report-screenshot"
-                        onClick={() => setPreviewScreenshot(report.screenshot)}
-                      />
-                    </button>
-                  </div>
-                ) : null}
-
                 {expandedReportId === report.id && (
                   <div className="admin-inline-details">
+                    {report.screenshot ? (
+                      <>
+                        <p className="request-detail admin-evidence-label">Evidence image:</p>
+                        <button
+                          type="button"
+                          className="admin-report-screenshot-button"
+                          onClick={() => setPreviewScreenshot(report.screenshot)}
+                          aria-label="View attached evidence image"
+                        >
+                          <img
+                            src={report.screenshot}
+                            alt="Reported evidence"
+                            className="admin-report-screenshot"
+                            onClick={() => setPreviewScreenshot(report.screenshot)}
+                          />
+                        </button>
+                      </>
+                    ) : null}
                     {report.resolution && (
                       <p className="resolution-text"><strong>Resolution:</strong> {report.resolution}</p>
                     )}
