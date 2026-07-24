@@ -10,6 +10,7 @@ function AdminReports() {
   const [error, setError] = useState('');
   const [actionLoading, setActionLoading] = useState('');
   const [expandedReportId, setExpandedReportId] = useState(null);
+  const [previewScreenshot, setPreviewScreenshot] = useState('');
 
   const fetchReports = async () => {
     try {
@@ -29,6 +30,21 @@ function AdminReports() {
   useEffect(() => {
     fetchReports();
   }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        setPreviewScreenshot('');
+      }
+    };
+
+    if (previewScreenshot) {
+      window.addEventListener('keydown', handleKeyDown);
+      return () => window.removeEventListener('keydown', handleKeyDown);
+    }
+
+    return undefined;
+  }, [previewScreenshot]);
 
   const handleReportAction = async (reportId, action) => {
     try {
@@ -146,7 +162,14 @@ function AdminReports() {
                 {expandedReportId === report.id && (
                   <div className="admin-inline-details">
                     {report.screenshot ? (
-                      <img src={report.screenshot} alt="Reported evidence" className="admin-report-screenshot" />
+                      <button
+                        type="button"
+                        className="admin-report-screenshot-button"
+                        onClick={() => setPreviewScreenshot(report.screenshot)}
+                        aria-label="View attached evidence image"
+                      >
+                        <img src={report.screenshot} alt="Reported evidence" className="admin-report-screenshot" />
+                      </button>
                     ) : (
                       <p className="request-detail">No screenshot attached.</p>
                     )}
@@ -194,6 +217,32 @@ function AdminReports() {
           ))
         )}
       </div>
+
+      {previewScreenshot ? (
+        <div
+          className="admin-report-preview-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Evidence image preview"
+          onClick={() => setPreviewScreenshot('')}
+        >
+          <div className="admin-report-preview-dialog" onClick={(event) => event.stopPropagation()}>
+            <button
+              type="button"
+              className="admin-report-preview-close"
+              onClick={() => setPreviewScreenshot('')}
+              aria-label="Close image preview"
+            >
+              ×
+            </button>
+            <img
+              src={previewScreenshot}
+              alt="Attached evidence preview"
+              className="admin-report-preview-image"
+            />
+          </div>
+        </div>
+      ) : null}
 
       {!loading && filteredReports.length === 0 && (
         <div className="empty-state">
