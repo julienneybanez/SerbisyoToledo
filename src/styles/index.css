@@ -81,6 +81,31 @@
   color-scheme: dark;
 }
 
+[data-theme='dark'] .text-muted {
+  color: var(--color-text-secondary) !important;
+}
+
+[data-theme='dark'] .text-dark {
+  color: var(--color-text-primary) !important;
+}
+
+[data-theme='dark'] .card,
+[data-theme='dark'] .dropdown-menu,
+[data-theme='dark'] .modal-content,
+[data-theme='dark'] .list-group-item {
+  background-color: var(--color-surface);
+  color: var(--color-text-primary);
+  border-color: var(--color-border);
+}
+
+[data-theme='dark'] .card-header,
+[data-theme='dark'] .card-footer,
+[data-theme='dark'] .list-group-item.active {
+  background-color: var(--color-surface-secondary);
+  border-color: var(--color-border);
+  color: var(--color-text-primary);
+}
+
 * {
   margin: 0;
   padding: 0;

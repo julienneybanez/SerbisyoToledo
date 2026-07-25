@@ -13,6 +13,34 @@
   background: linear-gradient(120deg, var(--brand-primary) 0%, var(--brand-accent) 100%);
 }
 
+.profile-checklist .card-body,
+.profile-checklist .fw-semibold,
+.profile-checklist .h5 {
+  color: var(--color-text-primary);
+}
+
+.profile-checklist .text-muted,
+.profile-checklist .small {
+  color: var(--color-text-secondary) !important;
+}
+
+.profile-checklist .btn-outline-secondary {
+  color: var(--color-text-secondary);
+  border-color: var(--color-border);
+}
+
+.profile-checklist .btn-outline-secondary:hover {
+  background: var(--color-surface-secondary);
+  color: var(--color-text-primary);
+  border-color: var(--color-border-strong);
+}
+
+.profile-checklist .alert-light {
+  background: var(--color-surface-secondary);
+  border-color: var(--color-border);
+  color: var(--color-text-secondary);
+}
+
 .checklist-loading {
   display: inline-flex;
   align-items: center;

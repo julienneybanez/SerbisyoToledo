@@ -85,9 +85,9 @@ const Register = () => {
 
       await authAPI.register(registrationData);
       
-      setSuccess('Registration successful! Redirecting you now...');
+      setSuccess('Registration successful! A confirmation email was sent to your account. Redirecting...');
       
-      // New users are already signed in after registration, so take them to their app entry point.
+      // Auto-redirect to dashboard for service providers, feed for clients
       setTimeout(() => {
         if (userType === 'tradesperson') {
           navigate('/dashboard');

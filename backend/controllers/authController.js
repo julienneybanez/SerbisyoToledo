@@ -6,6 +6,7 @@ const db = require('../config/database');
 const {
   generateVerificationToken,
   sendVerificationEmail,
+  sendWelcomeEmail,
   sendPasswordResetEmail,
 } = require('../utils/emailService');
 
@@ -92,10 +93,10 @@ exports.register = async (req, res) => {
       skills: userType === 'tradesperson' && skills ? JSON.stringify(skills) : null
     };
 
-    // Email verification is temporarily disabled in production, so new accounts are activated immediately.
+    // Insert user into database (email verified immediately)
     const [result] = await db.query(
-      `INSERT INTO users (full_name, email, password, user_type, preferred_services, profession, skills, email_verified, verification_token, verification_token_expires) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO users (full_name, email, password, user_type, preferred_services, profession, skills, email_verified) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         userData.full_name,
         userData.email,
@@ -104,18 +105,29 @@ exports.register = async (req, res) => {
         userData.preferred_services,
         userData.profession,
         userData.skills,
-        true,
-        null,
-        null
+        true
       ]
     );
 
+    const welcomeEmailResult = await sendWelcomeEmail(
+      userData.email,
+      userData.full_name,
+      userData.user_type
+    );
+
+    if (!welcomeEmailResult.success) {
+      console.error('Welcome email was not sent:', welcomeEmailResult.error);
+    }
+
+    // Generate token
     const token = generateToken(result.insertId);
 
     // Return success response
     res.status(201).json({
       success: true,
-      message: 'Registration successful! You can now use your account.',
+      message: welcomeEmailResult.success
+        ? 'Registration successful! A confirmation email has been sent.'
+        : 'Registration successful! You can now log in.',
       data: {
         user: {
           id: result.insertId,
