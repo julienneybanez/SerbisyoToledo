@@ -15,6 +15,16 @@
   --admin-shadow-md: 0 10px 28px rgba(15, 23, 42, 0.12);
 }
 
+[data-theme='dark'] {
+  --admin-surface: var(--color-surface);
+  --admin-surface-soft: var(--color-surface-secondary);
+  --admin-border: var(--color-border);
+  --admin-text: var(--color-text-primary);
+  --admin-muted: var(--color-text-secondary);
+  --admin-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.22);
+  --admin-shadow-md: 0 10px 28px rgba(0, 0, 0, 0.35);
+}
+
 .admin-page {
   max-width: 1400px;
   margin: 0 auto;
@@ -29,13 +39,13 @@
 .admin-page-title {
   font-size: 1.75rem;
   font-weight: 800;
-  color: #1e293b;
+  color: var(--admin-text);
   margin: 0 0 0.25rem 0;
   letter-spacing: -0.02em;
 }
 
 .admin-page-subtitle {
-  color: #64748b;
+  color: var(--admin-muted);
   margin: 0;
   font-size: 0.95rem;
 }
@@ -51,7 +61,7 @@
 }
 
 .stat-card {
-  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+  background: linear-gradient(180deg, var(--admin-surface) 0%, var(--admin-surface-soft) 100%);
   border: 1px solid var(--admin-border);
   border-radius: 14px;
   padding: 1.25rem;
@@ -67,7 +77,7 @@
 .stat-label {
   display: block;
   font-size: 0.85rem;
-  color: #64748b;
+  color: var(--admin-muted);
   margin-bottom: 0.5rem;
 }
 
@@ -103,7 +113,7 @@
 
 .admin-page .mini-stat-label {
   font-size: 0.9rem;
-  color: #64748b;
+  color: var(--admin-muted);
 }
 
 /* ===================================
@@ -118,18 +128,18 @@
 .admin-tab {
   padding: 0.6rem 1.25rem;
   border: none;
-  background: white;
+  background: var(--admin-surface);
   border-radius: 20px;
   font-size: 0.9rem;
   font-weight: 500;
-  color: #64748b;
+  color: var(--admin-muted);
   cursor: pointer;
   transition: all 0.2s ease;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .admin-tab:hover {
-  color: #1e293b;
+  color: var(--admin-text);
 }
 
 .admin-tab.active {
@@ -151,7 +161,7 @@
   grid-template-columns: auto 1fr auto auto;
   gap: 1.5rem;
   align-items: start;
-  background: linear-gradient(180deg, #ffffff 0%, #f9fcff 100%);
+  background: linear-gradient(180deg, var(--admin-surface) 0%, var(--admin-surface-soft) 100%);
   border: 1px solid var(--admin-border);
   border-radius: 18px;
   padding: 1.5rem;
@@ -171,8 +181,8 @@
 .admin-page .request-avatar {
   width: 60px;
   height: 60px;
-  background: #eef5ff;
-  border: 1px solid #dce9fb;
+  background: color-mix(in srgb, var(--admin-primary) 12%, var(--admin-surface));
+  border: 1px solid color-mix(in srgb, var(--admin-primary) 25%, var(--admin-border));
   border-radius: 12px;
   display: flex;
   align-items: center;
@@ -200,13 +210,13 @@
 .admin-page .request-name {
   font-size: 1.1rem;
   font-weight: 600;
-  color: #1e293b;
+  color: var(--admin-text);
   margin: 0;
 }
 
 .admin-page .request-detail {
   font-size: 0.875rem;
-  color: #64748b;
+  color: var(--admin-muted);
   margin: 0.25rem 0;
 }
 
@@ -219,18 +229,18 @@
 
 .admin-page .document-tag {
   padding: 0.25rem 0.75rem;
-  background: #f1f5f9;
+  background: var(--admin-surface-soft);
   border-radius: 6px;
   font-size: 0.8rem;
-  color: #475569;
+  color: var(--admin-muted);
 }
 
 .admin-page .report-description {
   font-size: 0.9rem;
-  color: #475569;
+  color: var(--admin-muted);
   margin-top: 0.5rem;
   padding: 0.5rem;
-  background: #fafafa;
+  background: var(--admin-surface);
   border-radius: 6px;
   font-style: italic;
 }
@@ -238,7 +248,7 @@
 .admin-page .rejection-reason,
 .admin-page .resolution-text {
   font-size: 0.85rem;
-  color: #64748b;
+  color: var(--admin-muted);
   margin-top: 0.5rem;
   padding: 0.5rem;
   background: #fef2f2;
@@ -252,7 +262,7 @@
 .admin-page .request-contact {
   text-align: right;
   font-size: 0.875rem;
-  color: #64748b;
+  color: var(--admin-muted);
 }
 
 .admin-page .request-contact p {
@@ -291,7 +301,7 @@
 .admin-page .admin-evidence-label {
   margin-bottom: 0.4rem;
   font-weight: 600;
-  color: #334155;
+  color: var(--admin-text);
 }
 
 .admin-page .admin-report-screenshot-button {
@@ -326,7 +336,7 @@
   height: auto;
   max-width: 320px;
   border-radius: 10px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--admin-border);
   transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
   pointer-events: auto;
 }
@@ -334,7 +344,7 @@
 .admin-page .admin-report-preview-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.85);
+  background: var(--color-overlay);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -360,7 +370,7 @@
   object-fit: contain;
   border-radius: 14px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
-  background: #fff;
+  background: var(--admin-surface);
 }
 
 .admin-page .admin-report-preview-close {
@@ -371,8 +381,8 @@
   height: 2.25rem;
   border: none;
   border-radius: 999px;
-  background: #ffffff;
-  color: #0f172a;
+  background: var(--admin-surface);
+  color: var(--admin-text);
   font-size: 1.35rem;
   font-weight: 700;
   line-height: 1;
@@ -382,7 +392,7 @@
 }
 
 .admin-page .admin-report-preview-close:hover {
-  background: #f8fafc;
+  background: var(--admin-surface-soft);
 }
 
 .admin-page .admin-report-preview-close:focus-visible {

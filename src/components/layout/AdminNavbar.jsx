@@ -1,4 +1,5 @@
 import { getUser } from '../../services/api';
+import ThemeToggle from '../common/ThemeToggle';
 import '../../styles/AdminNavbar.css';
 
 function AdminNavbar({ onToggleSidebar }) {
@@ -27,6 +28,7 @@ function AdminNavbar({ onToggleSidebar }) {
       </div>
 
       <div className="admin-navbar-right">
+        <ThemeToggle compact className="admin-theme-toggle" />
         <div className="admin-profile-dropdown">
           <div className="admin-profile-btn">
             <div className="admin-avatar">

@@ -183,6 +183,67 @@
   }
 }
 
+[data-theme='dark'] .modal-overlay {
+  background-color: var(--color-overlay);
+}
+
+[data-theme='dark'] .modal-content,
+[data-theme='dark'] .modal-header,
+[data-theme='dark'] .service-profile-form,
+[data-theme='dark'] .form-section {
+  background: var(--color-surface-elevated) !important;
+}
+
+[data-theme='dark'] .modal-close,
+[data-theme='dark'] .modal-subtitle,
+[data-theme='dark'] .section-description,
+[data-theme='dark'] .upload-label,
+[data-theme='dark'] .upload-label p,
+[data-theme='dark'] .terms-text {
+  color: var(--color-text-secondary);
+}
+
+[data-theme='dark'] .section-header,
+[data-theme='dark'] .form-label,
+[data-theme='dark'] .upload-label h4,
+[data-theme='dark'] .important-notes h4 {
+  color: var(--color-text-primary);
+}
+
+[data-theme='dark'] .form-input,
+[data-theme='dark'] .category-pill,
+[data-theme='dark'] .upload-area {
+  background: var(--color-input-bg);
+  color: var(--color-input-text);
+  border-color: var(--color-border);
+}
+
+[data-theme='dark'] .category-pill {
+  color: var(--color-text-secondary);
+}
+
+[data-theme='dark'] .important-notes {
+  background: color-mix(in srgb, var(--brand-primary) 14%, var(--color-surface));
+  border-left-color: var(--brand-primary);
+}
+
+[data-theme='dark'] .important-notes li {
+  color: var(--color-text-secondary);
+}
+
+[data-theme='dark'] .alert-error {
+  background-color: color-mix(in srgb, var(--color-danger) 18%, var(--color-surface));
+  color: #fecaca;
+  border-color: color-mix(in srgb, var(--color-danger) 45%, var(--color-border));
+}
+
+[data-theme='dark'] .alert-success {
+  background-color: color-mix(in srgb, var(--color-success) 16%, var(--color-surface));
+  color: #bbf7d0;
+  border-color: color-mix(in srgb, var(--color-success) 42%, var(--color-border));
+}
+
+
 /* Categories Grid */
 .categories-grid {
   display: flex;

@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 import { useState, useEffect, useRef } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { isAuthenticated, getUser, removeToken, serviceProfileAPI } from '../../services/api';
@@ -6,6 +7,7 @@ import EditProfileModal from '../common/EditProfileModal';
 import EditPortfolioModal from '../common/EditPortfolioModal';
 import ServiceProfileModal from '../common/ServiceProfileModal';
 import VerificationRequestModal from '../common/VerificationRequestModal';
+import ThemeToggle from '../common/ThemeToggle';
 import logo from '../../assets/logo.png';
 
 function Navbar() {
@@ -14,8 +16,8 @@ function Navbar() {
   const navbarRef = useRef(null);
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [loggedIn, setLoggedIn] = useState(false);
-  const [user, setUser] = useState(null);
+  const [loggedIn, setLoggedIn] = useState(() => isAuthenticated());
+  const [user, setUser] = useState(() => getUser());
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [showEditProfile, setShowEditProfile] = useState(false);
   const [showEditPortfolio, setShowEditPortfolio] = useState(false);
@@ -53,7 +55,7 @@ function Navbar() {
         if (isMounted) {
           setHasServiceProfile(Boolean(response?.success && response?.data?.id));
         }
-      } catch (error) {
+      } catch {
         if (isMounted) {
           setHasServiceProfile(false);
         }
@@ -73,8 +75,6 @@ function Navbar() {
       setLoggedIn(isAuthenticated());
       setUser(getUser());
     };
-    
-    checkAuth();
     
     // Listen for storage changes (login/logout from other tabs)
     window.addEventListener('storage', checkAuth);
@@ -119,11 +119,6 @@ function Navbar() {
   const getInitials = (name) => {
     if (!name) return 'U';
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-  };
-
-  const closeMobileMenu = () => {
-    setMobileMenuOpen(false);
-    setDropdownOpen(false);
   };
 
   const handleNavClick = () => {
@@ -210,6 +205,7 @@ function Navbar() {
                 >
                   Requests
                 </NavLink>
+                <ThemeToggle compact className="navbar-theme-toggle" />
                 <div className="notification-wrap">
                   <NotificationDropdown />
                 </div>
@@ -311,6 +307,7 @@ function Navbar() {
               </div>
             ) : (
               <div className="auth-block logged-out-block">
+                <ThemeToggle compact className="navbar-theme-toggle" />
                 <NavLink 
                   to="/login" 
                   className={({ isActive }) => `btn btn-outline-primary login-btn ${isActive ? 'active-btn' : ''}`}

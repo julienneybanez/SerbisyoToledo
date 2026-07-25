@@ -418,6 +418,7 @@
 }
 
 .level-up-banner p {
+
   font-size: 15px;
   margin: 0 0 20px 0;
   opacity: 0.95;
@@ -506,4 +507,52 @@
   .tip-image {
     height: 120px;
   }
+}
+
+/* ===================================
+   DARK THEME OVERRIDES
+   =================================== */
+[data-theme='dark'] .dashboard-container {
+  background: linear-gradient(135deg, #0f172a 0%, #172236 100%);
+}
+
+[data-theme='dark'] .welcome-section,
+[data-theme='dark'] .tip-card,
+[data-theme='dark'] .job-card {
+  background: var(--color-surface);
+  box-shadow: 0 4px 6px var(--color-shadow);
+}
+
+[data-theme='dark'] .welcome-content h1,
+[data-theme='dark'] .section-title,
+[data-theme='dark'] .jobs-header h2,
+[data-theme='dark'] .job-title,
+[data-theme='dark'] .tip-title,
+[data-theme='dark'] .meta-value {
+  color: var(--color-text-primary);
+}
+
+[data-theme='dark'] .welcome-content p,
+[data-theme='dark'] .tip-description,
+[data-theme='dark'] .tip-footer,
+[data-theme='dark'] .job-client,
+[data-theme='dark'] .job-description,
+[data-theme='dark'] .meta-label,
+[data-theme='dark'] .jobs-loading,
+[data-theme='dark'] .jobs-empty {
+  color: var(--color-text-secondary);
+}
+
+[data-theme='dark'] .job-meta {
+  border-bottom-color: var(--color-border);
+}
+
+[data-theme='dark'] .job-btn-secondary {
+  background: var(--color-surface-secondary);
+  color: var(--color-text-secondary);
+  border-color: var(--color-border);
+}
+
+[data-theme='dark'] .job-btn-secondary:hover {
+  background: var(--color-surface-elevated);
 }

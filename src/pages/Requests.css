@@ -419,6 +419,59 @@
   transition: all 0.2s ease;
 }
 
+/* ===================================
+   DARK THEME OVERRIDES
+   =================================== */
+[data-theme='dark'] .requests-container {
+  background: linear-gradient(135deg, #0f172a 0%, #142032 100%);
+}
+
+[data-theme='dark'] .requests-header h1,
+[data-theme='dark'] .request-title,
+[data-theme='dark'] .requests-empty h3 {
+  color: var(--color-text-primary);
+}
+
+[data-theme='dark'] .requests-header p,
+[data-theme='dark'] .request-details,
+[data-theme='dark'] .meta-row,
+[data-theme='dark'] .requests-empty p {
+  color: var(--color-text-secondary);
+}
+
+[data-theme='dark'] .filter-btn,
+[data-theme='dark'] .request-card,
+[data-theme='dark'] .requests-empty,
+[data-theme='dark'] .request-card-header,
+[data-theme='dark'] .request-card-actions {
+  background: var(--color-surface);
+  border-color: var(--color-border);
+}
+
+[data-theme='dark'] .request-card-header,
+[data-theme='dark'] .request-card-actions,
+[data-theme='dark'] .request-discussion-section {
+  border-color: var(--color-border);
+}
+
+[data-theme='dark'] .discussion-pending {
+  background: color-mix(in srgb, var(--color-warning) 18%, var(--color-surface));
+  color: var(--color-warning);
+}
+
+[data-theme='dark'] .discussion-request-pending {
+  background: color-mix(in srgb, #9c27b0 20%, var(--color-surface));
+}
+
+[data-theme='dark'] .discussion-request-pending p {
+  color: #d8b4fe;
+}
+
+[data-theme='dark'] .requests-error {
+  background: color-mix(in srgb, var(--color-danger) 16%, var(--color-surface));
+}
+
+
 .btn-action:disabled {
   opacity: 0.6;
   cursor: not-allowed;

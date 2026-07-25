@@ -380,3 +380,49 @@
     padding: 24px !important;
   }
 }
+
+[data-theme='dark'] .gradient-container {
+  background: linear-gradient(to bottom, #10223a 0%, #0f2b47 34%, #123743 72%, #0f2f2b 100%);
+}
+
+[data-theme='dark'] .content-card {
+  background: color-mix(in srgb, var(--color-surface) 92%, transparent);
+  border-color: color-mix(in srgb, var(--color-border) 80%, transparent) !important;
+}
+
+[data-theme='dark'] .subtitle,
+[data-theme='dark'] .back-link,
+[data-theme='dark'] .section-text,
+[data-theme='dark'] .footer-text,
+[data-theme='dark'] .radio-pill-desc,
+[data-theme='dark'] .form-control::placeholder {
+  color: var(--color-text-secondary);
+}
+
+[data-theme='dark'] .form-label,
+[data-theme='dark'] .radio-pill-title,
+[data-theme='dark'] .professional-details h3 {
+  color: var(--color-text-primary);
+}
+
+[data-theme='dark'] .form-control,
+[data-theme='dark'] .form-select,
+[data-theme='dark'] .radio-pill-label {
+  background: var(--color-input-bg);
+  color: var(--color-input-text);
+  border-color: var(--color-border);
+}
+
+[data-theme='dark'] .radio-pill input[type='radio']:checked + .radio-pill-label {
+  background: color-mix(in srgb, var(--brand-primary) 14%, var(--color-input-bg));
+}
+
+[data-theme='dark'] .feature-item {
+  background: color-mix(in srgb, var(--brand-primary) 12%, var(--color-surface));
+  border-color: color-mix(in srgb, var(--brand-primary) 24%, var(--color-border));
+}
+
+[data-theme='dark'] .professional-details {
+  background: color-mix(in srgb, var(--brand-accent) 14%, var(--color-surface));
+  border-color: color-mix(in srgb, var(--brand-accent) 26%, var(--color-border));
+}

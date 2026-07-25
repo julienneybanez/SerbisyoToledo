@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { getUser, userProfileAPI } from '../services/api';
+import ThemeToggle from '../components/common/ThemeToggle';
 import '../styles/UserSettings.css';
 
 function ClientSettings() {
@@ -46,7 +47,7 @@ function ClientSettings() {
             address: profile.address || '',
           }));
         }
-      } catch (err) {
+      } catch {
         setSettings(prev => ({
           ...prev,
           fullName: currentUser.fullName || '',
@@ -99,6 +100,10 @@ function ClientSettings() {
       <div className="page-header">
         <h1 className="page-title">Settings</h1>
         <p className="page-subtitle">Manage your account and preferences</p>
+        <div className="settings-theme-row">
+          <span className="settings-theme-label">Appearance</span>
+          <ThemeToggle />
+        </div>
       </div>
 
       <div className="settings-layout">

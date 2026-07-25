@@ -1,0 +1,49 @@
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  padding: 0.45rem 0.75rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.theme-toggle:hover,
+.theme-toggle:focus-visible {
+  border-color: var(--brand-primary);
+  color: var(--brand-primary);
+  background: var(--color-surface-secondary);
+}
+
+.theme-toggle:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--brand-primary) 60%, transparent);
+  outline-offset: 2px;
+}
+
+.theme-toggle-icon {
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--brand-primary) 14%, var(--color-surface));
+}
+
+.theme-toggle-icon i {
+  font-size: 0.85rem;
+}
+
+.theme-toggle-compact {
+  padding: 0.42rem 0.62rem;
+}
+
+.theme-toggle-compact .theme-toggle-label {
+  font-size: 0.78rem;
+}

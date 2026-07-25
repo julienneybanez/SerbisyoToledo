@@ -256,6 +256,54 @@
   gap: 0.3rem;
 }
 
+[data-theme='dark'] .booking-overlay {
+  background: var(--color-overlay);
+}
+
+[data-theme='dark'] .booking-modal,
+[data-theme='dark'] .booking-content,
+[data-theme='dark'] .booking-stage-content,
+[data-theme='dark'] .booking-calendar {
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+}
+
+[data-theme='dark'] .booking-sidebar {
+  background: var(--color-surface-secondary);
+  border-right-color: var(--color-border);
+}
+
+[data-theme='dark'] .booking-provider-profession,
+[data-theme='dark'] .booking-provider-bio,
+[data-theme='dark'] .stage-description,
+[data-theme='dark'] .booking-subtitle,
+[data-theme='dark'] .calendar-weekdays,
+[data-theme='dark'] .booking-close {
+  color: var(--color-text-secondary);
+}
+
+[data-theme='dark'] .stage-label,
+[data-theme='dark'] .calendar-header,
+[data-theme='dark'] .booking-provider-name {
+  color: var(--color-text-primary);
+}
+
+[data-theme='dark'] .booking-stage::after,
+[data-theme='dark'] .stage-indicator {
+  border-color: var(--color-border);
+  background: color-mix(in srgb, var(--color-surface-secondary) 65%, transparent);
+}
+
+[data-theme='dark'] .booking-stage-content,
+[data-theme='dark'] .booking-calendar {
+  border-color: var(--color-border);
+}
+
+[data-theme='dark'] .calendar-nav {
+  background: var(--color-surface-secondary);
+  color: var(--color-text-secondary);
+}
+
 .calendar-day {
   width: 48px;
   height: 48px;

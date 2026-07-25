@@ -1,12 +1,39 @@
 @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;700;800&family=Geist:wght@400;500;600;700;800&display=swap');
 
-:root {
+:root,
+[data-theme='light'] {
   --brand-primary: #5da9dd;
   --brand-primary-dark: #4a9fd5;
   --brand-accent: #44c9a0;
   --brand-accent-dark: #3bb890;
   --brand-text: #1e293b;
   --brand-muted: #64748b;
+
+  --color-page-bg: #f3f7fc;
+  --color-surface: #ffffff;
+  --color-surface-secondary: #f1f6fc;
+  --color-surface-elevated: #ffffff;
+
+  --color-text-primary: #1e293b;
+  --color-text-secondary: #64748b;
+  --color-text-muted: #94a3b8;
+  --color-text-inverse: #ffffff;
+
+  --color-border: #dbe5f1;
+  --color-border-strong: #c5d3e5;
+
+  --color-input-bg: #ffffff;
+  --color-input-text: #1e293b;
+  --color-placeholder: #94a3b8;
+
+  --color-overlay: rgba(15, 23, 42, 0.58);
+  --color-shadow: rgba(15, 23, 42, 0.12);
+
+  --color-primary: var(--brand-primary);
+  --color-primary-hover: var(--brand-primary-dark);
+  --color-danger: #dc2626;
+  --color-success: #16a34a;
+  --color-warning: #d97706;
 
   font-family: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto',
     'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
@@ -15,13 +42,43 @@
   font-weight: 400;
 
   color-scheme: light;
-  color: var(--brand-text);
-  background-color: #ffffff;
+  color: var(--color-text-primary);
+  background-color: var(--color-page-bg);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+[data-theme='dark'] {
+  --color-page-bg: #0f172a;
+  --color-surface: #1e293b;
+  --color-surface-secondary: #273549;
+  --color-surface-elevated: #334155;
+
+  --color-text-primary: #f8fafc;
+  --color-text-secondary: #cbd5e1;
+  --color-text-muted: #9fb0c8;
+  --color-text-inverse: #0f172a;
+
+  --color-border: #334155;
+  --color-border-strong: #475569;
+
+  --color-input-bg: #223245;
+  --color-input-text: #f8fafc;
+  --color-placeholder: #9fb0c8;
+
+  --color-overlay: rgba(2, 6, 23, 0.78);
+  --color-shadow: rgba(0, 0, 0, 0.35);
+
+  --color-primary: #74baf5;
+  --color-primary-hover: #95cfff;
+  --color-danger: #f87171;
+  --color-success: #4ade80;
+  --color-warning: #fbbf24;
+
+  color-scheme: dark;
 }
 
 * {
@@ -34,6 +91,8 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  background: var(--color-page-bg);
+  color: var(--color-text-primary);
 }
 
 #root {
@@ -45,4 +104,50 @@ html,
 body,
 #root {
   min-height: 100%;
+}
+
+a {
+  color: var(--color-primary);
+}
+
+a:hover {
+  color: var(--color-primary-hover);
+}
+
+::placeholder {
+  color: var(--color-placeholder);
+}
+
+.form-control,
+.form-select,
+.form-check-input,
+.form-range,
+.form-floating > .form-control,
+.form-floating > .form-select {
+  background-color: var(--color-input-bg);
+  color: var(--color-input-text);
+  border-color: var(--color-border);
+}
+
+.form-control::placeholder,
+.form-floating > .form-control::placeholder {
+  color: var(--color-placeholder);
+}
+
+.form-control:focus,
+.form-select:focus,
+.form-check-input:focus,
+.form-floating > .form-control:focus,
+.form-floating > .form-select:focus {
+  border-color: color-mix(in srgb, var(--color-primary) 75%, var(--color-border));
+  box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--color-primary) 20%, transparent);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  body,
+  .app,
+  .admin-layout,
+  .themed-surface {
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  }
 }

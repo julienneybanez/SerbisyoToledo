@@ -53,6 +53,10 @@
   z-index: 1000;
 }
 
+[data-theme='dark'] .floating-btn {
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45);
+}
+
 .floating-btn:hover {
   transform: scale(1.08);
 }

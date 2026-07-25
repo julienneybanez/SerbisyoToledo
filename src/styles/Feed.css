@@ -536,3 +536,78 @@
 .no-providers-container p {
   color: #1a74ff;
 }
+
+/* ===================================
+   DARK THEME OVERRIDES
+   =================================== */
+[data-theme='dark'] .feed-shell {
+  background: var(--color-page-bg);
+}
+
+[data-theme='dark'] .search-input-large,
+[data-theme='dark'] .advanced-filters,
+[data-theme='dark'] .provider-card,
+[data-theme='dark'] .loading-container,
+[data-theme='dark'] .error-container,
+[data-theme='dark'] .no-providers-container {
+  background: var(--color-surface);
+  border-color: var(--color-border);
+}
+
+[data-theme='dark'] .search-input-large input,
+[data-theme='dark'] .provider-name,
+[data-theme='dark'] .price,
+[data-theme='dark'] .filters-title {
+  color: var(--color-text-primary);
+}
+
+[data-theme='dark'] .search-input-large input::placeholder,
+[data-theme='dark'] .feed-filter-label,
+[data-theme='dark'] .provider-description,
+[data-theme='dark'] .provider-meta,
+[data-theme='dark'] .price-label,
+[data-theme='dark'] .loading-container p,
+[data-theme='dark'] .error-container p,
+[data-theme='dark'] .no-providers-container p {
+  color: var(--color-text-secondary);
+}
+
+[data-theme='dark'] .feed-filter-input,
+[data-theme='dark'] .feed-filter-select,
+[data-theme='dark'] .category-btn {
+  background: var(--color-input-bg);
+  color: var(--color-input-text);
+  border-color: var(--color-border);
+}
+
+[data-theme='dark'] .feed-filter-input:focus,
+[data-theme='dark'] .feed-filter-select:focus {
+  background: var(--color-surface-elevated);
+}
+
+[data-theme='dark'] .btn-filter {
+  color: var(--color-text-primary);
+  background: color-mix(in srgb, var(--brand-primary) 20%, var(--color-surface));
+}
+
+[data-theme='dark'] .category-btn:hover {
+  color: var(--color-primary-hover);
+}
+
+[data-theme='dark'] .provider-tag {
+  background: color-mix(in srgb, var(--brand-primary) 20%, var(--color-surface));
+  color: var(--color-primary-hover);
+}
+
+[data-theme='dark'] .spinner {
+  border-color: color-mix(in srgb, var(--color-text-muted) 36%, transparent);
+  border-top-color: var(--color-primary);
+}
+
+[data-theme='dark'] .error-container {
+  background: color-mix(in srgb, var(--color-danger) 16%, var(--color-surface));
+}
+
+[data-theme='dark'] .no-providers-container {
+  background: color-mix(in srgb, var(--color-primary) 12%, var(--color-surface));
+}

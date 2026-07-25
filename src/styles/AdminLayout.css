@@ -28,3 +28,7 @@
     margin-left: 0;
   }
 }
+
+[data-theme='dark'] .admin-layout {
+  background: linear-gradient(135deg, #0f172a 0%, #152236 45%, #0f2530 100%);
+}

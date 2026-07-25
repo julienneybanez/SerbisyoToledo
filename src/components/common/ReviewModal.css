@@ -316,3 +316,45 @@
     height: 36px;
   }
 }
+
+[data-theme='dark'] .review-modal-overlay {
+  background: var(--color-overlay);
+}
+
+[data-theme='dark'] .review-modal {
+  background: var(--color-surface-elevated);
+}
+
+[data-theme='dark'] .review-modal-close {
+  background: color-mix(in srgb, var(--color-surface-secondary) 65%, transparent);
+  color: var(--color-text-secondary);
+}
+
+[data-theme='dark'] .review-modal-header h2,
+[data-theme='dark'] .review-rating-section label,
+[data-theme='dark'] .review-comment-section label {
+  color: var(--color-text-primary);
+}
+
+[data-theme='dark'] .review-subtitle,
+[data-theme='dark'] .rating-display,
+[data-theme='dark'] .char-count,
+[data-theme='dark'] .btn-cancel-review {
+  color: var(--color-text-secondary);
+}
+
+[data-theme='dark'] .review-textarea,
+[data-theme='dark'] .btn-cancel-review {
+  background: var(--color-input-bg);
+  color: var(--color-input-text);
+  border-color: var(--color-border);
+}
+
+[data-theme='dark'] .review-textarea::placeholder {
+  color: var(--color-placeholder);
+}
+
+[data-theme='dark'] .star-empty-bg path {
+  fill: var(--color-surface-secondary);
+  stroke: var(--color-border-strong);
+}

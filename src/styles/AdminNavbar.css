@@ -6,9 +6,9 @@
   align-items: center;
   justify-content: space-between;
   padding: 0.85rem 1.5rem;
-  background: rgba(255, 255, 255, 0.78);
+  background: color-mix(in srgb, var(--color-surface) 82%, transparent);
   backdrop-filter: blur(14px);
-  border-bottom: 1px solid rgba(203, 213, 225, 0.7);
+  border-bottom: 1px solid var(--color-border);
   box-shadow: 0 10px 20px rgba(15, 23, 42, 0.06);
   position: sticky;
   top: 0;
@@ -27,18 +27,18 @@
   justify-content: center;
   width: 40px;
   height: 40px;
-  border: 1px solid #d8e3ef;
-  background: #f8fbff;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-secondary);
   border-radius: 8px;
   cursor: pointer;
-  color: #64748b;
+  color: var(--color-text-secondary);
   transition: all 0.2s ease;
 }
 
 .sidebar-toggle:hover {
-  background: #edf5ff;
-  color: #1f3650;
-  border-color: #bed5ee;
+  background: color-mix(in srgb, var(--brand-primary) 14%, var(--color-surface));
+  color: var(--color-text-primary);
+  border-color: color-mix(in srgb, var(--brand-primary) 45%, var(--color-border));
 }
 
 .admin-brand {
@@ -58,7 +58,7 @@
 }
 
 .brand-admin {
-  color: #94a3b8;
+  color: var(--color-text-muted);
   font-size: 0.875rem;
   font-weight: 500;
   margin-left: 0.5rem;
@@ -81,13 +81,13 @@
   background: transparent;
   border-radius: 8px;
   cursor: pointer;
-  color: #64748b;
+  color: var(--color-text-secondary);
   transition: all 0.2s ease;
 }
 
 .admin-notification-btn:hover {
-  background: #f1f5f9;
-  color: #334155;
+  background: var(--color-surface-secondary);
+  color: var(--color-text-primary);
 }
 
 .notification-badge {
@@ -116,16 +116,16 @@
   gap: 0.75rem;
   padding: 0.45rem 0.55rem;
   border: none;
-  background: #f8fbff;
+  background: var(--color-surface-secondary);
   border-radius: 12px;
-  border: 1px solid #d8e3ef;
+  border: 1px solid var(--color-border);
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .admin-profile-btn:hover {
-  background: #edf5ff;
-  border-color: #bed5ee;
+  background: color-mix(in srgb, var(--brand-primary) 12%, var(--color-surface));
+  border-color: color-mix(in srgb, var(--brand-primary) 45%, var(--color-border));
 }
 
 .admin-avatar {
@@ -142,7 +142,7 @@
 }
 
 .admin-name {
-  color: #334155;
+  color: var(--color-text-primary);
   font-weight: 500;
   font-size: 0.9rem;
 }
@@ -151,7 +151,7 @@
   position: absolute;
   top: calc(100% + 8px);
   right: 0;
-  background: white;
+  background: var(--color-surface-elevated);
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
   min-width: 200px;
@@ -179,18 +179,18 @@
 
 .dropdown-name {
   font-weight: 600;
-  color: #1e293b;
+  color: var(--color-text-primary);
 }
 
 .dropdown-role {
   font-size: 0.8rem;
-  color: #64748b;
+  color: var(--color-text-secondary);
 }
 
 .admin-dropdown-menu hr {
   margin: 0.25rem 0;
   border: none;
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid var(--color-border);
 }
 
 .admin-dropdown-menu .dropdown-item {
@@ -198,7 +198,7 @@
   align-items: center;
   gap: 0.75rem;
   padding: 0.6rem 1rem;
-  color: #475569;
+  color: var(--color-text-secondary);
   text-decoration: none;
   font-size: 0.9rem;
   border: none;
@@ -209,8 +209,12 @@
 }
 
 .admin-dropdown-menu .dropdown-item:hover {
-  background: #f1f5f9;
-  color: #1e293b;
+  background: var(--color-surface-secondary);
+  color: var(--color-text-primary);
+}
+
+.admin-theme-toggle {
+  margin-right: 0.25rem;
 }
 
 .admin-dropdown-menu .dropdown-item.logout {

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getUser, userProfileAPI } from '../services/api';
+import ThemeToggle from '../components/common/ThemeToggle';
 import '../styles/UserSettings.css';
 
 function ServiceProviderSettings() {
@@ -50,7 +51,7 @@ function ServiceProviderSettings() {
             businessAddress: profile.address || '',
           }));
         }
-      } catch (err) {
+      } catch {
         setSettings(prev => ({
           ...prev,
           fullName: currentUser.fullName || '',
@@ -94,6 +95,10 @@ function ServiceProviderSettings() {
       <div className="page-header">
         <h1 className="page-title">Settings</h1>
         <p className="page-subtitle">Manage your business and account preferences</p>
+        <div className="settings-theme-row">
+          <span className="settings-theme-label">Appearance</span>
+          <ThemeToggle />
+        </div>
       </div>
 
       <div className="settings-layout">

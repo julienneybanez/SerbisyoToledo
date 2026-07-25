@@ -13,7 +13,8 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  color: var(--brand-text, #1e293b);
+  color: var(--color-text-primary, #1e293b);
+  background: var(--color-page-bg, #f3f7fc);
 }
 
 .app {
@@ -42,5 +43,5 @@ body {
 }
 
 .bg-light-custom {
-  background-color: rgba(93, 169, 221, 0.05) !important;
+  background-color: color-mix(in srgb, var(--brand-primary, #5da9dd) 10%, transparent) !important;
 }

@@ -418,6 +418,7 @@
 }
 
 .action-btn.btn-accept {
+
   background: linear-gradient(135deg, #22c55e, #16a34a);
   color: #fff;
   box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3);
@@ -583,4 +584,58 @@
   .info-value {
     text-align: left;
   }
+}
+
+[data-theme='dark'] .request-details-overlay {
+  background: var(--color-overlay);
+}
+
+[data-theme='dark'] .request-details-modal {
+  background: var(--color-surface-elevated);
+}
+
+[data-theme='dark'] .modal-close-btn,
+[data-theme='dark'] .detail-card,
+[data-theme='dark'] .btn-close-modal {
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  border-color: var(--color-border);
+}
+
+[data-theme='dark'] .detail-card,
+[data-theme='dark'] .detail-card-header {
+  border-color: var(--color-border);
+}
+
+[data-theme='dark'] .detail-card.contact-card {
+  background: color-mix(in srgb, var(--brand-primary) 12%, var(--color-surface));
+}
+
+[data-theme='dark'] .detail-card-header h3,
+[data-theme='dark'] .info-value {
+  color: var(--color-text-primary);
+}
+
+[data-theme='dark'] .info-label,
+[data-theme='dark'] .job-details-text,
+[data-theme='dark'] .address-text,
+[data-theme='dark'] .phone-label,
+[data-theme='dark'] .btn-close-modal {
+  color: var(--color-text-secondary);
+}
+
+[data-theme='dark'] .discussion-request-info {
+  background: color-mix(in srgb, #9c27b0 20%, var(--color-surface));
+  color: #d8b4fe;
+}
+
+[data-theme='dark'] .discussion-pending-modal {
+  background: color-mix(in srgb, var(--color-warning) 16%, var(--color-surface));
+  color: var(--color-warning);
+}
+
+[data-theme='dark'] .modal-actions .review-submitted-badge {
+  background: color-mix(in srgb, var(--color-success) 15%, var(--color-surface));
+  color: var(--color-success);
+  border-color: color-mix(in srgb, var(--color-success) 45%, var(--color-border));
 }
