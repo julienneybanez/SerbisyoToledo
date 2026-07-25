@@ -425,7 +425,15 @@ input:checked + .slider:before {
 }
 
 [data-theme='dark'] .user-settings-container {
+  background: var(--color-background);
   color: var(--color-text-primary);
+}
+
+[data-theme='dark'] .user-settings-container .page-header {
+  background: var(--color-surface-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  padding: 1.25rem 1.5rem;
 }
 
 [data-theme='dark'] .user-settings-container .settings-layout {

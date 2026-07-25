@@ -513,6 +513,10 @@
   overflow: hidden;
 }
 
+[data-theme='dark'] .admin-page .admin-dialog-card {
+  background: linear-gradient(180deg, var(--admin-surface) 0%, var(--admin-surface-soft) 100%);
+}
+
 .admin-page .admin-dialog-card.danger {
   border-color: #f5c2c7;
   background: linear-gradient(180deg, #ffffff 0%, #fff7f8 100%);
@@ -526,11 +530,19 @@
   border-bottom: 1px solid #e2e8f0;
 }
 
+[data-theme='dark'] .admin-page .admin-dialog-header {
+  border-bottom-color: var(--admin-border);
+}
+
 .admin-page .admin-dialog-title {
   margin: 0;
   font-size: 1.05rem;
   font-weight: 700;
   color: #1e293b;
+}
+
+[data-theme='dark'] .admin-page .admin-dialog-title {
+  color: var(--admin-text);
 }
 
 .admin-page .admin-dialog-close {
@@ -545,8 +557,19 @@
   cursor: pointer;
 }
 
+[data-theme='dark'] .admin-page .admin-dialog-close {
+  background: var(--admin-surface);
+  color: var(--admin-muted);
+  border: 1px solid var(--admin-border);
+}
+
 .admin-page .admin-dialog-close:hover {
   background: #e2e8f0;
+}
+
+[data-theme='dark'] .admin-page .admin-dialog-close:hover {
+  background: var(--admin-surface-soft);
+  color: var(--admin-text);
 }
 
 .admin-page .admin-dialog-body {
@@ -560,6 +583,10 @@
   color: #475569;
   font-size: 0.92rem;
   line-height: 1.5;
+}
+
+[data-theme='dark'] .admin-page .admin-dialog-body p {
+  color: var(--admin-text);
 }
 
 .admin-page .admin-dialog-actions {
@@ -903,6 +930,10 @@
   min-width: 0;
 }
 
+[data-theme='dark'] .table-container {
+  background: linear-gradient(180deg, var(--admin-surface) 0%, var(--admin-surface-soft) 100%);
+}
+
 .admin-table {
   width: 100%;
   border-collapse: collapse;
@@ -920,14 +951,29 @@
   letter-spacing: 0.05em;
 }
 
+[data-theme='dark'] .admin-table th {
+  color: var(--admin-muted);
+  background: var(--admin-surface-secondary, var(--admin-surface-soft));
+  border-bottom-color: var(--admin-border);
+}
+
 .admin-table td {
   padding: 1rem;
   border-bottom: 1px solid #f1f5f9;
   vertical-align: middle;
 }
 
+[data-theme='dark'] .admin-table td {
+  color: var(--admin-text);
+  border-bottom-color: var(--admin-border);
+}
+
 .admin-table tbody tr:hover {
   background: #f5faff;
+}
+
+[data-theme='dark'] .admin-table tbody tr:hover {
+  background: color-mix(in srgb, var(--admin-surface-soft) 82%, #0b1220 18%);
 }
 
 .admin-table tbody tr:last-child td {
@@ -961,6 +1007,10 @@
 .user-info-cell .user-name {
   font-weight: 500;
   color: #1e293b;
+}
+
+[data-theme='dark'] .user-info-cell .user-name {
+  color: var(--admin-text);
 }
 
 .user-info-cell .user-email {

@@ -31,6 +31,11 @@
   height: 0;
 }
 
+.edit-profile-modal::-webkit-scrollbar-thumb,
+.edit-profile-modal::-webkit-scrollbar-track {
+  background: transparent;
+}
+
 .modal-close-btn {
   position: absolute;
   top: 18px;
@@ -295,6 +300,63 @@
 .btn-save:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+[data-theme='dark'] .edit-profile-modal {
+  background: var(--color-surface-elevated) !important;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-primary);
+}
+
+[data-theme='dark'] .modal-close-btn {
+  color: var(--color-text-secondary);
+}
+
+[data-theme='dark'] .modal-close-btn:hover {
+  background: var(--color-surface-secondary);
+  color: var(--color-text-primary);
+}
+
+[data-theme='dark'] .edit-profile-header p,
+[data-theme='dark'] .edit-profile-loading p,
+[data-theme='dark'] .btn-cancel {
+  color: var(--color-text-secondary);
+}
+
+[data-theme='dark'] .edit-profile-form {
+  background: transparent;
+}
+
+[data-theme='dark'] .photo-section {
+  border-bottom-color: var(--color-border);
+}
+
+[data-theme='dark'] .btn-photo-remove,
+[data-theme='dark'] .btn-cancel {
+  background: var(--color-surface-secondary);
+  border-color: var(--color-border);
+}
+
+[data-theme='dark'] .btn-photo-remove:hover:not(:disabled),
+[data-theme='dark'] .btn-cancel:hover:not(:disabled) {
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+}
+
+[data-theme='dark'] .edit-profile-form .form-group label {
+  color: var(--color-text-primary);
+}
+
+[data-theme='dark'] .edit-profile-form .form-group input,
+[data-theme='dark'] .edit-profile-form .form-group textarea {
+  background: var(--color-input-bg);
+  color: var(--color-input-text);
+  border-color: var(--color-border);
+}
+
+[data-theme='dark'] .edit-profile-form .form-group input::placeholder,
+[data-theme='dark'] .edit-profile-form .form-group textarea::placeholder {
+  color: var(--color-placeholder);
 }
 
 .spinner-small {

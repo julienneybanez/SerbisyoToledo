@@ -19,8 +19,20 @@
   max-width: 650px;
   max-height: 90vh;
   overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
   position: relative;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+}
+
+.edit-portfolio-modal::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+.edit-portfolio-modal::-webkit-scrollbar-thumb,
+.edit-portfolio-modal::-webkit-scrollbar-track {
+  background: transparent;
 }
 
 .edit-portfolio-modal .modal-close-btn {
@@ -416,6 +428,81 @@
 .edit-portfolio-form .btn-save:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+[data-theme='dark'] .edit-portfolio-modal {
+  background: var(--color-surface-elevated);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-primary);
+}
+
+[data-theme='dark'] .edit-portfolio-modal .modal-close-btn {
+  background: var(--color-surface-secondary);
+  color: var(--color-text-secondary);
+}
+
+[data-theme='dark'] .edit-portfolio-modal .modal-close-btn:hover {
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+}
+
+[data-theme='dark'] .edit-portfolio-header {
+  border-bottom-color: var(--color-border);
+}
+
+[data-theme='dark'] .edit-portfolio-header h2,
+[data-theme='dark'] .edit-portfolio-form .form-section h3 {
+  color: var(--color-text-primary);
+}
+
+[data-theme='dark'] .edit-portfolio-header p,
+[data-theme='dark'] .edit-portfolio-loading p {
+  color: var(--color-text-secondary);
+}
+
+[data-theme='dark'] .edit-portfolio-form textarea,
+[data-theme='dark'] .edit-portfolio-form select,
+[data-theme='dark'] .edit-portfolio-form input[type='text'],
+[data-theme='dark'] .caption-input {
+  background: var(--color-input-bg);
+  color: var(--color-input-text);
+  border-color: var(--color-border);
+}
+
+[data-theme='dark'] .edit-portfolio-form textarea::placeholder,
+[data-theme='dark'] .edit-portfolio-form input[type='text']::placeholder,
+[data-theme='dark'] .caption-input::placeholder {
+  color: var(--color-placeholder);
+}
+
+[data-theme='dark'] .portfolio-item {
+  background: var(--color-surface-secondary);
+}
+
+[data-theme='dark'] .add-image-section {
+  background: var(--color-surface-secondary);
+  border-color: var(--color-border);
+}
+
+[data-theme='dark'] .caption-label {
+  color: var(--color-text-secondary);
+}
+
+[data-theme='dark'] .btn-upload-image,
+[data-theme='dark'] .edit-portfolio-form .btn-cancel {
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  border-color: var(--color-border);
+}
+
+[data-theme='dark'] .btn-upload-image:hover:not(:disabled),
+[data-theme='dark'] .edit-portfolio-form .btn-cancel:hover:not(:disabled) {
+  background: var(--color-surface-secondary);
+  color: var(--color-text-primary);
+}
+
+[data-theme='dark'] .edit-portfolio-form .form-actions {
+  border-top-color: var(--color-border);
 }
 
 .spinner-small {

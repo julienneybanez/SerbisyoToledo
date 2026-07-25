@@ -10,8 +10,8 @@
   width: 260px !important;
   height: 100vh;
   background:
-    radial-gradient(circle at top, rgba(93, 169, 221, 0.16), transparent 46%),
-    linear-gradient(180deg, color-mix(in srgb, var(--color-surface-elevated) 92%, #0f172a) 0%, #0f172a 100%) !important;
+    radial-gradient(circle at top, rgba(93, 169, 221, 0.2), transparent 46%),
+    linear-gradient(180deg, #1e293b 0%, #0f172a 100%) !important;
   border-right: none !important;
   z-index: 1050;
   transition: transform 0.3s ease;
@@ -61,7 +61,7 @@
   border: none;
   border-radius: 6px;
   padding: 0.5rem;
-  color: var(--color-text-muted);
+  color: rgba(226, 232, 240, 0.88);
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -73,7 +73,7 @@
 
 /* Navigation Styles */
 .admin-sidebar-coreui .sidebar-nav .nav-title {
-  color: var(--color-text-muted) !important;
+  color: rgba(148, 163, 184, 0.9) !important;
   font-size: 0.7rem;
   font-weight: 600;
   text-transform: uppercase;
@@ -106,7 +106,7 @@
 }
 
 .admin-sidebar-coreui .sidebar-nav .nav-link {
-  color: var(--color-text-secondary) !important;
+  color: rgba(226, 232, 240, 0.9) !important;
   padding: 0.78rem 1rem;
   margin: 0.15rem 0.75rem;
   border-radius: 10px;
