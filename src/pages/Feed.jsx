@@ -329,11 +329,6 @@ export default function Feed() {
                     <LocationIcon />
                     {p.location}
                   </span>
-                  <span
-                    className={`provider-status-badge ${p.online ? "online" : "offline"}`}
-                  >
-                    {p.online ? "Online now" : "Offline"}
-                  </span>
                 </div>
 
                 <p className="provider-description">
