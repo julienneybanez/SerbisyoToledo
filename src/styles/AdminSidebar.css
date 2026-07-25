@@ -177,6 +177,7 @@
 /* Responsive */
 @media (max-width: 991.98px) {
   .admin-sidebar-coreui {
+    width: min(86vw, 260px) !important;
     transform: translateX(-100%);
     z-index: 1050 !important;
     pointer-events: none;

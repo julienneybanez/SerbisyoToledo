@@ -5,6 +5,7 @@
   display: flex;
   min-height: 100vh;
   background: linear-gradient(135deg, #f2f8fe 0%, #eaf5ff 45%, #ecfbf6 100%);
+  overflow-x: clip;
 }
 
 .admin-main {
@@ -14,18 +15,25 @@
   min-height: 100vh;
   margin-left: 260px;
   transition: margin-left 0.3s ease;
+  min-width: 0;
 }
 
 .admin-content {
   flex: 1;
   padding: 1.5rem;
   overflow-y: auto;
+  overflow-x: hidden;
+  min-width: 0;
 }
 
 /* Responsive */
 @media (max-width: 991px) {
   .admin-main {
     margin-left: 0;
+  }
+
+  .admin-content {
+    padding: 1rem;
   }
 }
 

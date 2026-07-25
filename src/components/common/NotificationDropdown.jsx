@@ -122,6 +122,10 @@ export default function NotificationDropdown() {
         return <i className="bi bi-chat-dots-fill notification-icon icon-discussion"></i>;
       case 'discussion_accepted':
         return <i className="bi bi-telephone-fill notification-icon icon-phone"></i>;
+      case 'verification_approved':
+        return <i className="bi bi-patch-check-fill notification-icon icon-accepted"></i>;
+      case 'verification_rejected':
+        return <i className="bi bi-shield-x notification-icon icon-declined"></i>;
       default:
         return <i className="bi bi-bell-fill notification-icon"></i>;
     }

@@ -125,7 +125,7 @@ exports.getProviderRequests = async (req, res) => {
 exports.updateRequestStatus = async (req, res) => {
   try {
     const { requestId } = req.params;
-    const { status } = req.body;
+    const { status, reason } = req.body;
     const userId = req.user.userId;
 
     // Validate status
@@ -155,6 +155,7 @@ exports.updateRequestStatus = async (req, res) => {
     }
 
     const request = requests[0];
+    const trimmedReason = typeof reason === 'string' ? reason.trim() : '';
 
     // Only provider can update status (except cancelled and completed which have special rules)
     if (status === 'cancelled') {
@@ -251,11 +252,41 @@ exports.updateRequestStatus = async (req, res) => {
       }
     }
 
-    // Update the status
-    await db.query(
-      'UPDATE service_requests SET status = ? WHERE id = ?',
-      [status, requestId]
-    );
+    if (status === 'declined') {
+      if (request.status === 'declined') {
+        return res.status(400).json({
+          success: false,
+          message: 'This request has already been declined'
+        });
+      }
+
+      if (!trimmedReason) {
+        return res.status(400).json({
+          success: false,
+          message: 'Reason for declining is required'
+        });
+      }
+
+      if (trimmedReason.length > 500) {
+        return res.status(400).json({
+          success: false,
+          message: 'Reason for declining must not exceed 500 characters'
+        });
+      }
+    }
+
+    // Update the status (and decline reason where applicable)
+    if (status === 'declined') {
+      await db.query(
+        'UPDATE service_requests SET status = ?, decline_reason = ? WHERE id = ?',
+        [status, trimmedReason, requestId]
+      );
+    } else {
+      await db.query(
+        'UPDATE service_requests SET status = ? WHERE id = ?',
+        [status, requestId]
+      );
+    }
 
     // Create notification for the client based on status
     let notificationType, notificationTitle, notificationMessage;
@@ -269,7 +300,7 @@ exports.updateRequestStatus = async (req, res) => {
       case 'declined':
         notificationType = 'request_declined';
         notificationTitle = 'Request Declined';
-        notificationMessage = `${request.provider_name} has declined your service request: ${request.job_title}`;
+        notificationMessage = `${request.provider_name} declined your service request "${request.job_title}".\n\nReason: ${trimmedReason}`;
         break;
       case 'on_the_way':
         notificationType = 'provider_on_way';

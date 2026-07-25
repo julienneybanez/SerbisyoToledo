@@ -281,6 +281,8 @@ exports.getVerificationRequests = async (req, res) => {
 
 // Review verification request (approve/reject)
 exports.reviewVerificationRequest = async (req, res) => {
+  let connection;
+
   try {
     const { id } = req.params;
     const { action, rejectionReason, adminNotes } = req.body;
@@ -293,15 +295,19 @@ exports.reviewVerificationRequest = async (req, res) => {
       });
     }
 
-    if (action === 'reject' && !rejectionReason) {
+    const trimmedReason = typeof rejectionReason === 'string' ? rejectionReason.trim() : '';
+    if (action === 'reject' && !trimmedReason) {
       return res.status(400).json({
         success: false,
         message: 'Rejection reason is required when rejecting a request'
       });
     }
 
-    const [requests] = await db.query(
-      'SELECT id, user_id, status FROM verification_requests WHERE id = ?',
+    connection = await db.getConnection();
+    await connection.beginTransaction();
+
+    const [requests] = await connection.query(
+      'SELECT id, user_id, status FROM verification_requests WHERE id = ? FOR UPDATE',
       [id]
     );
 
@@ -321,30 +327,50 @@ exports.reviewVerificationRequest = async (req, res) => {
 
     const newStatus = action === 'approve' ? 'approved' : 'rejected';
     const isVerified = action === 'approve';
+    const notificationType = action === 'approve' ? 'verification_approved' : 'verification_rejected';
+    const notificationTitle = action === 'approve' ? 'Verification Approved' : 'Verification Request Rejected';
+    const notificationMessage = action === 'approve'
+      ? 'Your service provider verification request has been approved.'
+      : `Your service provider verification request was rejected. Reason: ${trimmedReason}`;
 
-    await db.query(
+    await connection.query(
       `UPDATE verification_requests
        SET status = ?, rejection_reason = ?, admin_notes = ?, reviewed_by = ?, reviewed_at = NOW()
        WHERE id = ?`,
-      [newStatus, action === 'reject' ? rejectionReason : null, adminNotes || null, adminId, id]
+      [newStatus, action === 'reject' ? trimmedReason : null, typeof adminNotes === 'string' ? adminNotes.trim() || null : null, adminId, id]
     );
 
-    await db.query(
+    await connection.query(
       'UPDATE users SET is_verified = ? WHERE id = ?',
       [isVerified, requests[0].user_id]
     );
+
+    await connection.query(
+      `INSERT INTO notifications (user_id, type, title, message, related_request_id)
+       VALUES (?, ?, ?, ?, NULL)`,
+      [requests[0].user_id, notificationType, notificationTitle, notificationMessage]
+    );
+
+    await connection.commit();
 
     res.json({
       success: true,
       message: `Verification request ${newStatus} successfully`
     });
   } catch (error) {
+    if (connection) {
+      await connection.rollback();
+    }
+
     console.error('Error reviewing verification request:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to review verification request',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      message: 'Failed to review verification request'
     });
+  } finally {
+    if (connection) {
+      connection.release();
+    }
   }
 };
 

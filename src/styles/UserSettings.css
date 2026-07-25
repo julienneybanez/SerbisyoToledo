@@ -92,6 +92,10 @@
 }
 
 .settings-section {
+  background: transparent;
+}
+
+.settings-section {
   margin-bottom: 2rem;
 }
 
@@ -418,4 +422,35 @@ input:checked + .slider:before {
   .settings-label {
     font-size: 0.9rem;
   }
+}
+
+[data-theme='dark'] .user-settings-container {
+  color: var(--color-text-primary);
+}
+
+[data-theme='dark'] .user-settings-container .settings-layout {
+  background: var(--color-surface-elevated);
+  border: 1px solid var(--color-border);
+}
+
+[data-theme='dark'] .user-settings-container .settings-nav {
+  background: var(--color-surface-secondary);
+}
+
+[data-theme='dark'] .user-settings-container .settings-content {
+  background: var(--color-surface-elevated);
+}
+
+[data-theme='dark'] .user-settings-container .settings-nav-item,
+[data-theme='dark'] .user-settings-container .settings-label,
+[data-theme='dark'] .user-settings-container .settings-section-title,
+[data-theme='dark'] .user-settings-container .settings-subsection-title,
+[data-theme='dark'] .user-settings-container .toggle-label span {
+  color: var(--color-text-primary);
+}
+
+[data-theme='dark'] .user-settings-container .settings-help,
+[data-theme='dark'] .user-settings-container .toggle-label small,
+[data-theme='dark'] .user-settings-container .page-subtitle {
+  color: var(--color-text-secondary);
 }

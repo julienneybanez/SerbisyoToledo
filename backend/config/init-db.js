@@ -174,6 +174,7 @@ async function initializeDatabase() {
         scheduled_date DATE NOT NULL,
         scheduled_time VARCHAR(50) NOT NULL,
         status ENUM('pending', 'accepted', 'declined', 'on_the_way', 'in_progress', 'completed', 'cancelled') DEFAULT 'pending',
+        decline_reason TEXT DEFAULT NULL,
         discussion_requested BOOLEAN DEFAULT FALSE,
         discussion_accepted BOOLEAN DEFAULT FALSE,
         provider_phone_revealed BOOLEAN DEFAULT FALSE,
@@ -194,7 +195,7 @@ async function initializeDatabase() {
       CREATE TABLE IF NOT EXISTS notifications (
         id INT PRIMARY KEY AUTO_INCREMENT,
         user_id INT NOT NULL,
-        type ENUM('request_received', 'request_accepted', 'request_declined', 'provider_on_way', 'service_completed', 'discussion_requested', 'discussion_accepted', 'phone_revealed') NOT NULL,
+        type ENUM('request_received', 'request_accepted', 'request_declined', 'provider_on_way', 'service_completed', 'discussion_requested', 'discussion_accepted', 'phone_revealed', 'completion_confirmed', 'review_received', 'verification_approved', 'verification_rejected') NOT NULL,
         title VARCHAR(255) NOT NULL,
         message TEXT NOT NULL,
         related_request_id INT DEFAULT NULL,
@@ -388,6 +389,14 @@ async function initializeDatabase() {
       // Column already exists
     }
 
+    // Add decline_reason column to service_requests if it doesn't exist
+    try {
+      await connection.query(`ALTER TABLE service_requests ADD COLUMN decline_reason TEXT DEFAULT NULL`);
+      console.log('✅ Added decline_reason column to service_requests');
+    } catch (err) {
+      // Column already exists
+    }
+
     // Update reviews rating column to DECIMAL to support half-stars
     try {
       await connection.query(`ALTER TABLE reviews MODIFY COLUMN rating DECIMAL(2,1) NOT NULL`);
@@ -411,7 +420,7 @@ async function initializeDatabase() {
           'request_received', 'request_accepted', 'request_declined', 
           'provider_on_way', 'service_completed', 'discussion_requested', 
           'discussion_accepted', 'phone_revealed', 'completion_confirmed',
-          'review_received'
+          'review_received', 'verification_approved', 'verification_rejected'
         ) NOT NULL
       `);
       console.log('✅ Updated notification type ENUM with new types');

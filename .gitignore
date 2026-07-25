@@ -38,6 +38,8 @@ dist-ssr
 *.sql
 *.sql.gz
 *.dump
+!backend/migrations/
+!backend/migrations/*.sql
 
 # Coverage and temp
 coverage/
@@ -62,3 +64,5 @@ temp/
 *.secrets
 *.token
 secrets/
+backend/migrations/20260725_add_service_request_decline_reason.sql
+backend/migrations/20260725_add_verification_notification_types.sql

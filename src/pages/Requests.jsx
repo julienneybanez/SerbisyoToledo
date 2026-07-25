@@ -18,6 +18,12 @@ export default function Requests() {
   const [reviewRequest, setReviewRequest] = useState(null);
   const [reportRequest, setReportRequest] = useState(null);
   const [reviewLoading, setReviewLoading] = useState(false);
+  const [declineDialog, setDeclineDialog] = useState({
+    open: false,
+    requestId: null,
+    reason: '',
+    error: '',
+  });
 
   useEffect(() => {
     fetchRequests();
@@ -41,10 +47,11 @@ export default function Requests() {
     }
   };
 
-  const handleStatusUpdate = async (requestId, status) => {
+  const handleStatusUpdate = async (requestId, status, reason = null, options = {}) => {
+    const { suppressAlert = false } = options;
     setActionLoading(requestId);
     try {
-      const response = await serviceRequestAPI.updateStatus(requestId, status);
+      const response = await serviceRequestAPI.updateStatus(requestId, status, reason);
       if (response.success) {
         if (status === 'completed' && response.data) {
           // Two-way completion
@@ -58,7 +65,9 @@ export default function Requests() {
             if (selectedRequest?.id === requestId) {
               setSelectedRequest(prev => ({ ...prev, status: 'completed', provider_completed: true, client_completed: true }));
             }
-            alert('Service has been completed by both parties!');
+            if (!suppressAlert) {
+              alert('Service has been completed by both parties!');
+            }
           } else {
             // Only one side confirmed
             setRequests(prev =>
@@ -78,26 +87,74 @@ export default function Requests() {
                 client_completed: response.data.client_completed 
               }));
             }
-            alert('Completion confirmed! Waiting for the other party to confirm.');
+            if (!suppressAlert) {
+              alert('Completion confirmed! Waiting for the other party to confirm.');
+            }
           }
         } else {
           // Normal status update
           setRequests(prev =>
             prev.map(req =>
-              req.id === requestId ? { ...req, status } : req
+              req.id === requestId ? { ...req, status, ...(status === 'declined' ? { decline_reason: reason?.trim() || null } : {}) } : req
             )
           );
           if (selectedRequest?.id === requestId) {
-            setSelectedRequest(prev => ({ ...prev, status }));
+            setSelectedRequest(prev => ({ ...prev, status, ...(status === 'declined' ? { decline_reason: reason?.trim() || null } : {}) }));
           }
         }
+        return { success: true };
       }
     } catch (err) {
       console.error('Status update error:', err);
-      alert(err.message || 'Failed to update status');
+      if (!suppressAlert) {
+        alert(err.message || 'Failed to update status');
+      }
+      return { success: false, message: err.message || 'Failed to update status' };
     } finally {
       setActionLoading(null);
     }
+
+    return { success: false, message: 'Failed to update status' };
+  };
+
+  const openDeclineDialog = (requestId) => {
+    setDeclineDialog({
+      open: true,
+      requestId,
+      reason: '',
+      error: '',
+    });
+  };
+
+  const closeDeclineDialog = () => {
+    setDeclineDialog({
+      open: false,
+      requestId: null,
+      reason: '',
+      error: '',
+    });
+  };
+
+  const handleConfirmDecline = async () => {
+    const trimmedReason = declineDialog.reason.trim();
+    if (!trimmedReason) {
+      setDeclineDialog((prev) => ({
+        ...prev,
+        error: 'Reason for declining is required.',
+      }));
+      return;
+    }
+
+    const result = await handleStatusUpdate(declineDialog.requestId, 'declined', trimmedReason, { suppressAlert: true });
+    if (result?.success) {
+      closeDeclineDialog();
+      return;
+    }
+
+    setDeclineDialog((prev) => ({
+      ...prev,
+      error: result?.message || 'Failed to decline request',
+    }));
   };
 
   const handleRequestDiscussion = async (requestId) => {
@@ -195,13 +252,6 @@ export default function Requests() {
       day: 'numeric',
       year: 'numeric',
     });
-  };
-
-  const filterCounts = {
-    all: requests.length,
-    active: requests.filter(req => ['pending', 'accepted', 'on_the_way', 'in_progress'].includes(req.status)).length,
-    completed: requests.filter(req => req.status === 'completed').length,
-    cancelled: requests.filter(req => ['declined', 'cancelled'].includes(req.status)).length,
   };
 
   const filteredRequests = requests.filter(req => {
@@ -322,6 +372,10 @@ export default function Requests() {
                   </div>
                 </div>
 
+                {request.status === 'declined' && request.decline_reason && (
+                  <p className="request-decline-reason"><strong>Reason for declining:</strong> {request.decline_reason}</p>
+                )}
+
                 {/* Discussion/Phone Section */}
                 {['accepted', 'on_the_way', 'in_progress'].includes(request.status) && (
                   <div className="request-discussion-section">
@@ -401,7 +455,7 @@ export default function Requests() {
                           </button>
                           <button
                             className="btn-action btn-decline"
-                            onClick={() => handleStatusUpdate(request.id, 'declined')}
+                            onClick={() => openDeclineDialog(request.id)}
                             disabled={actionLoading === request.id}
                           >
                             Decline
@@ -489,11 +543,65 @@ export default function Requests() {
           onOpenReview={(request) => {
             setReviewRequest(request);
           }}
+          onOpenDecline={(request) => {
+            openDeclineDialog(request.id);
+          }}
           onOpenReport={(request) => {
             setReportRequest(request);
           }}
           actionLoading={actionLoading}
         />
+      )}
+
+      {declineDialog.open && (
+        <div className="decline-dialog-overlay" role="dialog" aria-modal="true" aria-labelledby="decline-dialog-title" onClick={closeDeclineDialog}>
+          <div className="decline-dialog-card" onClick={(event) => event.stopPropagation()}>
+            <div className="decline-dialog-header">
+              <h2 id="decline-dialog-title">Decline Service Request</h2>
+              <button type="button" className="decline-dialog-close" onClick={closeDeclineDialog} aria-label="Close decline dialog">
+                ×
+              </button>
+            </div>
+            <div className="decline-dialog-body">
+              <label htmlFor="decline-reason-text" className="decline-dialog-label">Reason for declining</label>
+              <textarea
+                id="decline-reason-text"
+                className="decline-dialog-textarea"
+                value={declineDialog.reason}
+                onChange={(event) => {
+                  const nextValue = event.target.value;
+                  setDeclineDialog((prev) => ({
+                    ...prev,
+                    reason: nextValue,
+                    error: prev.error ? '' : prev.error,
+                  }));
+                }}
+                rows={4}
+                maxLength={500}
+                placeholder="Explain why you need to decline this request"
+              />
+              {declineDialog.error ? <p className="decline-dialog-error">{declineDialog.error}</p> : null}
+            </div>
+            <div className="decline-dialog-actions">
+              <button
+                type="button"
+                className="decline-btn-cancel"
+                onClick={closeDeclineDialog}
+                disabled={actionLoading === declineDialog.requestId}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="decline-btn-confirm"
+                onClick={handleConfirmDecline}
+                disabled={actionLoading === declineDialog.requestId || !declineDialog.reason.trim()}
+              >
+                {actionLoading === declineDialog.requestId ? 'Declining...' : 'Confirm Decline'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Review Modal */}

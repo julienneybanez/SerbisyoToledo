@@ -9,6 +9,14 @@ function AdminVerifications() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [actionLoading, setActionLoading] = useState(null);
+  const [documentPreview, setDocumentPreview] = useState(null);
+  const [isImageZoomed, setIsImageZoomed] = useState(false);
+  const [rejectDialog, setRejectDialog] = useState({
+    open: false,
+    requestId: null,
+    reason: '',
+    error: '',
+  });
 
   const fetchVerifications = async () => {
     try {
@@ -29,34 +37,133 @@ function AdminVerifications() {
     fetchVerifications();
   }, []);
 
-  const handleReview = async (requestId, action) => {
+  useEffect(() => {
+    if (!documentPreview && !rejectDialog.open) {
+      return undefined;
+    }
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        if (documentPreview) {
+          setDocumentPreview(null);
+          setIsImageZoomed(false);
+          return;
+        }
+
+        if (rejectDialog.open) {
+          setRejectDialog({
+            open: false,
+            requestId: null,
+            reason: '',
+            error: '',
+          });
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [documentPreview, rejectDialog.open]);
+
+  const getDocumentType = (dataUrl) => {
+    if (!dataUrl || typeof dataUrl !== 'string') {
+      return { kind: 'unknown', mime: '' };
+    }
+
+    const mimeMatch = dataUrl.match(/^data:([^;,]+)[;,]/i);
+    const mime = (mimeMatch?.[1] || '').toLowerCase();
+
+    if (mime === 'application/pdf') {
+      return { kind: 'pdf', mime };
+    }
+
+    if (mime.startsWith('image/')) {
+      return { kind: 'image', mime };
+    }
+
+    return { kind: 'unknown', mime };
+  };
+
+  const openDocumentPreview = (dataUrl, label) => {
+    if (!dataUrl) {
+      return;
+    }
+
+    const { kind, mime } = getDocumentType(dataUrl);
+    setIsImageZoomed(false);
+    setDocumentPreview({
+      dataUrl,
+      label,
+      kind,
+      mime,
+    });
+  };
+
+  const closeDocumentPreview = () => {
+    setDocumentPreview(null);
+    setIsImageZoomed(false);
+  };
+
+  const openRejectDialog = (requestId) => {
+    setRejectDialog({
+      open: true,
+      requestId,
+      reason: '',
+      error: '',
+    });
+  };
+
+  const closeRejectDialog = () => {
+    setRejectDialog({
+      open: false,
+      requestId: null,
+      reason: '',
+      error: '',
+    });
+  };
+
+  const handleReview = async (requestId, action, rejectionReasonInput = '') => {
     try {
       setActionLoading(`${requestId}-${action}`);
       let payload = { action };
 
       if (action === 'reject') {
-        const reason = window.prompt('Enter rejection reason:');
-        if (!reason) return;
-        payload = { ...payload, rejectionReason: reason };
+        const trimmedReason = rejectionReasonInput.trim();
+        if (!trimmedReason) {
+          setRejectDialog((prev) => ({
+            ...prev,
+            error: 'Rejection reason is required.',
+          }));
+          return;
+        }
+        payload = { ...payload, rejectionReason: trimmedReason };
       }
 
       const response = await adminAPI.reviewVerificationRequest(requestId, payload);
       if (response.success) {
+        if (action === 'reject') {
+          closeRejectDialog();
+        }
         await fetchVerifications();
       }
     } catch (err) {
-      alert(err.message || 'Failed to review request');
+      if (action === 'reject') {
+        setRejectDialog((prev) => ({
+          ...prev,
+          error: err.message || 'Failed to reject request',
+        }));
+      } else {
+        alert(err.message || 'Failed to review request');
+      }
     } finally {
       setActionLoading(null);
     }
-  };
-
-  const openDocument = (dataUrl) => {
-    if (!dataUrl) {
-      alert('No document available.');
-      return;
-    }
-    window.open(dataUrl, '_blank', 'noopener,noreferrer');
   };
 
   const filteredVerifications = verifications.filter((v) => {
@@ -156,13 +263,27 @@ function AdminVerifications() {
                 )}
 
                 <div className="request-documents">
-                  <button className="btn-view-details" onClick={() => openDocument(request.documents?.governmentId)}>
+                  <button
+                    className="btn-view-details"
+                    onClick={() => openDocumentPreview(request.documents?.governmentId, 'Government ID')}
+                    disabled={!request.documents?.governmentId}
+                    aria-label="Preview government ID document"
+                  >
                     View Government ID
                   </button>
-                  <button className="btn-view-details" onClick={() => openDocument(request.documents?.certifications)}>
+                  <button
+                    className="btn-view-details"
+                    onClick={() => openDocumentPreview(request.documents?.certifications, 'Certifications')}
+                    disabled={!request.documents?.certifications}
+                    aria-label="Preview certifications document"
+                  >
                     View Certifications
                   </button>
                 </div>
+
+                {!request.documents?.governmentId && !request.documents?.certifications && (
+                  <p className="request-detail">No document submitted</p>
+                )}
               </div>
 
               <div className="request-actions">
@@ -178,13 +299,18 @@ function AdminVerifications() {
                     <button
                       className="btn-reject"
                       disabled={actionLoading === `${request.id}-reject`}
-                      onClick={() => handleReview(request.id, 'reject')}
+                      onClick={() => openRejectDialog(request.id)}
                     >
                       {actionLoading === `${request.id}-reject` ? 'Rejecting...' : 'Reject'}
                     </button>
                   </>
                 ) : (
-                  <button className="btn-view-details" onClick={() => openDocument(request.documents?.governmentId)}>
+                  <button
+                    className="btn-view-details"
+                    onClick={() => openDocumentPreview(request.documents?.governmentId || request.documents?.certifications, 'Verification Document')}
+                    disabled={!request.documents?.governmentId && !request.documents?.certifications}
+                    aria-label="Preview verification document"
+                  >
                     View Details
                   </button>
                 )}
@@ -198,6 +324,131 @@ function AdminVerifications() {
         <div className="empty-state">
           <h3>No verification requests found</h3>
           <p>Try adjusting your search or filter criteria</p>
+        </div>
+      )}
+
+      {documentPreview && (
+        <div
+          className="admin-document-preview-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-label={`${documentPreview.label} preview`}
+          onClick={closeDocumentPreview}
+        >
+          <div className="admin-document-preview-dialog" onClick={(event) => event.stopPropagation()}>
+            <button
+              type="button"
+              className="admin-document-preview-close"
+              onClick={closeDocumentPreview}
+              aria-label="Close document preview"
+            >
+              ×
+            </button>
+
+            {documentPreview.kind === 'image' ? (
+              <div className="admin-document-image-container">
+                <button
+                  type="button"
+                  className="admin-document-zoom-toggle"
+                  onClick={() => setIsImageZoomed((prev) => !prev)}
+                  aria-label={isImageZoomed ? 'Reset image zoom' : 'Enlarge image'}
+                >
+                  {isImageZoomed ? 'Reset Zoom' : 'Enlarge'}
+                </button>
+                <img
+                  src={documentPreview.dataUrl}
+                  alt={`${documentPreview.label} document`}
+                  className={`admin-document-preview-image ${isImageZoomed ? 'zoomed' : ''}`}
+                  onClick={() => setIsImageZoomed((prev) => !prev)}
+                />
+              </div>
+            ) : null}
+
+            {documentPreview.kind === 'pdf' ? (
+              <div className="admin-document-pdf-container">
+                <iframe
+                  src={documentPreview.dataUrl}
+                  title={`${documentPreview.label} PDF preview`}
+                  className="admin-document-preview-pdf"
+                />
+                <p className="admin-document-preview-fallback">
+                  If the PDF cannot be previewed in this browser, download support may be required in your environment.
+                </p>
+              </div>
+            ) : null}
+
+            {documentPreview.kind === 'unknown' ? (
+              <div className="admin-document-preview-unsupported">
+                <p>Preview is not available for this document type.</p>
+              </div>
+            ) : null}
+          </div>
+        </div>
+      )}
+
+      {rejectDialog.open && (
+        <div
+          className="admin-dialog-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="verification-reject-title"
+          onClick={closeRejectDialog}
+        >
+          <div className="admin-dialog-card danger" onClick={(event) => event.stopPropagation()}>
+            <div className="admin-dialog-header">
+              <h2 id="verification-reject-title" className="admin-dialog-title">Reject Verification Request</h2>
+              <button
+                type="button"
+                className="admin-dialog-close"
+                onClick={closeRejectDialog}
+                aria-label="Close rejection dialog"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="admin-dialog-body">
+              <label htmlFor="verification-rejection-reason" className="settings-label">
+                Rejection reason
+              </label>
+              <textarea
+                id="verification-rejection-reason"
+                className="settings-textarea admin-reject-textarea"
+                value={rejectDialog.reason}
+                onChange={(event) => {
+                  const value = event.target.value;
+                  setRejectDialog((prev) => ({
+                    ...prev,
+                    reason: value,
+                    error: prev.error ? '' : prev.error,
+                  }));
+                }}
+                rows={4}
+                maxLength={500}
+                aria-required="true"
+              />
+              {rejectDialog.error && <p className="admin-dialog-error">{rejectDialog.error}</p>}
+            </div>
+
+            <div className="admin-dialog-actions admin-dialog-actions-split">
+              <button
+                type="button"
+                className="btn-view-details"
+                onClick={closeRejectDialog}
+                disabled={actionLoading === `${rejectDialog.requestId}-reject`}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn-reject"
+                onClick={() => handleReview(rejectDialog.requestId, 'reject', rejectDialog.reason)}
+                disabled={actionLoading === `${rejectDialog.requestId}-reject` || !rejectDialog.reason.trim()}
+              >
+                {actionLoading === `${rejectDialog.requestId}-reject` ? 'Rejecting...' : 'Confirm Reject'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

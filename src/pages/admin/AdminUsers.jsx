@@ -156,7 +156,7 @@ function AdminUsers() {
   });
 
   return (
-    <div className="admin-page">
+    <div className="admin-page admin-users-page">
       <div className="admin-page-header">
         <h1 className="admin-page-title">Users Management</h1>
         <p className="admin-page-subtitle">Manage all users in the system</p>
@@ -195,6 +195,67 @@ function AdminUsers() {
       </div>
 
       {error && <div className="alert alert-danger mt-3">{error}</div>}
+
+      {!loading && (
+        <div className="admin-users-mobile-list" aria-label="Users list for mobile">
+          {filteredUsers.map((user) => (
+            <div key={`mobile-${user.id}`} className="admin-user-mobile-card">
+              <div className="admin-user-mobile-header">
+                <div className="user-cell">
+                  <div className="user-avatar-small">
+                    {user.name.split(' ').map((n) => n[0]).join('').slice(0, 2)}
+                  </div>
+                  <div className="user-info-cell">
+                    <span className="user-name">{user.name}</span>
+                    <span className="user-email">{user.email}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="admin-user-mobile-body">
+                <p className="request-detail"><strong>Type:</strong> {user.type === 'tradesperson' ? 'Provider' : user.type}</p>
+                <p className="request-detail"><strong>Profession:</strong> {user.profession || '—'}</p>
+                <p className="request-detail"><strong>Status:</strong> {!user.isActive ? 'suspended' : user.isVerified ? 'verified' : 'active'}</p>
+                <p className="request-detail"><strong>Verification:</strong> {user.isVerified ? 'verified' : 'not verified'}</p>
+                <p className="request-detail"><strong>Join Date:</strong> {new Date(user.joinDate).toLocaleDateString()}</p>
+              </div>
+
+              <div className="table-actions-stack admin-user-mobile-actions">
+                <button className="btn-view-details btn-users-action" onClick={() => handleViewDetails(user.id)}>
+                  View Details
+                </button>
+                <button
+                  className="btn-dismiss btn-users-action"
+                  disabled={actionLoading === `active-${user.id}`}
+                  onClick={() => handleToggleActive(user)}
+                >
+                  {actionLoading === `active-${user.id}`
+                    ? 'Updating...'
+                    : user.isActive
+                      ? 'Deactivate'
+                      : 'Reactivate'}
+                </button>
+                {user.type === 'tradesperson' && (
+                  <button
+                    className="btn-investigate btn-users-action"
+                    disabled={actionLoading === `verify-${user.id}`}
+                    onClick={() => handleToggleVerification(user)}
+                  >
+                    {actionLoading === `verify-${user.id}`
+                      ? 'Updating...'
+                      : user.isVerified
+                        ? 'Unverify Provider'
+                        : 'Verify Provider'}
+                  </button>
+                )}
+                <button className="btn-approve btn-users-action" onClick={() => handleViewActivity(user.id)}>
+                  View Activity
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       <div className="table-container">
         {loading ? (

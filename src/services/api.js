@@ -594,15 +594,16 @@ export const serviceRequestAPI = {
   },
 
   // Update request status
-  updateStatus: async (requestId, status) => {
+  updateStatus: async (requestId, status, reason = null) => {
     const token = getToken();
+    const payload = reason == null ? { status } : { status, reason };
     const response = await fetch(`${API_BASE_URL}/service-requests/${requestId}/status`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`,
       },
-      body: JSON.stringify({ status }),
+      body: JSON.stringify(payload),
     });
     return handleResponse(response);
   },

@@ -1,6 +1,6 @@
 import './RequestDetailsModal.css';
 
-export default function RequestDetailsModal({ request, isProvider, onClose, onStatusUpdate, onRequestDiscussion, onAcceptDiscussion, onOpenReview, onOpenReport, actionLoading }) {
+export default function RequestDetailsModal({ request, isProvider, onClose, onStatusUpdate, onRequestDiscussion, onAcceptDiscussion, onOpenReview, onOpenDecline, onOpenReport, actionLoading }) {
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       weekday: 'long',
@@ -125,6 +125,18 @@ export default function RequestDetailsModal({ request, isProvider, onClose, onSt
             </div>
           </div>
 
+          {request.status === 'declined' && request.decline_reason && (
+            <div className="detail-card full-width decline-reason-card">
+              <div className="detail-card-header">
+                <i className="bi bi-exclamation-circle"></i>
+                <h3>Reason for declining</h3>
+              </div>
+              <div className="detail-card-body">
+                <p className="job-details-text">{request.decline_reason}</p>
+              </div>
+            </div>
+          )}
+
           {/* Client Address (if available) */}
           {request.client_address && (
             <div className="detail-card full-width">
@@ -238,7 +250,7 @@ export default function RequestDetailsModal({ request, isProvider, onClose, onSt
               </button>
               <button
                 className="action-btn btn-decline"
-                onClick={() => void onStatusUpdate(request.id, 'declined')}
+                onClick={() => onOpenDecline && onOpenDecline(request)}
                 disabled={actionLoading === request.id}
               >
                 <i className="bi bi-x-lg"></i> Decline

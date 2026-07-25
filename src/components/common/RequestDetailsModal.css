@@ -204,6 +204,7 @@
   font-weight: 500;
   color: #1e293b;
   text-align: right;
+  overflow-wrap: anywhere;
 }
 
 .job-details-text {
@@ -219,6 +220,11 @@
   color: #475569;
   line-height: 1.5;
   margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.decline-reason-card .detail-card-header i {
+  color: #dc2626;
 }
 
 /* Contact Display */

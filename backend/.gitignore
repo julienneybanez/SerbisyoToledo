@@ -24,3 +24,5 @@ npm-debug.log*
 *.sql
 *.sql.gz
 *.dump
+!migrations/
+!migrations/*.sql
