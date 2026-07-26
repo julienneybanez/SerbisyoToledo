@@ -3,6 +3,13 @@ const router = express.Router();
 const { body } = require('express-validator');
 const authController = require('../controllers/authController');
 const { authenticateToken } = require('../middleware/auth');
+const {
+  loginLimiter,
+  registerLimiter,
+  forgotPasswordLimiter,
+  resetPasswordLimiter,
+  resendVerificationLimiter,
+} = require('../middleware/rateLimiters');
 
 // Validation rules for registration
 const registerValidation = [
@@ -83,22 +90,22 @@ const resendVerificationValidation = [
 
 // Routes
 // POST /api/auth/register - Register a new user
-router.post('/register', registerValidation, authController.register);
+router.post('/register', registerLimiter, registerValidation, authController.register);
 
 // POST /api/auth/login - Login user
-router.post('/login', loginValidation, authController.login);
+router.post('/login', loginLimiter, loginValidation, authController.login);
 
 // POST /api/auth/forgot-password - Request a password reset
-router.post('/forgot-password', forgotPasswordValidation, authController.forgotPassword);
+router.post('/forgot-password', forgotPasswordLimiter, forgotPasswordValidation, authController.forgotPassword);
 
 // POST /api/auth/reset-password/:token - Reset password with token
-router.post('/reset-password/:token', resetPasswordValidation, authController.resetPassword);
+router.post('/reset-password/:token', resetPasswordLimiter, resetPasswordValidation, authController.resetPassword);
 
 // GET /api/auth/verify-email?token=... - Verify user email
 router.get('/verify-email', authController.verifyEmail);
 
 // POST /api/auth/resend-verification - Resend verification email
-router.post('/resend-verification', resendVerificationValidation, authController.resendVerification);
+router.post('/resend-verification', resendVerificationLimiter, resendVerificationValidation, authController.resendVerification);
 
 // GET /api/auth/me - Get current user profile (protected)
 router.get('/me', authenticateToken, authController.getMe);

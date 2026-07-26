@@ -1,7 +1,9 @@
 const express = require('express');
 const multer = require('multer');
-const { authenticateToken } = require('../middleware/auth');
+const { authenticateToken, requireUserType } = require('../middleware/auth');
 const userController = require('../controllers/userController');
+const { uploadLimiter } = require('../middleware/rateLimiters');
+const { validateSingleUpload, validateMultiFieldUploads } = require('../middleware/uploadValidation');
 
 const router = express.Router();
 const upload = multer({ 
@@ -23,7 +25,7 @@ router.use(authenticateToken);
 router.get('/profile', userController.getProfile);
 
 // Update user profile (with optional photo upload)
-router.patch('/profile', upload.single('profilePhoto'), userController.updateProfile);
+router.patch('/profile', uploadLimiter, upload.single('profilePhoto'), validateSingleUpload({ allowedKinds: ['image'], required: false, fieldName: 'profilePhoto' }), userController.updateProfile);
 
 // Remove profile photo
 router.delete('/profile/photo', userController.removeProfilePhoto);
@@ -31,10 +33,16 @@ router.delete('/profile/photo', userController.removeProfilePhoto);
 // Submit verification request (service provider)
 router.post(
   '/verification-request',
+  requireUserType('tradesperson'),
+  uploadLimiter,
   upload.fields([
     { name: 'governmentId', maxCount: 1 },
     { name: 'certifications', maxCount: 1 },
   ]),
+  validateMultiFieldUploads({
+    governmentId: { allowedKinds: ['image', 'pdf'], required: true, maxCount: 1 },
+    certifications: { allowedKinds: ['image', 'pdf'], required: true, maxCount: 1 },
+  }),
   userController.submitVerificationRequest
 );
 

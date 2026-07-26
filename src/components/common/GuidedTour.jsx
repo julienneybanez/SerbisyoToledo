@@ -12,6 +12,7 @@ export default function GuidedTour({ show, steps = [], onFinish, onSkip }) {
 
   useEffect(() => {
     if (!show) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIndex(0);
       setTargetRect(null);
       return;

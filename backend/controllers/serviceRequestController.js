@@ -1,41 +1,168 @@
 const db = require('../config/database');
 
+const MAX_JOB_TITLE_LENGTH = 255;
+const MAX_JOB_DETAILS_LENGTH = 2000;
+const MAX_DECLINE_REASON_LENGTH = 500;
+
+const allowedTransitions = {
+  pending: ['accepted', 'declined', 'cancelled'],
+  accepted: ['on_the_way', 'cancelled'],
+  on_the_way: ['in_progress', 'cancelled'],
+  in_progress: ['completed'],
+  completed: [],
+  declined: [],
+  cancelled: []
+};
+
+const parseDateOnly = (dateString) => {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(dateString || ''))) {
+    return null;
+  }
+
+  const [year, month, day] = String(dateString).split('-').map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+
+  if (
+    Number.isNaN(date.getTime()) ||
+    date.getUTCFullYear() !== year ||
+    date.getUTCMonth() + 1 !== month ||
+    date.getUTCDate() !== day
+  ) {
+    return null;
+  }
+
+  return date;
+};
+
 // Create a new service request
 exports.createRequest = async (req, res) => {
+  let connection;
+
   try {
     const clientId = req.user.userId;
-    const { providerId, serviceProfileId, jobTitle, jobDetails, scheduledDate, scheduledTime } = req.body;
+    const { providerId, serviceProfileId, scheduledDate, scheduledTime } = req.body;
+    const jobTitle = String(req.body.jobTitle || '').trim();
+    const jobDetails = String(req.body.jobDetails || '').trim();
 
-    console.log('Create request received:', { clientId, providerId, serviceProfileId, jobTitle, scheduledDate, scheduledTime });
+    if (req.user.userType !== 'client') {
+      return res.status(403).json({
+        success: false,
+        message: 'Only clients can create service requests'
+      });
+    }
 
     // Validate required fields
-    if (!providerId || !serviceProfileId || !jobTitle || !jobDetails || !scheduledDate || !scheduledTime) {
-      console.log('Validation failed - missing fields:', { providerId, serviceProfileId, jobTitle, jobDetails: !!jobDetails, scheduledDate, scheduledTime });
+    if (!serviceProfileId || !jobTitle || !jobDetails || !scheduledDate || !scheduledTime) {
       return res.status(400).json({
         success: false,
         message: 'All fields are required'
       });
     }
 
+    if (jobTitle.length > MAX_JOB_TITLE_LENGTH || jobDetails.length > MAX_JOB_DETAILS_LENGTH) {
+      return res.status(400).json({
+        success: false,
+        message: 'Request details exceed allowed length limits'
+      });
+    }
+
+    const parsedDate = parseDateOnly(scheduledDate);
+    if (!parsedDate) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid scheduled date'
+      });
+    }
+
+    const today = new Date();
+    const todayUtc = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()));
+    if (parsedDate < todayUtc) {
+      return res.status(400).json({
+        success: false,
+        message: 'Schedule date cannot be in the past'
+      });
+    }
+
+    connection = await db.getConnection();
+    await connection.beginTransaction();
+
+    const [profileRows] = await connection.query(
+      `SELECT
+        sp.id AS service_profile_id,
+        sp.user_id AS provider_id,
+        sp.is_published,
+        u.user_type,
+        u.is_active
+       FROM service_profiles sp
+       JOIN users u ON u.id = sp.user_id
+       WHERE sp.id = ?
+       LIMIT 1`,
+      [serviceProfileId]
+    );
+
+    if (profileRows.length === 0) {
+      await connection.rollback();
+      return res.status(404).json({
+        success: false,
+        message: 'Service profile not found'
+      });
+    }
+
+    const profile = profileRows[0];
+
+    if (!profile.is_published) {
+      await connection.rollback();
+      return res.status(400).json({
+        success: false,
+        message: 'This service profile is not available for booking'
+      });
+    }
+
+    if (profile.user_type !== 'tradesperson' || !profile.is_active) {
+      await connection.rollback();
+      return res.status(400).json({
+        success: false,
+        message: 'This service provider is not available for booking'
+      });
+    }
+
+    if (Number(clientId) === Number(profile.provider_id)) {
+      await connection.rollback();
+      return res.status(400).json({
+        success: false,
+        message: 'You cannot book your own service profile'
+      });
+    }
+
+    if (providerId && Number(providerId) !== Number(profile.provider_id)) {
+      await connection.rollback();
+      return res.status(400).json({
+        success: false,
+        message: 'Provider and service profile mismatch'
+      });
+    }
+
     // Create the service request
-    const [result] = await db.query(
+    const [result] = await connection.query(
       `INSERT INTO service_requests (client_id, provider_id, service_profile_id, job_title, job_details, scheduled_date, scheduled_time)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [clientId, providerId, serviceProfileId, jobTitle, jobDetails, scheduledDate, scheduledTime]
+      [clientId, profile.provider_id, profile.service_profile_id, jobTitle, jobDetails, scheduledDate, scheduledTime]
     );
 
     const requestId = result.insertId;
 
     // Get client name for notification
-    const [clientRows] = await db.query('SELECT full_name FROM users WHERE id = ?', [clientId]);
+    const [clientRows] = await connection.query('SELECT full_name FROM users WHERE id = ? LIMIT 1', [clientId]);
     const clientName = clientRows[0]?.full_name || 'A client';
 
     // Create notification for the service provider
-    await db.query(
+    await connection.query(
       `INSERT INTO notifications (user_id, type, title, message, related_request_id)
        VALUES (?, 'request_received', ?, ?, ?)`,
-      [providerId, 'New Service Request', `${clientName} has requested your service: ${jobTitle}`, requestId]
+      [profile.provider_id, 'New Service Request', `${clientName} has requested your service: ${jobTitle}`, requestId]
     );
+
+    await connection.commit();
 
     res.status(201).json({
       success: true,
@@ -43,13 +170,19 @@ exports.createRequest = async (req, res) => {
       data: { requestId }
     });
   } catch (error) {
+    if (connection) {
+      await connection.rollback();
+    }
+
     console.error('Create request error:', error);
-    console.error('Error details:', error.message, error.code, error.sqlMessage);
     res.status(500).json({
       success: false,
-      message: 'Failed to create service request',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      message: 'Failed to create service request'
     });
+  } finally {
+    if (connection) {
+      connection.release();
+    }
   }
 };
 
@@ -123,6 +256,8 @@ exports.getProviderRequests = async (req, res) => {
 
 // Update request status (accept/decline/on_the_way/complete)
 exports.updateRequestStatus = async (req, res) => {
+  let connection;
+
   try {
     const { requestId } = req.params;
     const { status, reason } = req.body;
@@ -137,17 +272,22 @@ exports.updateRequestStatus = async (req, res) => {
       });
     }
 
-    // Get the request to verify ownership and get client info
-    const [requests] = await db.query(
+    connection = await db.getConnection();
+    await connection.beginTransaction();
+
+    // Get participant-bound request to verify ownership and lock row for update
+    const [requests] = await connection.query(
       `SELECT sr.*, u.full_name as provider_name, c.full_name as client_name
        FROM service_requests sr
        JOIN users u ON sr.provider_id = u.id
        JOIN users c ON sr.client_id = c.id
-       WHERE sr.id = ?`,
-      [requestId]
+       WHERE sr.id = ? AND (sr.client_id = ? OR sr.provider_id = ?)
+       FOR UPDATE`,
+      [requestId, userId, userId]
     );
 
     if (requests.length === 0) {
+      await connection.rollback();
       return res.status(404).json({
         success: false,
         message: 'Request not found'
@@ -156,10 +296,23 @@ exports.updateRequestStatus = async (req, res) => {
 
     const request = requests[0];
     const trimmedReason = typeof reason === 'string' ? reason.trim() : '';
+    const currentStatus = request.status;
+
+    if (status !== 'completed') {
+      const possibleTransitions = allowedTransitions[currentStatus] || [];
+      if (!possibleTransitions.includes(status)) {
+        await connection.rollback();
+        return res.status(409).json({
+          success: false,
+          message: `Cannot change request status from ${currentStatus} to ${status}`
+        });
+      }
+    }
 
     // Only provider can update status (except cancelled and completed which have special rules)
     if (status === 'cancelled') {
       if (request.client_id !== userId) {
+        await connection.rollback();
         return res.status(403).json({
           success: false,
           message: 'Only the client can cancel the request'
@@ -168,9 +321,26 @@ exports.updateRequestStatus = async (req, res) => {
     } else if (status === 'completed') {
       // Both client and provider can mark as completed (two-way confirmation)
       if (request.client_id !== userId && request.provider_id !== userId) {
+        await connection.rollback();
         return res.status(403).json({
           success: false,
           message: 'Only the client or provider can mark this request as completed'
+        });
+      }
+
+      if (currentStatus === 'completed' || currentStatus === 'declined' || currentStatus === 'cancelled') {
+        await connection.rollback();
+        return res.status(409).json({
+          success: false,
+          message: `Cannot change request status from ${currentStatus} to completed`
+        });
+      }
+
+      if (currentStatus !== 'in_progress') {
+        await connection.rollback();
+        return res.status(409).json({
+          success: false,
+          message: 'Request can only be completed after it is in progress'
         });
       }
 
@@ -180,42 +350,46 @@ exports.updateRequestStatus = async (req, res) => {
       // Update the respective completion flag
       if (isProviderAction) {
         if (request.provider_completed) {
-          return res.status(400).json({ success: false, message: 'You have already confirmed completion' });
+          await connection.rollback();
+          return res.status(409).json({ success: false, message: 'You have already confirmed completion' });
         }
-        await db.query('UPDATE service_requests SET provider_completed = TRUE WHERE id = ?', [requestId]);
+        await connection.query('UPDATE service_requests SET provider_completed = TRUE WHERE id = ?', [requestId]);
       }
       if (isClientAction) {
         if (request.client_completed) {
-          return res.status(400).json({ success: false, message: 'You have already confirmed completion' });
+          await connection.rollback();
+          return res.status(409).json({ success: false, message: 'You have already confirmed completion' });
         }
-        await db.query('UPDATE service_requests SET client_completed = TRUE WHERE id = ?', [requestId]);
+        await connection.query('UPDATE service_requests SET client_completed = TRUE WHERE id = ?', [requestId]);
       }
 
       // Re-fetch to check if both have now confirmed
-      const [updated] = await db.query('SELECT provider_completed, client_completed FROM service_requests WHERE id = ?', [requestId]);
+      const [updated] = await connection.query('SELECT provider_completed, client_completed FROM service_requests WHERE id = ? FOR UPDATE', [requestId]);
       const bothConfirmed = updated[0].provider_completed && updated[0].client_completed;
 
       if (bothConfirmed) {
         // Both confirmed — mark as completed
-        await db.query('UPDATE service_requests SET status = ? WHERE id = ?', ['completed', requestId]);
+        await connection.query('UPDATE service_requests SET status = ? WHERE id = ?', ['completed', requestId]);
 
         // Increment jobs_completed for the provider's service profile
-        await db.query(
+        await connection.query(
           'UPDATE service_profiles SET jobs_completed = jobs_completed + 1 WHERE user_id = ?',
           [request.provider_id]
         );
 
         // Notify both parties
-        await db.query(
+        await connection.query(
           `INSERT INTO notifications (user_id, type, title, message, related_request_id)
            VALUES (?, 'service_completed', ?, ?, ?)`,
           [request.client_id, 'Service Completed', `Your service request "${request.job_title}" has been completed! You can now leave a review.`, requestId]
         );
-        await db.query(
+        await connection.query(
           `INSERT INTO notifications (user_id, type, title, message, related_request_id)
            VALUES (?, 'service_completed', ?, ?, ?)`,
           [request.provider_id, 'Service Completed', `The service "${request.job_title}" has been marked as completed by both parties.`, requestId]
         );
+
+        await connection.commit();
 
         return res.json({
           success: true,
@@ -227,11 +401,13 @@ exports.updateRequestStatus = async (req, res) => {
         const otherUserId = isProviderAction ? request.client_id : request.provider_id;
         const confirmerName = isProviderAction ? request.provider_name : request.client_name;
         
-        await db.query(
+        await connection.query(
           `INSERT INTO notifications (user_id, type, title, message, related_request_id)
            VALUES (?, 'completion_confirmed', ?, ?, ?)`,
           [otherUserId, 'Completion Pending', `${confirmerName} has confirmed completion for "${request.job_title}". Please confirm on your end.`, requestId]
         );
+
+        await connection.commit();
 
         return res.json({
           success: true,
@@ -245,6 +421,7 @@ exports.updateRequestStatus = async (req, res) => {
       }
     } else {
       if (request.provider_id !== userId) {
+        await connection.rollback();
         return res.status(403).json({
           success: false,
           message: 'Only the service provider can update this request'
@@ -253,21 +430,16 @@ exports.updateRequestStatus = async (req, res) => {
     }
 
     if (status === 'declined') {
-      if (request.status === 'declined') {
-        return res.status(400).json({
-          success: false,
-          message: 'This request has already been declined'
-        });
-      }
-
       if (!trimmedReason) {
+        await connection.rollback();
         return res.status(400).json({
           success: false,
           message: 'Reason for declining is required'
         });
       }
 
-      if (trimmedReason.length > 500) {
+      if (trimmedReason.length > MAX_DECLINE_REASON_LENGTH) {
+        await connection.rollback();
         return res.status(400).json({
           success: false,
           message: 'Reason for declining must not exceed 500 characters'
@@ -277,12 +449,12 @@ exports.updateRequestStatus = async (req, res) => {
 
     // Update the status (and decline reason where applicable)
     if (status === 'declined') {
-      await db.query(
+      await connection.query(
         'UPDATE service_requests SET status = ?, decline_reason = ? WHERE id = ?',
         [status, trimmedReason, requestId]
       );
     } else {
-      await db.query(
+      await connection.query(
         'UPDATE service_requests SET status = ? WHERE id = ?',
         [status, requestId]
       );
@@ -313,23 +485,33 @@ exports.updateRequestStatus = async (req, res) => {
     }
 
     if (notificationType) {
-      await db.query(
+      await connection.query(
         `INSERT INTO notifications (user_id, type, title, message, related_request_id)
          VALUES (?, ?, ?, ?, ?)`,
         [request.client_id, notificationType, notificationTitle, notificationMessage, requestId]
       );
     }
 
+    await connection.commit();
+
     res.json({
       success: true,
       message: `Request ${status} successfully`
     });
   } catch (error) {
+    if (connection) {
+      await connection.rollback();
+    }
+
     console.error('Update request status error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to update request status'
     });
+  } finally {
+    if (connection) {
+      connection.release();
+    }
   }
 };
 
@@ -631,8 +813,10 @@ exports.createReport = async (req, res) => {
     const [requests] = await db.query(
       `SELECT id, client_id, provider_id, job_title
        FROM service_requests
-       WHERE id = ?`,
-      [requestId]
+       WHERE id = ?
+         AND (client_id = ? OR provider_id = ?)
+       LIMIT 1`,
+      [requestId, reporterId, reporterId]
     );
 
     if (requests.length === 0) {

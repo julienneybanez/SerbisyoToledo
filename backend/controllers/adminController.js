@@ -507,7 +507,7 @@ exports.updateReportStatus = async (req, res) => {
     }
 
     const [reports] = await db.query(
-      'SELECT id, reported_user_id FROM user_reports WHERE id = ?',
+      'SELECT id, reported_user_id, status FROM user_reports WHERE id = ?',
       [id]
     );
 
@@ -518,9 +518,24 @@ exports.updateReportStatus = async (req, res) => {
       });
     }
 
+    const currentStatus = reports[0].status;
+    if (['dismissed', 'resolved', 'banned'].includes(currentStatus)) {
+      return res.status(409).json({
+        success: false,
+        message: `Cannot apply action to a ${currentStatus} report`
+      });
+    }
+
     let nextStatus = 'under_review';
     if (action === 'dismiss') nextStatus = 'dismissed';
     if (action === 'ban') nextStatus = 'banned';
+
+    if (currentStatus === nextStatus) {
+      return res.status(409).json({
+        success: false,
+        message: `Report is already marked as ${nextStatus}`
+      });
+    }
 
     await db.query(
       `UPDATE user_reports

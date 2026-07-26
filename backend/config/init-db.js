@@ -84,7 +84,7 @@ async function initializeDatabase() {
         ALTER TABLE users MODIFY COLUMN user_type ENUM('client', 'tradesperson', 'admin') NOT NULL DEFAULT 'client'
       `);
       console.log('✅ User type ENUM updated to include admin');
-    } catch (err) {
+    } catch {
       // Ignore if already updated
     }
 
@@ -99,7 +99,7 @@ async function initializeDatabase() {
       try {
         await connection.query(`ALTER TABLE users ADD COLUMN ${col.name} ${col.definition}`);
         console.log(`✅ Added column: ${col.name}`);
-      } catch (err) {
+      } catch {
         // Column already exists
       }
     }
@@ -308,7 +308,7 @@ async function initializeDatabase() {
     try {
       await connection.query(`ALTER TABLE service_profiles ADD COLUMN about_me TEXT DEFAULT NULL`);
       console.log('✅ Added about_me column to service_profiles');
-    } catch (err) {
+    } catch {
       // Column already exists
     }
 
@@ -316,7 +316,7 @@ async function initializeDatabase() {
     try {
       await connection.query(`ALTER TABLE service_profiles ADD COLUMN response_time VARCHAR(100) DEFAULT 'Within 24 hours'`);
       console.log('✅ Added response_time column to service_profiles');
-    } catch (err) {
+    } catch {
       // Column already exists
     }
 
@@ -324,7 +324,7 @@ async function initializeDatabase() {
     try {
       await connection.query(`ALTER TABLE service_profiles ADD COLUMN jobs_completed INT DEFAULT 0`);
       console.log('✅ Added jobs_completed column to service_profiles');
-    } catch (err) {
+    } catch {
       // Column already exists
     }
 
@@ -332,7 +332,7 @@ async function initializeDatabase() {
     try {
       await connection.query(`ALTER TABLE users ADD COLUMN profile_photo LONGBLOB DEFAULT NULL`);
       console.log('✅ Added profile_photo column to users');
-    } catch (err) {
+    } catch {
       // Column already exists
     }
 
@@ -340,14 +340,14 @@ async function initializeDatabase() {
     try {
       await connection.query(`ALTER TABLE users ADD COLUMN profile_photo_url VARCHAR(500) DEFAULT NULL`);
       console.log('✅ Added profile_photo_url column to users');
-    } catch (err) {
+    } catch {
       // Column already exists
     }
 
     try {
       await connection.query(`ALTER TABLE users ADD COLUMN profile_photo_public_id VARCHAR(255) DEFAULT NULL`);
       console.log('✅ Added profile_photo_public_id column to users');
-    } catch (err) {
+    } catch {
       // Column already exists
     }
 
@@ -355,14 +355,14 @@ async function initializeDatabase() {
     try {
       await connection.query(`ALTER TABLE service_profiles ADD COLUMN banner_image_url VARCHAR(500) DEFAULT NULL`);
       console.log('✅ Added banner_image_url column to service_profiles');
-    } catch (err) {
+    } catch {
       // Column already exists
     }
 
     try {
       await connection.query(`ALTER TABLE service_profiles ADD COLUMN banner_image_public_id VARCHAR(255) DEFAULT NULL`);
       console.log('✅ Added banner_image_public_id column to service_profiles');
-    } catch (err) {
+    } catch {
       // Column already exists
     }
 
@@ -370,7 +370,7 @@ async function initializeDatabase() {
     try {
       await connection.query(`ALTER TABLE portfolio_items ADD COLUMN image_public_id VARCHAR(255) DEFAULT NULL`);
       console.log('✅ Added image_public_id column to portfolio_items');
-    } catch (err) {
+    } catch {
       // Column already exists
     }
 
@@ -378,14 +378,14 @@ async function initializeDatabase() {
     try {
       await connection.query(`ALTER TABLE service_requests ADD COLUMN provider_completed BOOLEAN DEFAULT FALSE`);
       console.log('✅ Added provider_completed column to service_requests');
-    } catch (err) {
+    } catch {
       // Column already exists
     }
 
     try {
       await connection.query(`ALTER TABLE service_requests ADD COLUMN client_completed BOOLEAN DEFAULT FALSE`);
       console.log('✅ Added client_completed column to service_requests');
-    } catch (err) {
+    } catch {
       // Column already exists
     }
 
@@ -393,7 +393,7 @@ async function initializeDatabase() {
     try {
       await connection.query(`ALTER TABLE service_requests ADD COLUMN decline_reason TEXT DEFAULT NULL`);
       console.log('✅ Added decline_reason column to service_requests');
-    } catch (err) {
+    } catch {
       // Column already exists
     }
 
@@ -401,7 +401,7 @@ async function initializeDatabase() {
     try {
       await connection.query(`ALTER TABLE reviews MODIFY COLUMN rating DECIMAL(2,1) NOT NULL`);
       console.log('✅ Updated reviews rating column to DECIMAL(2,1) for half-star support');
-    } catch (err) {
+    } catch {
       // Already updated or error
     }
 
@@ -409,7 +409,7 @@ async function initializeDatabase() {
     try {
       await connection.query(`ALTER TABLE reviews ADD UNIQUE INDEX idx_unique_request_review (service_request_id)`);
       console.log('✅ Added unique index on service_request_id in reviews');
-    } catch (err) {
+    } catch {
       // Already exists
     }
 
@@ -424,7 +424,7 @@ async function initializeDatabase() {
         ) NOT NULL
       `);
       console.log('✅ Updated notification type ENUM with new types');
-    } catch (err) {
+    } catch {
       // Already updated
     }
 

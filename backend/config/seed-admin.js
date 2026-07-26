@@ -51,7 +51,7 @@ async function seedAdmin() {
         MODIFY COLUMN user_type ENUM('client', 'tradesperson', 'admin') NOT NULL
       `);
       console.log('✅ ENUM updated successfully');
-    } catch (enumError) {
+    } catch {
       // ENUM might already be updated, continue
       console.log('ℹ️  ENUM already includes admin or table structure is correct');
     }

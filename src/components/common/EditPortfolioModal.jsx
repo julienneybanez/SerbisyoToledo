@@ -121,7 +121,7 @@ export default function EditPortfolioModal({ onClose }) {
       if (response.success) {
         setPortfolio(prev => prev.filter(img => img.id !== imageId));
       }
-    } catch (err) {
+    } catch {
       setError('Failed to delete image');
     }
   };

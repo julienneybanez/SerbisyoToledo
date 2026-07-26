@@ -1,7 +1,8 @@
 const jwt = require('jsonwebtoken');
+const db = require('../config/database');
 
 // Middleware to authenticate JWT token
-exports.authenticateToken = (req, res, next) => {
+exports.authenticateToken = async (req, res, next) => {
   // Get token from header
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
@@ -16,7 +17,34 @@ exports.authenticateToken = (req, res, next) => {
   try {
     // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded;
+
+    const [users] = await db.query(
+      'SELECT id, user_type, is_active FROM users WHERE id = ? LIMIT 1',
+      [decoded.userId]
+    );
+
+    if (users.length === 0) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid authentication token.'
+      });
+    }
+
+    const user = users[0];
+
+    if (!user.is_active) {
+      return res.status(403).json({
+        success: false,
+        message: 'This account is currently disabled.'
+      });
+    }
+
+    req.user = {
+      userId: user.id,
+      userType: user.user_type,
+      isActive: Boolean(user.is_active)
+    };
+
     next();
   } catch (error) {
     if (error.name === 'TokenExpiredError') {
@@ -35,76 +63,31 @@ exports.authenticateToken = (req, res, next) => {
 
 // Optional: Middleware to check user type
 exports.requireUserType = (...allowedTypes) => {
-  return async (req, res, next) => {
-    try {
-      const db = require('../config/database');
-      
-      const [users] = await db.query(
-        'SELECT user_type FROM users WHERE id = ?',
-        [req.user.userId]
-      );
-
-      if (users.length === 0) {
-        return res.status(404).json({
-          success: false,
-          message: 'User not found'
-        });
-      }
-
-      const userType = users[0].user_type;
-
-      if (!allowedTypes.includes(userType)) {
-        return res.status(403).json({
-          success: false,
-          message: 'Access denied. Insufficient permissions.'
-        });
-      }
-
-      req.userType = userType;
-      next();
-    } catch (error) {
-      console.error('User type check error:', error);
-      return res.status(500).json({
+  return (req, res, next) => {
+    if (!req.user || !req.user.userId || !req.user.userType) {
+      return res.status(401).json({
         success: false,
-        message: 'Authorization check failed'
+        message: 'Access denied. Authentication required.'
       });
     }
+
+    if (!req.user.isActive) {
+      return res.status(403).json({
+        success: false,
+        message: 'This account is currently disabled.'
+      });
+    }
+
+    if (!allowedTypes.includes(req.user.userType)) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. Insufficient permissions.'
+      });
+    }
+
+    next();
   };
 };
 
 // Middleware to require admin access
-exports.requireAdmin = async (req, res, next) => {
-  try {
-    const db = require('../config/database');
-    
-    const [users] = await db.query(
-      'SELECT user_type FROM users WHERE id = ?',
-      [req.user.userId]
-    );
-
-    if (users.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: 'User not found'
-      });
-    }
-
-    const userType = users[0].user_type;
-
-    if (userType !== 'admin') {
-      return res.status(403).json({
-        success: false,
-        message: 'Access denied. Admin privileges required.'
-      });
-    }
-
-    req.userType = userType;
-    next();
-  } catch (error) {
-    console.error('Admin check error:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Authorization check failed'
-    });
-  }
-};
+exports.requireAdmin = exports.requireUserType('admin');

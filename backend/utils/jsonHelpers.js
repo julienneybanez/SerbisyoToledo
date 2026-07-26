@@ -6,7 +6,7 @@ function parseJsonValue(value, fallback = null) {
   if (typeof value === 'string') {
     try {
       return JSON.parse(value);
-    } catch (error) {
+    } catch {
       return fallback;
     }
   }

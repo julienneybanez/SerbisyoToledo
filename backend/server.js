@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
 const dotenv = require('dotenv');
 const { validateEmailConfiguration } = require('./utils/emailService');
 
@@ -30,6 +31,11 @@ const userRoutes = require('./routes/user');
 const db = require('./config/database');
 
 const app = express();
+
+if (isProduction || process.env.RAILWAY_STATIC_URL) {
+  app.set('trust proxy', 1);
+}
+
 const defaultOrigins = [
   'http://localhost:5173',
   'http://localhost:5174',
@@ -56,8 +62,19 @@ const allowedOrigins = Array.from(new Set(
 ));
 
 // Middleware
+app.use(helmet());
 app.use(cors({
-  origin: allowedOrigins,
+  origin: (origin, callback) => {
+    if (!origin) {
+      return callback(null, true);
+    }
+
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    return callback(new Error('Origin not allowed by CORS'));
+  },
   credentials: true
 }));
 app.use(express.json());
@@ -76,12 +93,11 @@ app.get('/api/health', async (req, res) => {
       message: 'API is healthy',
       database: rows[0]?.ok === 1 ? 'connected' : 'unknown'
     });
-  } catch (error) {
+  } catch {
     res.status(503).json({
       success: false,
       message: 'API is unavailable',
-      database: 'disconnected',
-      error: error.message
+      database: 'disconnected'
     });
   }
 });
@@ -96,11 +112,33 @@ app.use('/api/user', userRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error(err.stack);
+  void next;
+  console.error('Unhandled error:', err);
+
+  if (err.message === 'Origin not allowed by CORS') {
+    return res.status(403).json({
+      success: false,
+      message: 'Request origin is not allowed.'
+    });
+  }
+
+  if (err.code === 'LIMIT_FILE_SIZE') {
+    return res.status(413).json({
+      success: false,
+      message: 'Uploaded file is too large.'
+    });
+  }
+
+  if (err.message && err.message.toLowerCase().includes('only image')) {
+    return res.status(400).json({
+      success: false,
+      message: err.message
+    });
+  }
+
   res.status(500).json({
     success: false,
-    message: 'Something went wrong!',
-    error: process.env.NODE_ENV === 'development' ? err.message : undefined
+    message: 'Something went wrong!'
   });
 });
 
@@ -114,23 +152,27 @@ app.use((req, res) => {
 
 const PORT = process.env.PORT || 5000;
 
-// Test database connection and start server
-db.getConnection()
-  .then((connection) => {
-    console.log('✅ Database connected successfully');
-    connection.release();
-    
-    app.listen(PORT, () => {
-      console.log(`🚀 Server running on port ${PORT}`);
-      console.log(`📍 API URL: http://localhost:${PORT}`);
+if (require.main === module) {
+  // Test database connection and start server
+  db.getConnection()
+    .then((connection) => {
+      console.log('✅ Database connected successfully');
+      connection.release();
+      
+      app.listen(PORT, () => {
+        console.log(`🚀 Server running on port ${PORT}`);
+        console.log(`📍 API URL: http://localhost:${PORT}`);
+      });
+    })
+    .catch((err) => {
+      console.error('❌ Database connection failed:', err.message);
+      console.log('⚠️  Starting server without database connection...');
+      
+      app.listen(PORT, () => {
+        console.log(`🚀 Server running on port ${PORT}`);
+        console.log(`📍 API URL: http://localhost:${PORT}`);
+      });
     });
-  })
-  .catch((err) => {
-    console.error('❌ Database connection failed:', err.message);
-    console.log('⚠️  Starting server without database connection...');
-    
-    app.listen(PORT, () => {
-      console.log(`🚀 Server running on port ${PORT}`);
-      console.log(`📍 API URL: http://localhost:${PORT}`);
-    });
-  });
+}
+
+module.exports = app;

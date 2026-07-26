@@ -1,10 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { userProfileAPI, getUser } from '../../services/api';
+import { userProfileAPI } from '../../services/api';
 import './EditProfileModal.css';
 
 export default function EditProfileModal({ onClose, onProfileUpdated }) {
-  const currentUser = getUser();
   const fileInputRef = useRef(null);
   
   const [formData, setFormData] = useState({
@@ -78,7 +77,7 @@ export default function EditProfileModal({ onClose, onProfileUpdated }) {
           fileInputRef.current.value = '';
         }
       }
-    } catch (err) {
+    } catch {
       setError('Failed to remove photo');
     } finally {
       setIsSaving(false);

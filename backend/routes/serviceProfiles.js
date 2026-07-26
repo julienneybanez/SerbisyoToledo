@@ -1,7 +1,9 @@
 const express = require('express');
 const multer = require('multer');
-const { authenticateToken } = require('../middleware/auth');
+const { authenticateToken, requireUserType } = require('../middleware/auth');
 const serviceProfileController = require('../controllers/serviceProfileController');
+const { uploadLimiter, publicSearchLimiter } = require('../middleware/rateLimiters');
+const { validateSingleUpload } = require('../middleware/uploadValidation');
 
 const router = express.Router();
 const upload = multer({ 
@@ -17,18 +19,18 @@ const upload = multer({
 });
 
 // Public routes
-router.get('/all', serviceProfileController.getAllProfiles);
+router.get('/all', publicSearchLimiter, serviceProfileController.getAllProfiles);
 
 // Protected routes (requires authentication)
-router.post('/create', authenticateToken, upload.single('bannerImage'), serviceProfileController.createOrUpdateProfile);
-router.get('/user/me', authenticateToken, serviceProfileController.getMyProfile);
-router.patch('/toggle-publish', authenticateToken, serviceProfileController.togglePublish);
+router.post('/create', authenticateToken, requireUserType('tradesperson'), uploadLimiter, upload.single('bannerImage'), validateSingleUpload({ allowedKinds: ['image'], required: false, fieldName: 'bannerImage' }), serviceProfileController.createOrUpdateProfile);
+router.get('/user/me', authenticateToken, requireUserType('tradesperson'), serviceProfileController.getMyProfile);
+router.patch('/toggle-publish', authenticateToken, requireUserType('tradesperson'), serviceProfileController.togglePublish);
 
 // Portfolio management routes
-router.get('/portfolio/me', authenticateToken, serviceProfileController.getMyPortfolio);
-router.patch('/portfolio/details', authenticateToken, serviceProfileController.updatePortfolioDetails);
-router.post('/portfolio/image', authenticateToken, upload.single('portfolioImage'), serviceProfileController.addPortfolioImage);
-router.delete('/portfolio/image/:imageId', authenticateToken, serviceProfileController.deletePortfolioImage);
+router.get('/portfolio/me', authenticateToken, requireUserType('tradesperson'), serviceProfileController.getMyPortfolio);
+router.patch('/portfolio/details', authenticateToken, requireUserType('tradesperson'), serviceProfileController.updatePortfolioDetails);
+router.post('/portfolio/image', authenticateToken, requireUserType('tradesperson'), uploadLimiter, upload.single('portfolioImage'), validateSingleUpload({ allowedKinds: ['image'], required: true, fieldName: 'portfolioImage' }), serviceProfileController.addPortfolioImage);
+router.delete('/portfolio/image/:imageId', authenticateToken, requireUserType('tradesperson'), serviceProfileController.deletePortfolioImage);
 
 // Public route with dynamic param (must come last)
 router.get('/:id', serviceProfileController.getProfileById);

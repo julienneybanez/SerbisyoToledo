@@ -57,7 +57,7 @@ export default function ServiceProfileModal({ onClose }) {
             setBannerPreview(profile.image);
           }
         }
-      } catch (err) {
+      } catch {
         // No existing profile is a normal state for first-time posting.
       } finally {
         setIsFetchingProfile(false);

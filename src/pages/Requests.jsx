@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { getUser, serviceRequestAPI } from '../services/api';
 import RequestDetailsModal from '../components/common/RequestDetailsModal';
 import ReviewModal from '../components/common/ReviewModal';
@@ -25,11 +25,7 @@ export default function Requests() {
     error: '',
   });
 
-  useEffect(() => {
-    fetchRequests();
-  }, []);
-
-  const fetchRequests = async () => {
+  const fetchRequests = useCallback(async () => {
     setLoading(true);
     try {
       const response = isProvider
@@ -45,7 +41,11 @@ export default function Requests() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [isProvider]);
+
+  useEffect(() => {
+    fetchRequests();
+  }, [fetchRequests]);
 
   const handleStatusUpdate = async (requestId, status, reason = null, options = {}) => {
     const { suppressAlert = false } = options;

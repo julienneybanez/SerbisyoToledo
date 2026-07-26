@@ -120,6 +120,7 @@ function App() {
 
   useEffect(() => {
     if (!isAuthenticated() || !currentUser) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setShowTourPrompt(false);
       setShowGuidedTour(false);
       return;

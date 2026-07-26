@@ -45,7 +45,7 @@ const validateEmailConfiguration = ({ throwOnError = false } = {}) => {
     return { valid: true, provider, missing: [] };
   }
 
-  const message = `Email provider \"${provider}\" is missing required environment variables: ${missing.join(', ')}`;
+  const message = `Email provider "${provider}" is missing required environment variables: ${missing.join(', ')}`;
 
   if (throwOnError) {
     const error = new Error(message);

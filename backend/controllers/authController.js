@@ -441,7 +441,7 @@ exports.login = async (req, res) => {
     if (user.skills) {
       try {
         skills = typeof user.skills === 'string' ? JSON.parse(user.skills) : user.skills;
-      } catch (e) {
+      } catch {
         skills = [];
       }
     }
@@ -501,7 +501,7 @@ exports.getMe = async (req, res) => {
     if (user.skills) {
       try {
         skills = typeof user.skills === 'string' ? JSON.parse(user.skills) : user.skills;
-      } catch (e) {
+      } catch {
         skills = [];
       }
     }
@@ -621,7 +621,7 @@ exports.updateProfile = async (req, res) => {
     if (user.skills) {
       try {
         parsedSkills = typeof user.skills === 'string' ? JSON.parse(user.skills) : user.skills;
-      } catch (e) {
+      } catch {
         parsedSkills = [];
       }
     }
@@ -672,7 +672,7 @@ exports.verifyEmail = async (req, res) => {
     // Decode token if it's URL encoded
     try {
       token = decodeURIComponent(token);
-    } catch (e) {
+    } catch {
       // Token might not be encoded, continue
     }
 
