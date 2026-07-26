@@ -8,6 +8,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
+import VerifyEmail from './pages/VerifyEmail';
 import Footer from './components/layout/Footer';
 import Chatbot from './components/common/Chatbot';
 import Feed from './pages/Feed';
@@ -215,6 +216,7 @@ function App() {
                 <Route path="/register" element={<Register />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/reset-password/:token" element={<ResetPassword />} />
+                <Route path="/verify-email" element={<VerifyEmail />} />
                 <Route path="/feed" element={<Feed />} />
                 <Route path="/dashboard" element={<ServiceProviderDashboard />} />
                 <Route path="/provider/:id" element={<ServiceProviderPortfolio />} />

@@ -210,6 +210,32 @@ export const authAPI = {
   },
 };
 
+export const verificationAPI = {
+  verifyEmail: async (token) => {
+    const params = new URLSearchParams({ token });
+    const response = await fetch(`${API_BASE_URL}/auth/verify-email?${params.toString()}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    return handleResponse(response);
+  },
+
+  resendVerification: async (payload) => {
+    const response = await fetch(`${API_BASE_URL}/auth/resend-verification`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    return handleResponse(response);
+  },
+};
+
 // Admin API calls
 export const adminAPI = {
   // Get dashboard statistics

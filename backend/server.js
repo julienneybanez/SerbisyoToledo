@@ -1,9 +1,22 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
+const { validateEmailConfiguration } = require('./utils/emailService');
 
 // Load environment variables
 dotenv.config();
+
+const isProduction = process.env.NODE_ENV === 'production';
+const emailConfig = validateEmailConfiguration();
+
+if (!emailConfig.valid) {
+  if (isProduction) {
+    console.error(`❌ ${emailConfig.message}`);
+    process.exit(1);
+  }
+
+  console.warn(`⚠️ ${emailConfig.message}`);
+}
 
 // Import routes
 const authRoutes = require('./routes/auth');

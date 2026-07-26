@@ -73,6 +73,14 @@ const resetPasswordValidation = [
     })
 ];
 
+const resendVerificationValidation = [
+  body('email')
+    .trim()
+    .isEmail()
+    .withMessage('Please provide a valid email')
+    .normalizeEmail()
+];
+
 // Routes
 // POST /api/auth/register - Register a new user
 router.post('/register', registerValidation, authController.register);
@@ -85,6 +93,12 @@ router.post('/forgot-password', forgotPasswordValidation, authController.forgotP
 
 // POST /api/auth/reset-password/:token - Reset password with token
 router.post('/reset-password/:token', resetPasswordValidation, authController.resetPassword);
+
+// GET /api/auth/verify-email?token=... - Verify user email
+router.get('/verify-email', authController.verifyEmail);
+
+// POST /api/auth/resend-verification - Resend verification email
+router.post('/resend-verification', resendVerificationValidation, authController.resendVerification);
 
 // GET /api/auth/me - Get current user profile (protected)
 router.get('/me', authenticateToken, authController.getMe);

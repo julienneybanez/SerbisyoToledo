@@ -59,7 +59,7 @@ async function seedAdmin() {
     // Admin credentials
     const adminData = {
       fullName: 'Admin User',
-      email: 'serbisyotoledo@gmail.com',
+      email: 'toledoserbisyo@gmail.com',
       password: 'admin123', // Change this in production!
       userType: 'admin'
     };
