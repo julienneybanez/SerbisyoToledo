@@ -336,11 +336,11 @@ exports.updateRequestStatus = async (req, res) => {
         });
       }
 
-      if (currentStatus !== 'in_progress') {
+      if (!['on_the_way', 'in_progress'].includes(currentStatus)) {
         await connection.rollback();
         return res.status(409).json({
           success: false,
-          message: 'Request can only be completed after it is in progress'
+          message: 'Request can only be completed after it is on the way or in progress'
         });
       }
 
