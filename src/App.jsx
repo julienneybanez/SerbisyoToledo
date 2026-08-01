@@ -145,9 +145,11 @@ function App() {
 
   useEffect(() => {
     if (!currentUser || currentUser.userType !== 'tradesperson') {
-      setHasServiceProfile(false);
-      setProviderPublicProfileRoute('/dashboard');
-      return;
+      const timer = setTimeout(() => {
+        setHasServiceProfile(false);
+        setProviderPublicProfileRoute('/dashboard');
+      }, 0);
+      return () => clearTimeout(timer);
     }
 
     let isMounted = true;
@@ -177,7 +179,7 @@ function App() {
     return () => {
       isMounted = false;
     };
-  }, [currentUser?.id, currentUser?.userType]);
+  }, [currentUser]);
 
   useEffect(() => {
     if (!isAuthenticated() || !currentUser) {

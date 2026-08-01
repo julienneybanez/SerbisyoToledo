@@ -37,7 +37,6 @@ export default function MobileTopBar({
   user,
   role = 'client',
   onMenu,
-  profileRoute,
   settingsRoute,
   onLogout,
   profileMenuOpen,

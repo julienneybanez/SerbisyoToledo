@@ -96,8 +96,11 @@ describe('Backend Security Hardening', () => {
         serviceProfileId: 7,
         jobTitle: 'Fix leaking pipe',
         jobDetails: 'Kitchen sink pipe is leaking heavily.',
-        scheduledDate: '2099-12-31',
-        scheduledTime: '09:00 AM',
+        bookingType: 'one_day',
+        startDate: '2099-12-31',
+        endDate: '2099-12-31',
+        startTime: '09:00',
+        estimatedDurationMinutes: 120,
       });
 
     expect(res.status).toBe(201);
@@ -118,8 +121,11 @@ describe('Backend Security Hardening', () => {
         serviceProfileId: 7,
         jobTitle: 'Test',
         jobDetails: 'Test details',
-        scheduledDate: '2099-12-31',
-        scheduledTime: '09:00 AM',
+        bookingType: 'one_day',
+        startDate: '2099-12-31',
+        endDate: '2099-12-31',
+        startTime: '09:00',
+        estimatedDurationMinutes: 120,
       });
 
     expect(res.status).toBe(403);
@@ -148,8 +154,11 @@ describe('Backend Security Hardening', () => {
         serviceProfileId: 7,
         jobTitle: 'Fix leaking pipe',
         jobDetails: 'Kitchen sink pipe is leaking heavily.',
-        scheduledDate: '2099-12-31',
-        scheduledTime: '09:00 AM',
+        bookingType: 'one_day',
+        startDate: '2099-12-31',
+        endDate: '2099-12-31',
+        startTime: '09:00',
+        estimatedDurationMinutes: 120,
       });
 
     expect(res.status).toBe(400);
@@ -179,8 +188,11 @@ describe('Backend Security Hardening', () => {
         serviceProfileId: 7,
         jobTitle: 'Fix leaking pipe',
         jobDetails: 'Kitchen sink pipe is leaking heavily.',
-        scheduledDate: '2099-12-31',
-        scheduledTime: '09:00 AM',
+        bookingType: 'one_day',
+        startDate: '2099-12-31',
+        endDate: '2099-12-31',
+        startTime: '09:00',
+        estimatedDurationMinutes: 120,
       });
 
     expect(res.status).toBe(400);
@@ -209,8 +221,11 @@ describe('Backend Security Hardening', () => {
         serviceProfileId: 7,
         jobTitle: 'Fix leaking pipe',
         jobDetails: 'Kitchen sink pipe is leaking heavily.',
-        scheduledDate: '2099-12-31',
-        scheduledTime: '09:00 AM',
+        bookingType: 'one_day',
+        startDate: '2099-12-31',
+        endDate: '2099-12-31',
+        startTime: '09:00',
+        estimatedDurationMinutes: 120,
       });
 
     expect(res.status).toBe(400);

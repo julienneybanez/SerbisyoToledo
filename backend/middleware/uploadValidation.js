@@ -121,6 +121,52 @@ const validateSingleUpload = ({ allowedKinds = ['image'], required = false, fiel
   };
 };
 
+const validateMultiFieldUploads = (schema = {}) => {
+  return (req, res, next) => {
+    const files = req.files || {};
+
+    for (const [fieldName, rules] of Object.entries(schema)) {
+      const {
+        allowedKinds = ['image'],
+        required = false,
+        maxCount = 1,
+      } = rules || {};
+
+      const fieldFiles = Array.isArray(files[fieldName]) ? files[fieldName] : [];
+
+      if (required && fieldFiles.length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: `${fieldName} upload is required.`,
+        });
+      }
+
+      if (fieldFiles.length > maxCount) {
+        return res.status(400).json({
+          success: false,
+          message: `${fieldName} accepts up to ${maxCount} file(s).`,
+        });
+      }
+
+      for (const file of fieldFiles) {
+        const mimeOk = hasAllowedMime(file.mimetype, allowedKinds);
+        const extOk = hasAllowedExtension(file.originalname, allowedKinds);
+        const sigOk = hasValidSignature(file.buffer, allowedKinds);
+
+        if (!mimeOk || !extOk || !sigOk) {
+          return res.status(400).json({
+            success: false,
+            message: `Invalid ${fieldName} file type.`,
+          });
+        }
+      }
+    }
+
+    return next();
+  };
+};
+
 module.exports = {
   validateSingleUpload,
+  validateMultiFieldUploads,
 };
