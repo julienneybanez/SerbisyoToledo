@@ -12,6 +12,9 @@ export default function EditPortfolioModal({ onClose }) {
     skills: [],
   });
   const [portfolio, setPortfolio] = useState([]);
+  const [eligibleCompletedRequests, setEligibleCompletedRequests] = useState([]);
+  const [selectedCompletedRequestId, setSelectedCompletedRequestId] = useState('');
+  const [isLinkingCompletedRequest, setIsLinkingCompletedRequest] = useState(false);
   const [newSkill, setNewSkill] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -45,6 +48,11 @@ export default function EditPortfolioModal({ onClose }) {
         });
         setPortfolio(response.data.portfolio || []);
       }
+
+      const completedResponse = await serviceProfileAPI.getEligibleCompletedRequests();
+      if (completedResponse.success && completedResponse.data) {
+        setEligibleCompletedRequests(completedResponse.data.requests || []);
+      }
     } catch (err) {
       if (err.status === 404) {
         setError('Please create a service profile first before editing your portfolio.');
@@ -54,6 +62,45 @@ export default function EditPortfolioModal({ onClose }) {
       console.error('Portfolio fetch error:', err);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleLinkCompletedRequest = async () => {
+    if (!selectedCompletedRequestId) {
+      setError('Please select a completed job to link.');
+      return;
+    }
+
+    const selectedRequest = eligibleCompletedRequests.find(
+      (request) => Number(request.id) === Number(selectedCompletedRequestId)
+    );
+
+    if (!selectedRequest) {
+      setError('Selected completed request could not be found.');
+      return;
+    }
+
+    try {
+      setIsLinkingCompletedRequest(true);
+      setError(null);
+
+      const response = await serviceProfileAPI.createPortfolioFromRequest({
+        serviceRequestId: Number(selectedCompletedRequestId),
+        caption: selectedRequest.job_title || 'Completed project',
+        description: '',
+        serviceCategory: null,
+        isPublished: true,
+        isFeatured: false,
+      });
+
+      if (response.success) {
+        setSelectedCompletedRequestId('');
+        await fetchPortfolio();
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to link completed request');
+    } finally {
+      setIsLinkingCompletedRequest(false);
     }
   };
 
@@ -246,6 +293,36 @@ export default function EditPortfolioModal({ onClose }) {
             {/* Portfolio Images Section */}
             <div className="form-section" data-tour="provider-portfolio-images">
               <h3><i className="bi bi-images"></i> Portfolio Images</h3>
+
+              <div style={{ marginBottom: '1rem', border: '1px solid #e5e7eb', borderRadius: '10px', padding: '0.75rem' }}>
+                <label style={{ display: 'block', fontWeight: 600, marginBottom: '0.5rem' }}>Link Completed Job</label>
+                <select
+                  value={selectedCompletedRequestId}
+                  onChange={(e) => setSelectedCompletedRequestId(e.target.value)}
+                  disabled={isLinkingCompletedRequest || eligibleCompletedRequests.length === 0}
+                  style={{ width: '100%', marginBottom: '0.5rem' }}
+                >
+                  <option value="">
+                    {eligibleCompletedRequests.length > 0 ? 'Select a completed request' : 'No completed requests available'}
+                  </option>
+                  {eligibleCompletedRequests.map((request) => (
+                    <option key={request.id} value={request.id}>
+                      {request.job_title || `Request #${request.id}`} ({new Date(request.created_at).toLocaleDateString()})
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  className="btn-upload-image"
+                  onClick={handleLinkCompletedRequest}
+                  disabled={isLinkingCompletedRequest || !selectedCompletedRequestId}
+                >
+                  {isLinkingCompletedRequest ? 'Linking...' : 'Link Job to Portfolio'}
+                </button>
+                <p style={{ marginTop: '0.5rem', fontSize: '0.85rem', color: '#6b7280' }}>
+                  Linked jobs create a portfolio entry without exposing private request details by default.
+                </p>
+              </div>
               
               <div className="portfolio-grid">
                 {portfolio.map((item) => (

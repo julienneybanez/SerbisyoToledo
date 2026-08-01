@@ -63,7 +63,7 @@ export default function Requests() {
   const [cancelDialog, setCancelDialog] = useState({
     open: false,
     requestId: null,
-    cancellationReason: 'change_of_plans',
+    cancellationReason: 'Schedule conflict',
     cancellationReasonOther: '',
     error: '',
   });
@@ -199,7 +199,7 @@ export default function Requests() {
     setCancelDialog({
       open: true,
       requestId,
-      cancellationReason: 'change_of_plans',
+      cancellationReason: 'Schedule conflict',
       cancellationReasonOther: '',
       error: '',
     });
@@ -209,14 +209,14 @@ export default function Requests() {
     setCancelDialog({
       open: false,
       requestId: null,
-      cancellationReason: 'change_of_plans',
+      cancellationReason: 'Schedule conflict',
       cancellationReasonOther: '',
       error: '',
     });
   };
 
   const handleConfirmCancellation = async () => {
-    if (cancelDialog.cancellationReason === 'other' && !cancelDialog.cancellationReasonOther.trim()) {
+    if (cancelDialog.cancellationReason === 'Other' && !cancelDialog.cancellationReasonOther.trim()) {
       setCancelDialog((prev) => ({
         ...prev,
         error: 'Please provide details for cancellation reason.',
@@ -858,14 +858,16 @@ export default function Requests() {
                   }));
                 }}
               >
-                <option value="change_of_plans">Change of plans</option>
-                <option value="provider_unresponsive">Provider unresponsive</option>
-                <option value="price_issue">Price issue</option>
-                <option value="scheduled_conflict">Schedule conflict</option>
-                <option value="duplicate_request">Duplicate request</option>
-                <option value="other">Other</option>
+                <option value="Schedule conflict">Schedule conflict</option>
+                <option value="No longer need the service">No longer need the service</option>
+                <option value="Provider unavailable">Provider unavailable</option>
+                <option value="Client unavailable">Client unavailable</option>
+                <option value="Incorrect booking information">Incorrect booking information</option>
+                <option value="Provider did not respond">Provider did not respond</option>
+                <option value="Found another provider">Found another provider</option>
+                <option value="Other">Other</option>
               </select>
-              {cancelDialog.cancellationReason === 'other' && (
+              {cancelDialog.cancellationReason === 'Other' && (
                 <>
                   <label htmlFor="cancel-reason-other" className="decline-dialog-label">Please provide details</label>
                   <textarea

@@ -392,6 +392,45 @@ export const adminAPI = {
     return handleResponse(response);
   },
 
+  // Get provider credentials for admin review
+  getProviderCredentials: async () => {
+    const token = getToken();
+
+    if (!token) {
+      throw { message: 'No authentication token found' };
+    }
+
+    const response = await fetch(`${API_BASE_URL}/admin/provider-credentials`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    return handleResponse(response);
+  },
+
+  // Review provider credential (approve/reject/expire)
+  reviewProviderCredential: async (id, payload) => {
+    const token = getToken();
+
+    if (!token) {
+      throw { message: 'No authentication token found' };
+    }
+
+    const response = await fetch(`${API_BASE_URL}/admin/provider-credentials/${id}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    return handleResponse(response);
+  },
+
   // Update report status
   updateReportStatus: async (id, updateData) => {
     const token = getToken();

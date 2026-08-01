@@ -6,14 +6,25 @@ function AdminVerifications() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('pending');
   const [verifications, setVerifications] = useState([]);
+  const [providerCredentials, setProviderCredentials] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [credentialsLoading, setCredentialsLoading] = useState(true);
   const [error, setError] = useState('');
+  const [credentialsError, setCredentialsError] = useState('');
   const [actionLoading, setActionLoading] = useState(null);
+  const [credentialActionLoading, setCredentialActionLoading] = useState(null);
   const [documentPreview, setDocumentPreview] = useState(null);
   const [isImageZoomed, setIsImageZoomed] = useState(false);
+  const [credentialFilterStatus, setCredentialFilterStatus] = useState('pending');
   const [rejectDialog, setRejectDialog] = useState({
     open: false,
     requestId: null,
+    reason: '',
+    error: '',
+  });
+  const [credentialRejectDialog, setCredentialRejectDialog] = useState({
+    open: false,
+    credentialId: null,
     reason: '',
     error: '',
   });
@@ -33,12 +44,28 @@ function AdminVerifications() {
     }
   };
 
+  const fetchProviderCredentials = async () => {
+    try {
+      setCredentialsLoading(true);
+      setCredentialsError('');
+      const response = await adminAPI.getProviderCredentials();
+      if (response.success) {
+        setProviderCredentials(response.data || []);
+      }
+    } catch (err) {
+      setCredentialsError(err.message || 'Failed to load provider credentials');
+    } finally {
+      setCredentialsLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchVerifications();
+    fetchProviderCredentials();
   }, []);
 
   useEffect(() => {
-    if (!documentPreview && !rejectDialog.open) {
+    if (!documentPreview && !rejectDialog.open && !credentialRejectDialog.open) {
       return undefined;
     }
 
@@ -60,6 +87,16 @@ function AdminVerifications() {
             reason: '',
             error: '',
           });
+          return;
+        }
+
+        if (credentialRejectDialog.open) {
+          setCredentialRejectDialog({
+            open: false,
+            credentialId: null,
+            reason: '',
+            error: '',
+          });
         }
       }
     };
@@ -69,7 +106,7 @@ function AdminVerifications() {
       window.removeEventListener('keydown', handleKeyDown);
       document.body.style.overflow = previousOverflow;
     };
-  }, [documentPreview, rejectDialog.open]);
+  }, [documentPreview, rejectDialog.open, credentialRejectDialog.open]);
 
   const getDocumentType = (dataUrl) => {
     if (!dataUrl || typeof dataUrl !== 'string') {
@@ -166,6 +203,62 @@ function AdminVerifications() {
     }
   };
 
+  const openCredentialRejectDialog = (credentialId) => {
+    setCredentialRejectDialog({
+      open: true,
+      credentialId,
+      reason: '',
+      error: '',
+    });
+  };
+
+  const closeCredentialRejectDialog = () => {
+    setCredentialRejectDialog({
+      open: false,
+      credentialId: null,
+      reason: '',
+      error: '',
+    });
+  };
+
+  const handleCredentialReview = async (credentialId, action, reasonInput = '') => {
+    try {
+      setCredentialActionLoading(`${credentialId}-${action}`);
+      let payload = { action };
+
+      if (action === 'reject') {
+        const trimmedReason = reasonInput.trim();
+        if (!trimmedReason) {
+          setCredentialRejectDialog((prev) => ({
+            ...prev,
+            error: 'Rejection reason is required.',
+          }));
+          return;
+        }
+        payload = { ...payload, reason: trimmedReason };
+      }
+
+      const response = await adminAPI.reviewProviderCredential(credentialId, payload);
+      if (response.success) {
+        if (action === 'reject') {
+          closeCredentialRejectDialog();
+        }
+        await fetchProviderCredentials();
+      }
+    } catch (err) {
+      if (action === 'reject') {
+        setCredentialRejectDialog((prev) => ({
+          ...prev,
+          error: err.message || 'Failed to reject credential',
+        }));
+      } else {
+        alert(err.message || 'Failed to review credential');
+      }
+    } finally {
+      setCredentialActionLoading(null);
+    }
+  };
+
   const filteredVerifications = verifications.filter((v) => {
     const query = searchTerm.trim().toLowerCase();
     const matchesSearch =
@@ -181,6 +274,23 @@ function AdminVerifications() {
   const pendingCount = verifications.filter((v) => v.status === 'pending').length;
   const approvedCount = verifications.filter((v) => v.status === 'approved').length;
   const rejectedCount = verifications.filter((v) => v.status === 'rejected').length;
+
+  const filteredCredentials = providerCredentials.filter((credential) => {
+    const query = searchTerm.trim().toLowerCase();
+    const matchesSearch =
+      !query ||
+      (credential.provider?.name || '').toLowerCase().includes(query) ||
+      (credential.credentialName || '').toLowerCase().includes(query) ||
+      (credential.credentialType || '').toLowerCase().includes(query);
+
+    const status = credential.verificationStatus || 'unverified';
+    const matchesStatus = credentialFilterStatus === 'all' || status === credentialFilterStatus;
+    return matchesSearch && matchesStatus;
+  });
+
+  const credentialPendingCount = providerCredentials.filter((c) => c.verificationStatus === 'pending').length;
+  const credentialVerifiedCount = providerCredentials.filter((c) => c.verificationStatus === 'verified').length;
+  const credentialRejectedCount = providerCredentials.filter((c) => c.verificationStatus === 'rejected').length;
 
   return (
     <div className="admin-page">
@@ -327,6 +437,131 @@ function AdminVerifications() {
         </div>
       )}
 
+      <div className="admin-page-header" style={{ marginTop: '2rem' }}>
+        <h2 className="admin-page-title" style={{ fontSize: '1.4rem' }}>Provider Credential Reviews</h2>
+        <p className="admin-page-subtitle">Review submitted credentials from service providers</p>
+      </div>
+
+      <div className="mini-stats">
+        <div className="mini-stat">
+          <span className="mini-stat-value text-warning">{credentialPendingCount}</span>
+          <span className="mini-stat-label">Pending</span>
+        </div>
+        <div className="mini-stat">
+          <span className="mini-stat-value text-success">{credentialVerifiedCount}</span>
+          <span className="mini-stat-label">Verified</span>
+        </div>
+        <div className="mini-stat">
+          <span className="mini-stat-value text-danger">{credentialRejectedCount}</span>
+          <span className="mini-stat-label">Rejected</span>
+        </div>
+      </div>
+
+      <div className="filters-bar">
+        <div className="filter-group">
+          <select value={credentialFilterStatus} onChange={(e) => setCredentialFilterStatus(e.target.value)}>
+            <option value="all">All Status</option>
+            <option value="pending">Pending</option>
+            <option value="verified">Verified</option>
+            <option value="rejected">Rejected</option>
+            <option value="expired">Expired</option>
+            <option value="unverified">Unverified</option>
+          </select>
+        </div>
+      </div>
+
+      {credentialsError && <div className="alert alert-danger mt-3">{credentialsError}</div>}
+
+      <div className="requests-list">
+        {credentialsLoading ? (
+          <div className="text-center py-4">Loading provider credentials...</div>
+        ) : (
+          filteredCredentials.map((credential) => (
+            <div key={credential.id} className={`request-card verification-card ${credential.verificationStatus !== 'pending' ? 'processed' : ''}`}>
+              <div className="request-avatar">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+              </div>
+
+              <div className="request-info">
+                <div className="request-header">
+                  <h4 className="request-name">{credential.provider?.name || 'Unknown Provider'}</h4>
+                  <span className="document-tag">{credential.credentialType || 'Credential'}</span>
+                  <span className={`status-badge status-${credential.verificationStatus === 'verified' ? 'verified' : credential.verificationStatus === 'rejected' ? 'suspended' : 'pending'}`}>
+                    {credential.verificationStatus || 'unverified'}
+                  </span>
+                </div>
+
+                <p className="request-detail">Credential: {credential.credentialName || 'Unnamed credential'}</p>
+                <p className="request-detail">Issuer: {credential.issuingOrganization || 'Not provided'}</p>
+                <p className="request-detail">Credential ID: {credential.credentialId || 'Not provided'}</p>
+                <p className="request-detail">Submitted: {new Date(credential.createdAt).toLocaleString()}</p>
+                {credential.verificationNotes && (
+                  <p className="rejection-reason"><strong>Review Note:</strong> {credential.verificationNotes}</p>
+                )}
+
+                <div className="request-documents">
+                  <button
+                    className="btn-view-details"
+                    onClick={() => openDocumentPreview(credential.document, 'Credential Document')}
+                    disabled={!credential.document}
+                    aria-label="Preview credential document"
+                  >
+                    View Credential Document
+                  </button>
+                </div>
+              </div>
+
+              <div className="request-actions">
+                {credential.verificationStatus === 'pending' || credential.verificationStatus === 'unverified' ? (
+                  <>
+                    <button
+                      className="btn-approve"
+                      disabled={credentialActionLoading === `${credential.id}-approve`}
+                      onClick={() => handleCredentialReview(credential.id, 'approve')}
+                    >
+                      {credentialActionLoading === `${credential.id}-approve` ? 'Approving...' : 'Approve'}
+                    </button>
+                    <button
+                      className="btn-reject"
+                      disabled={credentialActionLoading === `${credential.id}-reject`}
+                      onClick={() => openCredentialRejectDialog(credential.id)}
+                    >
+                      {credentialActionLoading === `${credential.id}-reject` ? 'Rejecting...' : 'Reject'}
+                    </button>
+                    <button
+                      className="btn-view-details"
+                      disabled={credentialActionLoading === `${credential.id}-expire`}
+                      onClick={() => handleCredentialReview(credential.id, 'expire')}
+                    >
+                      {credentialActionLoading === `${credential.id}-expire` ? 'Expiring...' : 'Mark Expired'}
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    className="btn-view-details"
+                    onClick={() => openDocumentPreview(credential.document, 'Credential Document')}
+                    disabled={!credential.document}
+                    aria-label="Preview credential document"
+                  >
+                    View Details
+                  </button>
+                )}
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {!credentialsLoading && filteredCredentials.length === 0 && (
+        <div className="empty-state">
+          <h3>No provider credentials found</h3>
+          <p>Try adjusting your search or filter criteria</p>
+        </div>
+      )}
+
       {documentPreview && (
         <div
           className="admin-document-preview-overlay"
@@ -446,6 +681,72 @@ function AdminVerifications() {
                 disabled={actionLoading === `${rejectDialog.requestId}-reject` || !rejectDialog.reason.trim()}
               >
                 {actionLoading === `${rejectDialog.requestId}-reject` ? 'Rejecting...' : 'Confirm Reject'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {credentialRejectDialog.open && (
+        <div
+          className="admin-dialog-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="credential-reject-title"
+          onClick={closeCredentialRejectDialog}
+        >
+          <div className="admin-dialog-card danger" onClick={(event) => event.stopPropagation()}>
+            <div className="admin-dialog-header">
+              <h2 id="credential-reject-title" className="admin-dialog-title">Reject Credential</h2>
+              <button
+                type="button"
+                className="admin-dialog-close"
+                onClick={closeCredentialRejectDialog}
+                aria-label="Close credential rejection dialog"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="admin-dialog-body">
+              <label htmlFor="credential-rejection-reason" className="settings-label">
+                Rejection reason
+              </label>
+              <textarea
+                id="credential-rejection-reason"
+                className="settings-textarea admin-reject-textarea"
+                value={credentialRejectDialog.reason}
+                onChange={(event) => {
+                  const value = event.target.value;
+                  setCredentialRejectDialog((prev) => ({
+                    ...prev,
+                    reason: value,
+                    error: prev.error ? '' : prev.error,
+                  }));
+                }}
+                rows={4}
+                maxLength={500}
+                aria-required="true"
+              />
+              {credentialRejectDialog.error && <p className="admin-dialog-error">{credentialRejectDialog.error}</p>}
+            </div>
+
+            <div className="admin-dialog-actions admin-dialog-actions-split">
+              <button
+                type="button"
+                className="btn-view-details"
+                onClick={closeCredentialRejectDialog}
+                disabled={credentialActionLoading === `${credentialRejectDialog.credentialId}-reject`}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn-reject"
+                onClick={() => handleCredentialReview(credentialRejectDialog.credentialId, 'reject', credentialRejectDialog.reason)}
+                disabled={credentialActionLoading === `${credentialRejectDialog.credentialId}-reject` || !credentialRejectDialog.reason.trim()}
+              >
+                {credentialActionLoading === `${credentialRejectDialog.credentialId}-reject` ? 'Rejecting...' : 'Confirm Reject'}
               </button>
             </div>
           </div>

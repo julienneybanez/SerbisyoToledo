@@ -1373,6 +1373,8 @@ exports.createPortfolioFromCompletedRequest = async (req, res) => {
       [serviceProfileId]
     );
 
+    const safeDescription = String(description || '').trim();
+
     const [insertResult] = await connection.query(
       `INSERT INTO portfolio_items (
          service_profile_id,
@@ -1397,7 +1399,7 @@ exports.createPortfolioFromCompletedRequest = async (req, res) => {
         String(caption || '').trim(),
         orderResult[0].nextOrder,
         requests[0].job_title,
-        String(description || requests[0].job_details || '').trim(),
+        safeDescription,
         String(serviceCategory || '').trim() || null,
         isPublished !== false,
         Boolean(isFeatured),

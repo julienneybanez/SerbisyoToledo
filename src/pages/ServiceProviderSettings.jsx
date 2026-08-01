@@ -36,6 +36,15 @@ function ServiceProviderSettings() {
     maxAdvanceBookingDays: 60,
   });
   const [weeklyBlocks, setWeeklyBlocks] = useState([]);
+  const [availabilityExceptions, setAvailabilityExceptions] = useState([]);
+  const [newException, setNewException] = useState({
+    exceptionDate: '',
+    exceptionType: 'unavailable',
+    startTime: '',
+    endTime: '',
+    reason: '',
+  });
+  const [exceptionSaving, setExceptionSaving] = useState(false);
   const [newCredential, setNewCredential] = useState({
     credentialName: '',
     credentialType: '',
@@ -133,6 +142,16 @@ function ServiceProviderSettings() {
             endTime: String(b.end_time ?? b.endTime ?? '').slice(0, 5),
             isAvailable: b.is_available !== false,
           })));
+
+          const exceptions = Array.isArray(availabilityResponse.data.exceptions) ? availabilityResponse.data.exceptions : [];
+          setAvailabilityExceptions(exceptions.map((ex) => ({
+            id: ex.id,
+            exceptionDate: String(ex.exception_date ?? ex.exceptionDate ?? '').slice(0, 10),
+            exceptionType: ex.exception_type ?? ex.exceptionType ?? 'unavailable',
+            startTime: String(ex.start_time ?? ex.startTime ?? '').slice(0, 5),
+            endTime: String(ex.end_time ?? ex.endTime ?? '').slice(0, 5),
+            reason: ex.reason || '',
+          })));
         }
 
         if (languagesResponse.success) {
@@ -222,6 +241,66 @@ function ServiceProviderSettings() {
 
   const removeWeekDayBlock = (index) => {
     setWeeklyBlocks((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleAddAvailabilityException = async () => {
+    if (!newException.exceptionDate) {
+      alert('Please choose an exception date.');
+      return;
+    }
+
+    if ((newException.startTime && !newException.endTime) || (!newException.startTime && newException.endTime)) {
+      alert('Provide both start and end time, or leave both blank for whole-day exception.');
+      return;
+    }
+
+    try {
+      setExceptionSaving(true);
+      await serviceProfileAPI.addAvailabilityException({
+        exceptionDate: newException.exceptionDate,
+        exceptionType: newException.exceptionType,
+        startTime: newException.startTime || null,
+        endTime: newException.endTime || null,
+        reason: newException.reason.trim() || null,
+      });
+
+      const refreshed = await serviceProfileAPI.getMyAvailability();
+      if (refreshed.success && refreshed.data) {
+        const exceptions = Array.isArray(refreshed.data.exceptions) ? refreshed.data.exceptions : [];
+        setAvailabilityExceptions(exceptions.map((ex) => ({
+          id: ex.id,
+          exceptionDate: String(ex.exception_date ?? ex.exceptionDate ?? '').slice(0, 10),
+          exceptionType: ex.exception_type ?? ex.exceptionType ?? 'unavailable',
+          startTime: String(ex.start_time ?? ex.startTime ?? '').slice(0, 5),
+          endTime: String(ex.end_time ?? ex.endTime ?? '').slice(0, 5),
+          reason: ex.reason || '',
+        })));
+      }
+
+      setNewException({
+        exceptionDate: '',
+        exceptionType: 'unavailable',
+        startTime: '',
+        endTime: '',
+        reason: '',
+      });
+    } catch (err) {
+      alert(err.message || 'Failed to add availability exception');
+    } finally {
+      setExceptionSaving(false);
+    }
+  };
+
+  const handleDeleteAvailabilityException = async (exceptionId) => {
+    try {
+      setExceptionSaving(true);
+      await serviceProfileAPI.deleteAvailabilityException(exceptionId);
+      setAvailabilityExceptions((prev) => prev.filter((item) => Number(item.id) !== Number(exceptionId)));
+    } catch (err) {
+      alert(err.message || 'Failed to delete exception');
+    } finally {
+      setExceptionSaving(false);
+    }
   };
 
   const handleCreateCredential = async () => {
@@ -645,6 +724,88 @@ function ServiceProviderSettings() {
                 <button className="btn-save" onClick={handleAvailabilitySave} disabled={availabilityLoading || isSaving}>
                   {isSaving ? 'Saving...' : 'Save Availability'}
                 </button>
+              </div>
+
+              <div className="settings-section-divider"></div>
+              <h3 className="settings-subsection-title">Date Exceptions</h3>
+
+              <div className="settings-group" style={{ border: '1px solid #e5e7eb', borderRadius: '10px', padding: '0.75rem' }}>
+                <label className="settings-label">Exception date</label>
+                <input
+                  type="date"
+                  className="settings-input"
+                  value={newException.exceptionDate}
+                  onChange={(e) => setNewException((prev) => ({ ...prev, exceptionDate: e.target.value }))}
+                  disabled={exceptionSaving}
+                />
+
+                <label className="settings-label">Exception type</label>
+                <select
+                  className="settings-select"
+                  value={newException.exceptionType}
+                  onChange={(e) => setNewException((prev) => ({ ...prev, exceptionType: e.target.value }))}
+                  disabled={exceptionSaving}
+                >
+                  <option value="available">Available override</option>
+                  <option value="unavailable">Unavailable</option>
+                  <option value="booked">Booked</option>
+                  <option value="vacation">Vacation</option>
+                </select>
+
+                <label className="settings-label">Start time (optional)</label>
+                <input
+                  type="time"
+                  className="settings-input"
+                  value={newException.startTime}
+                  onChange={(e) => setNewException((prev) => ({ ...prev, startTime: e.target.value }))}
+                  disabled={exceptionSaving}
+                />
+
+                <label className="settings-label">End time (optional)</label>
+                <input
+                  type="time"
+                  className="settings-input"
+                  value={newException.endTime}
+                  onChange={(e) => setNewException((prev) => ({ ...prev, endTime: e.target.value }))}
+                  disabled={exceptionSaving}
+                />
+
+                <label className="settings-label">Reason (optional)</label>
+                <input
+                  type="text"
+                  className="settings-input"
+                  value={newException.reason}
+                  onChange={(e) => setNewException((prev) => ({ ...prev, reason: e.target.value }))}
+                  disabled={exceptionSaving}
+                  maxLength={255}
+                />
+
+                <button type="button" className="btn-save" onClick={handleAddAvailabilityException} disabled={exceptionSaving}>
+                  {exceptionSaving ? 'Saving...' : 'Add Exception'}
+                </button>
+              </div>
+
+              <div className="settings-group">
+                {availabilityExceptions.length === 0 && <small className="settings-help">No date exceptions configured.</small>}
+                {availabilityExceptions.map((exception) => (
+                  <div key={exception.id} style={{ border: '1px solid #e5e7eb', borderRadius: '10px', padding: '0.75rem', marginBottom: '0.5rem' }}>
+                    <p style={{ margin: 0, fontWeight: 600 }}>{exception.exceptionDate} • {exception.exceptionType}</p>
+                    <small className="settings-help">
+                      {exception.startTime && exception.endTime ? `${exception.startTime} - ${exception.endTime}` : 'Whole day'}
+                      {exception.reason ? ` • ${exception.reason}` : ''}
+                    </small>
+                    <div style={{ marginTop: '0.5rem' }}>
+                      <button
+                        type="button"
+                        className="btn-cancel"
+                        onClick={() => handleDeleteAvailabilityException(exception.id)}
+                        disabled={exceptionSaving}
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                ))}
               </div>
 
               <div className="settings-section-divider"></div>

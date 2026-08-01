@@ -463,4 +463,61 @@ describe('Backend Security Hardening', () => {
     expect(res.body.data.adminNotes).toBeUndefined();
     expect(res.body.data.verificationToken).toBeUndefined();
   });
+
+  it('19) does not expose job_details when linking completed request without description', async () => {
+    vi.spyOn(db, 'query').mockImplementation(async (sql) => {
+      if (sql === authUserSql) return [[{ id: 21, user_type: 'tradesperson', is_active: 1 }]];
+      return [[]];
+    });
+
+    const conn = createConnectionMock(async (sql) => {
+      if (sql.includes('SELECT id FROM service_profiles WHERE user_id = ? LIMIT 1')) {
+        return [[{ id: 77 }]];
+      }
+
+      if (sql.includes('FROM service_requests') && sql.includes('FOR UPDATE')) {
+        return [[{
+          id: 300,
+          job_title: 'Completed Plumbing Work',
+          job_details: 'Private issue details that should not be auto-published',
+          status: 'completed',
+          start_date: '2099-12-31',
+          end_date: '2099-12-31',
+        }]];
+      }
+
+      if (sql.includes('SELECT id FROM portfolio_items WHERE service_request_id = ? LIMIT 1')) {
+        return [[]];
+      }
+
+      if (sql.includes('SELECT COALESCE(MAX(display_order), 0) + 1 AS nextOrder FROM portfolio_items WHERE service_profile_id = ?')) {
+        return [[{ nextOrder: 4 }]];
+      }
+
+      if (sql.includes('INSERT INTO portfolio_items')) {
+        return [{ insertId: 909 }];
+      }
+
+      return [[]];
+    });
+
+    vi.spyOn(db, 'getConnection').mockResolvedValue(conn);
+
+    const res = await request(app)
+      .post('/api/service-profiles/portfolio/from-request')
+      .set('Authorization', `Bearer ${signToken(21)}`)
+      .send({
+        serviceRequestId: 300,
+        caption: 'Completed project',
+      });
+
+    expect(res.status).toBe(201);
+    expect(res.body.success).toBe(true);
+
+    const insertCall = conn.query.mock.calls.find(([sql]) => sql.includes('INSERT INTO portfolio_items'));
+    expect(insertCall).toBeTruthy();
+
+    const insertParams = insertCall[1];
+    expect(insertParams[5]).toBe('');
+  });
 });
