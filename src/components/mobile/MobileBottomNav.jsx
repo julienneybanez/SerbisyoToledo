@@ -3,6 +3,12 @@ import { NavLink } from 'react-router-dom';
 import { serviceRequestAPI } from '../../services/api';
 
 const ROLE_ITEMS = {
+  guest: [
+    { to: '/', label: 'Home', icon: 'bi-house-door' },
+    { to: '/feed', label: 'Browse', icon: 'bi-search' },
+    { to: '/login', label: 'Log In', icon: 'bi-box-arrow-in-right' },
+    { to: '/register', label: 'Sign Up', icon: 'bi-person-plus' },
+  ],
   client: [
     { to: '/', label: 'Home', icon: 'bi-house-door' },
     { to: '/feed', label: 'Browse', icon: 'bi-search' },

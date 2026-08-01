@@ -241,10 +241,12 @@
     line-height: 1;
   }
 
+  .mobile-shell-layout .mobile-page-content,
   .mobile-auth-layout .authenticated-page-content {
     padding-bottom: calc(78px + env(safe-area-inset-bottom));
   }
 
+  .mobile-shell-layout .floating-btn,
   .mobile-auth-layout .floating-btn {
     bottom: calc(88px + env(safe-area-inset-bottom));
     right: 1rem;

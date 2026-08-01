@@ -348,7 +348,7 @@ function App() {
               <Navbar />
             </div>
 
-            <main className={`main-content ${isMobileAuthenticated ? 'authenticated-page-content' : ''}`}>
+            <main className={`main-content ${isMobileShellLayout ? 'mobile-page-content' : ''} ${isMobileAuthenticated ? 'authenticated-page-content' : ''}`}>
               <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/about" element={<About />} />
@@ -366,7 +366,7 @@ function App() {
               </Routes>
             </main>
 
-            {isMobileAuthenticated && (
+            {isMobileShellLayout && (
               <MobileBottomNav
                 role={mobileRole}
                 profileMenuOpen={mobileProfileMenuOpen}
