@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { serviceProfileAPI } from '../../services/api';
 import './Chatbot.css';
 
 const RobotIcon = () => (
@@ -44,6 +45,72 @@ const SendIcon = () => (
   </svg>
 );
 
+const formatMoney = (amount) => `P${Number(amount || 0).toLocaleString('en-PH', { maximumFractionDigits: 0 })}`;
+
+const SERVICE_KEYWORDS = [
+  { keyword: 'plumb', category: 'Plumbing' },
+  { keyword: 'electric', category: 'Electrical' },
+  { keyword: 'carpent', category: 'Carpentry' },
+  { keyword: 'clean', category: 'Cleaning' },
+  { keyword: 'garden', category: 'Gardening' },
+  { keyword: 'aircon', category: 'Aircon Repair' },
+  { keyword: 'ac ', category: 'Aircon Repair' },
+  { keyword: 'massage', category: 'Massage Therapy' },
+  { keyword: 'laundry', category: 'Laundry' },
+  { keyword: 'mechanic', category: 'Mechanic' },
+  { keyword: 'locksmith', category: 'Locksmith' },
+];
+
+const buildRecommendationFilters = (rawInput) => {
+  const input = String(rawInput || '').toLowerCase();
+
+  const serviceMatch = SERVICE_KEYWORDS.find((item) => input.includes(item.keyword));
+  const category = serviceMatch ? serviceMatch.category : undefined;
+
+  const locationMatch = input.match(/(?:in|near|around)\s+([a-z\s.-]{3,40})/i);
+  const location = locationMatch ? locationMatch[1].trim() : undefined;
+
+  const budgetMatch = input.match(/(?:under|below|max|budget)\s*(?:p|php|₱)?\s*(\d{3,6})/i);
+  const maxPrice = budgetMatch ? Number(budgetMatch[1]) : undefined;
+
+  const ratingMatch = input.match(/(\d(?:\.\d)?)\s*(?:\+)?\s*(?:stars?|rating)/i);
+  const minRating = ratingMatch ? Number(ratingMatch[1]) : undefined;
+
+  const language = input.includes('cebuano')
+    ? 'ceb'
+    : input.includes('filipino') || input.includes('tagalog')
+      ? 'fil'
+      : input.includes('english')
+        ? 'en'
+        : undefined;
+
+  let availabilityDate;
+  const now = new Date();
+  if (input.includes('tomorrow')) {
+    const tomorrow = new Date(now);
+    tomorrow.setDate(now.getDate() + 1);
+    availabilityDate = tomorrow.toISOString().slice(0, 10);
+  } else if (input.includes('today')) {
+    availabilityDate = now.toISOString().slice(0, 10);
+  }
+
+  return {
+    category,
+    location,
+    maxPrice,
+    minRating,
+    language,
+    availabilityDate,
+    search: rawInput,
+    limit: 3,
+  };
+};
+
+const shouldFetchRecommendations = (rawInput) => {
+  const input = String(rawInput || '').toLowerCase();
+  return /find|looking for|recommend|need|book|provider|service|plumber|electrician|carpenter|cleaner|massage|aircon|gardener|laundry/.test(input);
+};
+
 const Chatbot = ({ isOpen, onClose }) => {
   const [messages, setMessages] = useState([
     {
@@ -54,6 +121,7 @@ const Chatbot = ({ isOpen, onClose }) => {
     },
   ]);
   const [inputValue, setInputValue] = useState('');
+  const [isResponding, setIsResponding] = useState(false);
 
   const suggestions = [
     { emoji: '👋', text: 'What is SerbisyoToledo?' },
@@ -61,56 +129,98 @@ const Chatbot = ({ isOpen, onClose }) => {
     { emoji: '📚', text: 'FAQs' },
   ];
 
-  const handleSendMessage = (text) => {
+  const handleSendMessage = async (text) => {
     const messageText = text || inputValue;
     if (messageText.trim() === '') return;
 
     const userMessage = {
-      id: messages.length + 1,
+      id: Date.now(),
       text: messageText,
       sender: 'user',
       timestamp: new Date(),
     };
 
-    setMessages([...messages, userMessage]);
+    setMessages((prev) => [...prev, userMessage]);
     setInputValue('');
+    setIsResponding(true);
 
-    setTimeout(() => {
+    try {
+      const botPayload = await getBotResponsePayload(messageText);
       const botResponse = {
-        id: messages.length + 2,
-        text: getBotResponse(messageText),
+        id: Date.now() + 1,
+        text: botPayload.text,
+        recommendations: botPayload.recommendations || [],
         sender: 'bot',
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, botResponse]);
-    }, 500);
+    } finally {
+      setIsResponding(false);
+    }
   };
 
-  const getBotResponse = (userInput) => {
+  const getBotResponsePayload = async (userInput) => {
     const input = userInput.toLowerCase();
 
     if (input.includes('what is serbisyotoledo') || input.includes('what are you')) {
-      return "I'm SerbisyoToledo's virtual assistant! I'm here to help you find services, book appointments, and answer your questions.";
+      return {
+        text: "I'm SerbisyoToledo's virtual assistant! I'm here to help you find services, book appointments, and answer your questions.",
+      };
     }
     if (input.includes('hello') || input.includes('hi') || input.includes('get started')) {
-      return "Welcome! I can help you find local service providers, book appointments, or answer questions about our platform. What would you like to do?";
+      return {
+        text: "Welcome! I can help you find local service providers, book appointments, or answer questions about our platform. What would you like to do?",
+      };
     }
     if (input.includes('register') || input.includes('provider')) {
-      return "To register as a service provider, click the 'Sign Up' button and select 'Service Provider' option. You'll need to provide your skills, experience, and contact information.";
+      return {
+        text: "To register as a service provider, click the 'Sign Up' button and select 'Service Provider' option. You'll need to provide your skills, experience, and contact information.",
+      };
     }
     if (input.includes('faq') || input.includes('help')) {
-      return "Here are common topics: 1) How to book a service, 2) Payment methods, 3) Cancellation policy, 4) Provider verification. Which would you like to know more about?";
+      return {
+        text: 'Here are common topics: 1) How to book a service, 2) Payment methods, 3) Cancellation policy, 4) Provider verification. Which would you like to know more about?',
+      };
     }
-    if (input.includes('service') || input.includes('services')) {
-      return 'We offer carpentry, plumbing, electrical work, house cleaning, AC repair, gardening, and more! What service do you need?';
+
+    if (shouldFetchRecommendations(userInput)) {
+      try {
+        const filters = buildRecommendationFilters(userInput);
+        const response = await serviceProfileAPI.getRecommendations(filters);
+        const providers = response?.data?.providers || [];
+
+        if (providers.length === 0) {
+          return {
+            text: 'I could not find an exact match right now. Try adding the service type, location, or budget so I can refine recommendations.',
+            recommendations: [],
+          };
+        }
+
+        return {
+          text: `I found ${providers.length} provider${providers.length > 1 ? 's' : ''} from the live database that match your request.`,
+          recommendations: providers,
+        };
+      } catch {
+        return {
+          text: 'I could not fetch provider recommendations right now. Please try again in a moment.',
+          recommendations: [],
+        };
+      }
     }
+
     if (input.includes('price') || input.includes('cost')) {
-      return 'Pricing varies by service and provider. You can see rates on each provider\'s profile. Would you like help finding affordable options?';
+      return {
+        text: 'Pricing varies by service and provider. You can see rates on each provider profile. If you share your budget, I can recommend options.',
+      };
     }
     if (input.includes('thank')) {
-      return "You're welcome! Is there anything else I can help you with?";
+      return {
+        text: "You're welcome! Is there anything else I can help you with?",
+      };
     }
-    return "Thanks for your message! I'd be happy to help. Could you tell me more about what you're looking for?";
+    return {
+      text: "Thanks for your message! I'd be happy to help. Could you tell me more about what you're looking for?",
+    };
   };
 
   const handleKeyPress = (e) => {
@@ -164,6 +274,29 @@ const Chatbot = ({ isOpen, onClose }) => {
                 <div className="message-content">
                   <div className="message-bubble">
                     <p>{message.text}</p>
+                      {Array.isArray(message.recommendations) && message.recommendations.length > 0 && (
+                        <div className="chatbot-recommendations">
+                          {message.recommendations.map((provider) => (
+                            <a
+                              key={provider.id}
+                              className="chatbot-provider-card"
+                              href={`/provider/${provider.id}`}
+                            >
+                              <div className="chatbot-provider-title-row">
+                                <strong>{provider.name}</strong>
+                                <span>{Number(provider.rating || 0).toFixed(1)}★</span>
+                              </div>
+                              <p>{provider.profession || 'Service Provider'} • {provider.location}</p>
+                              <p>{formatMoney(provider.dailyRate)} / day</p>
+                              <small>
+                                {Array.isArray(provider.languages) && provider.languages.length > 0
+                                  ? `Languages: ${provider.languages.join(', ')}`
+                                  : 'Languages not specified'}
+                              </small>
+                            </a>
+                          ))}
+                        </div>
+                      )}
                   </div>
                   <div className="message-meta">
                     {message.sender === 'user' && (
@@ -213,8 +346,9 @@ const Chatbot = ({ isOpen, onClose }) => {
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyPress={handleKeyPress}
+            disabled={isResponding}
           />
-          <button className="chatbot-send-btn" onClick={() => handleSendMessage()}>
+          <button className="chatbot-send-btn" onClick={() => handleSendMessage()} disabled={isResponding}>
             <SendIcon />
           </button>
         </div>

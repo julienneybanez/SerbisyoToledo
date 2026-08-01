@@ -538,6 +538,30 @@ export const serviceProfileAPI = {
     return handleResponse(response);
   },
 
+  // Get recommended providers for assistant/chatbot flows
+  getRecommendations: async (filters = {}) => {
+    const params = new URLSearchParams();
+
+    if (filters.category) params.set('category', filters.category);
+    if (filters.location) params.set('location', filters.location);
+    if (filters.maxPrice) params.set('maxPrice', String(filters.maxPrice));
+    if (filters.minRating) params.set('minRating', String(filters.minRating));
+    if (filters.search) params.set('search', filters.search);
+    if (filters.language) params.set('language', filters.language);
+    if (filters.availabilityDate) params.set('availabilityDate', filters.availabilityDate);
+    if (filters.duration) params.set('duration', String(filters.duration));
+    if (filters.limit) params.set('limit', String(filters.limit));
+
+    const response = await fetch(`${API_BASE_URL}/service-profiles/recommendations?${params.toString()}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    return handleResponse(response);
+  },
+
   // Get current user's profile
   getMyProfile: async () => {
     const token = getToken();

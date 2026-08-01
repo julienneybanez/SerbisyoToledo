@@ -256,6 +256,173 @@ exports.getAllProfiles = async (req, res) => {
   }
 };
 
+// Recommend providers for chatbot and assisted discovery flows
+exports.getRecommendedProviders = async (req, res) => {
+  let connection;
+
+  try {
+    const {
+      category,
+      location,
+      maxPrice,
+      minRating,
+      search,
+      language,
+      availabilityDate,
+      duration,
+      limit,
+    } = req.query;
+
+    const normalizedLanguage = String(language || '').trim().toLowerCase();
+    if (normalizedLanguage && !SUPPORTED_LANGUAGE_CODES.has(normalizedLanguage)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Unsupported language code',
+      });
+    }
+
+    if (availabilityDate) {
+      const parsedDate = parseDateOnly(String(availabilityDate));
+      if (!parsedDate) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid availabilityDate format. Use YYYY-MM-DD.',
+        });
+      }
+    }
+
+    const resultLimit = Math.min(Math.max(Number(limit || 3), 1), 10);
+    const durationMinutes = Math.min(Math.max(Number(duration || 120), 30), 1440);
+
+    connection = await db.getConnection();
+
+    let query = `
+      SELECT
+        sp.id,
+        sp.user_id,
+        sp.full_name,
+        sp.barangay_address,
+        sp.starting_price,
+        sp.service_categories,
+        sp.description,
+        sp.banner_image,
+        sp.banner_image_url,
+        sp.rating,
+        sp.reviews_count,
+        sp.online,
+        u.profession,
+        u.skills,
+        u.is_verified
+      FROM service_profiles sp
+      JOIN users u ON sp.user_id = u.id
+      WHERE sp.is_published = TRUE
+    `;
+
+    const params = [];
+
+    if (location) {
+      query += ' AND sp.barangay_address LIKE ?';
+      params.push(`%${String(location).trim()}%`);
+    }
+
+    if (maxPrice) {
+      query += ' AND sp.starting_price <= ?';
+      params.push(parseFloat(maxPrice));
+    }
+
+    if (minRating) {
+      query += ' AND sp.rating >= ?';
+      params.push(parseFloat(minRating));
+    }
+
+    if (search) {
+      query += ' AND (sp.full_name LIKE ? OR u.profession LIKE ? OR u.skills LIKE ? OR sp.description LIKE ? OR sp.service_categories LIKE ?)';
+      params.push(`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`);
+    }
+
+    if (category && category !== 'All') {
+      query += ' AND JSON_CONTAINS(sp.service_categories, ?)';
+      params.push(JSON.stringify(category));
+    }
+
+    if (normalizedLanguage) {
+      query += ' AND EXISTS (SELECT 1 FROM provider_languages pl WHERE pl.service_profile_id = sp.id AND pl.language_code = ?)';
+      params.push(normalizedLanguage);
+    }
+
+    query += ' ORDER BY sp.rating DESC, sp.reviews_count DESC LIMIT 30';
+
+    const [profiles] = await connection.query(query, params);
+
+    const recommended = [];
+
+    for (const profile of profiles) {
+      if (recommended.length >= resultLimit) {
+        break;
+      }
+
+      if (availabilityDate) {
+        const slots = await getAvailableSlotsForDate(connection, {
+          serviceProfileId: profile.id,
+          providerId: profile.user_id,
+          date: formatDateOnly(parseDateOnly(String(availabilityDate))),
+          durationMinutes,
+          slotStepMinutes: 60,
+        });
+
+        if (!slots || slots.length === 0) {
+          continue;
+        }
+      }
+
+      const [languageRows] = await connection.query(
+        'SELECT language_code FROM provider_languages WHERE service_profile_id = ? ORDER BY language_code ASC',
+        [profile.id]
+      );
+
+      const categories = parseJsonArray(profile.service_categories, []);
+      const skills = parseJsonArray(profile.skills, []);
+
+      recommended.push({
+        id: profile.id,
+        userId: profile.user_id,
+        name: profile.full_name,
+        location: profile.barangay_address,
+        startingPrice: parseFloat(profile.starting_price),
+        dailyRate: parseFloat(profile.starting_price),
+        description: profile.description,
+        image: profile.banner_image_url || (profile.banner_image ? `data:image/jpeg;base64,${Buffer.from(profile.banner_image).toString('base64')}` : null),
+        tags: [...skills, ...categories],
+        rating: parseFloat(profile.rating),
+        reviews: profile.reviews_count,
+        online: Boolean(profile.online),
+        verified: Boolean(profile.is_verified),
+        profession: profile.profession,
+        categories,
+        languages: languageRows.map((row) => row.language_code),
+      });
+    }
+
+    return res.json({
+      success: true,
+      data: {
+        providers: recommended,
+      },
+      count: recommended.length,
+    });
+  } catch (error) {
+    console.error('Error fetching provider recommendations:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch provider recommendations',
+    });
+  } finally {
+    if (connection) {
+      connection.release();
+    }
+  }
+};
+
 // Get single profile by ID
 exports.getProfileById = async (req, res) => {
   try {
