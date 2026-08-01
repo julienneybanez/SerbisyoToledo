@@ -1,8 +1,8 @@
 import logo from '../../assets/logo.png';
 
-function Footer() {
+function Footer({ className = '' }) {
   return (
-    <footer className="footer py-4">
+    <footer className={`footer py-4 ${className}`.trim()}>
       <div className="container">
         <div className="d-flex flex-column flex-md-row align-items-center justify-content-between gap-3">
           <div className="d-flex align-items-center">

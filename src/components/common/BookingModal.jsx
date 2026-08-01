@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback } from "react";
+import { useMemo, useState, useCallback, useEffect } from "react";
 import {
   CalendarIcon,
   ClockIcon,
@@ -85,6 +85,23 @@ export default function BookingModal({ provider, onClose }) {
   const [jobDetails, setJobDetails] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
+
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    const handleEscape = (event) => {
+      if (event.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    window.addEventListener('keydown', handleEscape);
+    return () => {
+      window.removeEventListener('keydown', handleEscape);
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [onClose]);
 
   const safeProvider = {
     name: provider?.name ?? "Service Provider",
@@ -414,6 +431,10 @@ export default function BookingModal({ provider, onClose }) {
                 ? "Share the specifics so the provider can prepare."
                 : "Pick a date and time that works for you."}
             </p>
+            <p className="booking-progress-label">Step {step > 4 ? 4 : step} of 4</p>
+            <div className="booking-progress-track" aria-hidden="true">
+              <span className="booking-progress-fill" style={{ width: `${(Math.min(step, 4) / 4) * 100}%` }}></span>
+            </div>
           </div>
 
           <div className={`booking-stage-content ${step <= 2 ? "two-column" : ""}`}>

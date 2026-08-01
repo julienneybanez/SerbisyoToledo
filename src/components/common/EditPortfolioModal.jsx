@@ -199,7 +199,7 @@ export default function EditPortfolioModal({ onClose }) {
             </div>
 
             {/* Response Time */}
-            <div className="form-section">
+            <div className="form-section" data-tour="provider-response-time">
               <h3><i className="bi bi-clock"></i> Response Time</h3>
               <select
                 name="responseTime"
@@ -244,7 +244,7 @@ export default function EditPortfolioModal({ onClose }) {
             </div>
 
             {/* Portfolio Images Section */}
-            <div className="form-section">
+            <div className="form-section" data-tour="provider-portfolio-images">
               <h3><i className="bi bi-images"></i> Portfolio Images</h3>
               
               <div className="portfolio-grid">

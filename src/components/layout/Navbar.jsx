@@ -23,6 +23,7 @@ function Navbar() {
   const [showEditPortfolio, setShowEditPortfolio] = useState(false);
   const [showServiceProfileForm, setShowServiceProfileForm] = useState(false);
   const [hasServiceProfile, setHasServiceProfile] = useState(false);
+  const [providerPublicProfileRoute, setProviderPublicProfileRoute] = useState('/dashboard');
   const [showVerificationRequest, setShowVerificationRequest] = useState(false);
 
   useEffect(() => {
@@ -46,6 +47,7 @@ function Navbar() {
       if (!loggedIn || user?.userType !== 'tradesperson') {
         if (isMounted) {
           setHasServiceProfile(false);
+          setProviderPublicProfileRoute('/dashboard');
         }
         return;
       }
@@ -53,11 +55,14 @@ function Navbar() {
       try {
         const response = await serviceProfileAPI.getMyProfile();
         if (isMounted) {
-          setHasServiceProfile(Boolean(response?.success && response?.data?.id));
+          const hasProfile = Boolean(response?.success && response?.data?.id);
+          setHasServiceProfile(hasProfile);
+          setProviderPublicProfileRoute(hasProfile ? `/provider/${response.data.id}` : '/dashboard');
         }
       } catch {
         if (isMounted) {
           setHasServiceProfile(false);
+          setProviderPublicProfileRoute('/dashboard');
         }
       }
     };
@@ -75,12 +80,26 @@ function Navbar() {
       setLoggedIn(isAuthenticated());
       setUser(getUser());
     };
+
+    const handleOpenProviderEditProfile = () => {
+      const authUser = getUser();
+      if (isAuthenticated() && authUser?.userType === 'tradesperson') {
+        setDropdownOpen(false);
+        setShowEditPortfolio(true);
+      }
+    };
+
+    const handleCloseProviderEditProfile = () => {
+      setShowEditPortfolio(false);
+    };
     
     // Listen for storage changes (login/logout from other tabs)
     window.addEventListener('storage', checkAuth);
     
     // Custom event for same-tab updates
     window.addEventListener('authChange', checkAuth);
+    window.addEventListener('guidedTour:openProviderEditProfile', handleOpenProviderEditProfile);
+    window.addEventListener('guidedTour:closeProviderEditProfile', handleCloseProviderEditProfile);
 
     const handleDocumentPointerDown = (event) => {
       if (navbarRef.current && !navbarRef.current.contains(event.target)) {
@@ -102,6 +121,8 @@ function Navbar() {
     return () => {
       window.removeEventListener('storage', checkAuth);
       window.removeEventListener('authChange', checkAuth);
+      window.removeEventListener('guidedTour:openProviderEditProfile', handleOpenProviderEditProfile);
+      window.removeEventListener('guidedTour:closeProviderEditProfile', handleCloseProviderEditProfile);
       document.removeEventListener('pointerdown', handleDocumentPointerDown);
       document.removeEventListener('keydown', handleDocumentKeyDown);
     };
@@ -126,10 +147,13 @@ function Navbar() {
     setMobileMenuOpen(false);
   };
 
+  const isProvider = loggedIn && user?.userType === 'tradesperson';
+  const brandDestination = isProvider ? '/dashboard' : '/';
+
   return (
     <nav ref={navbarRef} className={`navbar navbar-expand-lg ${scrolled ? 'navbar-scrolled' : ''}`}>
       <div className="container navbar-shell">
-        <Link className="navbar-brand brand-link d-flex align-items-center" to="/" onClick={handleNavClick}>
+        <Link className="navbar-brand brand-link d-flex align-items-center" to={brandDestination} onClick={handleNavClick}>
           <div className="logo-wrapper" aria-hidden="true">
             <img src={logo} alt="" width="56" height="56" />
           </div>
@@ -152,15 +176,17 @@ function Navbar() {
 
         <div id="serbisyo-navbar" className={`collapse navbar-collapse ${mobileMenuOpen ? 'show' : ''}`}>
           <ul className="navbar-nav primary-nav ms-lg-auto align-items-lg-center gap-lg-2">
-            <li className="nav-item">
-              <NavLink 
-                className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
-                to="/"
-                onClick={handleNavClick}
-              >
-                Home
-              </NavLink>
-            </li>
+            {(!loggedIn || user?.userType !== 'tradesperson') && (
+              <li className="nav-item">
+                <NavLink 
+                  className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+                  to="/"
+                  onClick={handleNavClick}
+                >
+                  Home
+                </NavLink>
+              </li>
+            )}
             <li className="nav-item">
               <NavLink 
                 className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
@@ -171,7 +197,7 @@ function Navbar() {
               </NavLink>
             </li>
             
-            {loggedIn && user?.userType === 'tradesperson' ? (
+            {isProvider ? (
               <li className="nav-item">
                 <NavLink 
                   className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
@@ -284,6 +310,30 @@ function Navbar() {
                           <i className="bi bi-shield-check"></i>
                           Request Verification
                         </button>
+                      )}
+                      {user?.userType === 'tradesperson' && (
+                        hasServiceProfile ? (
+                          <Link
+                            to={providerPublicProfileRoute}
+                            state={{ previewMode: window.innerWidth <= 768 ? 'mobile' : 'web' }}
+                            className="dropdown-item"
+                            onClick={() => setDropdownOpen(false)}
+                          >
+                            <i className="bi bi-eye"></i>
+                            View Profile as Client
+                          </Link>
+                        ) : (
+                          <button
+                            className="dropdown-item"
+                            onClick={() => {
+                              setDropdownOpen(false);
+                              setShowServiceProfileForm(true);
+                            }}
+                          >
+                            <i className="bi bi-eye"></i>
+                            View Profile as Client (Post first)
+                          </button>
+                        )
                       )}
                       <Link 
                         to={user?.userType === 'tradesperson' ? '/provider-settings' : '/client-settings'} 

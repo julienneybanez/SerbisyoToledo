@@ -5,6 +5,41 @@ import ReviewModal from '../components/common/ReviewModal';
 import ReportUserModal from '../components/common/ReportUserModal';
 import './Requests.css';
 
+const getHiddenRequestsStorageKey = (user) => {
+  if (!user?.id || !user?.userType) {
+    return null;
+  }
+
+  return `hiddenRequests_${user.id}_${user.userType}`;
+};
+
+const getHiddenRequestIds = (user) => {
+  const key = getHiddenRequestsStorageKey(user);
+  if (!key) {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(localStorage.getItem(key) || '[]');
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+
+    return parsed.map((id) => Number(id)).filter((id) => Number.isFinite(id));
+  } catch {
+    return [];
+  }
+};
+
+const saveHiddenRequestIds = (user, ids) => {
+  const key = getHiddenRequestsStorageKey(user);
+  if (!key) {
+    return;
+  }
+
+  localStorage.setItem(key, JSON.stringify(ids));
+};
+
 export default function Requests() {
   const user = getUser();
   const isProvider = user?.userType === 'tradesperson';
@@ -33,7 +68,9 @@ export default function Requests() {
         : await serviceRequestAPI.getClientRequests();
       
       if (response.success) {
-        setRequests(response.data.requests);
+        const hiddenIds = new Set(getHiddenRequestIds(user));
+        const visibleRequests = (response.data.requests || []).filter((req) => !hiddenIds.has(Number(req.id)));
+        setRequests(visibleRequests);
       }
     } catch (err) {
       setError('Failed to load requests');
@@ -201,6 +238,21 @@ export default function Requests() {
     } finally {
       setActionLoading(null);
     }
+  };
+
+  const handleHideRequest = (requestId) => {
+    const shouldHide = window.confirm('Remove this request from your view? You can still see it again on another device/browser session.');
+    if (!shouldHide) {
+      return;
+    }
+
+    const numericRequestId = Number(requestId);
+    const currentIds = getHiddenRequestIds(user);
+    const nextIds = Array.from(new Set([...currentIds, numericRequestId]));
+    saveHiddenRequestIds(user, nextIds);
+
+    setRequests((prev) => prev.filter((req) => Number(req.id) !== numericRequestId));
+    setSelectedRequest((prev) => (prev && Number(prev.id) === numericRequestId ? null : prev));
   };
 
   const handleSubmitReview = async ({ rating, comment }) => {
@@ -480,6 +532,15 @@ export default function Requests() {
                           <i className="bi bi-check-lg"></i> Confirm Completed
                         </button>
                       )}
+                      {request.status === 'completed' && (
+                        <button
+                          className="btn-action btn-hide"
+                          onClick={() => handleHideRequest(request.id)}
+                          disabled={actionLoading === request.id}
+                        >
+                          <i className="bi bi-eye-slash"></i> Remove from View
+                        </button>
+                      )}
                     </>
                   ) : (
                     // Client actions
@@ -515,6 +576,15 @@ export default function Requests() {
                           <i className="bi bi-star-fill"></i>
                           <span>Review submitted</span>
                         </div>
+                      )}
+                      {request.status === 'completed' && (
+                        <button
+                          className="btn-action btn-hide"
+                          onClick={() => handleHideRequest(request.id)}
+                          disabled={actionLoading === request.id}
+                        >
+                          <i className="bi bi-eye-slash"></i> Remove from View
+                        </button>
                       )}
                     </>
                   )}

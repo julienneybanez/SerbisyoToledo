@@ -15,6 +15,7 @@ export default function GuidedTour({ show, steps = [], onFinish, onSkip }) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setIndex(0);
       setTargetRect(null);
+      window.dispatchEvent(new Event('guidedTour:closeProviderEditProfile'));
       return;
     }
 
@@ -22,6 +23,14 @@ export default function GuidedTour({ show, steps = [], onFinish, onSkip }) {
 
     if (currentStep.route) {
       navigate(currentStep.route);
+    }
+
+    if (currentStep.action === 'openProviderEditProfile') {
+      setTimeout(() => {
+        window.dispatchEvent(new Event('guidedTour:openProviderEditProfile'));
+      }, 50);
+    } else {
+      window.dispatchEvent(new Event('guidedTour:closeProviderEditProfile'));
     }
 
     const timeout = setTimeout(() => {

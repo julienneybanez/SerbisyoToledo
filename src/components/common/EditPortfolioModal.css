@@ -13,8 +13,8 @@
 }
 
 .edit-portfolio-modal {
-  background: white;
-  border-radius: 16px;
+  background: #ffffff !important;
+  border-radius: 28px !important;
   width: 100%;
   max-width: 650px;
   max-height: 90vh;
@@ -37,45 +37,47 @@
 
 .edit-portfolio-modal .modal-close-btn {
   position: absolute;
-  top: 16px;
-  right: 16px;
-  width: 40px;
-  height: 40px;
+  top: 18px;
+  right: 18px;
+  width: 32px;
+  height: 32px;
   border: none;
-  background: #f5f5f5;
+  background: none;
   border-radius: 50%;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
-  color: #666;
-  transition: all 0.2s ease;
+  font-size: 26px;
+  color: #333;
+  transition: all 0.3s ease;
   z-index: 1;
 }
 
 .edit-portfolio-modal .modal-close-btn:hover {
-  background: #eee;
-  color: #333;
+  background: #f0f0f0;
+  color: #000;
 }
 
 .edit-portfolio-header {
   padding: 32px 32px 0;
-  text-align: center;
-  border-bottom: 1px solid #eee;
-  padding-bottom: 20px;
+  margin-bottom: 25px;
 }
 
 .edit-portfolio-header h2 {
   font-size: 24px;
   font-weight: 700;
-  color: #1a1a1a;
+  background: linear-gradient(120deg, #1a74ff 0%, #20b87a 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
   margin: 0 0 8px;
 }
 
 .edit-portfolio-header p {
-  font-size: 14px;
-  color: #666;
+  font-size: 13px;
+  color: #555;
+  line-height: 1.5;
   margin: 0;
 }
 
@@ -105,7 +107,10 @@
 }
 
 .edit-portfolio-form {
-  padding: 24px 32px 32px;
+  padding: 0 32px 30px;
+  background-color: #ffffff;
+  width: 100%;
+  border-radius: 28px !important;
 }
 
 .edit-portfolio-form .alert {
@@ -154,11 +159,11 @@
 .edit-portfolio-form select,
 .edit-portfolio-form input[type="text"] {
   width: 100%;
-  padding: 14px 16px;
+  padding: 10px 12px;
   border: 1px solid #ddd;
-  border-radius: 10px;
+  border-radius: 14px !important;
   font-size: 14px;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: all 0.3s ease;
   font-family: inherit;
 }
 
@@ -226,19 +231,20 @@
 }
 
 .btn-add-skill {
-  padding: 12px 24px;
-  background: #0078D4;
+  padding: 10px 20px;
+  background: linear-gradient(120deg, #1a74ff 0%, #20b87a 100%);
   color: white;
   border: none;
-  border-radius: 10px;
-  font-size: 14px;
+  border-radius: 999px !important;
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: all 0.3s ease;
 }
 
 .btn-add-skill:hover {
-  background: #006bb3;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(32, 184, 122, 0.25);
 }
 
 /* Portfolio Grid */
@@ -358,21 +364,20 @@
   align-items: center;
   justify-content: center;
   gap: 10px;
-  padding: 14px 24px;
-  background: #f5f5f5;
-  color: #333;
-  border: 2px dashed #ccc;
-  border-radius: 10px;
-  font-size: 14px;
+  padding: 10px 20px;
+  background: linear-gradient(120deg, #1a74ff 0%, #20b87a 100%);
+  color: white;
+  border: none;
+  border-radius: 999px !important;
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.3s ease;
 }
 
 .btn-upload-image:hover:not(:disabled) {
-  background: #eee;
-  border-color: #0078D4;
-  color: #0078D4;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(32, 184, 122, 0.25);
 }
 
 .btn-upload-image:disabled {
@@ -383,22 +388,20 @@
 /* Form Actions */
 .edit-portfolio-form .form-actions {
   display: flex;
-  gap: 12px;
-  margin-top: 32px;
-  padding-top: 24px;
-  border-top: 1px solid #eee;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
 }
 
 .edit-portfolio-form .btn-cancel,
 .edit-portfolio-form .btn-save {
-  flex: 1;
-  padding: 14px 24px;
-  border-radius: 10px;
-  font-size: 15px;
+  min-width: 140px;
+  padding: 12px 24px;
+  border-radius: 999px !important;
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
-  border: none;
+  transition: all 0.3s ease;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -406,16 +409,18 @@
 }
 
 .edit-portfolio-form .btn-cancel {
-  background: #f5f5f5;
-  color: #666;
+  background: #ffffff;
+  color: #6c757d;
+  border: 1px solid #d7dce3;
 }
 
 .edit-portfolio-form .btn-cancel:hover:not(:disabled) {
-  background: #eee;
+  background: #f8f9fb;
 }
 
 .edit-portfolio-form .btn-save {
-  background: linear-gradient(135deg, #0078D4, #00BCD4);
+  border: none;
+  background: linear-gradient(120deg, #1a74ff 0%, #20b87a 100%);
   color: white;
 }
 
@@ -431,7 +436,7 @@
 }
 
 [data-theme='dark'] .edit-portfolio-modal {
-  background: var(--color-surface-elevated);
+  background: var(--color-surface-elevated) !important;
   border: 1px solid var(--color-border);
   color: var(--color-text-primary);
 }
@@ -447,7 +452,11 @@
 }
 
 [data-theme='dark'] .edit-portfolio-header {
-  border-bottom-color: var(--color-border);
+  background: var(--color-surface-elevated) !important;
+}
+
+[data-theme='dark'] .edit-portfolio-form {
+  background: var(--color-surface-elevated) !important;
 }
 
 [data-theme='dark'] .edit-portfolio-header h2,
@@ -475,6 +484,19 @@
   color: var(--color-placeholder);
 }
 
+[data-theme='dark'] .edit-portfolio-form select option {
+  background: var(--color-surface-elevated);
+  color: var(--color-text-primary);
+}
+
+[data-theme='dark'] .edit-portfolio-form input[type='text']:-webkit-autofill,
+[data-theme='dark'] .edit-portfolio-form textarea:-webkit-autofill,
+[data-theme='dark'] .caption-input:-webkit-autofill {
+  -webkit-text-fill-color: var(--color-input-text);
+  -webkit-box-shadow: 0 0 0px 1000px var(--color-input-bg) inset;
+  transition: background-color 9999s ease-out 0s;
+}
+
 [data-theme='dark'] .portfolio-item {
   background: var(--color-surface-secondary);
 }
@@ -490,7 +512,7 @@
 
 [data-theme='dark'] .btn-upload-image,
 [data-theme='dark'] .edit-portfolio-form .btn-cancel {
-  background: var(--color-surface);
+  background: var(--color-surface-secondary);
   color: var(--color-text-primary);
   border-color: var(--color-border);
 }
@@ -502,7 +524,7 @@
 }
 
 [data-theme='dark'] .edit-portfolio-form .form-actions {
-  border-top-color: var(--color-border);
+  border-top-color: transparent;
 }
 
 .spinner-small {

@@ -32,6 +32,13 @@
   min-width: 0;
 }
 
+[data-theme='dark'] .admin-page {
+  background: var(--color-surface-elevated);
+  border: 1px solid var(--admin-border);
+  border-radius: 18px;
+  padding: 1.25rem;
+}
+
 .admin-page-header {
   margin-bottom: 1.5rem;
   padding: 0.5rem 0.25rem 0;
@@ -1413,6 +1420,101 @@ input:checked + .slider:before {
   border-top: 1px solid var(--admin-border);
 }
 
+.admin-page .settings-flash {
+  margin-bottom: 1rem;
+  border-radius: 10px;
+  padding: 0.75rem 0.95rem;
+  font-size: 0.9rem;
+  border: 1px solid transparent;
+}
+
+.admin-page .settings-flash.success {
+  background: #e8fff4;
+  border-color: #9de5c3;
+  color: #0b5d3d;
+}
+
+.admin-page .settings-flash.error {
+  background: #fff1f2;
+  border-color: #fecdd3;
+  color: #9f1239;
+}
+
+.admin-page .settings-flash.info {
+  background: #edf4ff;
+  border-color: #bfdbfe;
+  color: #1e3a8a;
+}
+
+.admin-page .settings-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 0.85rem;
+  margin-bottom: 1.2rem;
+}
+
+.admin-page .settings-stat-card {
+  background: var(--admin-surface-soft);
+  border: 1px solid var(--admin-border);
+  border-radius: 10px;
+  padding: 0.9rem;
+}
+
+.admin-page .settings-stat-card h4 {
+  margin: 0;
+  font-size: 1.35rem;
+  color: var(--admin-text);
+}
+
+.admin-page .settings-stat-card p {
+  margin: 0.2rem 0 0;
+  color: var(--admin-muted);
+  font-size: 0.82rem;
+}
+
+.admin-page .settings-card {
+  border: 1px solid var(--admin-border);
+  border-radius: 10px;
+  background: var(--admin-surface-soft);
+  padding: 0.95rem;
+  margin-bottom: 1rem;
+}
+
+.admin-page .settings-card h3 {
+  margin: 0 0 0.35rem;
+  font-size: 1rem;
+  color: var(--admin-text);
+}
+
+.admin-page .settings-card p {
+  margin: 0.2rem 0;
+  color: var(--admin-muted);
+}
+
+.admin-page .settings-inline-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.admin-page .settings-status-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 0.5rem;
+}
+
+.admin-page .settings-status-table td {
+  border-bottom: 1px solid var(--admin-border);
+  padding: 0.6rem 0.25rem;
+  color: var(--admin-text);
+  font-size: 0.9rem;
+}
+
+.admin-page .settings-status-table td:first-child {
+  color: var(--admin-muted);
+  width: 36%;
+}
+
 .btn-save {
   padding: 0.75rem 2rem;
   background: #4A9FF5;
@@ -1599,6 +1701,95 @@ input:checked + .slider:before {
   .admin-page .filter-group {
     width: 100%;
     flex-direction: column;
+  }
+
+  .admin-page {
+    padding: 0;
+  }
+
+  .admin-page-header {
+    margin-bottom: 1rem;
+    padding: 0.25rem 0.1rem 0;
+  }
+
+  .admin-page-title {
+    font-size: 1.35rem;
+  }
+
+  .admin-page-subtitle {
+    font-size: 0.88rem;
+  }
+
+  .admin-page .settings-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    background: transparent;
+    border-radius: 0;
+    overflow: visible;
+    box-shadow: none;
+  }
+
+  .admin-page .settings-nav {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.6rem;
+    padding: 0;
+    border-right: none;
+    border-bottom: none;
+    background: transparent;
+  }
+
+  .admin-page .settings-nav-item {
+    justify-content: center;
+    margin-bottom: 0;
+    padding: 0.8rem 0.75rem;
+    border: 1px solid var(--admin-border);
+    border-radius: 14px;
+    background: var(--admin-surface-soft);
+  }
+
+  .admin-page .settings-nav-item.active {
+    background: var(--admin-surface);
+  }
+
+  .admin-page .settings-content {
+    padding: 0;
+  }
+
+  .admin-page .settings-section-title {
+    font-size: 1.05rem;
+    margin-bottom: 1rem;
+  }
+
+  .admin-page .settings-card,
+  .admin-page .settings-stat-card,
+  .admin-page .settings-toggle {
+    border-radius: 14px;
+  }
+
+  .admin-page .settings-card,
+  .admin-page .settings-toggle {
+    padding: 0.9rem;
+  }
+
+  .admin-page .settings-inline-actions {
+    flex-direction: column;
+  }
+
+  .admin-page .settings-inline-actions > button,
+  .admin-page .settings-actions > button {
+    width: 100%;
+  }
+
+  .admin-page .settings-actions {
+    flex-direction: column;
+    gap: 0.65rem;
+  }
+
+  .admin-page .settings-status-table td {
+    font-size: 0.84rem;
+    padding: 0.55rem 0.15rem;
   }
 
   .admin-page .filter-group select {

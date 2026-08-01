@@ -1,29 +1,30 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { getUser, userProfileAPI } from '../services/api';
+import { authAPI, getUser, userProfileAPI } from '../services/api';
 import ThemeToggle from '../components/common/ThemeToggle';
+import SettingsFlash from '../components/settings/SettingsFlash';
 import '../styles/UserSettings.css';
 
 function ClientSettings() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const isVerificationResendDisabled = true;
+
   const [activeSection, setActiveSection] = useState('account');
-  const [isSaving, setIsSaving] = useState(false);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
-  
+  const [isSaving, setIsSaving] = useState(false);
+  const [isSendingVerification, setIsSendingVerification] = useState(false);
+  const [flash, setFlash] = useState({ type: 'info', message: '' });
+
+  const [initialProfile, setInitialProfile] = useState(null);
   const [settings, setSettings] = useState({
     fullName: '',
     email: '',
     phone: '',
     address: '',
-    city: '',
-    postalCode: '',
-    enableNotifications: true,
-    enableEmailAlerts: true,
-    enableSMS: false,
-    profileVisibility: 'public',
-    allowMessages: true,
-    showContactInfo: false
+    bio: '',
+    createdAt: '',
+    isVerified: false,
   });
 
   useEffect(() => {
@@ -35,26 +36,35 @@ function ClientSettings() {
 
     const loadProfile = async () => {
       setIsLoadingProfile(true);
+      setFlash({ type: 'info', message: '' });
       try {
         const response = await userProfileAPI.getProfile();
         if (response.success) {
           const profile = response.data;
-          setSettings(prev => ({
-            ...prev,
-            fullName: profile.fullName || '',
+          const nextState = {
+            fullName: profile.fullName || currentUser.fullName || '',
             email: profile.email || currentUser.email || '',
             phone: profile.phone || '',
             address: profile.address || '',
-          }));
+            bio: profile.bio || '',
+            createdAt: profile.createdAt || '',
+            isVerified: Boolean(currentUser.isVerified),
+          };
+          setSettings(nextState);
+          setInitialProfile(nextState);
         }
       } catch {
-        setSettings(prev => ({
-          ...prev,
+        const fallbackState = {
           fullName: currentUser.fullName || '',
           email: currentUser.email || '',
           phone: currentUser.phone || '',
           address: currentUser.address || '',
-        }));
+          bio: currentUser.bio || '',
+          createdAt: '',
+          isVerified: Boolean(currentUser.isVerified),
+        };
+        setSettings(fallbackState);
+        setInitialProfile(fallbackState);
       } finally {
         setIsLoadingProfile(false);
       }
@@ -65,41 +75,100 @@ function ClientSettings() {
 
   useEffect(() => {
     const section = searchParams.get('section');
-    const validSections = ['account', 'address', 'privacy', 'notifications'];
+    const validSections = ['account', 'contact', 'security'];
 
     if (section && validSections.includes(section)) {
       setActiveSection(section);
     }
   }, [searchParams]);
 
+  const hasProfileChanges = useMemo(() => {
+    if (!initialProfile) {
+      return false;
+    }
+
+    return (
+      settings.fullName !== initialProfile.fullName
+      || settings.phone !== initialProfile.phone
+      || settings.address !== initialProfile.address
+      || settings.bio !== initialProfile.bio
+    );
+  }, [initialProfile, settings.address, settings.bio, settings.fullName, settings.phone]);
+
   const handleChange = (key, value) => {
-    setSettings(prev => ({ ...prev, [key]: value }));
+    setSettings((prev) => ({ ...prev, [key]: value }));
   };
 
   const handleSave = async () => {
+    if (!hasProfileChanges) {
+      setFlash({ type: 'info', message: 'No changes to save.' });
+      return;
+    }
+
     try {
       setIsSaving(true);
+      setFlash({ type: 'info', message: '' });
       const submitData = new FormData();
       submitData.append('fullName', settings.fullName || '');
       submitData.append('phone', settings.phone || '');
       submitData.append('address', settings.address || '');
+      submitData.append('bio', settings.bio || '');
 
       const response = await userProfileAPI.updateProfile(submitData);
       if (response.success) {
-        alert('Settings saved successfully!');
+        const updated = {
+          ...settings,
+          fullName: response.data.fullName || settings.fullName,
+          phone: response.data.phone || '',
+          address: response.data.address || '',
+          bio: response.data.bio || '',
+        };
+        setSettings(updated);
+        setInitialProfile(updated);
+        setFlash({ type: 'success', message: 'Profile settings saved successfully.' });
       }
     } catch (err) {
-      alert(err.message || 'Failed to save settings');
+      setFlash({ type: 'error', message: err.message || 'Failed to save profile settings.' });
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleReset = () => {
+    if (initialProfile) {
+      setSettings(initialProfile);
+      setFlash({ type: 'info', message: 'Changes were reset.' });
+    }
+  };
+
+  const handleResendVerification = async () => {
+    if (isVerificationResendDisabled) {
+      setFlash({ type: 'info', message: 'Resend verification email is temporarily disabled.' });
+      return;
+    }
+
+    if (!settings.email) {
+      setFlash({ type: 'error', message: 'No email address available for verification.' });
+      return;
+    }
+
+    try {
+      setIsSendingVerification(true);
+      setFlash({ type: 'info', message: '' });
+      await authAPI.resendVerification({ email: settings.email });
+      setFlash({ type: 'success', message: 'Verification email sent. Please check your inbox.' });
+    } catch (err) {
+      setFlash({ type: 'error', message: err.message || 'Failed to send verification email.' });
+    } finally {
+      setIsSendingVerification(false);
     }
   };
 
   return (
     <div className="user-settings-container">
       <div className="page-header">
-        <h1 className="page-title">Settings</h1>
-        <p className="page-subtitle">Manage your account and preferences</p>
+        <h1 className="page-title">Client Settings</h1>
+        <p className="page-subtitle">Update your account details and security actions.</p>
         <div className="settings-theme-row">
           <span className="settings-theme-label">Appearance</span>
           <ThemeToggle />
@@ -107,258 +176,154 @@ function ClientSettings() {
       </div>
 
       <div className="settings-layout">
-        {/* Settings Navigation */}
         <div className="settings-nav">
-          <button 
+          <button
             className={`settings-nav-item ${activeSection === 'account' ? 'active' : ''}`}
             onClick={() => setActiveSection('account')}
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-              <circle cx="12" cy="7" r="4"></circle>
-            </svg>
             Account
           </button>
-          <button 
-            className={`settings-nav-item ${activeSection === 'address' ? 'active' : ''}`}
-            onClick={() => setActiveSection('address')}
+          <button
+            className={`settings-nav-item ${activeSection === 'contact' ? 'active' : ''}`}
+            onClick={() => setActiveSection('contact')}
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-              <circle cx="12" cy="10" r="3"></circle>
-            </svg>
-            Address
+            Contact
           </button>
-          <button 
-            className={`settings-nav-item ${activeSection === 'privacy' ? 'active' : ''}`}
-            onClick={() => setActiveSection('privacy')}
+          <button
+            className={`settings-nav-item ${activeSection === 'security' ? 'active' : ''}`}
+            onClick={() => setActiveSection('security')}
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-            </svg>
-            Privacy
-          </button>
-          <button 
-            className={`settings-nav-item ${activeSection === 'notifications' ? 'active' : ''}`}
-            onClick={() => setActiveSection('notifications')}
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-              <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-            </svg>
-            Notifications
+            Security
           </button>
         </div>
 
-        {/* Settings Content */}
         <div className="settings-content">
+          <SettingsFlash type={flash.type} message={flash.message} />
+
           {activeSection === 'account' && (
             <div className="settings-section">
-              <h2 className="settings-section-title">Account Settings</h2>
-              
+              <h2 className="settings-section-title">Account Details</h2>
+
               <div className="settings-group">
-                <label className="settings-label">Full Name</label>
+                <label className="settings-label" htmlFor="client-full-name">Full Name</label>
                 <input
+                  id="client-full-name"
                   type="text"
                   className="settings-input"
                   value={settings.fullName}
                   onChange={(e) => handleChange('fullName', e.target.value)}
-                  placeholder="Your full name"
+                  autoComplete="name"
                   disabled={isLoadingProfile || isSaving}
                 />
               </div>
 
               <div className="settings-group">
-                <label className="settings-label">Email Address</label>
+                <label className="settings-label" htmlFor="client-email">Email Address</label>
                 <input
+                  id="client-email"
                   type="email"
                   className="settings-input"
                   value={settings.email}
                   readOnly
-                  placeholder="your.email@example.com"
+                  autoComplete="email"
                   disabled
                 />
-                <small className="settings-help">Your email address is used for login and notifications</small>
+                <small className="settings-help">Email changes are not supported from settings.</small>
               </div>
 
               <div className="settings-group">
-                <label className="settings-label">Phone Number</label>
+                <label className="settings-label" htmlFor="client-bio">Bio</label>
+                <textarea
+                  id="client-bio"
+                  className="settings-textarea"
+                  value={settings.bio}
+                  onChange={(e) => handleChange('bio', e.target.value)}
+                  rows={4}
+                  autoComplete="off"
+                  disabled={isLoadingProfile || isSaving}
+                />
+              </div>
+
+              {!!settings.createdAt && (
+                <small className="settings-help">
+                  Account created: {new Date(settings.createdAt).toLocaleDateString()}
+                </small>
+              )}
+            </div>
+          )}
+
+          {activeSection === 'contact' && (
+            <div className="settings-section">
+              <h2 className="settings-section-title">Contact Information</h2>
+
+              <div className="settings-group">
+                <label className="settings-label" htmlFor="client-phone">Phone Number</label>
                 <input
+                  id="client-phone"
                   type="tel"
                   className="settings-input"
                   value={settings.phone}
                   onChange={(e) => handleChange('phone', e.target.value)}
                   placeholder="+63 912 345 6789"
+                  autoComplete="tel"
                   disabled={isLoadingProfile || isSaving}
                 />
               </div>
 
-              <div className="settings-section-divider"></div>
-
-              <h3 className="settings-subsection-title">Password & Security</h3>
-              <button className="btn-change-password">
-                Change Password
-              </button>
-              <small className="settings-help">Keep your account secure by using a strong, unique password</small>
-            </div>
-          )}
-
-          {activeSection === 'address' && (
-            <div className="settings-section">
-              <h2 className="settings-section-title">Address Information</h2>
-              
               <div className="settings-group">
-                <label className="settings-label">Street Address</label>
+                <label className="settings-label" htmlFor="client-address">Address</label>
                 <input
+                  id="client-address"
                   type="text"
                   className="settings-input"
                   value={settings.address}
                   onChange={(e) => handleChange('address', e.target.value)}
-                  placeholder="123 Main Street"
+                  autoComplete="street-address"
                   disabled={isLoadingProfile || isSaving}
                 />
               </div>
-
-              <div className="settings-row">
-                <div className="settings-group">
-                  <label className="settings-label">City</label>
-                  <input
-                    type="text"
-                    className="settings-input"
-                    value={settings.city}
-                    onChange={(e) => handleChange('city', e.target.value)}
-                    placeholder="Toledo"
-                  />
-                </div>
-
-                <div className="settings-group">
-                  <label className="settings-label">Postal Code</label>
-                  <input
-                    type="text"
-                    className="settings-input"
-                    value={settings.postalCode}
-                    onChange={(e) => handleChange('postalCode', e.target.value)}
-                    placeholder="6000"
-                  />
-                </div>
-              </div>
-
-              <small className="settings-help">This address is used for service requests and location-based features</small>
             </div>
           )}
 
-          {activeSection === 'privacy' && (
+          {activeSection === 'security' && (
             <div className="settings-section">
-              <h2 className="settings-section-title">Privacy Settings</h2>
-              
-              <div className="settings-toggle-group">
-                <div className="settings-toggle">
-                  <label className="toggle-label">
-                    <span>Profile Visibility</span>
-                    <small>Who can see your profile</small>
-                  </label>
-                  <select 
-                    className="settings-select"
-                    value={settings.profileVisibility}
-                    onChange={(e) => handleChange('profileVisibility', e.target.value)}
-                  >
-                    <option value="public">Public</option>
-                    <option value="private">Private</option>
-                    <option value="friends">Friends Only</option>
-                  </select>
-                </div>
+              <h2 className="settings-section-title">Security Actions</h2>
 
-                <div className="settings-toggle">
-                  <label className="toggle-label">
-                    <span>Allow Messages from Service Providers</span>
-                    <small>Receive direct messages and service offers</small>
-                  </label>
-                  <label className="switch">
-                    <input
-                      type="checkbox"
-                      checked={settings.allowMessages}
-                      onChange={(e) => handleChange('allowMessages', e.target.checked)}
-                    />
-                    <span className="slider"></span>
-                  </label>
-                </div>
-
-                <div className="settings-toggle">
-                  <label className="toggle-label">
-                    <span>Show Contact Information</span>
-                    <small>Display your phone number and address to service providers</small>
-                  </label>
-                  <label className="switch">
-                    <input
-                      type="checkbox"
-                      checked={settings.showContactInfo}
-                      onChange={(e) => handleChange('showContactInfo', e.target.checked)}
-                    />
-                    <span className="slider"></span>
-                  </label>
-                </div>
+              <div className="settings-card">
+                <p>
+                  Email verification status: <strong>{settings.isVerified ? 'Verified' : 'Not verified'}</strong>
+                </p>
+                <p className="settings-help">Resend verification email is temporarily disabled.</p>
+                {!settings.isVerified && (
+                  <div className="settings-inline-actions">
+                    <button
+                      className="btn-secondary"
+                      onClick={handleResendVerification}
+                      disabled={isSendingVerification || isVerificationResendDisabled}
+                      type="button"
+                    >
+                      {isSendingVerification ? 'Sending...' : 'Resend Verification Email'}
+                    </button>
+                  </div>
+                )}
               </div>
-            </div>
-          )}
 
-          {activeSection === 'notifications' && (
-            <div className="settings-section">
-              <h2 className="settings-section-title">Notification Settings</h2>
-              
-              <div className="settings-toggle-group">
-                <div className="settings-toggle">
-                  <label className="toggle-label">
-                    <span>Push Notifications</span>
-                    <small>Receive browser notifications for important updates</small>
-                  </label>
-                  <label className="switch">
-                    <input
-                      type="checkbox"
-                      checked={settings.enableNotifications}
-                      onChange={(e) => handleChange('enableNotifications', e.target.checked)}
-                    />
-                    <span className="slider"></span>
-                  </label>
-                </div>
-
-                <div className="settings-toggle">
-                  <label className="toggle-label">
-                    <span>Email Alerts</span>
-                    <small>Get notified about service requests and messages via email</small>
-                  </label>
-                  <label className="switch">
-                    <input
-                      type="checkbox"
-                      checked={settings.enableEmailAlerts}
-                      onChange={(e) => handleChange('enableEmailAlerts', e.target.checked)}
-                    />
-                    <span className="slider"></span>
-                  </label>
-                </div>
-
-                <div className="settings-toggle">
-                  <label className="toggle-label">
-                    <span>SMS Notifications</span>
-                    <small>Send SMS for urgent service updates (may incur charges)</small>
-                  </label>
-                  <label className="switch">
-                    <input
-                      type="checkbox"
-                      checked={settings.enableSMS}
-                      onChange={(e) => handleChange('enableSMS', e.target.checked)}
-                    />
-                    <span className="slider"></span>
-                  </label>
+              <div className="settings-card">
+                <p>Need to change your password? Use the secure reset flow.</p>
+                <div className="settings-inline-actions">
+                  <button className="btn-change-password" onClick={() => navigate('/forgot-password')}>
+                    Open Password Reset
+                  </button>
                 </div>
               </div>
             </div>
           )}
 
           <div className="settings-actions">
-            <button className="btn-save" onClick={handleSave} disabled={isSaving || isLoadingProfile}>
+            <button className="btn-save" onClick={handleSave} disabled={isSaving || isLoadingProfile || !hasProfileChanges}>
               {isSaving ? 'Saving...' : 'Save Changes'}
             </button>
-            <button className="btn-cancel" onClick={() => window.location.reload()}>
+            <button className="btn-cancel" onClick={handleReset} disabled={isSaving || isLoadingProfile || !hasProfileChanges}>
               Reset
             </button>
           </div>

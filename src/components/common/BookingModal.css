@@ -193,6 +193,31 @@
   font-size: 0.95rem;
 }
 
+.booking-progress-label {
+  margin: 0.6rem 0 0.35rem;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #6c758f;
+  font-weight: 700;
+}
+
+.booking-progress-track {
+  width: 100%;
+  height: 6px;
+  border-radius: 999px;
+  background: #e7eefb;
+  overflow: hidden;
+}
+
+.booking-progress-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(120deg, #1f8ef1, #21c06e);
+  transition: width 0.25s ease;
+}
+
 .booking-stage-content {
   background: #fdfefe;
   border: 1px solid #edf1fb;
@@ -277,6 +302,7 @@
 [data-theme='dark'] .booking-provider-bio,
 [data-theme='dark'] .stage-description,
 [data-theme='dark'] .booking-subtitle,
+[data-theme='dark'] .booking-progress-label,
 [data-theme='dark'] .calendar-weekdays,
 [data-theme='dark'] .booking-close {
   color: var(--color-text-secondary);
@@ -297,6 +323,10 @@
 [data-theme='dark'] .booking-stage-content,
 [data-theme='dark'] .booking-calendar {
   border-color: var(--color-border);
+}
+
+[data-theme='dark'] .booking-progress-track {
+  background: var(--color-border);
 }
 
 [data-theme='dark'] .calendar-nav {
@@ -695,7 +725,7 @@
 
   .booking-modal {
     border-radius: 20px 20px 0 0;
-    max-height: 90vh;
+    max-height: 100dvh;
   }
 
   .booking-sidebar {
@@ -719,6 +749,7 @@
 
   .booking-content {
     padding: 1rem;
+    padding-bottom: calc(88px + env(safe-area-inset-bottom));
   }
 
   .booking-header {
@@ -772,8 +803,35 @@
     font-size: 0.85rem;
   }
 
+  .booking-actions {
+    position: sticky;
+    left: 0;
+    right: 0;
+    bottom: calc(-1rem);
+    z-index: 10;
+    margin: 1rem -1rem -1rem;
+    padding: 0.75rem 1rem calc(0.75rem + env(safe-area-inset-bottom));
+    border-top: 1px solid #e8effc;
+    background: #ffffff;
+    flex-direction: row;
+    justify-content: space-between;
+    gap: 0.6rem;
+  }
+
+  .booking-btn {
+    flex: 1;
+    min-height: 48px;
+    text-transform: none;
+    letter-spacing: 0;
+  }
+
   .booking-close {
     top: 1rem;
     right: 1rem;
   }
+}
+
+[data-theme='dark'] .booking-actions {
+  border-top-color: var(--color-border);
+  background: var(--color-surface);
 }
