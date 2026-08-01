@@ -62,7 +62,7 @@ export default function ServiceProviderDashboard() {
       } else {
         setMyPortfolio(null);
       }
-    } catch (err) {
+    } catch {
       setChecklistError('Unable to load some profile progress right now.');
     } finally {
       setChecklistLoading(false);

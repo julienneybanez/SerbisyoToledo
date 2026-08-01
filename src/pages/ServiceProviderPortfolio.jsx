@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import BookingModal from '../components/common/BookingModal';
+import MobileStickyAction from '../components/mobile/MobileStickyAction';
 import { serviceProfileAPI, isAuthenticated } from '../services/api';
 import {
   ArrowLeftIcon,
@@ -59,12 +60,13 @@ const ReviewSummary = ({ reviews }) => {
   );
 };
 
-const ProviderCard = ({ provider, profile, onBack }) => {
+const ProviderCard = ({ provider, profile, onBack, hideBackLink = false }) => {
   const [activeTab, setActiveTab] = useState('portfolio');
   const [showBooking, setShowBooking] = useState(false);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [expandedImage, setExpandedImage] = useState(null);
   const navigate = useNavigate();
+  const canRequestService = provider?.isPublished !== false;
   const initials = provider.name
     .split(' ')
     .map((n) => n[0])
@@ -96,9 +98,11 @@ const ProviderCard = ({ provider, profile, onBack }) => {
 
   return (
     <section className="provider-section">
-      <div className="back-link" onClick={handleBack}>
-        <ArrowLeftIcon /> Back to Browse
-      </div>
+      {!hideBackLink && (
+        <div className="back-link" onClick={handleBack}>
+          <ArrowLeftIcon /> Back to Browse
+        </div>
+      )}
 
       <div className="profile-header">
         <div className="profile-avatar-large">{initials}</div>
@@ -259,8 +263,13 @@ const ProviderCard = ({ provider, profile, onBack }) => {
         <p className="price-label">Daily rate</p>
       </div>
 
-      <button className="btn-request-service" onClick={handleRequestService}>
-        Request Service
+      <button
+        className="btn-request-service portfolio-desktop-request-btn"
+        onClick={handleRequestService}
+        disabled={!canRequestService}
+        data-tour="provider-request-service"
+      >
+        {canRequestService ? 'Request Service' : 'Currently Unavailable'}
       </button>
 
       <div className="contact-section">
@@ -312,6 +321,26 @@ const ProviderCard = ({ provider, profile, onBack }) => {
         />
       )}
 
+      <MobileStickyAction
+        className="provider-mobile-request-bar"
+        leftContent={(
+          <div className="provider-mobile-rate">
+            <p className="provider-mobile-rate-label">Starting at</p>
+            <p className="provider-mobile-rate-value">₱{profile.rate}</p>
+          </div>
+        )}
+      >
+        <button
+          type="button"
+          className="btn-request-service provider-mobile-request-btn"
+          onClick={handleRequestService}
+          disabled={!canRequestService}
+          data-tour="provider-request-service"
+        >
+          {canRequestService ? 'Request Service' : 'Unavailable'}
+        </button>
+      </MobileStickyAction>
+
       {expandedImage && (
         <div className="image-lightbox-overlay" onClick={() => setExpandedImage(null)}>
           <button className="lightbox-close" onClick={() => setExpandedImage(null)}>
@@ -332,7 +361,12 @@ const ProviderCard = ({ provider, profile, onBack }) => {
 const ServiceProviderPortfolio = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const providerId = Number(id);
+  const isPreviewMode = Boolean(
+    location.state?.previewMode
+    || new URLSearchParams(location.search).get('previewMode')
+  );
   
   const [provider, setProvider] = useState(null);
   const [profile, setProfile] = useState(null);
@@ -362,6 +396,7 @@ const ServiceProviderPortfolio = () => {
             dailyRate: apiProfile.dailyRate ?? apiProfile.startingPrice,
             verified: apiProfile.verified || false,
             image: apiProfile.image,
+            isPublished: apiProfile.isPublished !== false,
           };
           
           const transformedProfile = {
@@ -428,6 +463,7 @@ const ServiceProviderPortfolio = () => {
           provider={provider}
           profile={profile}
           onBack={() => navigate('/feed')}
+          hideBackLink={isPreviewMode}
         />
       </div>
     </div>

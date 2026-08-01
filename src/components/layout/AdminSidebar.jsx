@@ -15,8 +15,7 @@ import {
   cilCheckCircle,
   cilFile,
   cilSettings,
-  cilAccountLogout,
-  cilHome
+  cilAccountLogout
 } from '@coreui/icons';
 import { adminAPI, authAPI } from '../../services/api';
 import '@coreui/coreui/dist/css/coreui.min.css';

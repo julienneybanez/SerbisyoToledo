@@ -185,6 +185,72 @@
   margin-top: 0.25rem;
 }
 
+.settings-flash {
+  margin-bottom: 1rem;
+  border-radius: 10px;
+  padding: 0.75rem 0.95rem;
+  font-size: 0.9rem;
+  border: 1px solid transparent;
+}
+
+.settings-flash.success {
+  background: #ecfdf3;
+  border-color: #a7f3d0;
+  color: #065f46;
+}
+
+.settings-flash.error {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #991b1b;
+}
+
+.settings-flash.info {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #1d4ed8;
+}
+
+.settings-card {
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 1rem;
+  background: var(--color-surface-secondary);
+  margin-bottom: 1rem;
+}
+
+.settings-card p {
+  margin: 0.2rem 0;
+  color: var(--color-text-secondary);
+}
+
+.settings-inline-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.btn-secondary {
+  padding: 0.7rem 1rem;
+  background: transparent;
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-secondary:hover {
+  background: var(--color-surface-secondary);
+  border-color: var(--color-border-strong);
+}
+
+.btn-secondary:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
 /* ===================================
    TOGGLE SWITCHES & GROUPS
    =================================== */
@@ -315,6 +381,13 @@ input:checked + .slider:before {
   box-shadow: 0 4px 12px rgba(74, 159, 245, 0.25);
 }
 
+.btn-save:disabled,
+.btn-change-password:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
 .btn-cancel {
   padding: 0.75rem 2rem;
   background: transparent;
@@ -358,15 +431,53 @@ input:checked + .slider:before {
 
 @media (max-width: 768px) {
   .user-settings-container {
-    padding: 1rem 0;
+    padding: 1rem 0.75rem 1.25rem;
   }
 
   .page-title {
     font-size: 1.5rem;
   }
 
+  .page-header {
+    margin-bottom: 1rem;
+    border-radius: 14px;
+    padding: 0.9rem 0.95rem;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+  }
+
+  .settings-layout {
+    border-radius: 14px;
+    overflow: visible;
+  }
+
+  .settings-nav {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.6rem;
+    padding: 0.85rem;
+    border-bottom: 1px solid var(--color-border);
+    border-right: none;
+    overflow: visible;
+  }
+
+  .settings-nav-item {
+    justify-content: center;
+    padding: 0.8rem 0.75rem;
+    text-align: center;
+    white-space: normal;
+    line-height: 1.2;
+    min-height: 48px;
+  }
+
   .settings-content {
-    padding: 1.5rem 1rem;
+    padding: 1.1rem 0.85rem;
+  }
+
+  .settings-card,
+  .settings-toggle {
+    border-radius: 12px;
+    margin-inline: 0;
   }
 
   .settings-input,
@@ -395,8 +506,18 @@ input:checked + .slider:before {
 }
 
 @media (max-width: 576px) {
+  .user-settings-container {
+    padding-left: 0.6rem;
+    padding-right: 0.6rem;
+  }
+
   .page-header {
-    margin-bottom: 1.5rem;
+    margin-bottom: 1rem;
+    padding: 0.8rem 0.85rem;
+  }
+
+  .settings-nav {
+    grid-template-columns: 1fr;
   }
 
   .page-title {
@@ -405,6 +526,10 @@ input:checked + .slider:before {
 
   .settings-group {
     margin-bottom: 1rem;
+  }
+
+  .settings-content {
+    padding: 0.95rem 0.72rem;
   }
 
   .settings-toggle {
@@ -425,7 +550,10 @@ input:checked + .slider:before {
 }
 
 [data-theme='dark'] .user-settings-container {
-  background: var(--color-background);
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 2rem 0;
   color: var(--color-text-primary);
 }
 
@@ -441,8 +569,13 @@ input:checked + .slider:before {
   border: 1px solid var(--color-border);
 }
 
+[data-theme='dark'] .app,
+[data-theme='dark'] .main-content {
+  background: var(--color-page-bg);
+}
+
 [data-theme='dark'] .user-settings-container .settings-nav {
-  background: var(--color-surface-secondary);
+  background: var(--color-surface);
 }
 
 [data-theme='dark'] .user-settings-container .settings-content {

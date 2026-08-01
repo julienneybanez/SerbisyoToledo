@@ -1,5 +1,5 @@
 import { Routes, Route } from 'react-router-dom';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import './styles/App.css';
 import Navbar from './components/layout/Navbar';
 import Home from './pages/Home';
@@ -8,6 +8,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
+import VerifyEmail from './pages/VerifyEmail';
 import Footer from './components/layout/Footer';
 import Chatbot from './components/common/Chatbot';
 import Feed from './pages/Feed';
@@ -16,6 +17,12 @@ import ServiceProviderDashboard from './pages/ServiceProviderDashboard';
 import Requests from './pages/Requests';
 import ClientSettings from './pages/ClientSettings';
 import ServiceProviderSettings from './pages/ServiceProviderSettings';
+import MobileTopBar from './components/mobile/MobileTopBar';
+import MobileBottomNav from './components/mobile/MobileBottomNav';
+import EditProfileModal from './components/common/EditProfileModal';
+import EditPortfolioModal from './components/common/EditPortfolioModal';
+import ServiceProfileModal from './components/common/ServiceProfileModal';
+import VerificationRequestModal from './components/common/VerificationRequestModal';
 
 // Admin imports
 import AdminLayout from './components/layout/AdminLayout';
@@ -24,7 +31,7 @@ import AdminUsers from './pages/admin/AdminUsers';
 import AdminVerifications from './pages/admin/AdminVerifications';
 import AdminReports from './pages/admin/AdminReports';
 import AdminSettings from './pages/admin/AdminSettings';
-import { getUser, isAuthenticated } from './services/api';
+import { getUser, isAuthenticated, removeToken, serviceProfileAPI } from './services/api';
 import GuidedTour from './components/common/GuidedTour';
 import TourWelcomeModal from './components/common/TourWelcomeModal';
 
@@ -76,15 +83,17 @@ const PROVIDER_TOUR_STEPS = [
   },
   {
     title: 'Availability',
-    description: 'Update your availability settings for incoming jobs.',
-    route: '/provider-settings',
-    selector: '[data-tour="provider-availability-tab"]',
+    description: 'Set your typical response time in Edit Profile so clients know when to expect updates.',
+    route: '/dashboard',
+    action: 'openProviderEditProfile',
+    selector: '[data-tour="provider-response-time"]',
   },
   {
     title: 'Portfolio',
-    description: 'Add portfolio content to showcase your completed work.',
-    route: '/provider-settings',
-    selector: '[data-tour="provider-business-tab"]',
+    description: 'Upload portfolio images in Edit Profile to showcase your completed work.',
+    route: '/dashboard',
+    action: 'openProviderEditProfile',
+    selector: '[data-tour="provider-portfolio-images"]',
   },
   {
     title: 'Incoming Booking Requests',
@@ -99,6 +108,14 @@ function App() {
   const [currentUser, setCurrentUser] = useState(getUser());
   const [showTourPrompt, setShowTourPrompt] = useState(false);
   const [showGuidedTour, setShowGuidedTour] = useState(false);
+  const [isMobileViewport, setIsMobileViewport] = useState(() => window.innerWidth <= 767);
+  const [mobileProfileMenuOpen, setMobileProfileMenuOpen] = useState(false);
+  const [showMobileEditProfile, setShowMobileEditProfile] = useState(false);
+  const [showMobileEditPortfolio, setShowMobileEditPortfolio] = useState(false);
+  const [showMobileServiceProfile, setShowMobileServiceProfile] = useState(false);
+  const [showMobileVerificationRequest, setShowMobileVerificationRequest] = useState(false);
+  const [hasServiceProfile, setHasServiceProfile] = useState(false);
+  const [providerPublicProfileRoute, setProviderPublicProfileRoute] = useState('/dashboard');
 
   const getTourStorageKey = (user) => `serbisyoToledoTour_${user.id}_${user.userType}`;
 
@@ -118,7 +135,53 @@ function App() {
   }, []);
 
   useEffect(() => {
+    const handleResize = () => {
+      setIsMobileViewport(window.innerWidth <= 767);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    if (!currentUser || currentUser.userType !== 'tradesperson') {
+      setHasServiceProfile(false);
+      setProviderPublicProfileRoute('/dashboard');
+      return;
+    }
+
+    let isMounted = true;
+
+    const loadProviderProfile = async () => {
+      try {
+        const response = await serviceProfileAPI.getMyProfile();
+        if (!isMounted) {
+          return;
+        }
+
+        const hasProfile = Boolean(response?.success && response?.data?.id);
+        setHasServiceProfile(hasProfile);
+        setProviderPublicProfileRoute(hasProfile ? `/provider/${response.data.id}` : '/dashboard');
+      } catch {
+        if (!isMounted) {
+          return;
+        }
+
+        setHasServiceProfile(false);
+        setProviderPublicProfileRoute('/dashboard');
+      }
+    };
+
+    loadProviderProfile();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [currentUser?.id, currentUser?.userType]);
+
+  useEffect(() => {
     if (!isAuthenticated() || !currentUser) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setShowTourPrompt(false);
       setShowGuidedTour(false);
       return;
@@ -189,6 +252,34 @@ function App() {
     setShowGuidedTour(false);
   };
 
+  const isMobileAuthenticated = Boolean(
+    isMobileViewport
+    && currentUser
+    && ['client', 'tradesperson'].includes(currentUser.userType)
+    && isAuthenticated()
+  );
+
+  const mobileRole = currentUser?.userType || 'client';
+  const mobileSettingsRoute = mobileRole === 'tradesperson' ? '/provider-settings' : '/client-settings';
+
+  const handleOpenMobileProfileMenu = useCallback(() => {
+    setMobileProfileMenuOpen(true);
+  }, []);
+
+  const handleCloseMobileProfileMenu = useCallback(() => {
+    setMobileProfileMenuOpen(false);
+  }, []);
+
+  const handleToggleMobileProfileMenu = useCallback(() => {
+    setMobileProfileMenuOpen((open) => !open);
+  }, []);
+
+  const handleMobileLogout = () => {
+    removeToken();
+    setMobileProfileMenuOpen(false);
+    window.dispatchEvent(new Event('authChange'));
+  };
+
   return (
     <>
       <Routes>
@@ -204,10 +295,47 @@ function App() {
 
         {/* Public Routes - With regular Navbar/Footer */}
         <Route path="/*" element={
-          <div className="app">
-            <Navbar />
+          <div className={`app ${isMobileAuthenticated ? 'mobile-auth-layout' : ''}`}>
+            {isMobileAuthenticated && (
+              <MobileTopBar
+                user={currentUser}
+                role={mobileRole}
+                profileRoute={providerPublicProfileRoute}
+                settingsRoute={mobileSettingsRoute}
+                onLogout={handleMobileLogout}
+                profileMenuOpen={mobileProfileMenuOpen}
+                onToggleProfileMenu={handleToggleMobileProfileMenu}
+                onCloseProfileMenu={handleCloseMobileProfileMenu}
+                onEditClientProfile={() => {
+                  setMobileProfileMenuOpen(false);
+                  setShowMobileEditProfile(true);
+                }}
+                hasServiceProfile={hasServiceProfile}
+                onEditProviderProfile={() => {
+                  setMobileProfileMenuOpen(false);
+                  setShowMobileEditPortfolio(true);
+                }}
+                onManageServiceProfile={() => {
+                  setMobileProfileMenuOpen(false);
+                  setShowMobileServiceProfile(true);
+                }}
+                onRequestVerification={() => {
+                  setMobileProfileMenuOpen(false);
+                  setShowMobileVerificationRequest(true);
+                }}
+                onPreviewProfile={() => {
+                  setMobileProfileMenuOpen(false);
+                  const separator = providerPublicProfileRoute.includes('?') ? '&' : '?';
+                  window.location.assign(`${providerPublicProfileRoute}${separator}previewMode=mobile`);
+                }}
+              />
+            )}
 
-            <main className="main-content">
+            <div className={isMobileAuthenticated ? 'desktop-navbar-hidden' : ''}>
+              <Navbar />
+            </div>
+
+            <main className={`main-content ${isMobileAuthenticated ? 'authenticated-page-content' : ''}`}>
               <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/about" element={<About />} />
@@ -215,6 +343,7 @@ function App() {
                 <Route path="/register" element={<Register />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/reset-password/:token" element={<ResetPassword />} />
+                <Route path="/verify-email" element={<VerifyEmail />} />
                 <Route path="/feed" element={<Feed />} />
                 <Route path="/dashboard" element={<ServiceProviderDashboard />} />
                 <Route path="/provider/:id" element={<ServiceProviderPortfolio />} />
@@ -223,8 +352,16 @@ function App() {
                 <Route path="/provider-settings" element={<ServiceProviderSettings />} />
               </Routes>
             </main>
+
+            {isMobileAuthenticated && (
+              <MobileBottomNav
+                role={mobileRole}
+                profileMenuOpen={mobileProfileMenuOpen}
+                onProfileTap={mobileProfileMenuOpen ? handleCloseMobileProfileMenu : handleOpenMobileProfileMenu}
+              />
+            )}
             
-            <Footer />
+            <Footer className={isMobileAuthenticated ? 'mobile-footer-minimized' : ''} />
             
             <button 
               className="floating-btn"
@@ -237,6 +374,33 @@ function App() {
             </button>
 
             <Chatbot isOpen={isChatbotOpen} onClose={() => setIsChatbotOpen(false)} />
+
+            {showMobileEditProfile && (
+              <EditProfileModal
+                onClose={() => setShowMobileEditProfile(false)}
+                onProfileUpdated={() => {
+                  setShowMobileEditProfile(false);
+                }}
+              />
+            )}
+
+            {showMobileEditPortfolio && (
+              <EditPortfolioModal
+                onClose={() => setShowMobileEditPortfolio(false)}
+              />
+            )}
+
+            {showMobileServiceProfile && (
+              <ServiceProfileModal
+                onClose={() => setShowMobileServiceProfile(false)}
+              />
+            )}
+
+            {showMobileVerificationRequest && (
+              <VerificationRequestModal
+                onClose={() => setShowMobileVerificationRequest(false)}
+              />
+            )}
           </div>
         } />
       </Routes>

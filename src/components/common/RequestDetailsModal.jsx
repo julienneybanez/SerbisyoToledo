@@ -102,12 +102,6 @@ export default function RequestDetailsModal({
                 <span className="info-label">Name</span>
                 <span className="info-value">{isProvider ? request.client_name : request.provider_name}</span>
               </div>
-              {isProvider && request.client_email && (
-                <div className="info-row">
-                  <span className="info-label">Email</span>
-                  <span className="info-value">{request.client_email}</span>
-                </div>
-              )}
               {!isProvider && request.provider_location && (
                 <div className="info-row">
                   <span className="info-label">Location</span>

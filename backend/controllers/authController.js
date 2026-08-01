@@ -4,6 +4,7 @@ const crypto = require('crypto');
 const { validationResult } = require('express-validator');
 const db = require('../config/database');
 const {
+  boolFromEnv,
   generateVerificationToken,
   sendVerificationEmail,
   sendWelcomeEmail,
@@ -11,6 +12,26 @@ const {
 } = require('../utils/emailService');
 
 const RESET_TOKEN_EXPIRY_MINUTES = Number(process.env.PASSWORD_RESET_TOKEN_EXP_MINUTES || 20);
+const EMAIL_VERIFICATION_ENABLED = boolFromEnv(process.env.EMAIL_VERIFICATION_ENABLED, false);
+const WELCOME_EMAIL_ENABLED = boolFromEnv(process.env.WELCOME_EMAIL_ENABLED, false);
+const VERIFICATION_TOKEN_EXPIRY_HOURS = Number(process.env.EMAIL_VERIFICATION_TOKEN_EXP_HOURS || 24);
+const RESEND_VERIFICATION_MIN_INTERVAL_SECONDS = Number(process.env.RESEND_VERIFICATION_MIN_INTERVAL_SECONDS || 60);
+const resendVerificationThrottle = new Map();
+
+const hashToken = (value) => crypto.createHash('sha256').update(value).digest('hex');
+
+const shouldThrottleResend = (email) => {
+  const key = String(email || '').toLowerCase();
+  const now = Date.now();
+  const last = resendVerificationThrottle.get(key);
+
+  if (last && now - last < RESEND_VERIFICATION_MIN_INTERVAL_SECONDS * 1000) {
+    return true;
+  }
+
+  resendVerificationThrottle.set(key, now);
+  return false;
+};
 
 const resolveUserProfileImage = (user) => {
   if (user.profile_photo_url) {
@@ -93,10 +114,17 @@ exports.register = async (req, res) => {
       skills: userType === 'tradesperson' && skills ? JSON.stringify(skills) : null
     };
 
-    // Insert user into database (email verified immediately)
+    const isEmailVerified = !EMAIL_VERIFICATION_ENABLED;
+    const verificationTokenRaw = EMAIL_VERIFICATION_ENABLED ? generateVerificationToken() : null;
+    const verificationTokenHash = verificationTokenRaw ? hashToken(verificationTokenRaw) : null;
+    const verificationTokenExpires = verificationTokenRaw
+      ? new Date(Date.now() + VERIFICATION_TOKEN_EXPIRY_HOURS * 60 * 60 * 1000)
+      : null;
+
+    // Insert user into database
     const [result] = await db.query(
-      `INSERT INTO users (full_name, email, password, user_type, preferred_services, profession, skills, email_verified) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO users (full_name, email, password, user_type, preferred_services, profession, skills, email_verified, verification_token, verification_token_expires) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         userData.full_name,
         userData.email,
@@ -105,18 +133,36 @@ exports.register = async (req, res) => {
         userData.preferred_services,
         userData.profession,
         userData.skills,
-        true
+        isEmailVerified,
+        verificationTokenHash,
+        verificationTokenExpires
       ]
     );
 
-    const welcomeEmailResult = await sendWelcomeEmail(
-      userData.email,
-      userData.full_name,
-      userData.user_type
-    );
+    let verificationEmailResult = { success: true };
+    if (EMAIL_VERIFICATION_ENABLED && verificationTokenRaw) {
+      verificationEmailResult = await sendVerificationEmail(
+        userData.email,
+        userData.full_name,
+        verificationTokenRaw
+      );
 
-    if (!welcomeEmailResult.success) {
-      console.error('Welcome email was not sent:', welcomeEmailResult.error);
+      if (!verificationEmailResult.success) {
+        console.error('Verification email was not sent:', verificationEmailResult.errorCode || verificationEmailResult.error);
+      }
+    }
+
+    let welcomeEmailResult = { success: true };
+    if (WELCOME_EMAIL_ENABLED) {
+      welcomeEmailResult = await sendWelcomeEmail(
+        userData.email,
+        userData.full_name,
+        userData.user_type
+      );
+
+      if (!welcomeEmailResult.success) {
+        console.error('Welcome email was not sent:', welcomeEmailResult.errorCode || welcomeEmailResult.error);
+      }
     }
 
     // Generate token
@@ -125,9 +171,13 @@ exports.register = async (req, res) => {
     // Return success response
     res.status(201).json({
       success: true,
-      message: welcomeEmailResult.success
-        ? 'Registration successful! A confirmation email has been sent.'
-        : 'Registration successful! You can now log in.',
+      message: EMAIL_VERIFICATION_ENABLED
+        ? (verificationEmailResult.success
+          ? 'Registration successful! Please check your email to verify your account.'
+          : 'Registration successful, but we could not send verification email right now. Please use resend verification after email service is restored.')
+        : (welcomeEmailResult.success && WELCOME_EMAIL_ENABLED
+          ? 'Registration successful! A confirmation email has been sent.'
+          : 'Registration successful! You can now log in.'),
       data: {
         user: {
           id: result.insertId,
@@ -137,7 +187,7 @@ exports.register = async (req, res) => {
           preferredServices: userData.preferred_services,
           profession: userData.profession,
           skills: skills || [],
-          emailVerified: true
+          emailVerified: isEmailVerified
         },
         token
       }
@@ -181,6 +231,7 @@ exports.forgotPassword = async (req, res) => {
     }
 
     const user = users[0];
+
     const rawToken = crypto.randomBytes(32).toString('hex');
     const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
     const expiresAt = new Date(Date.now() + RESET_TOKEN_EXPIRY_MINUTES * 60 * 1000);
@@ -390,7 +441,7 @@ exports.login = async (req, res) => {
     if (user.skills) {
       try {
         skills = typeof user.skills === 'string' ? JSON.parse(user.skills) : user.skills;
-      } catch (e) {
+      } catch {
         skills = [];
       }
     }
@@ -450,7 +501,7 @@ exports.getMe = async (req, res) => {
     if (user.skills) {
       try {
         skills = typeof user.skills === 'string' ? JSON.parse(user.skills) : user.skills;
-      } catch (e) {
+      } catch {
         skills = [];
       }
     }
@@ -570,7 +621,7 @@ exports.updateProfile = async (req, res) => {
     if (user.skills) {
       try {
         parsedSkills = typeof user.skills === 'string' ? JSON.parse(user.skills) : user.skills;
-      } catch (e) {
+      } catch {
         parsedSkills = [];
       }
     }
@@ -621,22 +672,19 @@ exports.verifyEmail = async (req, res) => {
     // Decode token if it's URL encoded
     try {
       token = decodeURIComponent(token);
-    } catch (e) {
+    } catch {
       // Token might not be encoded, continue
     }
 
-    console.log('Token verification attempt - Token:', token.substring(0, 10) + '...');
+    const tokenHash = hashToken(token);
 
     // Find user with this token
     const [users] = await db.query(
       'SELECT id, full_name, email, verification_token_expires FROM users WHERE verification_token = ?',
-      [token]
+      [tokenHash]
     );
 
-    console.log('Verification query result:', users.length, 'users found');
-
     if (users.length === 0) {
-      console.log('Token not found in database');
       return res.status(400).json({
         success: false,
         message: 'Invalid verification token'
@@ -648,11 +696,8 @@ exports.verifyEmail = async (req, res) => {
     // Check if token has expired
     const now = new Date();
     const expiryTime = new Date(user.verification_token_expires);
-    
-    console.log('Token expiry check - Now:', now.toISOString(), 'Expires:', expiryTime.toISOString());
 
     if (now > expiryTime) {
-      console.log('Token has expired');
       return res.status(400).json({
         success: false,
         message: 'Verification token has expired. Please request a new one.'
@@ -664,8 +709,6 @@ exports.verifyEmail = async (req, res) => {
       'UPDATE users SET email_verified = TRUE, verification_token = NULL, verification_token_expires = NULL WHERE id = ?',
       [user.id]
     );
-
-    console.log('✅ Email verified successfully for user:', user.id, user.email);
 
     res.json({
       success: true,
@@ -685,12 +728,26 @@ exports.verifyEmail = async (req, res) => {
 // Resend verification email
 exports.resendVerification = async (req, res) => {
   try {
+    if (!EMAIL_VERIFICATION_ENABLED) {
+      return res.status(404).json({
+        success: false,
+        message: 'Email verification is currently disabled.'
+      });
+    }
+
     const { email } = req.body;
 
     if (!email) {
       return res.status(400).json({
         success: false,
         message: 'Email is required'
+      });
+    }
+
+    if (shouldThrottleResend(email)) {
+      return res.status(429).json({
+        success: false,
+        message: `Please wait ${RESEND_VERIFICATION_MIN_INTERVAL_SECONDS} seconds before requesting another verification email.`
       });
     }
 
@@ -701,29 +758,30 @@ exports.resendVerification = async (req, res) => {
     );
 
     if (users.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: 'No account found with this email'
+      return res.json({
+        success: true,
+        message: 'If this account exists and is unverified, a verification email has been sent.'
       });
     }
 
     const user = users[0];
 
     if (user.email_verified) {
-      return res.status(400).json({
-        success: false,
-        message: 'Email is already verified'
+      return res.json({
+        success: true,
+        message: 'Email is already verified.'
       });
     }
 
     // Generate new token
     const verificationToken = generateVerificationToken();
-    const tokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+    const verificationTokenHash = hashToken(verificationToken);
+    const tokenExpires = new Date(Date.now() + VERIFICATION_TOKEN_EXPIRY_HOURS * 60 * 60 * 1000);
 
     // Update token in database
     await db.query(
       'UPDATE users SET verification_token = ?, verification_token_expires = ? WHERE id = ?',
-      [verificationToken, tokenExpires, user.id]
+      [verificationTokenHash, tokenExpires, user.id]
     );
 
     // Send email
@@ -735,9 +793,9 @@ exports.resendVerification = async (req, res) => {
         message: 'Verification email sent! Please check your inbox.'
       });
     } else {
-      res.status(500).json({
+      res.status(503).json({
         success: false,
-        message: 'Failed to send verification email. Please try again.'
+        message: 'Unable to send verification email right now. Please try again later.'
       });
     }
 

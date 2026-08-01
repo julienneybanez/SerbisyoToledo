@@ -4,6 +4,76 @@ const dns = require('dns');
 
 dns.setDefaultResultOrder('ipv4first');
 
+const EMAIL_PROVIDERS = {
+  MAILJET: 'mailjet',
+  SMTP: 'smtp'
+};
+
+const boolFromEnv = (value, defaultValue = false) => {
+  if (value === undefined || value === null || value === '') {
+    return defaultValue;
+  }
+  return String(value).toLowerCase() === 'true';
+};
+
+const getEmailProvider = () => {
+  const value = String(process.env.EMAIL_PROVIDER || EMAIL_PROVIDERS.SMTP).toLowerCase().trim();
+  if (value === EMAIL_PROVIDERS.MAILJET) return EMAIL_PROVIDERS.MAILJET;
+  if (value === EMAIL_PROVIDERS.SMTP) return EMAIL_PROVIDERS.SMTP;
+  return EMAIL_PROVIDERS.SMTP;
+};
+
+const requiredByProvider = {
+  [EMAIL_PROVIDERS.MAILJET]: [
+    'MAILJET_API_KEY',
+    'MAILJET_SECRET_KEY',
+    'MAILJET_SENDER_EMAIL',
+    'FRONTEND_URL'
+  ],
+  [EMAIL_PROVIDERS.SMTP]: [
+    'SMTP_USER',
+    'SMTP_PASS',
+    'SMTP_FROM_EMAIL'
+  ]
+};
+
+const validateEmailConfiguration = ({ throwOnError = false } = {}) => {
+  const provider = getEmailProvider();
+  const missing = (requiredByProvider[provider] || []).filter((key) => !process.env[key]);
+
+  if (missing.length === 0) {
+    return { valid: true, provider, missing: [] };
+  }
+
+  const message = `Email provider "${provider}" is missing required environment variables: ${missing.join(', ')}`;
+
+  if (throwOnError) {
+    const error = new Error(message);
+    error.code = 'EMAIL_CONFIG_INVALID';
+    error.provider = provider;
+    error.missing = missing;
+    throw error;
+  }
+
+  return { valid: false, provider, missing, message };
+};
+
+const maskEmail = (email) => {
+  if (!email || !email.includes('@')) {
+    return 'unknown-recipient';
+  }
+
+  const [local, domain] = email.split('@');
+  const start = local.slice(0, 2);
+  return `${start}${'*'.repeat(Math.max(1, local.length - 2))}@${domain}`;
+};
+
+const sanitizeError = (error) => {
+  const code = error?.code || error?.response?.status || error?.response?.data?.error || 'unknown_error';
+  const message = error?.message || 'Email send failed';
+  return { code: String(code), message: String(message) };
+};
+
 const getSmtpConfig = () => {
   const user = process.env.SMTP_USER || process.env.EMAIL_USER;
   const pass = process.env.SMTP_PASS || process.env.EMAIL_PASS;
@@ -59,6 +129,140 @@ const createTransporter = async () => {
   });
 };
 
+const sendViaSmtp = async ({ to, subject, html, text }) => {
+  const transporter = await createTransporter();
+  const info = await transporter.sendMail({
+    from: getFromAddress(),
+    to,
+    subject,
+    html,
+    text
+  });
+
+  return {
+    success: true,
+    provider: EMAIL_PROVIDERS.SMTP,
+    messageId: info.messageId
+  };
+};
+
+const classifyMailjetError = (status, errorIdentifier) => {
+  if (status === 401 || status === 403) return 'MAILJET_INVALID_CREDENTIALS';
+  if (status === 400) {
+    if (/sender|from/i.test(errorIdentifier)) return 'MAILJET_UNVERIFIED_OR_UNAUTHORIZED_SENDER';
+    if (/to|recipient|email/i.test(errorIdentifier)) return 'MAILJET_INVALID_RECIPIENT';
+    return 'MAILJET_INVALID_REQUEST';
+  }
+  if (status === 429) return 'MAILJET_RATE_LIMIT';
+  if (status >= 500) return 'MAILJET_SERVICE_ERROR';
+  return 'MAILJET_SEND_FAILED';
+};
+
+const sendViaMailjet = async ({ to, subject, html, text, replyTo }) => {
+  const apiKey = process.env.MAILJET_API_KEY;
+  const secretKey = process.env.MAILJET_SECRET_KEY;
+  const senderEmail = process.env.MAILJET_SENDER_EMAIL;
+  const senderName = process.env.MAILJET_SENDER_NAME || 'SerbisyoToledo';
+  const configuredReplyTo = process.env.MAILJET_REPLY_TO_EMAIL;
+
+  const resolvedReplyTo = replyTo || configuredReplyTo;
+
+  const message = {
+    From: {
+      Email: senderEmail,
+      Name: senderName
+    },
+    To: [{ Email: to }],
+    Subject: subject,
+    TextPart: text || '',
+    HTMLPart: html || ''
+  };
+
+  if (resolvedReplyTo) {
+    message.ReplyTo = {
+      Email: resolvedReplyTo,
+      Name: senderName
+    };
+  }
+
+  let response;
+  try {
+    response = await fetch('https://api.mailjet.com/v3.1/send', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Basic ${Buffer.from(`${apiKey}:${secretKey}`).toString('base64')}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ Messages: [message] })
+    });
+  } catch (error) {
+    const networkError = new Error('Mailjet network request failed');
+    networkError.code = 'MAILJET_NETWORK_ERROR';
+    networkError.cause = error;
+    throw networkError;
+  }
+
+  const data = await response.json().catch(() => ({}));
+  const firstResult = data?.Messages?.[0];
+
+  if (!response.ok) {
+    const identifier = firstResult?.Errors?.[0]?.ErrorIdentifier || firstResult?.Errors?.[0]?.ErrorCode || 'unknown';
+    const errorCode = classifyMailjetError(response.status, String(identifier));
+    const error = new Error(`Mailjet send failed with status ${response.status}`);
+    error.code = errorCode;
+    error.httpStatus = response.status;
+    error.errorIdentifier = identifier;
+    throw error;
+  }
+
+  const status = firstResult?.Status || 'success';
+  const messageId = firstResult?.To?.[0]?.MessageID || firstResult?.To?.[0]?.MessageUUID || 'mailjet-accepted';
+
+  return {
+    success: true,
+    provider: EMAIL_PROVIDERS.MAILJET,
+    status,
+    messageId
+  };
+};
+
+const sendEmail = async ({ to, subject, html, text, replyTo, emailType = 'general' }) => {
+  const provider = getEmailProvider();
+  const validation = validateEmailConfiguration();
+
+  if (!validation.valid) {
+    console.error(`[Email:${emailType}] Provider config error (${provider}) for ${maskEmail(to)}: ${validation.message}`);
+    return {
+      success: false,
+      provider,
+      errorCode: 'EMAIL_CONFIG_INVALID',
+      error: validation.message
+    };
+  }
+
+  try {
+    const result = provider === EMAIL_PROVIDERS.MAILJET
+      ? await sendViaMailjet({ to, subject, html, text, replyTo })
+      : await sendViaSmtp({ to, subject, html, text });
+
+    const providerStatus = result.status ? ` Status: ${result.status}.` : '';
+    console.log(`[Email:${emailType}] Sent via ${provider} to ${maskEmail(to)}.${providerStatus} Message ID: ${result.messageId}`);
+    return result;
+  } catch (error) {
+    const sanitized = sanitizeError(error);
+    const statusSnippet = error?.httpStatus ? ` HTTP: ${error.httpStatus}.` : '';
+    const identifierSnippet = error?.errorIdentifier ? ` Identifier: ${String(error.errorIdentifier)}.` : '';
+    console.error(`[Email:${emailType}] Send failed via ${provider} to ${maskEmail(to)}.${statusSnippet}${identifierSnippet} Code: ${sanitized.code}. Message: ${sanitized.message}`);
+
+    return {
+      success: false,
+      provider,
+      errorCode: sanitized.code,
+      error: sanitized.message
+    };
+  }
+};
+
 // Generate a random verification token
 const generateVerificationToken = () => {
   return crypto.randomBytes(32).toString('hex');
@@ -66,19 +270,11 @@ const generateVerificationToken = () => {
 
 // Send verification email
 const sendVerificationEmail = async (toEmail, fullName, verificationToken) => {
-  const transporter = await createTransporter();
   const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
   const verifyUrl = `${frontendUrl}/verify-email?token=${verificationToken}`;
 
-  console.log('Sending verification email to:', toEmail);
-  console.log('Verification URL:', verifyUrl);
-  console.log('Token in URL:', verificationToken.substring(0, 10) + '...');
-
-  const mailOptions = {
-    from: getFromAddress(),
-    to: toEmail,
-    subject: 'Verify Your SerbisyoToledo Account',
-    html: `
+  const subject = 'Verify Your SerbisyoToledo Account';
+  const html = `
       <!DOCTYPE html>
       <html>
       <head>
@@ -209,28 +405,34 @@ const sendVerificationEmail = async (toEmail, fullName, verificationToken) => {
         </div>
       </body>
       </html>
-    `,
-  };
+    `;
+  const text = [
+    `Hello${fullName ? ` ${fullName}` : ''},`,
+    '',
+    'Thank you for signing up for SerbisyoToledo.',
+    'Please verify your account using this link:',
+    verifyUrl,
+    '',
+    'If you did not create this account, you can ignore this email.',
+    '',
+    'SerbisyoToledo Team'
+  ].join('\n');
 
-  try {
-    const info = await transporter.sendMail(mailOptions);
-    console.log('✅ Verification email sent:', info.messageId);
-    return { success: true, messageId: info.messageId };
-  } catch (error) {
-    console.error('❌ Error sending verification email:', error.message);
-    return { success: false, error: error.message };
-  }
+  return sendEmail({
+    to: toEmail,
+    subject,
+    html,
+    text,
+    replyTo: process.env.MAILJET_REPLY_TO_EMAIL,
+    emailType: 'verification'
+  });
 };
 
 const sendWelcomeEmail = async (toEmail, fullName, userType) => {
-  const transporter = await createTransporter();
   const roleLabel = userType === 'tradesperson' ? 'Service Provider' : 'Client';
 
-  const mailOptions = {
-    from: getFromAddress(),
-    to: toEmail,
-    subject: 'Welcome to SerbisyoToledo',
-    html: `
+  const subject = 'Welcome to SerbisyoToledo';
+  const html = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
         <h2 style="color: #2d7dd2;">Welcome to SerbisyoToledo</h2>
         <p>Hello${fullName ? ` ${fullName}` : ''},</p>
@@ -239,26 +441,30 @@ const sendWelcomeEmail = async (toEmail, fullName, userType) => {
         <p>You can now log in and start using SerbisyoToledo.</p>
         <p style="margin-top: 24px;">Best regards,<br/>SerbisyoToledo Team</p>
       </div>
-    `
-  };
+    `;
+  const text = [
+    `Hello${fullName ? ` ${fullName}` : ''},`,
+    '',
+    'Welcome to SerbisyoToledo.',
+    `You registered as: ${roleLabel}.`,
+    'You can now log in and start using SerbisyoToledo.',
+    '',
+    'SerbisyoToledo Team'
+  ].join('\n');
 
-  try {
-    const info = await transporter.sendMail(mailOptions);
-    return { success: true, messageId: info.messageId };
-  } catch (error) {
-    console.error('Error sending welcome email:', error.message);
-    return { success: false, error: error.message };
-  }
+  return sendEmail({
+    to: toEmail,
+    subject,
+    html,
+    text,
+    replyTo: process.env.MAILJET_REPLY_TO_EMAIL,
+    emailType: 'welcome'
+  });
 };
 
 const sendPasswordResetEmail = async (toEmail, fullName, resetUrl, expiryMinutes) => {
-  const transporter = await createTransporter();
-
-  const mailOptions = {
-    from: getFromAddress(),
-    to: toEmail,
-    subject: 'Reset Your SerbisyoToledo Password',
-    html: `
+  const subject = 'Reset Your SerbisyoToledo Password';
+  const html = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
         <h2 style="color: #2d7dd2;">Reset Your SerbisyoToledo Password</h2>
         <p>Hello${fullName ? ` ${fullName}` : ''},</p>
@@ -271,19 +477,34 @@ const sendPasswordResetEmail = async (toEmail, fullName, resetUrl, expiryMinutes
         <p>If you did not request a password reset, you can ignore this email.</p>
         <p style="margin-top: 24px;">Best regards,<br/>SerbisyoToledo Team</p>
       </div>
-    `
-  };
+    `;
+  const text = [
+    `Hello${fullName ? ` ${fullName}` : ''},`,
+    '',
+    'We received a request to reset your SerbisyoToledo password.',
+    `Reset link: ${resetUrl}`,
+    `This link expires in ${expiryMinutes} minutes.`,
+    'If you did not request a password reset, you can ignore this email.',
+    '',
+    'SerbisyoToledo Team'
+  ].join('\n');
 
-  try {
-    const info = await transporter.sendMail(mailOptions);
-    return { success: true, messageId: info.messageId };
-  } catch (error) {
-    console.error('Error sending password reset email:', error.message);
-    return { success: false, error: error.message };
-  }
+  return sendEmail({
+    to: toEmail,
+    subject,
+    html,
+    text,
+    replyTo: process.env.MAILJET_REPLY_TO_EMAIL,
+    emailType: 'password_reset'
+  });
 };
 
 module.exports = {
+  EMAIL_PROVIDERS,
+  getEmailProvider,
+  validateEmailConfiguration,
+  boolFromEnv,
+  sendEmail,
   generateVerificationToken,
   sendVerificationEmail,
   sendWelcomeEmail,

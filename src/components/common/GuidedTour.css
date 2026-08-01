@@ -2,7 +2,7 @@
   position: fixed;
   inset: 0;
   background: rgba(15, 23, 42, 0.45);
-  z-index: 1250;
+  z-index: 11000;
   pointer-events: none;
 }
 
@@ -11,7 +11,7 @@
   border: 2px solid #fff;
   border-radius: 10px;
   box-shadow: 0 0 0 9999px rgba(15, 23, 42, 0.35), 0 0 18px rgba(255, 255, 255, 0.5);
-  z-index: 1260;
+  z-index: 11010;
   pointer-events: none;
 }
 
@@ -23,7 +23,7 @@
   background: #fff;
   border-radius: 12px;
   padding: 1rem;
-  z-index: 1270;
+  z-index: 11020;
   box-shadow: 0 14px 32px rgba(15, 23, 42, 0.28);
 }
 

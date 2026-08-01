@@ -5,6 +5,11 @@
 .landing-search-wrap .search-box-home {
   max-width: 560px;
   width: 100%;
+  overflow: hidden;
+}
+
+.landing-search-wrap .search-box-home input {
+  min-width: 0;
 }
 
 .landing-search-wrap .btn-search-home {
@@ -15,6 +20,8 @@
   font-size: 0.9rem;
   font-weight: 600;
   line-height: 1;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .landing-search-wrap .btn-search-home:hover {
@@ -77,4 +84,19 @@
   border-color: var(--brand-primary);
   background: color-mix(in srgb, var(--brand-primary) 14%, var(--color-surface));
   color: var(--color-primary-hover);
+}
+
+@media (max-width: 576px) {
+  .landing-search-wrap .search-box-home {
+    padding: 0.65rem 0.85rem;
+  }
+
+  .landing-search-wrap .search-box-home .search-divider {
+    margin: 0 0.5rem;
+  }
+
+  .landing-search-wrap .btn-search-home {
+    padding: 0.4rem 0.75rem;
+    font-size: 0.82rem;
+  }
 }

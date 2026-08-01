@@ -51,7 +51,7 @@ async function seedAdmin() {
         MODIFY COLUMN user_type ENUM('client', 'tradesperson', 'admin') NOT NULL
       `);
       console.log('✅ ENUM updated successfully');
-    } catch (enumError) {
+    } catch {
       // ENUM might already be updated, continue
       console.log('ℹ️  ENUM already includes admin or table structure is correct');
     }
@@ -59,7 +59,7 @@ async function seedAdmin() {
     // Admin credentials
     const adminData = {
       fullName: 'Admin User',
-      email: 'serbisyotoledo@gmail.com',
+      email: 'toledoserbisyo@gmail.com',
       password: 'admin123', // Change this in production!
       userType: 'admin'
     };

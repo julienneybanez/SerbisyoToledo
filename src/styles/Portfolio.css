@@ -75,6 +75,39 @@
   box-shadow: 0 30px 50px rgba(26, 61, 93, 0.08);
 }
 
+.provider-mobile-request-bar {
+  display: none;
+}
+
+.provider-mobile-rate {
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+}
+
+.provider-mobile-rate-label,
+.provider-mobile-rate-value {
+  margin: 0;
+}
+
+.provider-mobile-rate-label {
+  font-size: 0.72rem;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.provider-mobile-rate-value {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1a3d5d;
+}
+
+.provider-mobile-request-btn {
+  min-height: 48px;
+  min-width: 160px;
+}
+
 /* ===================================
    PORTFOLIO PAGE - PROFILE HEADER
    =================================== */
@@ -468,6 +501,12 @@
   cursor: pointer;
 }
 
+.btn-request-service:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
 .contact-item {
   display: flex;
   gap: 0.9rem;
@@ -530,6 +569,20 @@
 
   .portfolio-tabs {
     flex-direction: column;
+  }
+}
+
+@media (max-width: 767px) {
+  .provider-section {
+    padding-bottom: calc(88px + env(safe-area-inset-bottom));
+  }
+
+  .portfolio-desktop-request-btn {
+    display: none;
+  }
+
+  .provider-mobile-request-bar {
+    display: flex;
   }
 }
 
@@ -970,6 +1023,14 @@
 }
 
 [data-theme='dark'] .portfolio-shell.empty-state {
+  color: var(--color-text-primary);
+}
+
+[data-theme='dark'] .provider-mobile-rate-label {
+  color: var(--color-text-secondary);
+}
+
+[data-theme='dark'] .provider-mobile-rate-value {
   color: var(--color-text-primary);
 }
 

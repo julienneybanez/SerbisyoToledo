@@ -37,7 +37,7 @@ exports.createOrUpdateProfile = async (req, res) => {
     if (typeof serviceCategories === 'string') {
       try {
         serviceCategories = JSON.parse(serviceCategories);
-      } catch (e) {
+      } catch {
         serviceCategories = [serviceCategories];
       }
     }
@@ -585,7 +585,7 @@ exports.updatePortfolioDetails = async (req, res) => {
     if (typeof skills === 'string') {
       try {
         skills = JSON.parse(skills);
-      } catch (e) {
+      } catch {
         skills = skills.split(',').map(s => s.trim());
       }
     }

@@ -26,6 +26,10 @@
   min-width: 0;
 }
 
+.admin-mobile-topbar-wrap {
+  display: none;
+}
+
 /* Responsive */
 @media (max-width: 991px) {
   .admin-main {
@@ -34,6 +38,22 @@
 
   .admin-content {
     padding: 1rem;
+  }
+}
+
+@media (max-width: 767px) {
+  .admin-desktop-navbar-wrap,
+  .admin-main .footer {
+    display: none;
+  }
+
+  .admin-mobile-topbar-wrap {
+    display: block;
+  }
+
+  .admin-content {
+    padding: 0.85rem;
+    padding-bottom: calc(78px + env(safe-area-inset-bottom));
   }
 }
 

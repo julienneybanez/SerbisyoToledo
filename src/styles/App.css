@@ -18,3 +18,4 @@
 
 /* Component styles */
 @import '../components/common/BookingModal.css';
+@import '../components/mobile/mobile.css';

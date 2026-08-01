@@ -100,7 +100,7 @@ export default function Feed() {
         if (response.success) {
           setHasClientRequest((response.data.requests || []).length > 0);
         }
-      } catch (err) {
+      } catch {
         setClientChecklistError('Unable to load some onboarding progress right now.');
       } finally {
         setClientChecklistLoading(false);

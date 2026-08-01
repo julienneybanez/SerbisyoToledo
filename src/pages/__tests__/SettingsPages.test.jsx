@@ -1,0 +1,229 @@
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import '@testing-library/jest-dom/vitest';
+import ClientSettings from '../ClientSettings';
+import ServiceProviderSettings from '../ServiceProviderSettings';
+import AdminSettings from '../admin/AdminSettings';
+import { adminAPI, authAPI, getUser, serviceProfileAPI, userProfileAPI } from '../../services/api';
+
+const mockNavigate = vi.fn();
+
+vi.mock('react-router-dom', () => ({
+  useNavigate: () => mockNavigate,
+  useSearchParams: () => [new URLSearchParams('')],
+}));
+
+vi.mock('../../components/common/ThemeToggle', () => ({
+  default: () => <div data-testid="theme-toggle">theme</div>,
+}));
+
+vi.mock('../../components/common/VerificationRequestModal', () => ({
+  default: ({ onClose }) => (
+    <div data-testid="verification-modal">
+      <button onClick={onClose}>Close Verification Modal</button>
+      Verification Request Modal
+    </div>
+  ),
+}));
+
+vi.mock('../../services/api', () => ({
+  API_BASE_URL: 'http://localhost:5000/api',
+  getUser: vi.fn(),
+  authAPI: {
+    resendVerification: vi.fn(),
+  },
+  userProfileAPI: {
+    getProfile: vi.fn(),
+    updateProfile: vi.fn(),
+  },
+  serviceProfileAPI: {
+    getMyProfile: vi.fn(),
+    getMyPortfolio: vi.fn(),
+    createProfile: vi.fn(),
+    togglePublish: vi.fn(),
+    updatePortfolioDetails: vi.fn(),
+  },
+  adminAPI: {
+    getDashboardStats: vi.fn(),
+    getAllUsers: vi.fn(),
+    getVerificationRequests: vi.fn(),
+    getReports: vi.fn(),
+  },
+}));
+
+describe('Settings pages', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockNavigate.mockReset();
+
+    globalThis.fetch = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({ status: 'ok', timestamp: '2026-07-30T12:00:00.000Z' }),
+    }));
+  });
+
+  it('client settings saves profile changes and shows resend verification as disabled', async () => {
+    getUser.mockReturnValue({
+      userType: 'client',
+      fullName: 'Client User',
+      email: 'client@example.com',
+      isVerified: false,
+    });
+
+    userProfileAPI.getProfile.mockResolvedValue({
+      success: true,
+      data: {
+        fullName: 'Client User',
+        email: 'client@example.com',
+        phone: '09123456789',
+        address: 'Old Address',
+        bio: 'Old bio',
+        createdAt: '2026-01-01T00:00:00.000Z',
+      },
+    });
+
+    userProfileAPI.updateProfile.mockResolvedValue({
+      success: true,
+      data: {
+        fullName: 'Client Updated',
+        phone: '09998887777',
+        address: 'New Address',
+        bio: 'New bio',
+      },
+    });
+
+    render(<ClientSettings />);
+
+    expect(await screen.findByText('Client Settings')).toBeInTheDocument();
+
+    fireEvent.change(screen.getByDisplayValue('Client User'), {
+      target: { value: 'Client Updated' },
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save Changes' }));
+
+    await waitFor(() => {
+      expect(userProfileAPI.updateProfile).toHaveBeenCalledTimes(1);
+    });
+
+    expect(await screen.findByText('Profile settings saved successfully.')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Security' }));
+
+    expect(screen.getByText('Resend verification email is temporarily disabled.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Resend Verification Email' })).toBeDisabled();
+    expect(authAPI.resendVerification).not.toHaveBeenCalled();
+  });
+
+  it('provider settings toggles publish and opens verification modal', async () => {
+    getUser.mockReturnValue({
+      userType: 'tradesperson',
+      fullName: 'Provider User',
+      email: 'provider@example.com',
+      isVerified: false,
+    });
+
+    userProfileAPI.getProfile.mockResolvedValue({
+      success: true,
+      data: {
+        fullName: 'Provider User',
+        email: 'provider@example.com',
+        phone: '09120000000',
+        address: 'Provider Address',
+        bio: 'Provider bio',
+      },
+    });
+
+    serviceProfileAPI.getMyProfile.mockResolvedValue({
+      success: true,
+      data: {
+        name: 'Provider User',
+        location: 'Poblacion',
+        startingPrice: 500,
+        description: 'Repairs',
+        categories: ['Plumbing'],
+        isPublished: false,
+      },
+    });
+
+    serviceProfileAPI.getMyPortfolio.mockResolvedValue({
+      success: true,
+      data: {
+        aboutMe: 'About provider',
+        responseTime: 'Within 24 hours',
+        skills: ['Repairs'],
+        portfolio: [],
+      },
+    });
+
+    serviceProfileAPI.togglePublish.mockResolvedValue({ success: true });
+
+    render(<ServiceProviderSettings />);
+
+    expect(await screen.findByText('Service Provider Settings')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Service Profile' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Publish Profile' }));
+
+    await waitFor(() => {
+      expect(serviceProfileAPI.togglePublish).toHaveBeenCalledWith(true);
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Verification' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Submit Verification Request' }));
+
+    expect(await screen.findByTestId('verification-modal')).toBeInTheDocument();
+  });
+
+  it('admin settings loads metrics and navigates to moderation queue', async () => {
+    adminAPI.getDashboardStats.mockResolvedValue({
+      success: true,
+      data: {
+        totalUsers: 6,
+        totalClients: 3,
+        totalTradespersons: 2,
+        totalAdmins: 1,
+        verifiedProviders: 1,
+        pendingVerifications: 1,
+        activeReports: 2,
+      },
+    });
+
+    adminAPI.getAllUsers.mockResolvedValue({
+      success: true,
+      data: [
+        { id: 1, type: 'tradesperson', isVerified: false, isActive: true },
+        { id: 2, type: 'client', isVerified: false, isActive: false },
+      ],
+    });
+
+    adminAPI.getVerificationRequests.mockResolvedValue({
+      success: true,
+      data: [{ id: 11, status: 'pending' }, { id: 12, status: 'rejected' }],
+    });
+
+    adminAPI.getReports.mockResolvedValue({
+      success: true,
+      data: [{ id: 21, status: 'pending' }, { id: 22, status: 'under_review' }],
+    });
+
+    render(<AdminSettings />);
+
+    expect(await screen.findByText('Admin Settings')).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(adminAPI.getDashboardStats).toHaveBeenCalledTimes(1);
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Moderation' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Open Verification Queue' }));
+
+    expect(mockNavigate).toHaveBeenCalledWith('/admin/verifications');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Overview' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh Metrics' }));
+
+    await waitFor(() => {
+      expect(adminAPI.getDashboardStats).toHaveBeenCalledTimes(2);
+    });
+  });
+});
