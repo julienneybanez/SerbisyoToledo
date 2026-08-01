@@ -1,22 +1,8 @@
 import { Routes, Route } from 'react-router-dom';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react';
 import './styles/App.css';
 import Navbar from './components/layout/Navbar';
-import Home from './pages/Home';
-import About from './pages/About';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import ForgotPassword from './pages/ForgotPassword';
-import ResetPassword from './pages/ResetPassword';
-import VerifyEmail from './pages/VerifyEmail';
 import Footer from './components/layout/Footer';
-import Chatbot from './components/common/Chatbot';
-import Feed from './pages/Feed';
-import ServiceProviderPortfolio from './pages/ServiceProviderPortfolio';
-import ServiceProviderDashboard from './pages/ServiceProviderDashboard';
-import Requests from './pages/Requests';
-import ClientSettings from './pages/ClientSettings';
-import ServiceProviderSettings from './pages/ServiceProviderSettings';
 import MobileTopBar from './components/mobile/MobileTopBar';
 import MobileBottomNav from './components/mobile/MobileBottomNav';
 import EditProfileModal from './components/common/EditProfileModal';
@@ -26,14 +12,29 @@ import VerificationRequestModal from './components/common/VerificationRequestMod
 
 // Admin imports
 import AdminLayout from './components/layout/AdminLayout';
-import AdminDashboard from './pages/admin/AdminDashboard';
-import AdminUsers from './pages/admin/AdminUsers';
-import AdminVerifications from './pages/admin/AdminVerifications';
-import AdminReports from './pages/admin/AdminReports';
-import AdminSettings from './pages/admin/AdminSettings';
 import { getUser, isAuthenticated, removeToken, serviceProfileAPI } from './services/api';
 import GuidedTour from './components/common/GuidedTour';
 import TourWelcomeModal from './components/common/TourWelcomeModal';
+
+const Home = lazy(() => import('./pages/Home'));
+const About = lazy(() => import('./pages/About'));
+const Login = lazy(() => import('./pages/Login'));
+const Register = lazy(() => import('./pages/Register'));
+const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
+const ResetPassword = lazy(() => import('./pages/ResetPassword'));
+const VerifyEmail = lazy(() => import('./pages/VerifyEmail'));
+const Feed = lazy(() => import('./pages/Feed'));
+const ServiceProviderPortfolio = lazy(() => import('./pages/ServiceProviderPortfolio'));
+const ServiceProviderDashboard = lazy(() => import('./pages/ServiceProviderDashboard'));
+const Requests = lazy(() => import('./pages/Requests'));
+const ClientSettings = lazy(() => import('./pages/ClientSettings'));
+const ServiceProviderSettings = lazy(() => import('./pages/ServiceProviderSettings'));
+const Chatbot = lazy(() => import('./components/common/Chatbot'));
+const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
+const AdminUsers = lazy(() => import('./pages/admin/AdminUsers'));
+const AdminVerifications = lazy(() => import('./pages/admin/AdminVerifications'));
+const AdminReports = lazy(() => import('./pages/admin/AdminReports'));
+const AdminSettings = lazy(() => import('./pages/admin/AdminSettings'));
 
 const CLIENT_TOUR_STEPS = [
   {
@@ -293,130 +294,136 @@ function App() {
     window.dispatchEvent(new Event('authChange'));
   };
 
+  const appLoadingFallback = (
+    <div className="text-center py-4">Loading...</div>
+  );
+
   return (
     <>
-      <Routes>
-        {/* Admin Routes - No regular Navbar/Footer */}
-        <Route path="/admin" element={<AdminLayout />}>
-          <Route index element={<AdminDashboard />} />
-          <Route path="dashboard" element={<AdminDashboard />} />
-          <Route path="users" element={<AdminUsers />} />
-          <Route path="verifications" element={<AdminVerifications />} />
-          <Route path="reports" element={<AdminReports />} />
-          <Route path="settings" element={<AdminSettings />} />
-        </Route>
+      <Suspense fallback={appLoadingFallback}>
+        <Routes>
+          {/* Admin Routes - No regular Navbar/Footer */}
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<AdminDashboard />} />
+            <Route path="dashboard" element={<AdminDashboard />} />
+            <Route path="users" element={<AdminUsers />} />
+            <Route path="verifications" element={<AdminVerifications />} />
+            <Route path="reports" element={<AdminReports />} />
+            <Route path="settings" element={<AdminSettings />} />
+          </Route>
 
-        {/* Public Routes - With regular Navbar/Footer */}
-        <Route path="/*" element={
-          <div className={`app ${isMobileShellLayout ? 'mobile-shell-layout' : ''} ${isMobileAuthenticated ? 'mobile-auth-layout' : ''}`}>
-            {isMobileShellLayout && (
-              <MobileTopBar
-                user={currentUser}
-                role={mobileRole}
-                profileRoute={providerPublicProfileRoute}
-                settingsRoute={mobileSettingsRoute}
-                onLogout={handleMobileLogout}
-                profileMenuOpen={mobileProfileMenuOpen}
-                onToggleProfileMenu={handleToggleMobileProfileMenu}
-                onCloseProfileMenu={handleCloseMobileProfileMenu}
-                onEditClientProfile={() => {
-                  setMobileProfileMenuOpen(false);
-                  setShowMobileEditProfile(true);
-                }}
-                hasServiceProfile={hasServiceProfile}
-                onEditProviderProfile={() => {
-                  setMobileProfileMenuOpen(false);
-                  setShowMobileEditPortfolio(true);
-                }}
-                onManageServiceProfile={() => {
-                  setMobileProfileMenuOpen(false);
-                  setShowMobileServiceProfile(true);
-                }}
-                onRequestVerification={() => {
-                  setMobileProfileMenuOpen(false);
-                  setShowMobileVerificationRequest(true);
-                }}
-                onPreviewProfile={() => {
-                  setMobileProfileMenuOpen(false);
-                  const separator = providerPublicProfileRoute.includes('?') ? '&' : '?';
-                  window.location.assign(`${providerPublicProfileRoute}${separator}previewMode=mobile`);
-                }}
-              />
-            )}
+          {/* Public Routes - With regular Navbar/Footer */}
+          <Route path="/*" element={
+            <div className={`app ${isMobileShellLayout ? 'mobile-shell-layout' : ''} ${isMobileAuthenticated ? 'mobile-auth-layout' : ''}`}>
+              {isMobileShellLayout && (
+                <MobileTopBar
+                  user={currentUser}
+                  role={mobileRole}
+                  profileRoute={providerPublicProfileRoute}
+                  settingsRoute={mobileSettingsRoute}
+                  onLogout={handleMobileLogout}
+                  profileMenuOpen={mobileProfileMenuOpen}
+                  onToggleProfileMenu={handleToggleMobileProfileMenu}
+                  onCloseProfileMenu={handleCloseMobileProfileMenu}
+                  onEditClientProfile={() => {
+                    setMobileProfileMenuOpen(false);
+                    setShowMobileEditProfile(true);
+                  }}
+                  hasServiceProfile={hasServiceProfile}
+                  onEditProviderProfile={() => {
+                    setMobileProfileMenuOpen(false);
+                    setShowMobileEditPortfolio(true);
+                  }}
+                  onManageServiceProfile={() => {
+                    setMobileProfileMenuOpen(false);
+                    setShowMobileServiceProfile(true);
+                  }}
+                  onRequestVerification={() => {
+                    setMobileProfileMenuOpen(false);
+                    setShowMobileVerificationRequest(true);
+                  }}
+                  onPreviewProfile={() => {
+                    setMobileProfileMenuOpen(false);
+                    const separator = providerPublicProfileRoute.includes('?') ? '&' : '?';
+                    window.location.assign(`${providerPublicProfileRoute}${separator}previewMode=mobile`);
+                  }}
+                />
+              )}
 
-            <div className={isMobileShellLayout ? 'desktop-navbar-hidden' : ''}>
-              <Navbar />
+              <div className={isMobileShellLayout ? 'desktop-navbar-hidden' : ''}>
+                <Navbar />
+              </div>
+
+              <main className={`main-content ${isMobileShellLayout ? 'mobile-page-content' : ''} ${isMobileAuthenticated ? 'authenticated-page-content' : ''}`}>
+                <Routes>
+                  <Route path="/" element={<Home />} />
+                  <Route path="/about" element={<About />} />
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/register" element={<Register />} />
+                  <Route path="/forgot-password" element={<ForgotPassword />} />
+                  <Route path="/reset-password/:token" element={<ResetPassword />} />
+                  <Route path="/verify-email" element={<VerifyEmail />} />
+                  <Route path="/feed" element={<Feed />} />
+                  <Route path="/dashboard" element={<ServiceProviderDashboard />} />
+                  <Route path="/provider/:id" element={<ServiceProviderPortfolio />} />
+                  <Route path="/requests" element={<Requests />} />
+                  <Route path="/client-settings" element={<ClientSettings />} />
+                  <Route path="/provider-settings" element={<ServiceProviderSettings />} />
+                </Routes>
+              </main>
+
+              {isMobileShellLayout && (
+                <MobileBottomNav
+                  role={mobileRole}
+                  profileMenuOpen={mobileProfileMenuOpen}
+                  onProfileTap={mobileProfileMenuOpen ? handleCloseMobileProfileMenu : handleOpenMobileProfileMenu}
+                />
+              )}
+              
+              <Footer className={isMobileAuthenticated ? 'mobile-footer-minimized' : ''} />
+              
+              <button 
+                className="floating-btn"
+                onClick={() => setIsChatbotOpen(true)}
+                aria-label="Open chat support"
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                </svg>
+              </button>
+
+              <Chatbot isOpen={isChatbotOpen} onClose={() => setIsChatbotOpen(false)} />
+
+              {showMobileEditProfile && (
+                <EditProfileModal
+                  onClose={() => setShowMobileEditProfile(false)}
+                  onProfileUpdated={() => {
+                    setShowMobileEditProfile(false);
+                  }}
+                />
+              )}
+
+              {showMobileEditPortfolio && (
+                <EditPortfolioModal
+                  onClose={() => setShowMobileEditPortfolio(false)}
+                />
+              )}
+
+              {showMobileServiceProfile && (
+                <ServiceProfileModal
+                  onClose={() => setShowMobileServiceProfile(false)}
+                />
+              )}
+
+              {showMobileVerificationRequest && (
+                <VerificationRequestModal
+                  onClose={() => setShowMobileVerificationRequest(false)}
+                />
+              )}
             </div>
-
-            <main className={`main-content ${isMobileShellLayout ? 'mobile-page-content' : ''} ${isMobileAuthenticated ? 'authenticated-page-content' : ''}`}>
-              <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/about" element={<About />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
-                <Route path="/forgot-password" element={<ForgotPassword />} />
-                <Route path="/reset-password/:token" element={<ResetPassword />} />
-                <Route path="/verify-email" element={<VerifyEmail />} />
-                <Route path="/feed" element={<Feed />} />
-                <Route path="/dashboard" element={<ServiceProviderDashboard />} />
-                <Route path="/provider/:id" element={<ServiceProviderPortfolio />} />
-                <Route path="/requests" element={<Requests />} />
-                <Route path="/client-settings" element={<ClientSettings />} />
-                <Route path="/provider-settings" element={<ServiceProviderSettings />} />
-              </Routes>
-            </main>
-
-            {isMobileShellLayout && (
-              <MobileBottomNav
-                role={mobileRole}
-                profileMenuOpen={mobileProfileMenuOpen}
-                onProfileTap={mobileProfileMenuOpen ? handleCloseMobileProfileMenu : handleOpenMobileProfileMenu}
-              />
-            )}
-            
-            <Footer className={isMobileAuthenticated ? 'mobile-footer-minimized' : ''} />
-            
-            <button 
-              className="floating-btn"
-              onClick={() => setIsChatbotOpen(true)}
-              aria-label="Open chat support"
-            >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-              </svg>
-            </button>
-
-            <Chatbot isOpen={isChatbotOpen} onClose={() => setIsChatbotOpen(false)} />
-
-            {showMobileEditProfile && (
-              <EditProfileModal
-                onClose={() => setShowMobileEditProfile(false)}
-                onProfileUpdated={() => {
-                  setShowMobileEditProfile(false);
-                }}
-              />
-            )}
-
-            {showMobileEditPortfolio && (
-              <EditPortfolioModal
-                onClose={() => setShowMobileEditPortfolio(false)}
-              />
-            )}
-
-            {showMobileServiceProfile && (
-              <ServiceProfileModal
-                onClose={() => setShowMobileServiceProfile(false)}
-              />
-            )}
-
-            {showMobileVerificationRequest && (
-              <VerificationRequestModal
-                onClose={() => setShowMobileVerificationRequest(false)}
-              />
-            )}
-          </div>
-        } />
-      </Routes>
+          } />
+        </Routes>
+      </Suspense>
 
       <TourWelcomeModal
         show={showTourPrompt}
