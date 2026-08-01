@@ -32,6 +32,7 @@ const credentialUpload = multer({
 // Public routes
 router.get('/all', serviceProfileController.getAllProfiles);
 router.get('/recommendations', serviceProfileController.getRecommendedProviders);
+router.get('/:id/available-dates', serviceProfileController.getAvailableDates);
 router.get('/:id/available-slots', serviceProfileController.getAvailableSlots);
 
 // Protected routes (requires authentication)

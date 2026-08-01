@@ -520,4 +520,53 @@ describe('Backend Security Hardening', () => {
     const insertParams = insertCall[1];
     expect(insertParams[5]).toBe('');
   });
+
+  it('20) rejects provider registration with unsupported language code', async () => {
+    const res = await request(app)
+      .post('/api/auth/register')
+      .send({
+        fullName: 'Provider One',
+        email: 'provider.invalidlang@example.com',
+        password: 'pass1234',
+        userType: 'tradesperson',
+        languages: ['ceb', 'xx'],
+      });
+
+    expect(res.status).toBe(400);
+    expect(res.body.success).toBe(false);
+    expect(res.body.message).toMatch(/unsupported language/i);
+  });
+
+  it('21) stores provider registration languages on valid signup', async () => {
+    vi.spyOn(db, 'query').mockImplementation(async (sql) => {
+      if (sql.includes('SELECT id FROM users WHERE email = ?')) {
+        return [[]];
+      }
+
+      if (sql.includes('INSERT INTO users') && sql.includes('registration_languages')) {
+        return [{ insertId: 333 }];
+      }
+
+      return [[]];
+    });
+
+    const res = await request(app)
+      .post('/api/auth/register')
+      .send({
+        fullName: 'Provider Two',
+        email: 'provider.validlang@example.com',
+        password: 'pass1234',
+        userType: 'tradesperson',
+        languages: ['ceb', 'en'],
+      });
+
+    expect(res.status).toBe(201);
+    expect(res.body.success).toBe(true);
+
+    const insertCall = db.query.mock.calls.find(([sql]) => sql.includes('INSERT INTO users'));
+    expect(insertCall).toBeTruthy();
+
+    const params = insertCall[1];
+    expect(params[7]).toBe(JSON.stringify(['ceb', 'en']));
+  });
 });

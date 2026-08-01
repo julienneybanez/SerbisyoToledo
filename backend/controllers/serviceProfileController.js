@@ -15,6 +15,25 @@ const {
 
 const SUPPORTED_LANGUAGE_CODES = new Set(['ceb', 'en', 'fil']);
 
+const normalizeLanguageCodes = (payload) => Array.from(
+  new Set(
+    (Array.isArray(payload) ? payload : [])
+      .map((value) => String(value || '').trim().toLowerCase())
+      .filter(Boolean)
+  )
+);
+
+const applyProviderLanguages = async (serviceProfileId, languageCodes = []) => {
+  await db.query('DELETE FROM provider_languages WHERE service_profile_id = ?', [serviceProfileId]);
+
+  for (const languageCode of languageCodes) {
+    await db.query(
+      'INSERT INTO provider_languages (service_profile_id, language_code) VALUES (?, ?)',
+      [serviceProfileId, languageCode]
+    );
+  }
+};
+
 // Create or update service profile
 exports.createOrUpdateProfile = async (req, res) => {
   try {
@@ -29,6 +48,7 @@ exports.createOrUpdateProfile = async (req, res) => {
 
     const { fullName, barangayAddress, startingPrice, description } = req.body;
     let serviceCategories = req.body.serviceCategories;
+    let languages = req.body.languages;
     let bannerImage = null;
     let bannerImageUrl = null;
     let bannerImagePublicId = null;
@@ -40,6 +60,22 @@ exports.createOrUpdateProfile = async (req, res) => {
       } catch {
         serviceCategories = [serviceCategories];
       }
+    }
+
+    if (typeof languages === 'string') {
+      try {
+        languages = JSON.parse(languages);
+      } catch {
+        languages = [languages];
+      }
+    }
+
+    const normalizedLanguages = normalizeLanguageCodes(languages);
+    if (normalizedLanguages.some((code) => !SUPPORTED_LANGUAGE_CODES.has(code))) {
+      return res.status(400).json({
+        success: false,
+        message: 'Unsupported language code provided',
+      });
     }
 
     // Validate required fields
@@ -108,6 +144,10 @@ exports.createOrUpdateProfile = async (req, res) => {
         params
       );
 
+      if (Array.isArray(languages)) {
+        await applyProviderLanguages(existingProfile[0].id, normalizedLanguages);
+      }
+
       if (bannerImagePublicId && existingProfile[0].banner_image_public_id) {
         await deleteImageByPublicId(existingProfile[0].banner_image_public_id);
       }
@@ -135,6 +175,32 @@ exports.createOrUpdateProfile = async (req, res) => {
           bannerImagePublicId,
         ]
       );
+
+      let initialLanguages = normalizedLanguages;
+
+      if (!Array.isArray(languages)) {
+        const [rows] = await db.query('SELECT registration_languages FROM users WHERE id = ? LIMIT 1', [userId]);
+        const persisted = rows[0]?.registration_languages;
+
+        if (persisted) {
+          let parsed = [];
+          if (typeof persisted === 'string') {
+            try {
+              parsed = JSON.parse(persisted);
+            } catch {
+              parsed = [];
+            }
+          } else if (Array.isArray(persisted)) {
+            parsed = persisted;
+          }
+
+          initialLanguages = normalizeLanguageCodes(parsed).filter((code) => SUPPORTED_LANGUAGE_CODES.has(code));
+        }
+      }
+
+      if (initialLanguages.length > 0) {
+        await applyProviderLanguages(result.insertId, initialLanguages);
+      }
 
       return res.status(201).json({
         success: true,
@@ -1107,6 +1173,96 @@ exports.getAvailableSlots = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: 'Failed to fetch available slots'
+    });
+  } finally {
+    if (connection) {
+      connection.release();
+    }
+  }
+};
+
+exports.getAvailableDates = async (req, res) => {
+  let connection;
+
+  try {
+    const serviceProfileId = Number(req.params.id);
+    const fromDateRaw = String(req.query.fromDate || '').trim();
+    const toDateRaw = String(req.query.toDate || '').trim();
+    const duration = Number(req.query.duration || 120);
+
+    if (!serviceProfileId || !fromDateRaw || !toDateRaw) {
+      return res.status(400).json({
+        success: false,
+        message: 'Profile, fromDate, and toDate are required.',
+      });
+    }
+
+    const fromDate = parseDateOnly(fromDateRaw);
+    const toDate = parseDateOnly(toDateRaw);
+
+    if (!fromDate || !toDate || toDate < fromDate) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid date range',
+      });
+    }
+
+    const dayWindow = Math.floor((toDate.getTime() - fromDate.getTime()) / (24 * 60 * 60 * 1000)) + 1;
+    if (dayWindow > 90) {
+      return res.status(400).json({
+        success: false,
+        message: 'Date range too large. Maximum 90 days.',
+      });
+    }
+
+    connection = await db.getConnection();
+
+    const [profiles] = await connection.query(
+      `SELECT sp.id, sp.user_id AS provider_id, sp.is_published
+       FROM service_profiles sp
+       WHERE sp.id = ?
+       LIMIT 1`,
+      [serviceProfileId]
+    );
+
+    if (profiles.length === 0 || !profiles[0].is_published) {
+      return res.status(404).json({
+        success: false,
+        message: 'Service profile not found',
+      });
+    }
+
+    const providerId = profiles[0].provider_id;
+    const availableDates = [];
+
+    for (const cursor = new Date(fromDate); cursor <= toDate; cursor.setUTCDate(cursor.getUTCDate() + 1)) {
+      const date = formatDateOnly(cursor);
+      const slots = await getAvailableSlotsForDate(connection, {
+        serviceProfileId,
+        providerId,
+        date,
+        durationMinutes: duration,
+        slotStepMinutes: 60,
+      });
+
+      if (slots.length > 0) {
+        availableDates.push(date);
+      }
+    }
+
+    return res.json({
+      success: true,
+      data: {
+        fromDate: formatDateOnly(fromDate),
+        toDate: formatDateOnly(toDate),
+        dates: availableDates,
+      },
+    });
+  } catch (error) {
+    console.error('Error fetching available dates:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch available dates',
     });
   } finally {
     if (connection) {

@@ -59,6 +59,7 @@ async function initializeDatabase() {
         preferred_services VARCHAR(255) DEFAULT NULL,
         profession VARCHAR(255) DEFAULT NULL,
         skills JSON DEFAULT NULL,
+        registration_languages JSON DEFAULT NULL,
         profile_image VARCHAR(500) DEFAULT NULL,
         profile_photo_url VARCHAR(500) DEFAULT NULL,
         profile_photo_public_id VARCHAR(255) DEFAULT NULL,
@@ -102,6 +103,13 @@ async function initializeDatabase() {
       } catch {
         // Column already exists
       }
+    }
+
+    try {
+      await connection.query('ALTER TABLE users ADD COLUMN registration_languages JSON DEFAULT NULL');
+      console.log('✅ Added column: registration_languages');
+    } catch {
+      // Column already exists
     }
 
     // Create refresh_tokens table for JWT refresh tokens

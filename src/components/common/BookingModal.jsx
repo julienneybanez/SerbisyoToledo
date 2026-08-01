@@ -11,6 +11,12 @@ const formatDateInput = (date) => {
 
 const formatMoney = (amount) => `₱${Number(amount || 0).toLocaleString('en-PH', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
 
+const addDays = (date, days) => {
+  const result = new Date(date);
+  result.setDate(result.getDate() + days);
+  return result;
+};
+
 const getDurationDays = (startDate, endDate) => {
   if (!startDate || !endDate) return 0;
 
@@ -32,6 +38,8 @@ export default function BookingModal({ provider, onClose }) {
   const [startDate, setStartDate] = useState(defaultStartDate);
   const [endDate, setEndDate] = useState(defaultStartDate);
   const [estimatedDurationMinutes, setEstimatedDurationMinutes] = useState(120);
+  const [availableDates, setAvailableDates] = useState([]);
+  const [dateLoading, setDateLoading] = useState(false);
   const [availableSlots, setAvailableSlots] = useState([]);
   const [selectedTime, setSelectedTime] = useState('');
   const [jobTitle, setJobTitle] = useState('');
@@ -44,6 +52,36 @@ export default function BookingModal({ provider, onClose }) {
   const dailyRate = Number(provider?.dailyRate ?? provider?.startingPrice ?? 0);
   const durationDays = useMemo(() => getDurationDays(startDate, bookingType === 'multi_day' ? endDate : startDate), [bookingType, startDate, endDate]);
   const estimatedTotal = useMemo(() => dailyRate * durationDays, [dailyRate, durationDays]);
+  const availableDateSet = useMemo(() => new Set(availableDates), [availableDates]);
+
+  const isContinuousMultiDayRange = useMemo(() => {
+    if (bookingType !== 'multi_day') {
+      return true;
+    }
+
+    if (!startDate || !endDate) {
+      return false;
+    }
+
+    const start = new Date(`${startDate}T00:00:00`);
+    const end = new Date(`${endDate}T00:00:00`);
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end < start) {
+      return false;
+    }
+
+    for (const cursor = new Date(start); cursor <= end; cursor.setDate(cursor.getDate() + 1)) {
+      const dateKey = formatDateInput(cursor);
+      if (!availableDateSet.has(dateKey)) {
+        return false;
+      }
+    }
+
+    return true;
+  }, [bookingType, startDate, endDate, availableDateSet]);
+
+  const endDateOptions = useMemo(() => (
+    availableDates.filter((date) => date >= startDate)
+  ), [availableDates, startDate]);
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
@@ -69,10 +107,72 @@ export default function BookingModal({ provider, onClose }) {
   }, [bookingType, startDate]);
 
   useEffect(() => {
+    const loadAvailableDates = async () => {
+      if (!provider?.id) {
+        setAvailableDates([]);
+        return;
+      }
+
+      setDateLoading(true);
+      setSubmitError('');
+
+      const windowStart = new Date();
+      const windowEnd = addDays(windowStart, 60);
+
+      try {
+        const response = await serviceProfileAPI.getAvailableDates(provider.id, {
+          fromDate: formatDateInput(windowStart),
+          toDate: formatDateInput(windowEnd),
+          duration: estimatedDurationMinutes,
+        });
+
+        if (response.success) {
+          const dates = Array.isArray(response.data?.dates) ? response.data.dates : [];
+          setAvailableDates(dates);
+
+          if (dates.length > 0) {
+            setStartDate((prev) => (dates.includes(prev) ? prev : dates[0]));
+            setEndDate((prev) => (dates.includes(prev) ? prev : dates[0]));
+          } else {
+            setStartDate('');
+            setEndDate('');
+          }
+        }
+      } catch (error) {
+        setAvailableDates([]);
+        setStartDate('');
+        setEndDate('');
+        setSubmitError(error.message || 'Unable to load available dates');
+      } finally {
+        setDateLoading(false);
+      }
+    };
+
+    loadAvailableDates();
+  }, [provider?.id, estimatedDurationMinutes]);
+
+  useEffect(() => {
+    if (bookingType !== 'multi_day') {
+      return;
+    }
+
+    if (endDate && !endDateOptions.includes(endDate)) {
+      setEndDate(endDateOptions[0] || startDate);
+    }
+  }, [bookingType, endDate, endDateOptions, startDate]);
+
+  useEffect(() => {
     const loadSlots = async () => {
       if (!provider?.id || !startDate) {
         setAvailableSlots([]);
         setSelectedTime('');
+        return;
+      }
+
+      if (bookingType === 'multi_day' && !isContinuousMultiDayRange) {
+        setAvailableSlots([]);
+        setSelectedTime('');
+        setSubmitError('Selected date range has unavailable day(s). Please choose a continuous available range.');
         return;
       }
 
@@ -110,7 +210,7 @@ export default function BookingModal({ provider, onClose }) {
     };
 
     loadSlots();
-  }, [provider?.id, startDate, endDate, bookingType, estimatedDurationMinutes]);
+  }, [provider?.id, startDate, endDate, bookingType, estimatedDurationMinutes, isContinuousMultiDayRange]);
 
   const handleSubmit = async () => {
     if (!isAuthenticated()) {
@@ -125,6 +225,16 @@ export default function BookingModal({ provider, onClose }) {
 
     if (!selectedTime) {
       setSubmitError('Please choose an available time slot.');
+      return;
+    }
+
+    if (!startDate || (bookingType === 'multi_day' && !endDate)) {
+      setSubmitError('Please select available booking date(s).');
+      return;
+    }
+
+    if (bookingType === 'multi_day' && !isContinuousMultiDayRange) {
+      setSubmitError('Selected date range has unavailable day(s). Please choose a continuous available range.');
       return;
     }
 
@@ -191,19 +301,40 @@ export default function BookingModal({ provider, onClose }) {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.75rem' }}>
               <div className="booking-form-group">
                 <label>Start Date</label>
-                <input className="booking-input" type="date" value={startDate} min={defaultStartDate} onChange={(event) => setStartDate(event.target.value)} />
+                <select
+                  className="booking-input"
+                  value={startDate}
+                  onChange={(event) => setStartDate(event.target.value)}
+                  disabled={dateLoading || availableDates.length === 0}
+                >
+                  {availableDates.length === 0 ? (
+                    <option value="">No available dates</option>
+                  ) : (
+                    availableDates.map((date) => (
+                      <option key={date} value={date}>{date}</option>
+                    ))
+                  )}
+                </select>
               </div>
 
               <div className="booking-form-group">
                 <label>End Date</label>
-                <input
+                <select
                   className="booking-input"
-                  type="date"
                   value={bookingType === 'multi_day' ? endDate : startDate}
-                  min={startDate || defaultStartDate}
                   disabled={bookingType !== 'multi_day'}
                   onChange={(event) => setEndDate(event.target.value)}
-                />
+                >
+                  {bookingType !== 'multi_day' ? (
+                    <option value={startDate}>{startDate || 'Select start date first'}</option>
+                  ) : endDateOptions.length === 0 ? (
+                    <option value="">No valid end date</option>
+                  ) : (
+                    endDateOptions.map((date) => (
+                      <option key={date} value={date}>{date}</option>
+                    ))
+                  )}
+                </select>
               </div>
 
               <div className="booking-form-group">
@@ -222,7 +353,9 @@ export default function BookingModal({ provider, onClose }) {
 
             <div className="booking-form-group">
               <label>Available Time Slots</label>
-              {slotLoading ? (
+              {dateLoading ? (
+                <p className="booking-subtitle">Loading provider availability...</p>
+              ) : slotLoading ? (
                 <p className="booking-subtitle">Loading available slots...</p>
               ) : availableSlots.length === 0 ? (
                 <p className="booking-subtitle">No valid slots available for this schedule.</p>

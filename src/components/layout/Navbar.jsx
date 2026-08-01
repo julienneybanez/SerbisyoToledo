@@ -8,6 +8,7 @@ import EditPortfolioModal from '../common/EditPortfolioModal';
 import ServiceProfileModal from '../common/ServiceProfileModal';
 import VerificationRequestModal from '../common/VerificationRequestModal';
 import ThemeToggle from '../common/ThemeToggle';
+import { useLanguage } from '../../context/LanguageContext';
 import logo from '../../assets/logo.png';
 
 function Navbar() {
@@ -25,6 +26,7 @@ function Navbar() {
   const [hasServiceProfile, setHasServiceProfile] = useState(false);
   const [providerPublicProfileRoute, setProviderPublicProfileRoute] = useState('/dashboard');
   const [showVerificationRequest, setShowVerificationRequest] = useState(false);
+  const { language, setLanguage, t } = useLanguage();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -183,7 +185,7 @@ function Navbar() {
                   to="/"
                   onClick={handleNavClick}
                 >
-                  Home
+                  {t('home')}
                 </NavLink>
               </li>
             )}
@@ -193,7 +195,7 @@ function Navbar() {
                 to="/about"
                 onClick={handleNavClick}
               >
-                About
+                {t('about')}
               </NavLink>
             </li>
             
@@ -204,7 +206,7 @@ function Navbar() {
                   to="/dashboard"
                   onClick={handleNavClick}
                 >
-                  My Dashboard
+                  {t('myDashboard')}
                 </NavLink>
               </li>
             ) : (
@@ -214,7 +216,7 @@ function Navbar() {
                   to="/feed"
                   onClick={handleNavClick}
                 >
-                  Browse Services
+                  {t('browseServices')}
                 </NavLink>
               </li>
             )}
@@ -229,8 +231,18 @@ function Navbar() {
                   data-tour="nav-requests"
                   onClick={handleNavClick}
                 >
-                  Requests
+                  {t('requests')}
                 </NavLink>
+                <select
+                  className="form-select form-select-sm"
+                  style={{ width: '88px' }}
+                  value={language}
+                  onChange={(event) => setLanguage(event.target.value)}
+                  aria-label={t('language')}
+                >
+                  <option value="en">EN</option>
+                  <option value="ceb">CEB</option>
+                </select>
                 <ThemeToggle compact className="navbar-theme-toggle" />
                 <div className="notification-wrap">
                   <NotificationDropdown />
@@ -258,7 +270,7 @@ function Navbar() {
                     <div className="profile-dropdown-menu" role="menu" aria-label="Profile menu">
                       <div className="dropdown-user-info">
                         <span className="dropdown-user-name" title={user?.fullName || 'User'}>{user?.fullName}</span>
-                        <span className="dropdown-user-type">{user?.userType === 'tradesperson' ? 'Service Provider' : user?.userType === 'admin' ? 'Admin' : 'Client'}</span>
+                        <span className="dropdown-user-type">{user?.userType === 'tradesperson' ? t('serviceProvider') : user?.userType === 'admin' ? t('admin') : t('client')}</span>
                       </div>
                       <hr className="dropdown-divider" />
                       <button 
@@ -273,7 +285,7 @@ function Navbar() {
                         }}
                       >
                         <i className="bi bi-pencil-square"></i>
-                        Edit Profile
+                        {t('editProfile')}
                       </button>
                       {user?.userType === 'tradesperson' && hasServiceProfile && (
                         <button 
@@ -284,7 +296,7 @@ function Navbar() {
                           }}
                         >
                           <i className="bi bi-images"></i>
-                          Edit Service Profile
+                          {t('editServiceProfile')}
                         </button>
                       )}
                       {user?.userType === 'tradesperson' && !hasServiceProfile && (
@@ -296,7 +308,7 @@ function Navbar() {
                           }}
                         >
                           <i className="bi bi-plus-circle"></i>
-                          Post Service Profile
+                          {t('postServiceProfile')}
                         </button>
                       )}
                       {user?.userType === 'tradesperson' && (
@@ -308,7 +320,7 @@ function Navbar() {
                           }}
                         >
                           <i className="bi bi-shield-check"></i>
-                          Request Verification
+                          {t('requestVerification')}
                         </button>
                       )}
                       {user?.userType === 'tradesperson' && (
@@ -320,7 +332,7 @@ function Navbar() {
                             onClick={() => setDropdownOpen(false)}
                           >
                             <i className="bi bi-eye"></i>
-                            View Profile as Client
+                            {t('viewProfileAsClient')}
                           </Link>
                         ) : (
                           <button
@@ -331,7 +343,7 @@ function Navbar() {
                             }}
                           >
                             <i className="bi bi-eye"></i>
-                            View Profile as Client (Post first)
+                            {t('viewProfilePostFirst')}
                           </button>
                         )
                       )}
@@ -341,7 +353,7 @@ function Navbar() {
                         onClick={() => setDropdownOpen(false)}
                       >
                         <i className="bi bi-gear"></i>
-                        Settings
+                        {t('settings')}
                       </Link>
                       <hr className="dropdown-divider" />
                       <button 
@@ -349,7 +361,7 @@ function Navbar() {
                         onClick={handleLogout}
                       >
                         <i className="bi bi-box-arrow-right"></i>
-                        Log Out
+                        {t('logOut')}
                       </button>
                     </div>
                   )}
@@ -357,20 +369,30 @@ function Navbar() {
               </div>
             ) : (
               <div className="auth-block logged-out-block">
+                <select
+                  className="form-select form-select-sm"
+                  style={{ width: '88px' }}
+                  value={language}
+                  onChange={(event) => setLanguage(event.target.value)}
+                  aria-label={t('language')}
+                >
+                  <option value="en">EN</option>
+                  <option value="ceb">CEB</option>
+                </select>
                 <ThemeToggle compact className="navbar-theme-toggle" />
                 <NavLink 
                   to="/login" 
                   className={({ isActive }) => `btn btn-outline-primary login-btn ${isActive ? 'active-btn' : ''}`}
                   onClick={handleNavClick}
                 >
-                  Log In
+                  {t('logIn')}
                 </NavLink>
                 <NavLink 
                   to="/register" 
                   className={({ isActive }) => `btn btn-primary signup-btn ${isActive ? 'active-btn' : ''}`}
                   onClick={handleNavClick}
                 >
-                  Sign Up
+                  {t('signUp')}
                 </NavLink>
               </div>
             )}

@@ -538,6 +538,23 @@ export const serviceProfileAPI = {
     return handleResponse(response);
   },
 
+  // Get dates with at least one available slot for a provider
+  getAvailableDates: async (id, { fromDate, toDate, duration }) => {
+    const params = new URLSearchParams();
+    if (fromDate) params.set('fromDate', fromDate);
+    if (toDate) params.set('toDate', toDate);
+    if (duration) params.set('duration', String(duration));
+
+    const response = await fetch(`${API_BASE_URL}/service-profiles/${id}/available-dates?${params.toString()}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    return handleResponse(response);
+  },
+
   // Get recommended providers for assistant/chatbot flows
   getRecommendations: async (filters = {}) => {
     const params = new URLSearchParams();

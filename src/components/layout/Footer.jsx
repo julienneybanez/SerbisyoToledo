@@ -1,6 +1,9 @@
 import logo from '../../assets/logo.png';
+import { useLanguage } from '../../context/LanguageContext';
 
 function Footer({ className = '' }) {
+  const { t } = useLanguage();
+
   return (
     <footer className={`footer py-4 ${className}`.trim()}>
       <div className="container">
@@ -10,7 +13,7 @@ function Footer({ className = '' }) {
             <span className="text-white fw-bold">SerbisyoToledo</span>
           </div>
 
-          <p className="text-white-50 small mb-0">© 2026 SerbisyoToledo. All rights reserved.</p>
+          <p className="footer-muted-text small mb-0">© 2026 SerbisyoToledo. {t('footerCopyright')}</p>
         </div>
       </div>
     </footer>

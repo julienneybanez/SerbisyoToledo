@@ -17,6 +17,7 @@ const WELCOME_EMAIL_ENABLED = boolFromEnv(process.env.WELCOME_EMAIL_ENABLED, fal
 const VERIFICATION_TOKEN_EXPIRY_HOURS = Number(process.env.EMAIL_VERIFICATION_TOKEN_EXP_HOURS || 24);
 const RESEND_VERIFICATION_MIN_INTERVAL_SECONDS = Number(process.env.RESEND_VERIFICATION_MIN_INTERVAL_SECONDS || 60);
 const resendVerificationThrottle = new Map();
+const SUPPORTED_LANGUAGE_CODES = new Set(['ceb', 'en', 'fil']);
 
 const hashToken = (value) => crypto.createHash('sha256').update(value).digest('hex');
 
@@ -77,7 +78,24 @@ exports.register = async (req, res) => {
       });
     }
 
-    const { fullName, email, password, userType, preferredServices, profession, skills } = req.body;
+    const { fullName, email, password, userType, preferredServices, profession, skills, languages } = req.body;
+
+    const normalizedLanguages = userType === 'tradesperson'
+      ? Array.from(
+        new Set(
+          (Array.isArray(languages) ? languages : [])
+            .map((value) => String(value || '').trim().toLowerCase())
+            .filter(Boolean)
+        )
+      )
+      : [];
+
+    if (normalizedLanguages.some((code) => !SUPPORTED_LANGUAGE_CODES.has(code))) {
+      return res.status(400).json({
+        success: false,
+        message: 'Unsupported language code provided'
+      });
+    }
 
     if (!['client', 'tradesperson'].includes(userType)) {
       return res.status(400).json({
@@ -111,7 +129,10 @@ exports.register = async (req, res) => {
       user_type: userType,
       preferred_services: userType === 'client' ? preferredServices : null,
       profession: userType === 'tradesperson' ? profession : null,
-      skills: userType === 'tradesperson' && skills ? JSON.stringify(skills) : null
+      skills: userType === 'tradesperson' && skills ? JSON.stringify(skills) : null,
+      registration_languages: userType === 'tradesperson' && normalizedLanguages.length > 0
+        ? JSON.stringify(normalizedLanguages)
+        : null,
     };
 
     const isEmailVerified = !EMAIL_VERIFICATION_ENABLED;
@@ -123,8 +144,8 @@ exports.register = async (req, res) => {
 
     // Insert user into database
     const [result] = await db.query(
-      `INSERT INTO users (full_name, email, password, user_type, preferred_services, profession, skills, email_verified, verification_token, verification_token_expires) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO users (full_name, email, password, user_type, preferred_services, profession, skills, registration_languages, email_verified, verification_token, verification_token_expires) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         userData.full_name,
         userData.email,
@@ -133,6 +154,7 @@ exports.register = async (req, res) => {
         userData.preferred_services,
         userData.profession,
         userData.skills,
+        userData.registration_languages,
         isEmailVerified,
         verificationTokenHash,
         verificationTokenExpires

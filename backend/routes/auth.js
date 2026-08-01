@@ -42,6 +42,13 @@ const registerValidation = [
       if (value === null || value === undefined) return true;
       if (Array.isArray(value)) return true;
       throw new Error('Skills must be an array');
+    }),
+  body('languages')
+    .optional({ nullable: true })
+    .custom((value) => {
+      if (value === null || value === undefined) return true;
+      if (Array.isArray(value)) return true;
+      throw new Error('Languages must be an array');
     })
 ];
 

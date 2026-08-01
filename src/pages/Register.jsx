@@ -5,12 +5,19 @@ import RoleSelectionCards from '../components/common/RoleSelectionCards';
 import logo from '../assets/logo.png';
 import '../styles/App.css';
 
+const LANGUAGE_OPTIONS = [
+  { value: 'ceb', label: 'Cebuano' },
+  { value: 'en', label: 'English' },
+  { value: 'fil', label: 'Filipino' },
+];
+
 const Register = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [userType, setUserType] = useState('client');
   const [showPassword, setShowPassword] = useState(false);
   const [skills, setSkills] = useState([]);
+  const [languages, setLanguages] = useState([]);
   const [currentSkill, setCurrentSkill] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -53,6 +60,16 @@ const Register = () => {
     setSkills(skills.filter(skill => skill !== skillToRemove));
   };
 
+  const handleToggleLanguage = (languageCode) => {
+    setLanguages((prev) => {
+      if (prev.includes(languageCode)) {
+        return prev.filter((code) => code !== languageCode);
+      }
+
+      return [...prev, languageCode];
+    });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -80,6 +97,9 @@ const Register = () => {
         }
         if (skills.length > 0) {
           registrationData.skills = skills;
+        }
+        if (languages.length > 0) {
+          registrationData.languages = languages;
         }
       }
 
@@ -256,6 +276,25 @@ const Register = () => {
                         ))}
                       </div>
                     )}
+                  </div>
+
+                  <div className="mb-3">
+                    <label className="form-label">Languages Spoken</label>
+                    <div className="d-flex flex-wrap gap-2">
+                      {LANGUAGE_OPTIONS.map((option) => (
+                        <label key={option.value} className="d-inline-flex align-items-center gap-2 border rounded-pill px-3 py-2" style={{ cursor: 'pointer' }}>
+                          <input
+                            type="checkbox"
+                            checked={languages.includes(option.value)}
+                            onChange={() => handleToggleLanguage(option.value)}
+                          />
+                          <span>{option.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                    <small className="text-muted d-block mt-2">
+                      This helps clients find providers by preferred language.
+                    </small>
                   </div>
                 </div>
               )}
