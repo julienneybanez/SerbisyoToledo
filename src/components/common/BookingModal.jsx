@@ -90,11 +90,15 @@ export default function BookingModal({ provider, onClose }) {
           const slots = response.data?.slots || [];
           setAvailableSlots(slots);
 
-          if (slots.length === 0) {
-            setSelectedTime('');
-          } else if (!slots.some((slot) => slot.time === selectedTime)) {
-            setSelectedTime(slots[0].time);
-          }
+          setSelectedTime((previousSelectedTime) => {
+            if (slots.length === 0) {
+              return '';
+            }
+
+            return slots.some((slot) => slot.time === previousSelectedTime)
+              ? previousSelectedTime
+              : slots[0].time;
+          });
         }
       } catch (error) {
         setAvailableSlots([]);

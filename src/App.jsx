@@ -103,12 +103,16 @@ const PROVIDER_TOUR_STEPS = [
   },
 ];
 
+const MOBILE_BREAKPOINT_PX = 768;
+
 function App() {
   const [isChatbotOpen, setIsChatbotOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState(getUser());
   const [showTourPrompt, setShowTourPrompt] = useState(false);
   const [showGuidedTour, setShowGuidedTour] = useState(false);
-  const [isMobileViewport, setIsMobileViewport] = useState(() => window.innerWidth <= 767);
+  const [isMobileViewport, setIsMobileViewport] = useState(() => (
+    window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT_PX}px)`).matches
+  ));
   const [mobileProfileMenuOpen, setMobileProfileMenuOpen] = useState(false);
   const [showMobileEditProfile, setShowMobileEditProfile] = useState(false);
   const [showMobileEditPortfolio, setShowMobileEditPortfolio] = useState(false);
@@ -135,12 +139,18 @@ function App() {
   }, []);
 
   useEffect(() => {
-    const handleResize = () => {
-      setIsMobileViewport(window.innerWidth <= 767);
+    const mediaQuery = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT_PX}px)`);
+    const handleViewportChange = (event) => {
+      setIsMobileViewport(event.matches);
     };
 
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    if (typeof mediaQuery.addEventListener === 'function') {
+      mediaQuery.addEventListener('change', handleViewportChange);
+      return () => mediaQuery.removeEventListener('change', handleViewportChange);
+    }
+
+    mediaQuery.addListener(handleViewportChange);
+    return () => mediaQuery.removeListener(handleViewportChange);
   }, []);
 
   useEffect(() => {
@@ -260,8 +270,9 @@ function App() {
     && ['client', 'tradesperson'].includes(currentUser.userType)
     && isAuthenticated()
   );
+  const isMobileShellLayout = isMobileViewport;
 
-  const mobileRole = currentUser?.userType || 'client';
+  const mobileRole = currentUser?.userType || 'guest';
   const mobileSettingsRoute = mobileRole === 'tradesperson' ? '/provider-settings' : '/client-settings';
 
   const handleOpenMobileProfileMenu = useCallback(() => {
@@ -297,8 +308,8 @@ function App() {
 
         {/* Public Routes - With regular Navbar/Footer */}
         <Route path="/*" element={
-          <div className={`app ${isMobileAuthenticated ? 'mobile-auth-layout' : ''}`}>
-            {isMobileAuthenticated && (
+          <div className={`app ${isMobileShellLayout ? 'mobile-shell-layout' : ''} ${isMobileAuthenticated ? 'mobile-auth-layout' : ''}`}>
+            {isMobileShellLayout && (
               <MobileTopBar
                 user={currentUser}
                 role={mobileRole}
@@ -333,7 +344,7 @@ function App() {
               />
             )}
 
-            <div className={isMobileAuthenticated ? 'desktop-navbar-hidden' : ''}>
+            <div className={isMobileShellLayout ? 'desktop-navbar-hidden' : ''}>
               <Navbar />
             </div>
 

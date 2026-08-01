@@ -35,7 +35,7 @@ function getTitle(pathname) {
 
 export default function MobileTopBar({
   user,
-  role = 'client',
+  role = 'guest',
   onMenu,
   settingsRoute,
   onLogout,
@@ -53,7 +53,12 @@ export default function MobileTopBar({
   const menuRef = useRef(null);
   const { isDark, toggleTheme } = useTheme();
   const title = getTitle(location.pathname);
-  const notificationsRoute = role === 'admin' ? '/admin/reports' : '/requests';
+  const isLoggedIn = Boolean(user);
+  const notificationsRoute = !isLoggedIn
+    ? '/login'
+    : role === 'admin'
+      ? '/admin/reports'
+      : '/requests';
 
   useEffect(() => {
     onCloseProfileMenu?.();
@@ -136,7 +141,18 @@ export default function MobileTopBar({
 
         {profileMenuOpen && (
           <div ref={menuRef} className="mobile-profile-menu" role="menu" aria-label="Mobile profile menu">
-            {role === 'tradesperson' ? (
+            {!isLoggedIn ? (
+              <>
+                <Link to="/login" className="mobile-profile-menu-item" role="menuitem" onClick={onCloseProfileMenu}>
+                  <i className="bi bi-box-arrow-in-right"></i>
+                  Log In
+                </Link>
+                <Link to="/register" className="mobile-profile-menu-item" role="menuitem" onClick={onCloseProfileMenu}>
+                  <i className="bi bi-person-plus"></i>
+                  Sign Up
+                </Link>
+              </>
+            ) : role === 'tradesperson' ? (
               <>
                 <button
                   type="button"
@@ -181,14 +197,18 @@ export default function MobileTopBar({
                 Edit Profile
               </button>
             )}
-            <Link to={settingsRoute} className="mobile-profile-menu-item" role="menuitem" onClick={onCloseProfileMenu}>
-              <i className="bi bi-gear"></i>
-              Settings
-            </Link>
-            <button type="button" className="mobile-profile-menu-item danger" role="menuitem" onClick={onLogout}>
-              <i className="bi bi-box-arrow-right"></i>
-              Log Out
-            </button>
+            {isLoggedIn && (
+              <>
+                <Link to={settingsRoute} className="mobile-profile-menu-item" role="menuitem" onClick={onCloseProfileMenu}>
+                  <i className="bi bi-gear"></i>
+                  Settings
+                </Link>
+                <button type="button" className="mobile-profile-menu-item danger" role="menuitem" onClick={onLogout}>
+                  <i className="bi bi-box-arrow-right"></i>
+                  Log Out
+                </button>
+              </>
+            )}
           </div>
         )}
       </div>

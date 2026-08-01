@@ -86,7 +86,7 @@ export default function Requests() {
         : await serviceRequestAPI.getClientRequests();
       
       if (response.success) {
-        const hiddenIds = new Set(getHiddenRequestIds(user));
+        const hiddenIds = new Set(getHiddenRequestIds({ id: user?.id, userType: user?.userType }));
         const visibleRequests = (response.data.requests || []).filter((req) => !hiddenIds.has(Number(req.id)));
         setRequests(visibleRequests);
       }
@@ -96,7 +96,7 @@ export default function Requests() {
     } finally {
       setLoading(false);
     }
-  }, [isProvider]);
+  }, [isProvider, user?.id, user?.userType]);
 
   useEffect(() => {
     fetchRequests();
