@@ -152,6 +152,17 @@ const ProviderCard = ({ provider, profile, onBack }) => {
         )}
       </div>
 
+      <div className="about-section">
+        <h3 className="about-title">Languages Spoken</h3>
+        {Array.isArray(profile.languages) && profile.languages.length > 0 ? (
+          <p className="about-text">{profile.languages.join(', ')}</p>
+        ) : (
+          <div className="about-empty">
+            <p className="empty-text">Language not specified</p>
+          </div>
+        )}
+      </div>
+
       <div className="portfolio-tabs">
         <button
           className={`tab-btn ${activeTab === 'portfolio' ? 'active' : ''}`}
@@ -178,6 +189,11 @@ const ProviderCard = ({ provider, profile, onBack }) => {
                   onClick={() => setExpandedImage(item.src)}
                 >
                   <img src={item.src} alt="Portfolio image" className="portfolio-image" />
+                  {item.completedThroughPlatform && (
+                    <span className="verified-badge" style={{ position: 'absolute', top: '8px', left: '8px' }}>
+                      Completed through SerbisyoToledo
+                    </span>
+                  )}
                 </div>
               ))}
             </div>
@@ -240,7 +256,7 @@ const ProviderCard = ({ provider, profile, onBack }) => {
           {profile.rate}
           <span className="price-unit"> {profile.rateUnit}</span>
         </div>
-        <p className="price-label">Average rate</p>
+        <p className="price-label">Daily rate</p>
       </div>
 
       <button className="btn-request-service" onClick={handleRequestService}>
@@ -343,6 +359,7 @@ const ServiceProviderPortfolio = () => {
             description: apiProfile.description,
             tags: apiProfile.categories || apiProfile.tags || [],
             startingPrice: apiProfile.startingPrice,
+            dailyRate: apiProfile.dailyRate ?? apiProfile.startingPrice,
             verified: apiProfile.verified || false,
             image: apiProfile.image,
           };
@@ -354,10 +371,11 @@ const ServiceProviderPortfolio = () => {
             skills: apiProfile.categories || apiProfile.tags || [],
             portfolio: apiProfile.portfolio || [],
             reviews: apiProfile.reviews || [],
+            languages: (apiProfile.languages || []).map((code) => ({ ceb: 'Cebuano', en: 'English', fil: 'Filipino' }[code] || code)),
             location: apiProfile.location,
             response: apiProfile.responseTime || 'Within 24 hours',
-            rate: apiProfile.startingPrice,
-            rateUnit: '/job',
+            rate: apiProfile.dailyRate ?? apiProfile.startingPrice,
+            rateUnit: 'per day',
           };
           
           setProvider(transformedProvider);

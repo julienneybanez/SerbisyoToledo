@@ -455,6 +455,24 @@ export const serviceProfileAPI = {
     return handleResponse(response);
   },
 
+  // Get available booking slots for a provider/date
+  getAvailableSlots: async (id, { date, duration, bookingType = 'one_day', endDate = null }) => {
+    const params = new URLSearchParams();
+    if (date) params.set('date', date);
+    if (duration) params.set('duration', String(duration));
+    if (bookingType) params.set('bookingType', bookingType);
+    if (endDate) params.set('endDate', endDate);
+
+    const response = await fetch(`${API_BASE_URL}/service-profiles/${id}/available-slots?${params.toString()}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    return handleResponse(response);
+  },
+
   // Get current user's profile
   getMyProfile: async () => {
     const token = getToken();
@@ -481,6 +499,146 @@ export const serviceProfileAPI = {
       body: JSON.stringify({ isPublished }),
     });
     
+    return handleResponse(response);
+  },
+
+  // Provider availability
+  getMyAvailability: async () => {
+    const token = getToken();
+    const response = await fetch(`${API_BASE_URL}/service-profiles/availability/me`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+    return handleResponse(response);
+  },
+
+  saveMyAvailability: async (payload) => {
+    const token = getToken();
+    const response = await fetch(`${API_BASE_URL}/service-profiles/availability/me`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(response);
+  },
+
+  addAvailabilityException: async (payload) => {
+    const token = getToken();
+    const response = await fetch(`${API_BASE_URL}/service-profiles/availability/me/exceptions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(response);
+  },
+
+  deleteAvailabilityException: async (exceptionId) => {
+    const token = getToken();
+    const response = await fetch(`${API_BASE_URL}/service-profiles/availability/me/exceptions/${exceptionId}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+    return handleResponse(response);
+  },
+
+  // Provider languages
+  getMyLanguages: async () => {
+    const token = getToken();
+    const response = await fetch(`${API_BASE_URL}/service-profiles/languages/me`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+    return handleResponse(response);
+  },
+
+  updateMyLanguages: async (languages) => {
+    const token = getToken();
+    const response = await fetch(`${API_BASE_URL}/service-profiles/languages/me`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({ languages }),
+    });
+    return handleResponse(response);
+  },
+
+  // Provider credentials
+  getMyCredentials: async () => {
+    const token = getToken();
+    const response = await fetch(`${API_BASE_URL}/service-profiles/credentials/me`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+    return handleResponse(response);
+  },
+
+  createCredential: async (formData) => {
+    const token = getToken();
+    const response = await fetch(`${API_BASE_URL}/service-profiles/credentials/me`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+      body: formData,
+    });
+    return handleResponse(response);
+  },
+
+  submitCredentialForReview: async (credentialId) => {
+    const token = getToken();
+    const response = await fetch(`${API_BASE_URL}/service-profiles/credentials/me/${credentialId}/submit`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+    return handleResponse(response);
+  },
+
+  // Completed request linkage for portfolio
+  getEligibleCompletedRequests: async () => {
+    const token = getToken();
+    const response = await fetch(`${API_BASE_URL}/service-profiles/portfolio/completed-requests`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+    return handleResponse(response);
+  },
+
+  createPortfolioFromRequest: async (payload) => {
+    const token = getToken();
+    const response = await fetch(`${API_BASE_URL}/service-profiles/portfolio/from-request`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify(payload),
+    });
     return handleResponse(response);
   },
 
@@ -594,9 +752,13 @@ export const serviceRequestAPI = {
   },
 
   // Update request status
-  updateStatus: async (requestId, status, reason = null) => {
+  updateStatus: async (requestId, status, reason = null, cancellation = null) => {
     const token = getToken();
     const payload = reason == null ? { status } : { status, reason };
+    if (cancellation && typeof cancellation === 'object') {
+      payload.cancellationReason = cancellation.cancellationReason;
+      payload.cancellationReasonOther = cancellation.cancellationReasonOther;
+    }
     const response = await fetch(`${API_BASE_URL}/service-requests/${requestId}/status`, {
       method: 'PATCH',
       headers: {
@@ -604,6 +766,34 @@ export const serviceRequestAPI = {
         'Authorization': `Bearer ${token}`,
       },
       body: JSON.stringify(payload),
+    });
+    return handleResponse(response);
+  },
+
+  // Create reschedule proposal
+  proposeReschedule: async (requestId, payload) => {
+    const token = getToken();
+    const response = await fetch(`${API_BASE_URL}/service-requests/${requestId}/reschedules`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(response);
+  },
+
+  // Respond to reschedule proposal
+  respondReschedule: async (requestId, rescheduleId, action) => {
+    const token = getToken();
+    const response = await fetch(`${API_BASE_URL}/service-requests/${requestId}/reschedules/${rescheduleId}/respond`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({ action }),
     });
     return handleResponse(response);
   },

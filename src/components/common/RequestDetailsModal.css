@@ -291,6 +291,25 @@
   font-size: 1.1rem;
 }
 
+.reschedule-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.reschedule-item {
+  border: 1px solid #dbe4ee;
+  border-radius: 12px;
+  background: #ffffff;
+  padding: 0.75rem;
+}
+
+.reschedule-actions {
+  margin-top: 0.65rem;
+  display: flex;
+  gap: 0.55rem;
+}
+
 /* ===================================
    DISCUSSION REQUEST/ACCEPT IN MODAL
    =================================== */

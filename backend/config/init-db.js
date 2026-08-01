@@ -428,6 +428,207 @@ async function initializeDatabase() {
       // Already updated
     }
 
+    // Stage 1 booking fields for one-day and multi-day support
+    const serviceRequestColumns = [
+      'booking_type ENUM(\'one_day\', \'multi_day\') NOT NULL DEFAULT \'one_day\'',
+      'start_date DATE NULL',
+      'end_date DATE NULL',
+      'start_time TIME NULL',
+      'estimated_duration_minutes INT NULL',
+      'duration_days INT NULL',
+      'daily_rate_snapshot DECIMAL(10,2) NULL',
+      'estimated_total DECIMAL(10,2) NULL',
+      'cancelled_by INT NULL',
+      'cancellation_reason VARCHAR(120) NULL',
+      'cancellation_reason_other TEXT NULL',
+      'cancelled_at TIMESTAMP NULL DEFAULT NULL',
+    ];
+
+    for (const col of serviceRequestColumns) {
+      try {
+        const [columnName] = col.split(' ');
+        await connection.query(`ALTER TABLE service_requests ADD COLUMN ${col}`);
+        console.log(`✅ Added column: service_requests.${columnName}`);
+      } catch {
+        // Column already exists
+      }
+    }
+
+    try {
+      await connection.query(
+        'ALTER TABLE service_requests ADD CONSTRAINT fk_service_requests_cancelled_by FOREIGN KEY (cancelled_by) REFERENCES users(id) ON DELETE SET NULL'
+      );
+      console.log('✅ Added fk_service_requests_cancelled_by');
+    } catch {
+      // FK already exists
+    }
+
+    // Backfill date range fields from legacy scheduled_date
+    try {
+      await connection.query(`
+        UPDATE service_requests
+        SET
+          start_date = COALESCE(start_date, scheduled_date),
+          end_date = COALESCE(end_date, scheduled_date),
+          duration_days = COALESCE(duration_days, 1)
+      `);
+    } catch {
+      // Ignore backfill errors on partial schemas
+    }
+
+    // Provider availability settings table
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS provider_availability_settings (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        service_profile_id INT NOT NULL UNIQUE,
+        allow_same_day_booking BOOLEAN NOT NULL DEFAULT FALSE,
+        min_advance_notice_minutes INT NOT NULL DEFAULT 720,
+        max_advance_booking_days INT NOT NULL DEFAULT 60,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (service_profile_id) REFERENCES service_profiles(id) ON DELETE CASCADE
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+
+    // Provider weekly availability table
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS provider_weekly_availability (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        service_profile_id INT NOT NULL,
+        day_of_week TINYINT NOT NULL,
+        start_time TIME NOT NULL,
+        end_time TIME NOT NULL,
+        is_available BOOLEAN NOT NULL DEFAULT TRUE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (service_profile_id) REFERENCES service_profiles(id) ON DELETE CASCADE,
+        UNIQUE KEY uniq_provider_weekly_block (service_profile_id, day_of_week, start_time, end_time)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+
+    // Provider availability exceptions table
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS provider_availability_exceptions (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        service_profile_id INT NOT NULL,
+        exception_date DATE NOT NULL,
+        start_time TIME NULL,
+        end_time TIME NULL,
+        exception_type ENUM('available', 'unavailable', 'booked', 'vacation') NOT NULL,
+        reason VARCHAR(255) NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (service_profile_id) REFERENCES service_profiles(id) ON DELETE CASCADE,
+        INDEX idx_provider_exception_lookup (service_profile_id, exception_date)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+
+    // Reschedule workflow table
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS service_request_reschedules (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        service_request_id INT NOT NULL,
+        original_start_date DATE NOT NULL,
+        original_end_date DATE NOT NULL,
+        original_start_time TIME NULL,
+        proposed_start_date DATE NOT NULL,
+        proposed_end_date DATE NOT NULL,
+        proposed_start_time TIME NULL,
+        proposed_by INT NOT NULL,
+        reschedule_reason TEXT NULL,
+        reschedule_status ENUM('pending', 'accepted', 'declined', 'cancelled') NOT NULL DEFAULT 'pending',
+        responded_by INT NULL,
+        responded_at TIMESTAMP NULL DEFAULT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (service_request_id) REFERENCES service_requests(id) ON DELETE CASCADE,
+        FOREIGN KEY (proposed_by) REFERENCES users(id) ON DELETE CASCADE,
+        FOREIGN KEY (responded_by) REFERENCES users(id) ON DELETE SET NULL
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+
+    // Provider credentials table
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS provider_credentials (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        service_profile_id INT NOT NULL,
+        credential_name VARCHAR(255) NOT NULL,
+        credential_type ENUM(
+          'professional_license',
+          'tesda_certification',
+          'safety_training',
+          'technical_certification',
+          'government_accreditation',
+          'manufacturer_certification',
+          'training_certificate',
+          'other'
+        ) NOT NULL,
+        issuing_organization VARCHAR(255) NOT NULL,
+        credential_id VARCHAR(120) NULL,
+        issue_date DATE NULL,
+        expiration_date DATE NULL,
+        does_not_expire BOOLEAN NOT NULL DEFAULT FALSE,
+        credential_url VARCHAR(500) NULL,
+        related_skills JSON NULL,
+        document_url VARCHAR(500) NULL,
+        document_public_id VARCHAR(255) NULL,
+        document_data LONGBLOB NULL,
+        document_mime VARCHAR(100) NULL,
+        verification_status ENUM('unverified', 'pending', 'verified', 'rejected', 'expired') NOT NULL DEFAULT 'unverified',
+        verification_notes TEXT NULL,
+        reviewed_by INT NULL,
+        reviewed_at TIMESTAMP NULL DEFAULT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (service_profile_id) REFERENCES service_profiles(id) ON DELETE CASCADE,
+        FOREIGN KEY (reviewed_by) REFERENCES users(id) ON DELETE SET NULL
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+
+    // Portfolio enhancements
+    const portfolioColumns = [
+      'service_request_id INT NULL',
+      'job_title VARCHAR(255) NULL',
+      'job_description TEXT NULL',
+      'service_category VARCHAR(120) NULL',
+      'completed_at DATETIME NULL',
+      'is_published BOOLEAN NOT NULL DEFAULT TRUE',
+      'is_featured BOOLEAN NOT NULL DEFAULT FALSE',
+      'completed_through_platform BOOLEAN NOT NULL DEFAULT FALSE',
+      'updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP',
+    ];
+
+    for (const col of portfolioColumns) {
+      try {
+        const [columnName] = col.split(' ');
+        await connection.query(`ALTER TABLE portfolio_items ADD COLUMN ${col}`);
+        console.log(`✅ Added column: portfolio_items.${columnName}`);
+      } catch {
+        // Column already exists
+      }
+    }
+
+    try {
+      await connection.query(
+        'ALTER TABLE portfolio_items ADD CONSTRAINT fk_portfolio_items_service_request FOREIGN KEY (service_request_id) REFERENCES service_requests(id) ON DELETE SET NULL'
+      );
+      console.log('✅ Added fk_portfolio_items_service_request');
+    } catch {
+      // FK already exists
+    }
+
+    // Provider languages table
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS provider_languages (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        service_profile_id INT NOT NULL,
+        language_code ENUM('ceb', 'en', 'fil') NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (service_profile_id) REFERENCES service_profiles(id) ON DELETE CASCADE,
+        UNIQUE KEY uniq_provider_language (service_profile_id, language_code)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+
     console.log('\n🎉 Database initialization complete!');
     console.log('You can now start the server with: npm run dev');
 

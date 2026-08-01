@@ -1,55 +1,366 @@
 const db = require('../config/database');
+const {
+  BLOCKING_STATUSES,
+  parseDateOnly,
+  formatDateOnly,
+  parseTimeInputToSql,
+  calculateDurationDays,
+  checkScheduleConflict,
+} = require('../utils/bookingAvailability');
+
+const MAX_JOB_TITLE_LENGTH = 255;
+const MAX_JOB_DETAILS_LENGTH = 2000;
+const MAX_DECLINE_REASON_LENGTH = 500;
+const MAX_RESCHEDULE_REASON_LENGTH = 1000;
+const MAX_DURATION_MINUTES = 24 * 60;
+
+const CANCELLATION_REASONS = new Set([
+  'Schedule conflict',
+  'No longer need the service',
+  'Provider unavailable',
+  'Client unavailable',
+  'Incorrect booking information',
+  'Provider did not respond',
+  'Found another provider',
+  'Other',
+]);
+
+const allowedTransitions = {
+  pending: ['accepted', 'declined', 'cancelled'],
+  accepted: ['on_the_way', 'cancelled'],
+  on_the_way: ['in_progress', 'cancelled'],
+  in_progress: ['completed'],
+  completed: [],
+  declined: [],
+  cancelled: [],
+};
+
+const getProviderProfile = async (connection, serviceProfileId) => {
+  const [profileRows] = await connection.query(
+    `SELECT
+      sp.id AS service_profile_id,
+      sp.user_id AS provider_id,
+      sp.starting_price,
+      sp.is_published,
+      u.user_type,
+      u.is_active
+     FROM service_profiles sp
+     JOIN users u ON u.id = sp.user_id
+     WHERE sp.id = ?
+     LIMIT 1`,
+    [serviceProfileId]
+  );
+
+  return profileRows[0] || null;
+};
+
+const validateBookingPayload = ({
+  bookingType,
+  startDate,
+  endDate,
+  scheduledDate,
+  startTime,
+  scheduledTime,
+  estimatedDurationMinutes,
+}) => {
+  const normalizedBookingType = bookingType === 'multi_day' ? 'multi_day' : 'one_day';
+  const normalizedStartDate = startDate || scheduledDate;
+  const normalizedEndDate = normalizedBookingType === 'multi_day'
+    ? (endDate || startDate || scheduledDate)
+    : (startDate || scheduledDate);
+  const normalizedStartTime = parseTimeInputToSql(startTime || scheduledTime);
+  const normalizedDurationMinutes = Number(estimatedDurationMinutes || 0);
+
+  if (!normalizedStartDate || !normalizedEndDate || !normalizedStartTime) {
+    return { error: 'Booking date and start time are required' };
+  }
+
+  if (!Number.isInteger(normalizedDurationMinutes) || normalizedDurationMinutes <= 0 || normalizedDurationMinutes > MAX_DURATION_MINUTES) {
+    return { error: 'Estimated duration must be between 1 and 1440 minutes' };
+  }
+
+  const parsedStartDate = parseDateOnly(normalizedStartDate);
+  const parsedEndDate = parseDateOnly(normalizedEndDate);
+
+  if (!parsedStartDate || !parsedEndDate) {
+    return { error: 'Invalid booking date range' };
+  }
+
+  if (parsedEndDate < parsedStartDate) {
+    return { error: 'End date cannot be earlier than start date' };
+  }
+
+  const today = new Date();
+  const todayUtc = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()));
+
+  if (parsedStartDate < todayUtc) {
+    return { error: 'Schedule date cannot be in the past' };
+  }
+
+  const durationDays = calculateDurationDays(normalizedStartDate, normalizedEndDate);
+
+  if (!durationDays) {
+    return { error: 'Invalid booking duration' };
+  }
+
+  return {
+    normalizedBookingType,
+    normalizedStartDate,
+    normalizedEndDate,
+    normalizedStartTime,
+    normalizedDurationMinutes,
+    durationDays,
+  };
+};
+
+const normalizeRequestSchedule = (requestRow) => {
+  const startDate = requestRow.start_date || requestRow.scheduled_date;
+  const endDate = requestRow.end_date || requestRow.scheduled_date;
+  const startTime = parseTimeInputToSql(requestRow.start_time || requestRow.scheduled_time);
+  const durationMinutes = Number(requestRow.estimated_duration_minutes || 0);
+
+  return {
+    startDate,
+    endDate,
+    startTime,
+    durationMinutes,
+  };
+};
 
 // Create a new service request
 exports.createRequest = async (req, res) => {
+  let connection;
+
   try {
     const clientId = req.user.userId;
-    const { providerId, serviceProfileId, jobTitle, jobDetails, scheduledDate, scheduledTime } = req.body;
+    const {
+      providerId,
+      serviceProfileId,
+      bookingType,
+      startDate,
+      endDate,
+      startTime,
+      scheduledDate,
+      scheduledTime,
+      estimatedDurationMinutes,
+    } = req.body;
 
-    console.log('Create request received:', { clientId, providerId, serviceProfileId, jobTitle, scheduledDate, scheduledTime });
+    const jobTitle = String(req.body.jobTitle || '').trim();
+    const jobDetails = String(req.body.jobDetails || '').trim();
 
-    // Validate required fields
-    if (!providerId || !serviceProfileId || !jobTitle || !jobDetails || !scheduledDate || !scheduledTime) {
-      console.log('Validation failed - missing fields:', { providerId, serviceProfileId, jobTitle, jobDetails: !!jobDetails, scheduledDate, scheduledTime });
+    if (req.user.userType !== 'client') {
+      return res.status(403).json({
+        success: false,
+        message: 'Only clients can create service requests'
+      });
+    }
+
+    if (!serviceProfileId || !jobTitle || !jobDetails) {
       return res.status(400).json({
         success: false,
         message: 'All fields are required'
       });
     }
 
-    // Create the service request
-    const [result] = await db.query(
-      `INSERT INTO service_requests (client_id, provider_id, service_profile_id, job_title, job_details, scheduled_date, scheduled_time)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [clientId, providerId, serviceProfileId, jobTitle, jobDetails, scheduledDate, scheduledTime]
+    if (jobTitle.length > MAX_JOB_TITLE_LENGTH || jobDetails.length > MAX_JOB_DETAILS_LENGTH) {
+      return res.status(400).json({
+        success: false,
+        message: 'Request details exceed allowed length limits'
+      });
+    }
+
+    const normalized = validateBookingPayload({
+      bookingType,
+      startDate,
+      endDate,
+      scheduledDate,
+      startTime,
+      scheduledTime,
+      estimatedDurationMinutes,
+    });
+
+    if (normalized.error) {
+      return res.status(400).json({
+        success: false,
+        message: normalized.error,
+      });
+    }
+
+    connection = await db.getConnection();
+    await connection.beginTransaction();
+
+    const profile = await getProviderProfile(connection, serviceProfileId);
+
+    if (!profile) {
+      await connection.rollback();
+      return res.status(404).json({
+        success: false,
+        message: 'Service profile not found'
+      });
+    }
+
+    if (!profile.is_published) {
+      await connection.rollback();
+      return res.status(400).json({
+        success: false,
+        message: 'This service profile is not available for booking'
+      });
+    }
+
+    if (profile.user_type !== 'tradesperson' || !profile.is_active) {
+      await connection.rollback();
+      return res.status(400).json({
+        success: false,
+        message: 'This service provider is not available for booking'
+      });
+    }
+
+    if (Number(clientId) === Number(profile.provider_id)) {
+      await connection.rollback();
+      return res.status(400).json({
+        success: false,
+        message: 'You cannot book your own service profile'
+      });
+    }
+
+    if (providerId && Number(providerId) !== Number(profile.provider_id)) {
+      await connection.rollback();
+      return res.status(400).json({
+        success: false,
+        message: 'Provider and service profile mismatch'
+      });
+    }
+
+    const [duplicateRows] = await connection.query(
+      `SELECT id
+       FROM service_requests
+       WHERE client_id = ?
+         AND provider_id = ?
+         AND service_profile_id = ?
+         AND COALESCE(start_date, scheduled_date) = ?
+         AND COALESCE(end_date, scheduled_date) = ?
+         AND COALESCE(start_time, ?) = ?
+         AND LOWER(job_title) = LOWER(?)
+         AND status IN ('pending', 'accepted', 'on_the_way', 'in_progress')
+       LIMIT 1`,
+      [
+        clientId,
+        profile.provider_id,
+        profile.service_profile_id,
+        normalized.normalizedStartDate,
+        normalized.normalizedEndDate,
+        normalized.normalizedStartTime,
+        normalized.normalizedStartTime,
+        jobTitle,
+      ]
+    );
+
+    if (duplicateRows.length > 0) {
+      await connection.rollback();
+      return res.status(409).json({
+        success: false,
+        message: 'A similar booking request already exists for this schedule.'
+      });
+    }
+
+    const conflict = await checkScheduleConflict(connection, {
+      providerId: profile.provider_id,
+      requestedStartDate: normalized.normalizedStartDate,
+      requestedEndDate: normalized.normalizedEndDate,
+      requestedStartTime: normalized.normalizedStartTime,
+      requestedDurationMinutes: normalized.normalizedDurationMinutes,
+    });
+
+    if (conflict.conflict) {
+      await connection.rollback();
+      return res.status(409).json({
+        success: false,
+        message: 'This schedule is no longer available because the provider already has another confirmed booking.'
+      });
+    }
+
+    const dailyRate = Number(profile.starting_price || 0);
+    const estimatedTotal = dailyRate * normalized.durationDays;
+
+    const [result] = await connection.query(
+      `INSERT INTO service_requests (
+         client_id,
+         provider_id,
+         service_profile_id,
+         job_title,
+         job_details,
+         booking_type,
+         start_date,
+         end_date,
+         start_time,
+         estimated_duration_minutes,
+         duration_days,
+         daily_rate_snapshot,
+         estimated_total,
+         scheduled_date,
+         scheduled_time
+       )
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        clientId,
+        profile.provider_id,
+        profile.service_profile_id,
+        jobTitle,
+        jobDetails,
+        normalized.normalizedBookingType,
+        normalized.normalizedStartDate,
+        normalized.normalizedEndDate,
+        normalized.normalizedStartTime,
+        normalized.normalizedDurationMinutes,
+        normalized.durationDays,
+        dailyRate,
+        estimatedTotal,
+        normalized.normalizedStartDate,
+        scheduledTime || normalized.normalizedStartTime,
+      ]
     );
 
     const requestId = result.insertId;
 
-    // Get client name for notification
-    const [clientRows] = await db.query('SELECT full_name FROM users WHERE id = ?', [clientId]);
+    const [clientRows] = await connection.query('SELECT full_name FROM users WHERE id = ? LIMIT 1', [clientId]);
     const clientName = clientRows[0]?.full_name || 'A client';
 
-    // Create notification for the service provider
-    await db.query(
+    await connection.query(
       `INSERT INTO notifications (user_id, type, title, message, related_request_id)
        VALUES (?, 'request_received', ?, ?, ?)`,
-      [providerId, 'New Service Request', `${clientName} has requested your service: ${jobTitle}`, requestId]
+      [profile.provider_id, 'New Service Request', `${clientName} has requested your service: ${jobTitle}`, requestId]
     );
+
+    await connection.commit();
 
     res.status(201).json({
       success: true,
       message: 'Service request created successfully',
-      data: { requestId }
+      data: {
+        requestId,
+        bookingType: normalized.normalizedBookingType,
+        startDate: normalized.normalizedStartDate,
+        endDate: normalized.normalizedEndDate,
+        startTime: normalized.normalizedStartTime,
+        durationDays: normalized.durationDays,
+        dailyRateSnapshot: dailyRate,
+        estimatedTotal,
+      }
     });
   } catch (error) {
+    if (connection) {
+      await connection.rollback();
+    }
+
     console.error('Create request error:', error);
-    console.error('Error details:', error.message, error.code, error.sqlMessage);
     res.status(500).json({
       success: false,
-      message: 'Failed to create service request',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      message: 'Failed to create service request'
     });
+  } finally {
+    if (connection) {
+      connection.release();
+    }
   }
 };
 
@@ -72,11 +383,10 @@ exports.getClientRequests = async (req, res) => {
       [clientId]
     );
 
-    // Only include phone if discussion is accepted
-    const processedRequests = requests.map(req => ({
-      ...req,
-      provider_phone: req.discussion_accepted ? req.provider_phone : null,
-      has_review: req.has_review > 0
+    const processedRequests = requests.map((request) => ({
+      ...request,
+      provider_phone: request.discussion_accepted ? request.provider_phone : null,
+      has_review: request.has_review > 0,
     }));
 
     res.json({
@@ -121,14 +431,15 @@ exports.getProviderRequests = async (req, res) => {
   }
 };
 
-// Update request status (accept/decline/on_the_way/complete)
+// Update request status (accept/decline/on_the_way/in_progress/completed/cancelled)
 exports.updateRequestStatus = async (req, res) => {
+  let connection;
+
   try {
     const { requestId } = req.params;
-    const { status, reason } = req.body;
+    const { status, reason, cancellationReason, cancellationReasonOther } = req.body;
     const userId = req.user.userId;
 
-    // Validate status
     const validStatuses = ['accepted', 'declined', 'on_the_way', 'in_progress', 'completed', 'cancelled'];
     if (!validStatuses.includes(status)) {
       return res.status(400).json({
@@ -137,17 +448,21 @@ exports.updateRequestStatus = async (req, res) => {
       });
     }
 
-    // Get the request to verify ownership and get client info
-    const [requests] = await db.query(
+    connection = await db.getConnection();
+    await connection.beginTransaction();
+
+    const [requests] = await connection.query(
       `SELECT sr.*, u.full_name as provider_name, c.full_name as client_name
        FROM service_requests sr
        JOIN users u ON sr.provider_id = u.id
        JOIN users c ON sr.client_id = c.id
-       WHERE sr.id = ?`,
-      [requestId]
+       WHERE sr.id = ? AND (sr.client_id = ? OR sr.provider_id = ?)
+       FOR UPDATE`,
+      [requestId, userId, userId]
     );
 
     if (requests.length === 0) {
+      await connection.rollback();
       return res.status(404).json({
         success: false,
         message: 'Request not found'
@@ -155,119 +470,243 @@ exports.updateRequestStatus = async (req, res) => {
     }
 
     const request = requests[0];
-    const trimmedReason = typeof reason === 'string' ? reason.trim() : '';
+    const currentStatus = request.status;
 
-    // Only provider can update status (except cancelled and completed which have special rules)
-    if (status === 'cancelled') {
-      if (request.client_id !== userId) {
-        return res.status(403).json({
+    if (status !== 'completed') {
+      const possibleTransitions = allowedTransitions[currentStatus] || [];
+      if (!possibleTransitions.includes(status)) {
+        await connection.rollback();
+        return res.status(409).json({
           success: false,
-          message: 'Only the client can cancel the request'
+          message: `Cannot change request status from ${currentStatus} to ${status}`
         });
       }
-    } else if (status === 'completed') {
-      // Both client and provider can mark as completed (two-way confirmation)
+    }
+
+    if (status === 'accepted') {
+      if (request.provider_id !== userId) {
+        await connection.rollback();
+        return res.status(403).json({
+          success: false,
+          message: 'Only the service provider can accept this request'
+        });
+      }
+
+      await connection.query(
+        'SELECT id FROM service_profiles WHERE id = ? AND user_id = ? FOR UPDATE',
+        [request.service_profile_id, request.provider_id]
+      );
+
+      const schedule = normalizeRequestSchedule(request);
+      const conflict = await checkScheduleConflict(connection, {
+        providerId: request.provider_id,
+        requestedStartDate: schedule.startDate,
+        requestedEndDate: schedule.endDate,
+        requestedStartTime: schedule.startTime,
+        requestedDurationMinutes: schedule.durationMinutes,
+        excludeRequestId: request.id,
+      });
+
+      if (conflict.conflict) {
+        await connection.rollback();
+        return res.status(409).json({
+          success: false,
+          message: 'This schedule is no longer available because the provider already has another confirmed booking.'
+        });
+      }
+    }
+
+    if (status === 'cancelled') {
       if (request.client_id !== userId && request.provider_id !== userId) {
+        await connection.rollback();
+        return res.status(403).json({
+          success: false,
+          message: 'Only participants can cancel this request'
+        });
+      }
+
+      if (['completed', 'declined', 'cancelled'].includes(currentStatus)) {
+        await connection.rollback();
+        return res.status(409).json({
+          success: false,
+          message: `Cannot change request status from ${currentStatus} to cancelled`
+        });
+      }
+
+      const normalizedCancellationReason = String(cancellationReason || '').trim();
+      const normalizedCancellationReasonOther = String(cancellationReasonOther || '').trim();
+
+      if (!CANCELLATION_REASONS.has(normalizedCancellationReason)) {
+        await connection.rollback();
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid cancellation reason'
+        });
+      }
+
+      if (normalizedCancellationReason === 'Other' && !normalizedCancellationReasonOther) {
+        await connection.rollback();
+        return res.status(400).json({
+          success: false,
+          message: 'Please provide a cancellation explanation when selecting Other.'
+        });
+      }
+
+      await connection.query(
+        `UPDATE service_requests
+         SET status = 'cancelled',
+             cancelled_by = ?,
+             cancellation_reason = ?,
+             cancellation_reason_other = ?,
+             cancelled_at = NOW()
+         WHERE id = ?`,
+        [
+          userId,
+          normalizedCancellationReason,
+          normalizedCancellationReason === 'Other' ? normalizedCancellationReasonOther : null,
+          requestId,
+        ]
+      );
+
+      const otherUserId = request.client_id === userId ? request.provider_id : request.client_id;
+      const actorName = request.client_id === userId ? request.client_name : request.provider_name;
+      await connection.query(
+        `INSERT INTO notifications (user_id, type, title, message, related_request_id)
+         VALUES (?, 'request_declined', ?, ?, ?)`,
+        [
+          otherUserId,
+          'Booking Cancelled',
+          `${actorName} cancelled the booking "${request.job_title}".`,
+          requestId,
+        ]
+      );
+
+      await connection.commit();
+
+      return res.json({
+        success: true,
+        message: 'Request cancelled successfully'
+      });
+    }
+
+    if (status === 'completed') {
+      if (request.client_id !== userId && request.provider_id !== userId) {
+        await connection.rollback();
         return res.status(403).json({
           success: false,
           message: 'Only the client or provider can mark this request as completed'
         });
       }
 
+      if (currentStatus === 'completed' || currentStatus === 'declined' || currentStatus === 'cancelled') {
+        await connection.rollback();
+        return res.status(409).json({
+          success: false,
+          message: `Cannot change request status from ${currentStatus} to completed`
+        });
+      }
+
+      if (!['on_the_way', 'in_progress'].includes(currentStatus)) {
+        await connection.rollback();
+        return res.status(409).json({
+          success: false,
+          message: 'Request can only be completed after it is on the way or in progress'
+        });
+      }
+
       const isClientAction = request.client_id === userId;
       const isProviderAction = request.provider_id === userId;
 
-      // Update the respective completion flag
       if (isProviderAction) {
         if (request.provider_completed) {
-          return res.status(400).json({ success: false, message: 'You have already confirmed completion' });
+          await connection.rollback();
+          return res.status(409).json({ success: false, message: 'You have already confirmed completion' });
         }
-        await db.query('UPDATE service_requests SET provider_completed = TRUE WHERE id = ?', [requestId]);
-      }
-      if (isClientAction) {
-        if (request.client_completed) {
-          return res.status(400).json({ success: false, message: 'You have already confirmed completion' });
-        }
-        await db.query('UPDATE service_requests SET client_completed = TRUE WHERE id = ?', [requestId]);
+        await connection.query('UPDATE service_requests SET provider_completed = TRUE WHERE id = ?', [requestId]);
       }
 
-      // Re-fetch to check if both have now confirmed
-      const [updated] = await db.query('SELECT provider_completed, client_completed FROM service_requests WHERE id = ?', [requestId]);
+      if (isClientAction) {
+        if (request.client_completed) {
+          await connection.rollback();
+          return res.status(409).json({ success: false, message: 'You have already confirmed completion' });
+        }
+        await connection.query('UPDATE service_requests SET client_completed = TRUE WHERE id = ?', [requestId]);
+      }
+
+      const [updated] = await connection.query('SELECT provider_completed, client_completed FROM service_requests WHERE id = ? FOR UPDATE', [requestId]);
       const bothConfirmed = updated[0].provider_completed && updated[0].client_completed;
 
       if (bothConfirmed) {
-        // Both confirmed — mark as completed
-        await db.query('UPDATE service_requests SET status = ? WHERE id = ?', ['completed', requestId]);
+        await connection.query('UPDATE service_requests SET status = ? WHERE id = ?', ['completed', requestId]);
 
-        // Increment jobs_completed for the provider's service profile
-        await db.query(
+        await connection.query(
           'UPDATE service_profiles SET jobs_completed = jobs_completed + 1 WHERE user_id = ?',
           [request.provider_id]
         );
 
-        // Notify both parties
-        await db.query(
+        await connection.query(
           `INSERT INTO notifications (user_id, type, title, message, related_request_id)
            VALUES (?, 'service_completed', ?, ?, ?)`,
           [request.client_id, 'Service Completed', `Your service request "${request.job_title}" has been completed! You can now leave a review.`, requestId]
         );
-        await db.query(
+        await connection.query(
           `INSERT INTO notifications (user_id, type, title, message, related_request_id)
            VALUES (?, 'service_completed', ?, ?, ?)`,
           [request.provider_id, 'Service Completed', `The service "${request.job_title}" has been marked as completed by both parties.`, requestId]
         );
+
+        await connection.commit();
 
         return res.json({
           success: true,
           message: 'Both parties confirmed — service marked as completed!',
           data: { fullyCompleted: true }
         });
-      } else {
-        // Only one party confirmed so far — notify the other
-        const otherUserId = isProviderAction ? request.client_id : request.provider_id;
-        const confirmerName = isProviderAction ? request.provider_name : request.client_name;
-        
-        await db.query(
-          `INSERT INTO notifications (user_id, type, title, message, related_request_id)
-           VALUES (?, 'completion_confirmed', ?, ?, ?)`,
-          [otherUserId, 'Completion Pending', `${confirmerName} has confirmed completion for "${request.job_title}". Please confirm on your end.`, requestId]
-        );
+      }
 
-        return res.json({
-          success: true,
-          message: 'Completion confirmed! Waiting for the other party to confirm.',
-          data: { 
-            fullyCompleted: false,
-            provider_completed: isProviderAction ? true : request.provider_completed,
-            client_completed: isClientAction ? true : request.client_completed
-          }
-        });
-      }
-    } else {
-      if (request.provider_id !== userId) {
-        return res.status(403).json({
-          success: false,
-          message: 'Only the service provider can update this request'
-        });
-      }
+      const otherUserId = isProviderAction ? request.client_id : request.provider_id;
+      const confirmerName = isProviderAction ? request.provider_name : request.client_name;
+
+      await connection.query(
+        `INSERT INTO notifications (user_id, type, title, message, related_request_id)
+         VALUES (?, 'completion_confirmed', ?, ?, ?)`,
+        [otherUserId, 'Completion Pending', `${confirmerName} has confirmed completion for "${request.job_title}". Please confirm on your end.`, requestId]
+      );
+
+      await connection.commit();
+
+      return res.json({
+        success: true,
+        message: 'Completion confirmed! Waiting for the other party to confirm.',
+        data: {
+          fullyCompleted: false,
+          provider_completed: isProviderAction ? true : request.provider_completed,
+          client_completed: isClientAction ? true : request.client_completed,
+        }
+      });
     }
 
-    if (status === 'declined') {
-      if (request.status === 'declined') {
-        return res.status(400).json({
-          success: false,
-          message: 'This request has already been declined'
-        });
-      }
+    if (request.provider_id !== userId) {
+      await connection.rollback();
+      return res.status(403).json({
+        success: false,
+        message: 'Only the service provider can update this request'
+      });
+    }
 
+    const trimmedReason = typeof reason === 'string' ? reason.trim() : '';
+
+    if (status === 'declined') {
       if (!trimmedReason) {
+        await connection.rollback();
         return res.status(400).json({
           success: false,
           message: 'Reason for declining is required'
         });
       }
 
-      if (trimmedReason.length > 500) {
+      if (trimmedReason.length > MAX_DECLINE_REASON_LENGTH) {
+        await connection.rollback();
         return res.status(400).json({
           success: false,
           message: 'Reason for declining must not exceed 500 characters'
@@ -275,21 +714,21 @@ exports.updateRequestStatus = async (req, res) => {
       }
     }
 
-    // Update the status (and decline reason where applicable)
     if (status === 'declined') {
-      await db.query(
+      await connection.query(
         'UPDATE service_requests SET status = ?, decline_reason = ? WHERE id = ?',
         [status, trimmedReason, requestId]
       );
     } else {
-      await db.query(
+      await connection.query(
         'UPDATE service_requests SET status = ? WHERE id = ?',
         [status, requestId]
       );
     }
 
-    // Create notification for the client based on status
-    let notificationType, notificationTitle, notificationMessage;
+    let notificationType;
+    let notificationTitle;
+    let notificationMessage;
 
     switch (status) {
       case 'accepted':
@@ -307,29 +746,332 @@ exports.updateRequestStatus = async (req, res) => {
         notificationTitle = 'Provider On The Way!';
         notificationMessage = `${request.provider_name} is now on the way for: ${request.job_title}`;
         break;
-      case 'completed':
-        // Handled by two-way confirmation above, should not reach here
+      default:
         break;
     }
 
     if (notificationType) {
-      await db.query(
+      await connection.query(
         `INSERT INTO notifications (user_id, type, title, message, related_request_id)
          VALUES (?, ?, ?, ?, ?)`,
         [request.client_id, notificationType, notificationTitle, notificationMessage, requestId]
       );
     }
 
+    await connection.commit();
+
     res.json({
       success: true,
       message: `Request ${status} successfully`
     });
   } catch (error) {
+    if (connection) {
+      await connection.rollback();
+    }
+
     console.error('Update request status error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to update request status'
     });
+  } finally {
+    if (connection) {
+      connection.release();
+    }
+  }
+};
+
+exports.proposeReschedule = async (req, res) => {
+  let connection;
+
+  try {
+    const { requestId } = req.params;
+    const actorId = req.user.userId;
+    const { proposedStartDate, proposedEndDate, proposedStartTime, reason, estimatedDurationMinutes } = req.body;
+
+    const parsedProposedStart = parseDateOnly(proposedStartDate);
+    const parsedProposedEnd = parseDateOnly(proposedEndDate || proposedStartDate);
+    const normalizedProposedTime = parseTimeInputToSql(proposedStartTime);
+    const normalizedDurationMinutes = Number(estimatedDurationMinutes || 0);
+
+    if (!parsedProposedStart || !parsedProposedEnd || !normalizedProposedTime) {
+      return res.status(400).json({ success: false, message: 'Proposed schedule is invalid.' });
+    }
+
+    if (parsedProposedEnd < parsedProposedStart) {
+      return res.status(400).json({ success: false, message: 'Proposed end date cannot be before start date.' });
+    }
+
+    if (!Number.isInteger(normalizedDurationMinutes) || normalizedDurationMinutes <= 0 || normalizedDurationMinutes > MAX_DURATION_MINUTES) {
+      return res.status(400).json({ success: false, message: 'Estimated duration must be between 1 and 1440 minutes.' });
+    }
+
+    const trimmedReason = String(reason || '').trim();
+    if (!trimmedReason) {
+      return res.status(400).json({ success: false, message: 'Reschedule reason is required.' });
+    }
+
+    if (trimmedReason.length > MAX_RESCHEDULE_REASON_LENGTH) {
+      return res.status(400).json({ success: false, message: 'Reschedule reason is too long.' });
+    }
+
+    connection = await db.getConnection();
+    await connection.beginTransaction();
+
+    const [requests] = await connection.query(
+      `SELECT sr.*, provider.full_name AS provider_name, client.full_name AS client_name
+       FROM service_requests sr
+       JOIN users provider ON provider.id = sr.provider_id
+       JOIN users client ON client.id = sr.client_id
+       WHERE sr.id = ? AND (sr.client_id = ? OR sr.provider_id = ?)
+       FOR UPDATE`,
+      [requestId, actorId, actorId]
+    );
+
+    if (requests.length === 0) {
+      await connection.rollback();
+      return res.status(404).json({ success: false, message: 'Request not found' });
+    }
+
+    const request = requests[0];
+
+    if (!['accepted', 'on_the_way', 'in_progress'].includes(request.status)) {
+      await connection.rollback();
+      return res.status(409).json({
+        success: false,
+        message: `Cannot reschedule request in ${request.status} status`
+      });
+    }
+
+    const proposedStartDateIso = formatDateOnly(parsedProposedStart);
+    const proposedEndDateIso = formatDateOnly(parsedProposedEnd);
+
+    const conflict = await checkScheduleConflict(connection, {
+      providerId: request.provider_id,
+      requestedStartDate: proposedStartDateIso,
+      requestedEndDate: proposedEndDateIso,
+      requestedStartTime: normalizedProposedTime,
+      requestedDurationMinutes: normalizedDurationMinutes,
+      excludeRequestId: request.id,
+    });
+
+    if (conflict.conflict) {
+      await connection.rollback();
+      return res.status(409).json({
+        success: false,
+        message: 'The proposed schedule conflicts with another confirmed booking.'
+      });
+    }
+
+    const existingSchedule = normalizeRequestSchedule(request);
+
+    await connection.query(
+      `INSERT INTO service_request_reschedules (
+         service_request_id,
+         original_start_date,
+         original_end_date,
+         original_start_time,
+         proposed_start_date,
+         proposed_end_date,
+         proposed_start_time,
+         proposed_by,
+         reschedule_reason,
+         reschedule_status
+       )
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
+      [
+        request.id,
+        existingSchedule.startDate,
+        existingSchedule.endDate,
+        existingSchedule.startTime,
+        proposedStartDateIso,
+        proposedEndDateIso,
+        normalizedProposedTime,
+        actorId,
+        trimmedReason,
+      ]
+    );
+
+    const recipientId = actorId === request.client_id ? request.provider_id : request.client_id;
+    const actorName = actorId === request.client_id ? request.client_name : request.provider_name;
+
+    await connection.query(
+      `INSERT INTO notifications (user_id, type, title, message, related_request_id)
+       VALUES (?, 'discussion_requested', ?, ?, ?)`,
+      [
+        recipientId,
+        'Reschedule Proposed',
+        `${actorName} proposed a new schedule for "${request.job_title}".`,
+        request.id,
+      ]
+    );
+
+    await connection.commit();
+
+    return res.status(201).json({
+      success: true,
+      message: 'Reschedule proposal sent successfully.',
+    });
+  } catch (error) {
+    if (connection) {
+      await connection.rollback();
+    }
+
+    console.error('Propose reschedule error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to create reschedule proposal'
+    });
+  } finally {
+    if (connection) {
+      connection.release();
+    }
+  }
+};
+
+exports.respondToReschedule = async (req, res) => {
+  let connection;
+
+  try {
+    const { requestId, rescheduleId } = req.params;
+    const actorId = req.user.userId;
+    const { action } = req.body;
+
+    if (!['accepted', 'declined', 'cancelled'].includes(action)) {
+      return res.status(400).json({ success: false, message: 'Invalid reschedule action.' });
+    }
+
+    connection = await db.getConnection();
+    await connection.beginTransaction();
+
+    const [requests] = await connection.query(
+      `SELECT sr.*, provider.full_name AS provider_name, client.full_name AS client_name
+       FROM service_requests sr
+       JOIN users provider ON provider.id = sr.provider_id
+       JOIN users client ON client.id = sr.client_id
+       WHERE sr.id = ? AND (sr.client_id = ? OR sr.provider_id = ?)
+       FOR UPDATE`,
+      [requestId, actorId, actorId]
+    );
+
+    if (requests.length === 0) {
+      await connection.rollback();
+      return res.status(404).json({ success: false, message: 'Request not found' });
+    }
+
+    const request = requests[0];
+
+    const [reschedules] = await connection.query(
+      `SELECT *
+       FROM service_request_reschedules
+       WHERE id = ? AND service_request_id = ?
+       FOR UPDATE`,
+      [rescheduleId, requestId]
+    );
+
+    if (reschedules.length === 0) {
+      await connection.rollback();
+      return res.status(404).json({ success: false, message: 'Reschedule proposal not found' });
+    }
+
+    const proposal = reschedules[0];
+
+    if (proposal.reschedule_status !== 'pending') {
+      await connection.rollback();
+      return res.status(409).json({ success: false, message: 'Reschedule proposal is already resolved' });
+    }
+
+    if (proposal.proposed_by === actorId) {
+      await connection.rollback();
+      return res.status(403).json({ success: false, message: 'You cannot respond to your own proposal' });
+    }
+
+    if (action === 'accepted') {
+      const conflict = await checkScheduleConflict(connection, {
+        providerId: request.provider_id,
+        requestedStartDate: proposal.proposed_start_date,
+        requestedEndDate: proposal.proposed_end_date,
+        requestedStartTime: proposal.proposed_start_time,
+        requestedDurationMinutes: Number(request.estimated_duration_minutes || 0),
+        excludeRequestId: request.id,
+      });
+
+      if (conflict.conflict) {
+        await connection.rollback();
+        return res.status(409).json({
+          success: false,
+          message: 'The proposed schedule is no longer available.'
+        });
+      }
+
+      const durationDays = calculateDurationDays(proposal.proposed_start_date, proposal.proposed_end_date) || 1;
+      const dailyRateSnapshot = Number(request.daily_rate_snapshot || 0);
+      const estimatedTotal = dailyRateSnapshot * durationDays;
+
+      await connection.query(
+        `UPDATE service_requests
+         SET start_date = ?,
+             end_date = ?,
+             start_time = ?,
+             scheduled_date = ?,
+             scheduled_time = ?,
+             duration_days = ?,
+             estimated_total = ?
+         WHERE id = ?`,
+        [
+          proposal.proposed_start_date,
+          proposal.proposed_end_date,
+          proposal.proposed_start_time,
+          proposal.proposed_start_date,
+          proposal.proposed_start_time,
+          durationDays,
+          estimatedTotal,
+          request.id,
+        ]
+      );
+    }
+
+    await connection.query(
+      `UPDATE service_request_reschedules
+       SET reschedule_status = ?, responded_by = ?, responded_at = NOW()
+       WHERE id = ?`,
+      [action, actorId, proposal.id]
+    );
+
+    const proposerId = proposal.proposed_by;
+    const responderName = actorId === request.client_id ? request.client_name : request.provider_name;
+
+    await connection.query(
+      `INSERT INTO notifications (user_id, type, title, message, related_request_id)
+       VALUES (?, 'discussion_accepted', ?, ?, ?)`,
+      [
+        proposerId,
+        `Reschedule ${action}`,
+        `${responderName} ${action} the reschedule proposal for "${request.job_title}".`,
+        request.id,
+      ]
+    );
+
+    await connection.commit();
+
+    return res.json({
+      success: true,
+      message: `Reschedule proposal ${action} successfully.`
+    });
+  } catch (error) {
+    if (connection) {
+      await connection.rollback();
+    }
+
+    console.error('Respond reschedule error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to respond to reschedule proposal'
+    });
+  } finally {
+    if (connection) {
+      connection.release();
+    }
   }
 };
 
@@ -339,7 +1081,6 @@ exports.requestDiscussion = async (req, res) => {
     const { requestId } = req.params;
     const clientId = req.user.userId;
 
-    // Verify the request belongs to this client and is accepted
     const [requests] = await db.query(
       `SELECT sr.*, u.full_name as client_name, p.full_name as provider_name
        FROM service_requests sr
@@ -358,7 +1099,7 @@ exports.requestDiscussion = async (req, res) => {
 
     const request = requests[0];
 
-    if (request.status !== 'accepted' && request.status !== 'on_the_way' && request.status !== 'in_progress') {
+    if (!['accepted', 'on_the_way', 'in_progress'].includes(request.status)) {
       return res.status(400).json({
         success: false,
         message: 'Discussion can only be requested for accepted requests'
@@ -372,13 +1113,11 @@ exports.requestDiscussion = async (req, res) => {
       });
     }
 
-    // Update the request
     await db.query(
       'UPDATE service_requests SET discussion_requested = TRUE WHERE id = ?',
       [requestId]
     );
 
-    // Notify the provider
     await db.query(
       `INSERT INTO notifications (user_id, type, title, message, related_request_id)
        VALUES (?, 'discussion_requested', ?, ?, ?)`,
@@ -404,7 +1143,6 @@ exports.acceptDiscussion = async (req, res) => {
     const { requestId } = req.params;
     const providerId = req.user.userId;
 
-    // Verify the request and ownership
     const [requests] = await db.query(
       `SELECT sr.*, u.full_name as provider_name, c.full_name as client_name
        FROM service_requests sr
@@ -430,7 +1168,6 @@ exports.acceptDiscussion = async (req, res) => {
       });
     }
 
-    // Get provider phone first — block if not set
     const [providerData] = await db.query('SELECT phone FROM users WHERE id = ?', [providerId]);
     const providerPhone = providerData[0]?.phone;
 
@@ -442,13 +1179,11 @@ exports.acceptDiscussion = async (req, res) => {
       });
     }
 
-    // Update the request
     await db.query(
       'UPDATE service_requests SET discussion_accepted = TRUE, provider_phone_revealed = TRUE WHERE id = ?',
       [requestId]
     );
 
-    // Notify the client that discussion was accepted and phone is revealed
     await db.query(
       `INSERT INTO notifications (user_id, type, title, message, related_request_id)
        VALUES (?, 'discussion_accepted', ?, ?, ?)`,
@@ -485,7 +1220,7 @@ exports.getRequestById = async (req, res) => {
        JOIN service_profiles sp ON sr.service_profile_id = sp.id
        JOIN users u ON sr.provider_id = u.id
        JOIN users c ON sr.client_id = c.id
-       WHERE sr.id = ? AND (sr.client_id = ? OR sr.provider_id = ?)`,
+       WHERE sr.id = ? AND (sr.client_id = ? OR sr.provider_id = ?)` ,
       [requestId, userId, userId]
     );
 
@@ -497,15 +1232,22 @@ exports.getRequestById = async (req, res) => {
     }
 
     const request = requests[0];
-    
-    // Only include phone if discussion is accepted
+
     if (!request.discussion_accepted) {
       request.provider_phone = null;
     }
 
+    const [reschedules] = await db.query(
+      `SELECT id, proposed_start_date, proposed_end_date, proposed_start_time, proposed_by, reschedule_reason, reschedule_status, created_at, responded_at
+       FROM service_request_reschedules
+       WHERE service_request_id = ?
+       ORDER BY created_at DESC`,
+      [requestId]
+    );
+
     res.json({
       success: true,
-      data: { request }
+      data: { request, reschedules }
     });
   } catch (error) {
     console.error('Get request by ID error:', error);
@@ -523,7 +1265,6 @@ exports.createReview = async (req, res) => {
     const clientId = req.user.userId;
     const { rating, comment } = req.body;
 
-    // Validate rating (0.5 to 5 in steps of 0.5)
     if (!rating || rating < 0.5 || rating > 5 || (rating * 2) % 1 !== 0) {
       return res.status(400).json({
         success: false,
@@ -531,7 +1272,6 @@ exports.createReview = async (req, res) => {
       });
     }
 
-    // Get the request and verify ownership + completion
     const [requests] = await db.query(
       `SELECT sr.*, sp.id as profile_id, u.full_name as client_name
        FROM service_requests sr
@@ -557,7 +1297,6 @@ exports.createReview = async (req, res) => {
       });
     }
 
-    // Check if a review already exists for this request
     const [existingReview] = await db.query(
       'SELECT id FROM reviews WHERE service_request_id = ? AND client_id = ?',
       [requestId, clientId]
@@ -570,14 +1309,12 @@ exports.createReview = async (req, res) => {
       });
     }
 
-    // Create the review
     await db.query(
       `INSERT INTO reviews (service_profile_id, client_id, service_request_id, rating, comment)
        VALUES (?, ?, ?, ?, ?)`,
       [request.profile_id, clientId, requestId, rating, comment || null]
     );
 
-    // Update the service profile's average rating and review count
     const [ratingResult] = await db.query(
       `SELECT AVG(rating) as avg_rating, COUNT(*) as total_reviews 
        FROM reviews WHERE service_profile_id = ?`,
@@ -592,7 +1329,6 @@ exports.createReview = async (req, res) => {
       [avgRating, totalReviews, request.profile_id]
     );
 
-    // Notify the provider about the new review
     await db.query(
       `INSERT INTO notifications (user_id, type, title, message, related_request_id)
        VALUES (?, 'review_received', ?, ?, ?)`,
@@ -627,12 +1363,13 @@ exports.createReport = async (req, res) => {
       });
     }
 
-    // Verify this request is a valid interaction between reporter and reported user
     const [requests] = await db.query(
       `SELECT id, client_id, provider_id, job_title
        FROM service_requests
-       WHERE id = ?`,
-      [requestId]
+       WHERE id = ?
+         AND (client_id = ? OR provider_id = ?)
+       LIMIT 1`,
+      [requestId, reporterId, reporterId]
     );
 
     if (requests.length === 0) {

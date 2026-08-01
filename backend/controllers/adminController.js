@@ -549,3 +549,158 @@ exports.updateReportStatus = async (req, res) => {
     });
   }
 };
+
+exports.getProviderCredentials = async (req, res) => {
+  try {
+    const [rows] = await db.query(
+      `SELECT pc.id, pc.service_profile_id, pc.credential_name, pc.credential_type,
+              pc.issuing_organization, pc.credential_id, pc.issue_date, pc.expiration_date,
+              pc.does_not_expire, pc.credential_url, pc.related_skills,
+              pc.document_url, pc.document_data, pc.document_mime,
+              pc.verification_status, pc.verification_notes, pc.created_at, pc.updated_at,
+              pc.reviewed_by, pc.reviewed_at,
+              sp.full_name AS provider_profile_name,
+              u.id AS provider_user_id,
+              u.full_name AS provider_user_name,
+              reviewer.full_name AS reviewer_name
+       FROM provider_credentials pc
+       JOIN service_profiles sp ON sp.id = pc.service_profile_id
+       JOIN users u ON u.id = sp.user_id
+       LEFT JOIN users reviewer ON reviewer.id = pc.reviewed_by
+       ORDER BY
+         CASE pc.verification_status
+           WHEN 'pending' THEN 1
+           WHEN 'unverified' THEN 2
+           WHEN 'rejected' THEN 3
+           WHEN 'verified' THEN 4
+           WHEN 'expired' THEN 5
+           ELSE 6
+         END,
+         pc.created_at DESC`
+    );
+
+    const credentials = rows.map((row) => ({
+      id: row.id,
+      serviceProfileId: row.service_profile_id,
+      provider: {
+        userId: row.provider_user_id,
+        name: row.provider_user_name,
+        profileName: row.provider_profile_name,
+      },
+      credentialName: row.credential_name,
+      credentialType: row.credential_type,
+      issuingOrganization: row.issuing_organization,
+      credentialId: row.credential_id,
+      issueDate: row.issue_date,
+      expirationDate: row.expiration_date,
+      doesNotExpire: Boolean(row.does_not_expire),
+      credentialUrl: row.credential_url,
+      relatedSkills: (() => {
+        try {
+          return row.related_skills ? JSON.parse(row.related_skills) : [];
+        } catch {
+          return [];
+        }
+      })(),
+      verificationStatus: row.verification_status,
+      verificationNotes: row.verification_notes,
+      reviewedBy: row.reviewed_by,
+      reviewerName: row.reviewer_name,
+      reviewedAt: row.reviewed_at,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+      document: row.document_url
+        ? row.document_url
+        : (row.document_data
+          ? `data:${row.document_mime || 'application/octet-stream'};base64,${Buffer.from(row.document_data).toString('base64')}`
+          : null),
+    }));
+
+    return res.json({
+      success: true,
+      data: credentials,
+    });
+  } catch (error) {
+    console.error('Error fetching provider credentials:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch provider credentials',
+    });
+  }
+};
+
+exports.reviewProviderCredential = async (req, res) => {
+  try {
+    const credentialId = Number(req.params.id);
+    const adminId = req.user.userId;
+    const { action, reason } = req.body;
+
+    if (!credentialId) {
+      return res.status(400).json({ success: false, message: 'Invalid credential id' });
+    }
+
+    if (!['approve', 'reject', 'expire'].includes(action)) {
+      return res.status(400).json({ success: false, message: 'Invalid review action' });
+    }
+
+    const reviewReason = String(reason || '').trim();
+    if (action === 'reject' && !reviewReason) {
+      return res.status(400).json({ success: false, message: 'Rejection reason is required' });
+    }
+
+    const [rows] = await db.query(
+      `SELECT pc.id, pc.verification_status, sp.user_id AS provider_user_id, pc.credential_name
+       FROM provider_credentials pc
+       JOIN service_profiles sp ON sp.id = pc.service_profile_id
+       WHERE pc.id = ?
+       LIMIT 1`,
+      [credentialId]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Credential not found' });
+    }
+
+    let nextStatus = 'verified';
+    if (action === 'reject') nextStatus = 'rejected';
+    if (action === 'expire') nextStatus = 'expired';
+
+    await db.query(
+      `UPDATE provider_credentials
+       SET verification_status = ?, verification_notes = ?, reviewed_by = ?, reviewed_at = NOW()
+       WHERE id = ?`,
+      [nextStatus, reviewReason || null, adminId, credentialId]
+    );
+
+    const notificationType = action === 'approve'
+      ? 'verification_approved'
+      : 'verification_rejected';
+    const notificationTitle = action === 'approve'
+      ? 'Credential Approved'
+      : action === 'reject'
+        ? 'Credential Rejected'
+        : 'Credential Expired';
+    const notificationMessage = action === 'approve'
+      ? `Your credential "${rows[0].credential_name}" has been verified.`
+      : action === 'reject'
+        ? `Your credential "${rows[0].credential_name}" was rejected. Reason: ${reviewReason}`
+        : `Your credential "${rows[0].credential_name}" is now marked as expired.`;
+
+    await db.query(
+      `INSERT INTO notifications (user_id, type, title, message, related_request_id)
+       VALUES (?, ?, ?, ?, NULL)`,
+      [rows[0].provider_user_id, notificationType, notificationTitle, notificationMessage]
+    );
+
+    return res.json({
+      success: true,
+      message: `Credential ${nextStatus} successfully`
+    });
+  } catch (error) {
+    console.error('Error reviewing provider credential:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to review credential'
+    });
+  }
+};

@@ -34,6 +34,12 @@ router.get('/reports', adminController.getReports);
 // PATCH /api/admin/reports/:id - Update report moderation status
 router.patch('/reports/:id', adminController.updateReportStatus);
 
+// GET /api/admin/provider-credentials - List provider credentials for review
+router.get('/provider-credentials', adminController.getProviderCredentials);
+
+// PATCH /api/admin/provider-credentials/:id - Approve/reject/expire a provider credential
+router.patch('/provider-credentials/:id', adminController.reviewProviderCredential);
+
 // DELETE /api/admin/users/:id - Delete user
 router.delete('/users/:id', adminController.deleteUser);
 

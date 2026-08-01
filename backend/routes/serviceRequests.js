@@ -1,12 +1,15 @@
 const express = require('express');
 const multer = require('multer');
 const router = express.Router();
-const { authenticateToken } = require('../middleware/auth');
+const { authenticateToken, requireUserType } = require('../middleware/auth');
+const { validateSingleUpload } = require('../middleware/uploadValidation');
 const {
   createRequest,
   getClientRequests,
   getProviderRequests,
   updateRequestStatus,
+  proposeReschedule,
+  respondToReschedule,
   requestDiscussion,
   acceptDiscussion,
   getRequestById,
@@ -30,13 +33,13 @@ const upload = multer({
 router.use(authenticateToken);
 
 // Create a new service request (client)
-router.post('/create', createRequest);
+router.post('/create', requireUserType('client'), createRequest);
 
 // Get requests for client (sent requests)
-router.get('/client', getClientRequests);
+router.get('/client', requireUserType('client'), getClientRequests);
 
 // Get requests for provider (received requests)
-router.get('/provider', getProviderRequests);
+router.get('/provider', requireUserType('tradesperson'), getProviderRequests);
 
 // Get single request by ID
 router.get('/:requestId', getRequestById);
@@ -44,16 +47,25 @@ router.get('/:requestId', getRequestById);
 // Update request status (accept/decline/on_the_way/complete)
 router.patch('/:requestId/status', updateRequestStatus);
 
+// Reschedule workflow
+router.post('/:requestId/reschedules', proposeReschedule);
+router.patch('/:requestId/reschedules/:rescheduleId/respond', respondToReschedule);
+
 // Request discussion (client)
-router.post('/:requestId/request-discussion', requestDiscussion);
+router.post('/:requestId/request-discussion', requireUserType('client'), requestDiscussion);
 
 // Accept discussion (provider)
-router.post('/:requestId/accept-discussion', acceptDiscussion);
+router.post('/:requestId/accept-discussion', requireUserType('tradesperson'), acceptDiscussion);
 
 // Create a review for a completed request (client)
-router.post('/:requestId/review', createReview);
+router.post('/:requestId/review', requireUserType('client'), createReview);
 
 // Report the other party in a request (requires existing request interaction)
-router.post('/:requestId/report', upload.single('screenshot'), createReport);
+router.post(
+  '/:requestId/report',
+  upload.single('screenshot'),
+  validateSingleUpload({ allowedKinds: ['image'], required: false, fieldName: 'screenshot' }),
+  createReport
+);
 
 module.exports = router;

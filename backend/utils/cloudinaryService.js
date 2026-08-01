@@ -21,7 +21,7 @@ const ensureCloudinaryConfigured = () => {
   return true;
 };
 
-const uploadImageBuffer = async ({ buffer, mimeType, folder }) => {
+const uploadImageBuffer = async ({ buffer, mimeType, folder, resourceType = 'image' }) => {
   if (!buffer || !mimeType) {
     throw new Error('Image buffer and mime type are required for upload');
   }
@@ -34,17 +34,17 @@ const uploadImageBuffer = async ({ buffer, mimeType, folder }) => {
 
   return cloudinary.uploader.upload(dataUri, {
     folder,
-    resource_type: 'image',
+    resource_type: resourceType,
   });
 };
 
-const deleteImageByPublicId = async (publicId) => {
+const deleteImageByPublicId = async (publicId, resourceType = 'image') => {
   if (!publicId || !ensureCloudinaryConfigured()) {
     return;
   }
 
   try {
-    await cloudinary.uploader.destroy(publicId, { resource_type: 'image' });
+    await cloudinary.uploader.destroy(publicId, { resource_type: resourceType });
   } catch (error) {
     console.warn('Failed to delete Cloudinary asset:', error.message);
   }

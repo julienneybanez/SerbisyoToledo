@@ -1,6 +1,22 @@
 import './RequestDetailsModal.css';
 
-export default function RequestDetailsModal({ request, isProvider, onClose, onStatusUpdate, onRequestDiscussion, onAcceptDiscussion, onOpenReview, onOpenDecline, onOpenReport, actionLoading }) {
+export default function RequestDetailsModal({
+  request,
+  isProvider,
+  currentUserId,
+  detailsLoading,
+  onClose,
+  onStatusUpdate,
+  onRequestDiscussion,
+  onAcceptDiscussion,
+  onOpenReview,
+  onOpenDecline,
+  onOpenCancel,
+  onOpenReschedule,
+  onRespondReschedule,
+  onOpenReport,
+  actionLoading,
+}) {
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       weekday: 'long',
@@ -9,6 +25,23 @@ export default function RequestDetailsModal({ request, isProvider, onClose, onSt
       year: 'numeric',
     });
   };
+
+  const formatDateSafe = (value) => {
+    if (!value) return '-';
+    return formatDate(value);
+  };
+
+  const formatReason = (value) => {
+    if (!value) return '-';
+    return String(value).replaceAll('_', ' ').replace(/\b\w/g, (l) => l.toUpperCase());
+  };
+
+  const requestStartDate = request.start_date || request.scheduled_date;
+  const requestEndDate = request.end_date || request.scheduled_date;
+  const requestStartTime = request.start_time || request.scheduled_time;
+  const isMultiDay = Boolean(requestEndDate && requestStartDate && requestEndDate !== requestStartDate);
+
+  const reschedules = Array.isArray(request.reschedules) ? request.reschedules : [];
 
   const formatStatus = (status) => {
     return status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
@@ -99,12 +132,24 @@ export default function RequestDetailsModal({ request, isProvider, onClose, onSt
             <div className="detail-card-body">
               <div className="info-row">
                 <span className="info-label">Date</span>
-                <span className="info-value">{formatDate(request.scheduled_date)}</span>
+                <span className="info-value">{formatDateSafe(requestStartDate)}</span>
               </div>
+              {isMultiDay && (
+                <div className="info-row">
+                  <span className="info-label">End Date</span>
+                  <span className="info-value">{formatDateSafe(requestEndDate)}</span>
+                </div>
+              )}
               <div className="info-row">
                 <span className="info-label">Time</span>
-                <span className="info-value">{request.scheduled_time}</span>
+                <span className="info-value">{requestStartTime || '-'}</span>
               </div>
+              {request.estimated_total != null && (
+                <div className="info-row">
+                  <span className="info-label">Estimated Total</span>
+                  <span className="info-value">₱{Number(request.estimated_total).toLocaleString()}</span>
+                </div>
+              )}
               <div className="info-row">
                 <span className="info-label">Request Created</span>
                 <span className="info-value">{formatDate(request.created_at)}</span>
@@ -136,6 +181,84 @@ export default function RequestDetailsModal({ request, isProvider, onClose, onSt
               </div>
             </div>
           )}
+
+          {request.status === 'cancelled' && request.cancellation_reason && (
+            <div className="detail-card full-width decline-reason-card">
+              <div className="detail-card-header">
+                <i className="bi bi-exclamation-circle"></i>
+                <h3>Reason for cancellation</h3>
+              </div>
+              <div className="detail-card-body">
+                <p className="job-details-text">{request.cancellation_reason_other || formatReason(request.cancellation_reason)}</p>
+              </div>
+            </div>
+          )}
+
+          <div className="detail-card full-width">
+            <div className="detail-card-header">
+              <i className="bi bi-arrow-repeat"></i>
+              <h3>Reschedule History</h3>
+            </div>
+            <div className="detail-card-body">
+              {detailsLoading ? (
+                <p className="job-details-text">Loading schedule history...</p>
+              ) : reschedules.length === 0 ? (
+                <p className="job-details-text">No reschedule proposals yet.</p>
+              ) : (
+                <div className="reschedule-list">
+                  {reschedules.map((item) => {
+                    const isPending = item.reschedule_status === 'pending';
+                    const actorCanRespond = isPending && currentUserId && Number(item.proposed_by) !== Number(currentUserId);
+
+                    return (
+                      <div className="reschedule-item" key={item.id}>
+                        <div className="info-row">
+                          <span className="info-label">Proposed Date</span>
+                          <span className="info-value">
+                            {formatDateSafe(item.proposed_start_date)}
+                            {item.proposed_end_date && item.proposed_end_date !== item.proposed_start_date
+                              ? ` to ${formatDateSafe(item.proposed_end_date)}`
+                              : ''}
+                          </span>
+                        </div>
+                        <div className="info-row">
+                          <span className="info-label">Proposed Time</span>
+                          <span className="info-value">{item.proposed_start_time || '-'}</span>
+                        </div>
+                        <div className="info-row">
+                          <span className="info-label">Reason</span>
+                          <span className="info-value">{item.reschedule_reason || '-'}</span>
+                        </div>
+                        <div className="info-row">
+                          <span className="info-label">Status</span>
+                          <span className="info-value">{formatReason(item.reschedule_status)}</span>
+                        </div>
+
+                        {actorCanRespond && (
+                          <div className="reschedule-actions">
+                            <button
+                              className="action-btn btn-accept"
+                              onClick={() => onRespondReschedule && onRespondReschedule(request.id, item.id, 'accepted')}
+                              disabled={actionLoading === request.id}
+                            >
+                              Accept Proposal
+                            </button>
+                            <button
+                              className="action-btn btn-decline"
+                              onClick={() => onRespondReschedule && onRespondReschedule(request.id, item.id, 'declined')}
+                              disabled={actionLoading === request.id}
+                            >
+                              Decline Proposal
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
 
           {/* Client Address (if available) */}
           {request.client_address && (
@@ -316,6 +439,26 @@ export default function RequestDetailsModal({ request, isProvider, onClose, onSt
             <span className="review-submitted-badge">
               <i className="bi bi-star-fill"></i> Review Submitted
             </span>
+          )}
+
+          {!isProvider && request.status === 'pending' && (
+            <button
+              className="action-btn btn-cancel"
+              onClick={() => onOpenCancel && onOpenCancel(request)}
+              disabled={actionLoading === request.id}
+            >
+              Cancel Request
+            </button>
+          )}
+
+          {['accepted', 'on_the_way', 'in_progress'].includes(request.status) && (
+            <button
+              className="action-btn btn-on-way"
+              onClick={() => onOpenReschedule && onOpenReschedule(request)}
+              disabled={actionLoading === request.id}
+            >
+              Propose Reschedule
+            </button>
           )}
         </div>
 

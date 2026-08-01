@@ -1,14 +1,53 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getUser, userProfileAPI } from '../services/api';
+import { getUser, userProfileAPI, serviceProfileAPI } from '../services/api';
 import ThemeToggle from '../components/common/ThemeToggle';
 import '../styles/UserSettings.css';
+
+const LANGUAGE_OPTIONS = [
+  { value: 'ceb', label: 'Cebuano' },
+  { value: 'en', label: 'English' },
+  { value: 'fil', label: 'Filipino' },
+];
+
+const WEEK_DAYS = [
+  { key: 1, label: 'Monday' },
+  { key: 2, label: 'Tuesday' },
+  { key: 3, label: 'Wednesday' },
+  { key: 4, label: 'Thursday' },
+  { key: 5, label: 'Friday' },
+  { key: 6, label: 'Saturday' },
+  { key: 0, label: 'Sunday' },
+];
 
 function ServiceProviderSettings() {
   const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState('account');
   const [isSaving, setIsSaving] = useState(false);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
+  const [availabilityLoading, setAvailabilityLoading] = useState(true);
+  const [languageSaving, setLanguageSaving] = useState(false);
+  const [credentialLoading, setCredentialLoading] = useState(true);
+  const [credentials, setCredentials] = useState([]);
+  const [selectedLanguages, setSelectedLanguages] = useState([]);
+  const [availabilitySettings, setAvailabilitySettings] = useState({
+    allowSameDayBooking: false,
+    minAdvanceNoticeMinutes: 720,
+    maxAdvanceBookingDays: 60,
+  });
+  const [weeklyBlocks, setWeeklyBlocks] = useState([]);
+  const [newCredential, setNewCredential] = useState({
+    credentialName: '',
+    credentialType: '',
+    issuingOrganization: '',
+    credentialId: '',
+    issueDate: '',
+    expirationDate: '',
+    doesNotExpire: false,
+    credentialUrl: '',
+  });
+  const [credentialFile, setCredentialFile] = useState(null);
+  const [credentialSaving, setCredentialSaving] = useState(false);
   
   const [settings, setSettings] = useState({
     fullName: '',
@@ -67,6 +106,53 @@ function ServiceProviderSettings() {
     loadProfile();
   }, [navigate]);
 
+  useEffect(() => {
+    const loadStageOneData = async () => {
+      try {
+        setAvailabilityLoading(true);
+        setCredentialLoading(true);
+
+        const [availabilityResponse, languagesResponse, credentialsResponse] = await Promise.all([
+          serviceProfileAPI.getMyAvailability(),
+          serviceProfileAPI.getMyLanguages(),
+          serviceProfileAPI.getMyCredentials(),
+        ]);
+
+        if (availabilityResponse.success && availabilityResponse.data) {
+          const s = availabilityResponse.data.settings || {};
+          setAvailabilitySettings({
+            allowSameDayBooking: Boolean(s.allow_same_day_booking ?? s.allowSameDayBooking),
+            minAdvanceNoticeMinutes: Number(s.min_advance_notice_minutes ?? s.minAdvanceNoticeMinutes ?? 720),
+            maxAdvanceBookingDays: Number(s.max_advance_booking_days ?? s.maxAdvanceBookingDays ?? 60),
+          });
+
+          const blocks = Array.isArray(availabilityResponse.data.weeklyBlocks) ? availabilityResponse.data.weeklyBlocks : [];
+          setWeeklyBlocks(blocks.map((b) => ({
+            dayOfWeek: Number(b.day_of_week ?? b.dayOfWeek),
+            startTime: String(b.start_time ?? b.startTime ?? '').slice(0, 5),
+            endTime: String(b.end_time ?? b.endTime ?? '').slice(0, 5),
+            isAvailable: b.is_available !== false,
+          })));
+        }
+
+        if (languagesResponse.success) {
+          setSelectedLanguages(languagesResponse.data?.languages || []);
+        }
+
+        if (credentialsResponse.success) {
+          setCredentials(credentialsResponse.data?.credentials || []);
+        }
+      } catch (err) {
+        console.error('Failed to load provider settings extensions:', err);
+      } finally {
+        setAvailabilityLoading(false);
+        setCredentialLoading(false);
+      }
+    };
+
+    loadStageOneData();
+  }, []);
+
   const handleChange = (key, value) => {
     setSettings(prev => ({ ...prev, [key]: value }));
   };
@@ -87,6 +173,116 @@ function ServiceProviderSettings() {
       alert(err.message || 'Failed to save settings');
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleAvailabilitySave = async () => {
+    try {
+      setIsSaving(true);
+      await serviceProfileAPI.saveMyAvailability({
+        settings: availabilitySettings,
+        weeklyBlocks,
+      });
+      alert('Availability updated successfully.');
+    } catch (err) {
+      alert(err.message || 'Failed to save availability settings');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleLanguageToggle = (code) => {
+    setSelectedLanguages((prev) => (
+      prev.includes(code) ? prev.filter((item) => item !== code) : [...prev, code]
+    ));
+  };
+
+  const handleSaveLanguages = async () => {
+    try {
+      setLanguageSaving(true);
+      await serviceProfileAPI.updateMyLanguages(selectedLanguages);
+      alert('Languages updated successfully.');
+    } catch (err) {
+      alert(err.message || 'Failed to update languages');
+    } finally {
+      setLanguageSaving(false);
+    }
+  };
+
+  const addWeekDayBlock = (dayOfWeek) => {
+    setWeeklyBlocks((prev) => ([
+      ...prev,
+      { dayOfWeek, startTime: '09:00', endTime: '17:00', isAvailable: true },
+    ]));
+  };
+
+  const updateWeekDayBlock = (index, key, value) => {
+    setWeeklyBlocks((prev) => prev.map((block, i) => (i === index ? { ...block, [key]: value } : block)));
+  };
+
+  const removeWeekDayBlock = (index) => {
+    setWeeklyBlocks((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleCreateCredential = async () => {
+    if (!newCredential.credentialName.trim() || !newCredential.credentialType.trim()) {
+      alert('Credential name and type are required.');
+      return;
+    }
+
+    try {
+      setCredentialSaving(true);
+      const formData = new FormData();
+      formData.append('credentialName', newCredential.credentialName.trim());
+      formData.append('credentialType', newCredential.credentialType.trim());
+      formData.append('issuingOrganization', newCredential.issuingOrganization.trim());
+      formData.append('credentialId', newCredential.credentialId.trim());
+      formData.append('issueDate', newCredential.issueDate || '');
+      formData.append('expirationDate', newCredential.expirationDate || '');
+      formData.append('doesNotExpire', String(newCredential.doesNotExpire));
+      formData.append('credentialUrl', newCredential.credentialUrl.trim());
+      if (credentialFile) {
+        formData.append('document', credentialFile);
+      }
+
+      await serviceProfileAPI.createCredential(formData);
+      const updated = await serviceProfileAPI.getMyCredentials();
+      if (updated.success) {
+        setCredentials(updated.data?.credentials || []);
+      }
+
+      setNewCredential({
+        credentialName: '',
+        credentialType: '',
+        issuingOrganization: '',
+        credentialId: '',
+        issueDate: '',
+        expirationDate: '',
+        doesNotExpire: false,
+        credentialUrl: '',
+      });
+      setCredentialFile(null);
+      alert('Credential saved successfully. Submit it for review when ready.');
+    } catch (err) {
+      alert(err.message || 'Failed to create credential');
+    } finally {
+      setCredentialSaving(false);
+    }
+  };
+
+  const handleSubmitCredential = async (credentialId) => {
+    try {
+      setCredentialSaving(true);
+      await serviceProfileAPI.submitCredentialForReview(credentialId);
+      const updated = await serviceProfileAPI.getMyCredentials();
+      if (updated.success) {
+        setCredentials(updated.data?.credentials || []);
+      }
+      alert('Credential submitted for review.');
+    } catch (err) {
+      alert(err.message || 'Failed to submit credential');
+    } finally {
+      setCredentialSaving(false);
     }
   };
 
@@ -341,6 +537,256 @@ function ServiceProviderSettings() {
                     <span className="slider"></span>
                   </label>
                 </div>
+              </div>
+
+              <div className="settings-section-divider"></div>
+              <h3 className="settings-subsection-title">Booking Configuration</h3>
+
+              <div className="settings-group">
+                <label className="settings-label">Allow same-day booking</label>
+                <label className="switch">
+                  <input
+                    type="checkbox"
+                    checked={availabilitySettings.allowSameDayBooking}
+                    onChange={(e) => setAvailabilitySettings((prev) => ({ ...prev, allowSameDayBooking: e.target.checked }))}
+                    disabled={availabilityLoading || isSaving}
+                  />
+                  <span className="slider"></span>
+                </label>
+              </div>
+
+              <div className="settings-group">
+                <label className="settings-label">Minimum advance notice (minutes)</label>
+                <input
+                  type="number"
+                  className="settings-input"
+                  value={availabilitySettings.minAdvanceNoticeMinutes}
+                  onChange={(e) => setAvailabilitySettings((prev) => ({ ...prev, minAdvanceNoticeMinutes: Number(e.target.value || 0) }))}
+                  min="0"
+                  max="20160"
+                  disabled={availabilityLoading || isSaving}
+                />
+              </div>
+
+              <div className="settings-group">
+                <label className="settings-label">Maximum advance booking days</label>
+                <input
+                  type="number"
+                  className="settings-input"
+                  value={availabilitySettings.maxAdvanceBookingDays}
+                  onChange={(e) => setAvailabilitySettings((prev) => ({ ...prev, maxAdvanceBookingDays: Number(e.target.value || 1) }))}
+                  min="1"
+                  max="365"
+                  disabled={availabilityLoading || isSaving}
+                />
+              </div>
+
+              <div className="settings-section-divider"></div>
+              <h3 className="settings-subsection-title">Weekly Availability Blocks</h3>
+
+              <div className="settings-group">
+                {WEEK_DAYS.map((day) => (
+                  <button
+                    key={day.key}
+                    type="button"
+                    className="btn-cancel"
+                    style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}
+                    onClick={() => addWeekDayBlock(day.key)}
+                    disabled={availabilityLoading || isSaving}
+                  >
+                    Add {day.label}
+                  </button>
+                ))}
+              </div>
+
+              {weeklyBlocks.length === 0 && (
+                <small className="settings-help">No weekly availability blocks yet.</small>
+              )}
+
+              {weeklyBlocks.map((block, index) => (
+                <div key={`${block.dayOfWeek}-${index}`} className="settings-group" style={{ border: '1px solid #e5e7eb', borderRadius: '10px', padding: '0.75rem' }}>
+                  <label className="settings-label">Day</label>
+                  <select
+                    className="settings-select"
+                    value={block.dayOfWeek}
+                    onChange={(e) => updateWeekDayBlock(index, 'dayOfWeek', Number(e.target.value))}
+                    disabled={availabilityLoading || isSaving}
+                  >
+                    {WEEK_DAYS.map((day) => (
+                      <option key={day.key} value={day.key}>{day.label}</option>
+                    ))}
+                  </select>
+
+                  <label className="settings-label">Start time</label>
+                  <input
+                    type="time"
+                    className="settings-input"
+                    value={block.startTime}
+                    onChange={(e) => updateWeekDayBlock(index, 'startTime', e.target.value)}
+                    disabled={availabilityLoading || isSaving}
+                  />
+
+                  <label className="settings-label">End time</label>
+                  <input
+                    type="time"
+                    className="settings-input"
+                    value={block.endTime}
+                    onChange={(e) => updateWeekDayBlock(index, 'endTime', e.target.value)}
+                    disabled={availabilityLoading || isSaving}
+                  />
+
+                  <button type="button" className="btn-cancel" onClick={() => removeWeekDayBlock(index)} disabled={availabilityLoading || isSaving}>
+                    Remove Block
+                  </button>
+                </div>
+              ))}
+
+              <div className="settings-actions" style={{ paddingLeft: 0, paddingRight: 0 }}>
+                <button className="btn-save" onClick={handleAvailabilitySave} disabled={availabilityLoading || isSaving}>
+                  {isSaving ? 'Saving...' : 'Save Availability'}
+                </button>
+              </div>
+
+              <div className="settings-section-divider"></div>
+              <h3 className="settings-subsection-title">Languages</h3>
+
+              <div className="settings-group">
+                {LANGUAGE_OPTIONS.map((option) => (
+                  <label key={option.value} className="settings-help" style={{ display: 'block', marginBottom: '0.35rem' }}>
+                    <input
+                      type="checkbox"
+                      checked={selectedLanguages.includes(option.value)}
+                      onChange={() => handleLanguageToggle(option.value)}
+                      disabled={languageSaving}
+                      style={{ marginRight: '0.45rem' }}
+                    />
+                    {option.label}
+                  </label>
+                ))}
+              </div>
+
+              <div className="settings-actions" style={{ paddingLeft: 0, paddingRight: 0 }}>
+                <button className="btn-save" onClick={handleSaveLanguages} disabled={languageSaving}>
+                  {languageSaving ? 'Saving...' : 'Save Languages'}
+                </button>
+              </div>
+
+              <div className="settings-section-divider"></div>
+              <h3 className="settings-subsection-title">Credentials and Certificates</h3>
+
+              <div className="settings-group">
+                <label className="settings-label">Credential name</label>
+                <input
+                  type="text"
+                  className="settings-input"
+                  value={newCredential.credentialName}
+                  onChange={(e) => setNewCredential((prev) => ({ ...prev, credentialName: e.target.value }))}
+                  disabled={credentialSaving}
+                />
+
+                <label className="settings-label">Credential type</label>
+                <input
+                  type="text"
+                  className="settings-input"
+                  value={newCredential.credentialType}
+                  onChange={(e) => setNewCredential((prev) => ({ ...prev, credentialType: e.target.value }))}
+                  disabled={credentialSaving}
+                />
+
+                <label className="settings-label">Issuing organization</label>
+                <input
+                  type="text"
+                  className="settings-input"
+                  value={newCredential.issuingOrganization}
+                  onChange={(e) => setNewCredential((prev) => ({ ...prev, issuingOrganization: e.target.value }))}
+                  disabled={credentialSaving}
+                />
+
+                <label className="settings-label">Credential ID</label>
+                <input
+                  type="text"
+                  className="settings-input"
+                  value={newCredential.credentialId}
+                  onChange={(e) => setNewCredential((prev) => ({ ...prev, credentialId: e.target.value }))}
+                  disabled={credentialSaving}
+                />
+
+                <label className="settings-label">Issue date</label>
+                <input
+                  type="date"
+                  className="settings-input"
+                  value={newCredential.issueDate}
+                  onChange={(e) => setNewCredential((prev) => ({ ...prev, issueDate: e.target.value }))}
+                  disabled={credentialSaving}
+                />
+
+                <label className="settings-label">Expiration date</label>
+                <input
+                  type="date"
+                  className="settings-input"
+                  value={newCredential.expirationDate}
+                  onChange={(e) => setNewCredential((prev) => ({ ...prev, expirationDate: e.target.value }))}
+                  disabled={credentialSaving || newCredential.doesNotExpire}
+                />
+
+                <label className="settings-help" style={{ display: 'block' }}>
+                  <input
+                    type="checkbox"
+                    checked={newCredential.doesNotExpire}
+                    onChange={(e) => setNewCredential((prev) => ({ ...prev, doesNotExpire: e.target.checked }))}
+                    disabled={credentialSaving}
+                    style={{ marginRight: '0.45rem' }}
+                  />
+                  This credential does not expire
+                </label>
+
+                <label className="settings-label">Credential URL</label>
+                <input
+                  type="url"
+                  className="settings-input"
+                  value={newCredential.credentialUrl}
+                  onChange={(e) => setNewCredential((prev) => ({ ...prev, credentialUrl: e.target.value }))}
+                  disabled={credentialSaving}
+                />
+
+                <label className="settings-label">Document (PDF/JPG/PNG)</label>
+                <input
+                  type="file"
+                  className="settings-input"
+                  accept=".pdf,.jpg,.jpeg,.png,.webp"
+                  onChange={(e) => setCredentialFile(e.target.files?.[0] || null)}
+                  disabled={credentialSaving}
+                />
+              </div>
+
+              <div className="settings-actions" style={{ paddingLeft: 0, paddingRight: 0 }}>
+                <button className="btn-save" onClick={handleCreateCredential} disabled={credentialSaving}>
+                  {credentialSaving ? 'Saving...' : 'Add Credential'}
+                </button>
+              </div>
+
+              <div className="settings-group">
+                <h4 className="settings-subsection-title" style={{ marginBottom: '0.5rem' }}>Saved Credentials</h4>
+                {credentialLoading && <small className="settings-help">Loading credentials...</small>}
+                {!credentialLoading && credentials.length === 0 && <small className="settings-help">No credentials yet.</small>}
+                {credentials.map((credential) => (
+                  <div key={credential.id} style={{ border: '1px solid #e5e7eb', borderRadius: '10px', padding: '0.75rem', marginBottom: '0.6rem' }}>
+                    <p style={{ margin: 0, fontWeight: 600 }}>{credential.credential_name}</p>
+                    <small className="settings-help">{credential.credential_type} • {credential.verification_status}</small>
+                    {credential.verification_notes && <p style={{ marginTop: '0.35rem' }}>{credential.verification_notes}</p>}
+                    <div style={{ marginTop: '0.5rem' }}>
+                      <button
+                        type="button"
+                        className="btn-save"
+                        onClick={() => handleSubmitCredential(credential.id)}
+                        disabled={credentialSaving || credential.verification_status === 'pending'}
+                        style={{ minHeight: '40px' }}
+                      >
+                        {credential.verification_status === 'pending' ? 'Pending Review' : 'Submit for Review'}
+                      </button>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           )}
