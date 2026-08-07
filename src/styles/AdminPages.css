@@ -1036,13 +1036,13 @@
 }
 
 .action-btn {
-  width: 32px;
-  height: 32px;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
   border: none;
-  border-radius: 6px;
+  border-radius: var(--radius-control);
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -1088,10 +1088,11 @@
 }
 
 .pagination-btn {
+  min-height: 40px;
   padding: 0.5rem 1rem;
   background: transparent;
   border: 1px solid #e2e8f0;
-  border-radius: 6px;
+  border-radius: var(--radius-control);
   font-size: 0.875rem;
   color: #475569;
   cursor: pointer;
@@ -1114,14 +1115,14 @@
 }
 
 .pagination-page {
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
   border: none;
   background: transparent;
-  border-radius: 6px;
+  border-radius: var(--radius-control);
   font-size: 0.875rem;
   color: #475569;
   cursor: pointer;
@@ -1281,7 +1282,8 @@
   max-width: 400px;
   padding: 0.75rem 1rem;
   border: 1px solid var(--admin-border);
-  border-radius: 8px;
+  border-radius: var(--radius-input);
+  min-height: var(--control-height);
   font-size: 0.9rem;
   color: var(--admin-text);
   background: var(--admin-surface);
@@ -1298,7 +1300,7 @@
   max-width: 500px;
   padding: 0.75rem 1rem;
   border: 1px solid var(--admin-border);
-  border-radius: 8px;
+  border-radius: var(--radius-input);
   font-size: 0.9rem;
   color: var(--admin-text);
   background: var(--admin-surface);
@@ -1520,12 +1522,13 @@ input:checked + .slider:before {
 }
 
 .btn-save {
-  padding: 0.75rem 2rem;
+  min-height: var(--control-height);
+  padding: 0.7rem 1.2rem;
   background: #4A9FF5;
   color: white;
   border: none;
-  border-radius: 8px;
-  font-weight: 500;
+  border-radius: var(--radius-control);
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -1535,12 +1538,13 @@ input:checked + .slider:before {
 }
 
 .admin-page .btn-cancel {
-  padding: 0.75rem 2rem;
+  min-height: var(--control-height);
+  padding: 0.7rem 1.2rem;
   background: transparent;
   color: var(--admin-muted);
   border: 1px solid var(--admin-border);
-  border-radius: 8px;
-  font-weight: 500;
+  border-radius: var(--radius-control);
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
 }

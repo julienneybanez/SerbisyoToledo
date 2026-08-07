@@ -430,8 +430,7 @@ function Navbar() {
             ) : (
               <div className="auth-block logged-out-block">
                 <select
-                  className="form-select form-select-sm"
-                  style={{ width: '88px' }}
+                  className="form-select navbar-language-select"
                   value={language}
                   onChange={(event) => setLanguage(event.target.value)}
                   aria-label={t('language')}

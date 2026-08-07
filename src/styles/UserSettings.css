@@ -326,12 +326,13 @@
 }
 
 .btn-secondary {
+  min-height: var(--control-height);
   padding: 0.7rem 1rem;
   background: transparent;
   color: var(--color-text-secondary);
   border: 1px solid var(--color-border);
-  border-radius: 8px;
-  font-weight: 500;
+  border-radius: var(--radius-control);
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
 }

@@ -67,10 +67,10 @@
 
 .form-control,
 .form-select {
-  min-height: 46px;
+  min-height: var(--control-height);
   padding: 12px 16px;
   border: 1px solid #e0e0e0;
-  border-radius: 8px;
+  border-radius: var(--radius-input);
   font-size: 14px;
   transition: all 0.3s ease;
   background: white;
@@ -110,22 +110,21 @@
 .gradient-container .btn-primary {
   background: var(--primary);
   border: none;
-  border-radius: 12px;
-  padding: 0.5rem 2rem;
+  min-height: var(--control-height);
+  border-radius: var(--radius-control);
+  padding: 0.65rem 1.25rem;
   font-size: 16px;
   font-weight: 600;
   color: white;
-  transition: all 0.3s ease;
+  transition: background-color 0.2s ease;
 }
 
 .gradient-container .btn-primary:hover {
   background: var(--primary-hover);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(93, 169, 221, 0.3);
 }
 
 .gradient-container .btn-primary:active {
-  transform: translateY(0);
+  background: var(--primary-hover);
 }
 
 /* ===================================
@@ -289,9 +288,9 @@
   background: #44c9a0;
   color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   width: 40px;
-  height: 40px;
+  height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;

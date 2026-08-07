@@ -51,7 +51,7 @@
   right: 1.25rem;
   width: 44px;
   height: 44px;
-  border-radius: 50%;
+  border-radius: var(--radius-control);
   border: none;
   background: var(--surface-muted);
   color: var(--text-secondary);
@@ -349,7 +349,7 @@
   background: var(--primary);
   color: white;
   border: none;
-  border-radius: 12px;
+  border-radius: var(--radius-control);
   font-weight: 600;
   font-size: 0.95rem;
   cursor: pointer;
@@ -357,13 +357,11 @@
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  transition: all 0.2s ease;
+  transition: background-color 0.2s ease;
 }
 
 .btn-accept-discussion-modal:hover:not(:disabled) {
-  transform: translateY(-2px);
   background: var(--primary-hover);
-  box-shadow: var(--shadow-md);
 }
 
 .btn-accept-discussion-modal:disabled {
@@ -378,7 +376,7 @@
   background: var(--primary);
   color: white;
   border: none;
-  border-radius: 12px;
+  border-radius: var(--radius-control);
   font-weight: 600;
   font-size: 0.95rem;
   cursor: pointer;
@@ -386,13 +384,11 @@
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  transition: all 0.2s ease;
+  transition: background-color 0.2s ease;
 }
 
 .btn-request-discussion-modal:hover:not(:disabled) {
-  transform: translateY(-2px);
   background: var(--primary-hover);
-  box-shadow: var(--shadow-md);
 }
 
 .btn-request-discussion-modal:disabled {
@@ -436,7 +432,7 @@
   min-width: 140px;
   min-height: 44px;
   padding: 0.75rem 1rem;
-  border-radius: 12px;
+  border-radius: var(--radius-control);
   border: none;
   font-weight: 600;
   font-size: 0.95rem;
@@ -445,7 +441,7 @@
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  transition: all 0.2s ease;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
 .action-btn:disabled {
@@ -465,13 +461,11 @@
 .action-btn.btn-accept {
   background: var(--primary);
   color: #fff;
-  box-shadow: var(--shadow-sm);
+  box-shadow: none;
 }
 
 .action-btn.btn-accept:hover:not(:disabled) {
-  transform: translateY(-2px);
   background: var(--primary-hover);
-  box-shadow: var(--shadow-md);
 }
 
 .action-btn.btn-decline {
@@ -487,24 +481,21 @@
 .action-btn.btn-on-way {
   background: var(--primary-hover);
   color: #fff;
-  box-shadow: var(--shadow-sm);
+  box-shadow: none;
 }
 
 .action-btn.btn-on-way:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
+  background: var(--primary);
 }
 
 .action-btn.btn-complete {
   background: var(--primary);
   color: #fff;
-  box-shadow: var(--shadow-sm);
+  box-shadow: none;
 }
 
 .action-btn.btn-complete:hover:not(:disabled) {
-  transform: translateY(-2px);
   background: var(--primary-hover);
-  box-shadow: var(--shadow-md);
 }
 
 .spinner-btn {
@@ -531,7 +522,7 @@
 .btn-close-modal {
   min-height: 44px;
   padding: 0.75rem 2rem;
-  border-radius: 12px;
+  border-radius: var(--radius-control);
   border: 1px solid var(--border);
   background: transparent;
   color: var(--text-secondary);
@@ -559,17 +550,15 @@
   background: var(--primary);
   color: white;
   border: none;
-  border-radius: 12px;
+  border-radius: var(--radius-control);
   font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background-color 0.2s ease;
 }
 
 .modal-actions .btn-review:hover {
-  transform: translateY(-2px);
   background: var(--primary-hover);
-  box-shadow: var(--shadow-md);
 }
 
 .modal-actions .review-submitted-badge {

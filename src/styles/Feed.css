@@ -47,7 +47,7 @@
   align-items: center;
   gap: 0.75rem;
   padding: 0.9rem 1.5rem;
-  border-radius: 14px;
+  border-radius: var(--radius-input);
   border: 1px solid var(--border);
   background: var(--surface);
   box-shadow: var(--shadow-sm);
@@ -77,8 +77,9 @@
    =================================== */
 .btn-filter {
   border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 0.85rem 1.5rem;
+  border-radius: var(--radius-control);
+  min-height: var(--control-height);
+  padding: 0.75rem 1.2rem;
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -86,12 +87,12 @@
   color: var(--text-primary);
   background: var(--surface);
   backdrop-filter: blur(6px);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
 }
 
 .btn-filter:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-sm);
+  border-color: var(--color-border-strong);
+  box-shadow: none;
 }
 
 .btn-filter.active {
@@ -204,7 +205,8 @@
 .feed-filter-input,
 .feed-filter-select {
   border: 1px solid #e2e8f0;
-  border-radius: 8px;
+  border-radius: var(--radius-input);
+  min-height: var(--control-height);
   padding: 0.65rem 0.9rem;
   font-size: 0.9rem;
   color: #334155;

@@ -63,6 +63,13 @@
   --radius-sm: 10px;
   --radius-md: 14px;
   --radius-lg: 18px;
+  --radius-control: 12px;
+  --radius-control-lg: 14px;
+  --radius-input: 11px;
+  --radius-card: 15px;
+  --radius-pill: 999px;
+  --control-height: 44px;
+  --control-height-lg: 48px;
   --shadow-sm: 0 4px 14px rgba(15, 23, 42, 0.08);
   --shadow-md: 0 12px 30px rgba(15, 23, 42, 0.12);
   --mobile-nav-height: 72px;
@@ -211,6 +218,35 @@ select:focus-visible {
   background-color: var(--color-input-bg);
   color: var(--color-input-text);
   border-color: var(--color-border);
+}
+
+.form-control,
+.form-select,
+input:not([type='checkbox']):not([type='radio']):not([type='range']),
+textarea,
+select {
+  border-radius: var(--radius-input);
+  min-height: var(--control-height);
+}
+
+.btn,
+button.btn,
+a.btn,
+.ui-button,
+[class*='btn-']:not(.btn-close):not(.navbar-toggler-icon),
+[class$='-btn']:not(.filter-btn):not(.category-btn):not(.popular-search-chip):not(.how-role-btn):not(.theme-toggle):not(.status-pill):not(.mobile-bottom-nav-item):not(.notification-bell-btn):not(.modal-close-btn):not(.calendar-nav):not(.profile-avatar-btn):not(.mobile-topbar-icon-btn):not(.mobile-topbar-avatar):not(.login-prompt-close):not(.lightbox-close):not(.floating-btn) {
+  border-radius: var(--radius-control);
+  min-height: var(--control-height);
+  font-weight: 600;
+}
+
+.btn-lg,
+.ui-button-primary,
+.cta-btn,
+.btn-request-service,
+.booking-btn-primary {
+  border-radius: var(--radius-control-lg);
+  min-height: var(--control-height-lg);
 }
 
 .form-control::placeholder,

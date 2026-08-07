@@ -413,13 +413,12 @@
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  transition: all 0.2s ease;
-  box-shadow: var(--shadow-sm);
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+  box-shadow: none;
 }
 
 .btn-request-discussion:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
+  background: var(--primary-hover);
 }
 
 .btn-request-discussion:disabled {
@@ -467,13 +466,12 @@
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  transition: all 0.2s ease;
-  box-shadow: var(--shadow-sm);
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+  box-shadow: none;
 }
 
 .btn-accept-discussion:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
+  background: var(--primary-hover);
 }
 
 /* Action Buttons */
@@ -584,12 +582,11 @@
 .btn-accept {
   background: var(--primary);
   color: white;
-  box-shadow: var(--shadow-sm);
+  box-shadow: none;
 }
 
 .btn-accept:hover:not(:disabled) {
   background: var(--primary-hover);
-  box-shadow: var(--shadow-md);
 }
 
 .btn-decline {
@@ -605,22 +602,21 @@
 .btn-on-way {
   background: var(--primary-hover);
   color: white;
-  box-shadow: var(--shadow-sm);
+  box-shadow: none;
 }
 
 .btn-on-way:hover:not(:disabled) {
-  box-shadow: var(--shadow-md);
+  background: var(--primary);
 }
 
 .btn-complete {
   background: var(--primary);
   color: white;
-  box-shadow: var(--shadow-sm);
+  box-shadow: none;
 }
 
 .btn-complete:hover:not(:disabled) {
   background: var(--primary-hover);
-  box-shadow: var(--shadow-md);
 }
 
 .btn-cancel {
@@ -680,9 +676,9 @@
   font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
   white-space: nowrap;
-  box-shadow: var(--shadow-sm);
+  box-shadow: none;
 }
 
 .btn-view-details i {
@@ -690,9 +686,7 @@
 }
 
 .btn-view-details:hover {
-  transform: translateY(-2px);
   background: var(--primary-hover);
-  box-shadow: var(--shadow-md);
 }
 
 /* ===================================
@@ -711,15 +705,13 @@
   font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
   white-space: nowrap;
-  box-shadow: var(--shadow-sm);
+  box-shadow: none;
 }
 
 .btn-review:hover {
-  transform: translateY(-2px);
   background: var(--primary-hover);
-  box-shadow: var(--shadow-md);
 }
 
 .btn-review i {

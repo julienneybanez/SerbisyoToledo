@@ -47,19 +47,18 @@
   background: var(--primary);
   color: white;
   border: none;
-  padding: 12px 30px;
-  border-radius: 12px;
+  min-height: var(--control-height);
+  padding: 0.7rem 1.2rem;
+  border-radius: var(--radius-control);
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: background-color 0.2s ease;
   white-space: nowrap;
 }
 
 .btn-post-service:hover {
   background: var(--primary-hover);
-  transform: translateY(-1px);
-  box-shadow: 0 10px 22px rgba(74, 159, 213, 0.28);
 }
 
 .action-banner {
@@ -338,13 +337,13 @@
 .job-btn {
   flex: 1;
   min-height: 44px;
-  padding: 8px 12px;
+  padding: 0.6rem 0.85rem;
   border: none;
-  border-radius: 10px;
-  font-size: 12px;
+  border-radius: var(--radius-control);
+  font-size: 0.82rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
 .job-btn-primary {
@@ -500,18 +499,17 @@
   background-color: var(--primary);
   color: #fff;
   border: none;
-  padding: 12px 30px;
-  border-radius: 12px;
+  padding: 0.7rem 1.2rem;
+  border-radius: var(--radius-control);
   font-size: 14px;
   font-weight: 600;
   min-height: 44px;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: background-color 0.2s ease;
 }
 
 .btn-get-verified:hover {
   background-color: var(--primary-hover);
-  transform: translateY(-2px);
 }
 
 /* Responsive Design */

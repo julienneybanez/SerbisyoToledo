@@ -461,7 +461,7 @@
   padding: 0.75rem 1rem;
   background: #fff5f5;
   border: 1px solid #ffcccc;
-  border-radius: 12px;
+  border-radius: var(--radius-control);
   color: #dc3545;
   font-size: 0.9rem;
   display: flex;
@@ -482,7 +482,7 @@
 
 .booking-btn {
   border: none;
-  border-radius: 12px;
+  border-radius: var(--radius-control);
   padding: 0.85rem 1.8rem;
   font-weight: 600;
   text-transform: none;
@@ -813,7 +813,7 @@
   .booking-textarea {
     padding: 0.75rem 1rem;
     font-size: 0.9rem;
-    border-radius: 12px;
+    border-radius: var(--radius-input);
   }
 
   .booking-btn {

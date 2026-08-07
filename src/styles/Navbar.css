@@ -93,11 +93,16 @@
   color: var(--brand-primary, #5da9dd) !important;
   border-color: rgba(93, 169, 221, 0.32) !important;
   font-weight: 600;
-  border-radius: 10px;
-  padding: 0.55rem 1rem !important;
+  min-height: var(--control-height) !important;
+  height: var(--control-height) !important;
+  border-radius: var(--radius-control) !important;
+  padding: 0 1rem !important;
   line-height: 1.1;
   background: rgba(93, 169, 221, 0.05) !important;
   box-shadow: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .login-btn:hover {
@@ -113,16 +118,21 @@
 .signup-btn {
   background: var(--brand-primary, #5da9dd) !important;
   border: 1px solid color-mix(in srgb, var(--brand-primary, #5da9dd) 75%, #0f172a) !important;
-  padding: 0.55rem 1rem;
+  min-height: var(--control-height) !important;
+  height: var(--control-height) !important;
+  padding: 0 1rem !important;
   font-weight: 600;
-  border-radius: 10px;
+  border-radius: var(--radius-control) !important;
   color: white !important;
-  box-shadow: 0 8px 16px rgba(93, 169, 221, 0.16);
+  box-shadow: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .signup-btn:hover {
   background: color-mix(in srgb, var(--brand-primary, #5da9dd) 90%, #0f172a) !important;
-  box-shadow: 0 12px 20px rgba(93, 169, 221, 0.2);
+  box-shadow: none;
 }
 
 .signup-btn.active-btn {
@@ -336,14 +346,14 @@
 
 .dropdown-language-select {
   width: 100%;
-  min-height: 40px;
-  border-radius: 10px;
+  min-height: var(--control-height);
+  border-radius: var(--radius-input);
   border: 1px solid var(--color-border, #d7dce3);
   background: var(--color-surface, #ffffff);
   color: var(--color-text-primary, #1e293b);
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   font-weight: 600;
-  padding: 0.45rem 0.6rem;
+  padding: 0.45rem 0.7rem;
 }
 
 .dropdown-language-select:focus-visible {
@@ -353,7 +363,26 @@
 
 .dropdown-theme-toggle {
   justify-content: center;
-  min-height: 40px;
+  min-height: var(--control-height);
+}
+
+.navbar-language-select {
+  width: 88px;
+  min-height: var(--control-height) !important;
+  height: var(--control-height) !important;
+  border-radius: var(--radius-input) !important;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 0.45rem 0.5rem;
+  line-height: 1.1;
+}
+
+.navbar-language-select:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--brand-primary, #5da9dd) 58%, transparent);
+  outline-offset: 2px;
 }
 
 .profile-dropdown-menu .dropdown-item:last-child {
