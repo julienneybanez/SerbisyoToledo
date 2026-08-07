@@ -4,7 +4,7 @@
 .requests-container {
   min-height: calc(100vh - 140px);
   padding: 2rem 0;
-  background: linear-gradient(135deg, #f5f7fa 0%, #e4e9f2 100%);
+  background: linear-gradient(165deg, #f4f8ff 0%, #eef4ff 55%, #f4faf9 100%);
 }
 
 .requests-wrapper {
@@ -20,12 +20,12 @@
 .requests-header h1 {
   font-size: 2rem;
   font-weight: 700;
-  color: #333;
+  color: var(--text-primary);
   margin-bottom: 0.5rem;
 }
 
 .requests-header p {
-  color: #666;
+  color: var(--text-secondary);
   font-size: 1rem;
 }
 
@@ -57,10 +57,10 @@
 }
 
 .filter-btn.active {
-  background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-accent) 100%);
-  border-color: transparent;
+  background: var(--primary);
+  border-color: var(--primary);
   color: white;
-  box-shadow: 0 8px 20px rgba(68, 201, 160, 0.24);
+  box-shadow: 0 8px 20px rgba(74, 159, 213, 0.24);
 }
 
 /* Loading & Empty States */
@@ -138,9 +138,10 @@
 }
 
 .request-card {
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
   overflow: hidden;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   display: flex;
@@ -154,8 +155,8 @@
 
 .request-card-header {
   padding: 1.25rem 1.5rem;
-  border-bottom: 1px solid #f0f0f0;
-  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
 }
 
 .request-title-section {
@@ -168,53 +169,53 @@
 .request-title {
   font-size: 1.1rem;
   font-weight: 600;
-  color: #333;
+  color: var(--text-primary);
   margin: 0;
   flex: 1;
 }
 
 .request-status-badge {
   padding: 0.35rem 0.75rem;
-  border-radius: 20px;
+  border-radius: 999px;
   font-size: 0.75rem;
   font-weight: 600;
-  text-transform: uppercase;
+  text-transform: none;
   white-space: nowrap;
 }
 
 .badge-pending {
-  background: #fff3cd;
-  color: #856404;
+  background: var(--status-pending-bg);
+  color: var(--status-pending-text);
 }
 
 .badge-accepted {
-  background: #d4edda;
-  color: #155724;
+  background: var(--status-accepted-bg);
+  color: var(--status-accepted-text);
 }
 
 .badge-declined {
-  background: #f8d7da;
-  color: #721c24;
+  background: var(--status-danger-bg);
+  color: var(--status-danger-text);
 }
 
 .badge-on-way {
-  background: #fff0e0;
-  color: #e65100;
+  background: var(--status-progress-bg);
+  color: var(--status-progress-text);
 }
 
 .badge-in-progress {
-  background: #e3f2fd;
-  color: #1565c0;
+  background: var(--status-progress-bg);
+  color: var(--status-progress-text);
 }
 
 .badge-completed {
-  background: #c8e6c9;
-  color: #2e7d32;
+  background: var(--status-completed-bg);
+  color: var(--status-completed-text);
 }
 
 .badge-cancelled {
-  background: #f5f5f5;
-  color: #666;
+  background: var(--status-danger-bg);
+  color: var(--status-danger-text);
 }
 
 .request-card-body {
@@ -306,7 +307,7 @@
 }
 
 .request-details {
-  color: #666;
+  color: var(--text-secondary);
   font-size: 0.9rem;
   line-height: 1.6;
   margin-bottom: 0;
@@ -330,7 +331,7 @@
   align-items: center;
   gap: 0.5rem;
   font-size: 0.85rem;
-  color: #555;
+  color: var(--text-secondary);
 }
 
 .meta-row i {
@@ -476,10 +477,10 @@
 /* Action Buttons */
 .request-card-actions {
   padding: 1rem 1.5rem;
-  border-top: 1px solid #f0f0f0;
+  border-top: 1px solid var(--border);
   display: flex;
   gap: 0.75rem;
-  background: #f8f9fa;
+  background: var(--surface-muted);
 }
 
 .request-decline-reason {

@@ -75,6 +75,7 @@ export default function MobileBottomNav({ role = 'client', profileMenuOpen = fal
             className={`mobile-bottom-nav-item mobile-bottom-nav-action ${profileMenuOpen ? 'active' : ''}`}
             onClick={onProfileTap}
             aria-label={item.action === 'edit-profile' ? 'Edit profile' : 'Open profile menu'}
+            aria-pressed={profileMenuOpen}
           >
             <span className="mobile-bottom-nav-icon-wrap">
               <i className={`bi ${item.icon}`} aria-hidden="true"></i>
@@ -91,7 +92,7 @@ export default function MobileBottomNav({ role = 'client', profileMenuOpen = fal
               <i className={`bi ${item.icon}`} aria-hidden="true"></i>
               {role === 'tradesperson' && item.label === 'Requests' && pendingRequests > 0 && (
                 <span className="mobile-bottom-nav-badge" aria-label={`${pendingRequests} pending requests`}>
-                  {pendingRequests > 9 ? '9+' : pendingRequests}
+                  {pendingRequests > 99 ? '99+' : pendingRequests}
                 </span>
               )}
             </span>

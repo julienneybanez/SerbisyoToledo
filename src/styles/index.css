@@ -35,6 +35,39 @@
   --color-success: #16a34a;
   --color-warning: #d97706;
 
+  --primary: var(--brand-primary);
+  --primary-hover: var(--brand-primary-dark);
+  --primary-soft: #e8f4fd;
+  --success: #16a34a;
+  --warning: #d97706;
+  --danger: #dc2626;
+  --info: #0ea5e9;
+  --status-pending-bg: #fff7e6;
+  --status-pending-text: #9a6100;
+  --status-accepted-bg: #e8f1ff;
+  --status-accepted-text: #1e4db7;
+  --status-attention-bg: #fff3e8;
+  --status-attention-text: #b45309;
+  --status-progress-bg: #e8f7f6;
+  --status-progress-text: #0f766e;
+  --status-completed-bg: #e8f8ef;
+  --status-completed-text: #166534;
+  --status-danger-bg: #feecef;
+  --status-danger-text: #b42318;
+  --background: var(--color-page-bg);
+  --surface: var(--color-surface);
+  --surface-muted: var(--color-surface-secondary);
+  --text-primary: var(--color-text-primary);
+  --text-secondary: var(--color-text-secondary);
+  --border: var(--color-border);
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 18px;
+  --shadow-sm: 0 4px 14px rgba(15, 23, 42, 0.08);
+  --shadow-md: 0 12px 30px rgba(15, 23, 42, 0.12);
+  --mobile-nav-height: 72px;
+  --mobile-sticky-action-height: 74px;
+
   font-family: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto',
     'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
     sans-serif;
@@ -78,6 +111,22 @@
   --color-success: #4ade80;
   --color-warning: #fbbf24;
 
+  --primary-soft: #1b2a41;
+  --status-pending-bg: #3f3320;
+  --status-pending-text: #fbbf24;
+  --status-accepted-bg: #1c2e4e;
+  --status-accepted-text: #93c5fd;
+  --status-attention-bg: #3e2d20;
+  --status-attention-text: #fdba74;
+  --status-progress-bg: #153a39;
+  --status-progress-text: #5eead4;
+  --status-completed-bg: #193727;
+  --status-completed-text: #86efac;
+  --status-danger-bg: #3b1f28;
+  --status-danger-text: #fda4af;
+  --shadow-sm: 0 6px 16px rgba(0, 0, 0, 0.26);
+  --shadow-md: 0 18px 36px rgba(0, 0, 0, 0.34);
+
   color-scheme: dark;
 }
 
@@ -118,6 +167,7 @@ body {
   min-height: 100vh;
   background: var(--color-page-bg);
   color: var(--color-text-primary);
+  font-size: 16px;
 }
 
 #root {
@@ -137,6 +187,15 @@ a {
 
 a:hover {
   color: var(--color-primary-hover);
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--primary) 45%, transparent);
+  outline-offset: 2px;
 }
 
 ::placeholder {

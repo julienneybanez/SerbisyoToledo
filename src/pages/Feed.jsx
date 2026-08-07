@@ -36,6 +36,11 @@ export default function Feed() {
   useEffect(() => {
     const queryValue = (searchParams.get('q') || '').trim();
     setSearchTerm(queryValue);
+
+    const categoryValue = (searchParams.get('category') || '').trim();
+    if (categoryValue) {
+      setActiveCategory(categoryValue);
+    }
   }, [searchParams]);
 
   // Fetch service profiles on component mount or when filters change
@@ -202,7 +207,7 @@ export default function Feed() {
             <div className="search-input-large">
               <SearchIcon />
               <input
-                placeholder="Search by name or skills..."
+                placeholder="Search by provider, service, skill, or location"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 aria-label="Search by service, provider, or location"
@@ -304,13 +309,15 @@ export default function Feed() {
 
           {!isLoading && !error && serviceProviders.length === 0 && (
             <div className="no-providers-container">
-              <p>No service providers found. Try adjusting your filters.</p>
+              <h3>No providers match your filters.</h3>
+              <p>Try changing your category, search term, or advanced filters.</p>
+              <button type="button" className="btn-view-profile" onClick={clearFilters}>Clear Filters</button>
             </div>
           )}
 
           {!isLoading && serviceProviders.map((p) => (
             <div key={p.id} className="provider-card">
-              <img src={p.image} className="provider-image" />
+              <img src={p.image} className="provider-image non-draggable-image" alt={`${p.name} profile`} draggable="false" />
               <div className="provider-info">
                 <div className="provider-header">
                   <span className="provider-name">{p.name}</span>
@@ -334,6 +341,8 @@ export default function Feed() {
                 <p className="provider-description">
                   {p.description}
                 </p>
+
+                <p className="provider-service-line">{p.tags?.[0] || 'General Services'}</p>
 
                 {p.tags?.length > 0 && (
                   <div className="provider-tags">

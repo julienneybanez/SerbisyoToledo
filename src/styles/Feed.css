@@ -2,7 +2,7 @@
    FEED PAGE - SHELL & CONTAINER
    =================================== */
 .feed-shell {
-  background: #f6f8fb;
+  background: #f3f8ff;
   padding: 3rem 0;
 }
 
@@ -24,10 +24,7 @@
 .feed-page-title {
   font-size: 2rem;
   font-weight: 700;
-  background: linear-gradient(120deg, #1a74ff 0%, #20b87a 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  color: var(--text-primary);
 }
 
 .search-filter-row {
@@ -44,9 +41,9 @@
   gap: 0.75rem;
   padding: 0.9rem 1.5rem;
   border-radius: 14px;
-  border: none;
-  background: white;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
 }
 
 .search-input-large input {
@@ -72,26 +69,27 @@
    FEED PAGE - FILTER BUTTON
    =================================== */
 .btn-filter {
-  border: none;
+  border: 1px solid var(--border);
   border-radius: 12px;
   padding: 0.85rem 1.5rem;
   display: flex;
   align-items: center;
   gap: 0.5rem;
   font-weight: 600;
-  color: #1a3d5d;
-  background: rgba(74, 159, 245, 0.15);
+  color: var(--text-primary);
+  background: var(--surface);
   backdrop-filter: blur(6px);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .btn-filter:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(74, 159, 245, 0.25);
+  box-shadow: var(--shadow-sm);
 }
 
 .btn-filter.active {
-  background: linear-gradient(120deg, #4a9ff5 0%, #44c9a0 100%);
+  background: var(--primary);
+  border-color: var(--primary);
   color: white;
 }
 
@@ -113,9 +111,9 @@
    FEED PAGE - ADVANCED FILTERS PANEL
    =================================== */
 .advanced-filters {
-  background: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
   padding: 1.25rem 1.5rem;
   margin-bottom: 1rem;
   animation: filterSlideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -161,7 +159,7 @@
 
 .filters-title {
   font-weight: 600;
-  color: #1a3d5d;
+  color: var(--text-primary);
   font-size: 0.95rem;
 }
 
@@ -233,8 +231,10 @@
    =================================== */
 .category-filters {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 0.75rem;
+  overflow-x: auto;
+  padding-bottom: 0.3rem;
 }
 
 .feed-results-row {
@@ -255,7 +255,7 @@
   border-radius: 30px;
   padding: 0.55rem 1.5rem;
   background: white;
-  color: #1a3d5d;
+  color: var(--text-primary);
   font-weight: 500;
   transition: all 0.2s ease;
 }
@@ -266,9 +266,9 @@
 }
 
 .category-btn.active {
-  background: linear-gradient(120deg, #4a9ff5 0%, #44c9a0 100%);
+  background: var(--primary);
   color: white;
-  border-color: transparent;
+  border-color: var(--primary);
   box-shadow: 0 10px 20px rgba(74, 159, 245, 0.25);
 }
 
@@ -277,20 +277,26 @@
    =================================== */
 .providers-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 1.25rem;
   padding-bottom: 2rem;
+}
+
+@media (min-width: 1366px) {
+  .providers-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
 }
 
 /* ===================================
    FEED PAGE - PROVIDER CARDS
    =================================== */
 .provider-card {
-  border-radius: 16px;
+  border-radius: var(--radius-lg);
   overflow: hidden;
   background: #ffffff;
-  border: 1px solid rgba(26, 61, 93, 0.08);
-  box-shadow: 0 8px 24px rgba(26, 61, 93, 0.07);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
   display: flex;
   flex-direction: column;
   transition: transform 0.25s ease, box-shadow 0.25s ease;
@@ -298,7 +304,7 @@
 
 .provider-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 16px 40px rgba(26, 61, 93, 0.13);
+  box-shadow: var(--shadow-md);
 }
 
 .provider-image {
@@ -333,8 +339,8 @@
 }
 
 .provider-service-line {
-  font-size: 0.82rem;
-  color: #1a74ff;
+  font-size: 0.84rem;
+  color: var(--text-primary);
   font-weight: 600;
   margin: 0;
 }
@@ -371,7 +377,7 @@
 .provider-name {
   font-size: 1rem;
   font-weight: 600;
-  color: #1a3d5d;
+  color: var(--text-primary);
 }
 
 .verified-badge {
@@ -395,7 +401,7 @@
 }
 
 .provider-description {
-  color: #4f6480;
+  color: var(--text-secondary);
   font-size: 0.85rem;
   line-height: 1.45;
   display: -webkit-box;
@@ -452,14 +458,15 @@
   font-weight: 600;
   font-size: 0.82rem;
   color: white;
-  background: #1a74ff;
+  background: var(--primary);
   box-shadow: 0 6px 18px rgba(26, 116, 255, 0.3);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .btn-view-profile:hover {
   transform: translateY(-2px);
-  box-shadow: 0 18px 32px rgba(26, 116, 255, 0.45);
+  background: var(--primary-hover);
+  box-shadow: 0 18px 32px rgba(26, 116, 255, 0.35);
 }
 
 .mobile-filter-btn {
@@ -565,11 +572,6 @@
     gap: 0.45rem;
   }
 
-  .provider-description,
-  .provider-tags {
-    display: none;
-  }
-
   .provider-footer {
     flex-direction: column;
     align-items: stretch;
@@ -601,8 +603,9 @@
   grid-column: 1 / -1;
   padding: 3rem 2rem;
   text-align: center;
-  border-radius: 12px;
-  background: white;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  background: var(--surface);
 }
 
 .loading-container {
@@ -630,8 +633,17 @@
 .error-container p,
 .no-providers-container p {
   font-size: 1rem;
-  color: #666;
+  color: var(--text-secondary);
   margin: 0;
+}
+
+.no-providers-container h3 {
+  margin: 0 0 0.45rem;
+  color: var(--text-primary);
+}
+
+.no-providers-container .btn-view-profile {
+  margin-top: 1rem;
 }
 
 .error-container {

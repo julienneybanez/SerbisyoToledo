@@ -2,7 +2,7 @@
 
 .dashboard-container {
   min-height: calc(100vh - 120px);
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  background: linear-gradient(160deg, #f4f8fd 0%, #edf5ff 45%, #f2fbf8 100%);
   padding: 40px 20px;
 }
 
@@ -17,11 +17,12 @@
 
 /* Welcome Section */
 .welcome-section {
-  background: white;
-  border-radius: 12px;
+  background: var(--surface);
+  border-radius: var(--radius-lg);
   padding: 40px;
   margin-bottom: 40px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -31,23 +32,23 @@
 .welcome-content h1 {
   font-size: 32px;
   font-weight: 700;
-  color: #1a1a1a;
+  color: var(--text-primary);
   margin: 0 0 10px 0;
 }
 
 .welcome-content p {
-  font-size: 15px;
-  color: #666;
+  font-size: 16px;
+  color: var(--text-secondary);
   margin: 0 0 25px 0;
   line-height: 1.6;
 }
 
 .btn-post-service {
-  background: linear-gradient(120deg, #1a74ff 0%, #20b87a 100%);
+  background: var(--primary);
   color: white;
   border: none;
   padding: 12px 30px;
-  border-radius: 6px;
+  border-radius: 12px;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
@@ -56,8 +57,70 @@
 }
 
 .btn-post-service:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(32, 184, 122, 0.3);
+  background: var(--primary-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 10px 22px rgba(74, 159, 213, 0.28);
+}
+
+.action-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding: 1rem 1.25rem;
+  border-radius: var(--radius-md);
+  border: 1px solid #f3d396;
+  background: var(--status-pending-bg);
+}
+
+.action-banner h2 {
+  margin: 0 0 0.2rem;
+  font-size: 1.05rem;
+  color: var(--status-pending-text);
+}
+
+.action-banner p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.92rem;
+}
+
+.btn-review-requests {
+  border: none;
+  border-radius: 12px;
+  background: var(--primary);
+  color: #fff;
+  font-weight: 700;
+  min-height: 44px;
+  padding: 0 1rem;
+}
+
+.provider-stats-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.85rem;
+  margin-bottom: 1.2rem;
+}
+
+.provider-stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 0.95rem 1rem;
+}
+
+.provider-stat-card p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.provider-stat-card strong {
+  font-size: 1.55rem;
+  color: var(--text-primary);
 }
 
 /* Weekly Tips Section */
@@ -79,17 +142,11 @@
 }
 
 .tip-card {
-  background: white;
+  background: var(--surface);
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
-  transition: all 0.3s ease;
-  cursor: pointer;
-}
-
-.tip-card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
 }
 
 .tip-image {
@@ -104,15 +161,15 @@
 }
 
 .tip-title {
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 600;
   color: #1a1a1a;
   margin: 0 0 10px 0;
 }
 
 .tip-description {
-  font-size: 13px;
-  color: #666;
+  font-size: 14px;
+  color: var(--text-secondary);
   margin: 0 0 15px 0;
   line-height: 1.6;
 }
@@ -145,7 +202,7 @@
 .jobs-header h2 {
   font-size: 22px;
   font-weight: 700;
-  color: #1a1a1a;
+  color: var(--text-primary);
   margin: 0;
 }
 
@@ -169,10 +226,11 @@
 }
 
 .job-card {
-  background: #E3F2FD;
-  border-radius: 12px;
+  background: var(--surface);
+  border-radius: var(--radius-md);
   padding: 25px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
   transition: all 0.3s ease;
 }
 
@@ -191,7 +249,7 @@
 .job-title {
   font-size: 15px;
   font-weight: 600;
-  color: #1a1a1a;
+  color: var(--text-primary);
   margin: 0;
 }
 
@@ -206,34 +264,39 @@
 }
 
 .status-pending {
-  background-color: #fff3cd;
-  color: #856404;
+  background-color: var(--status-pending-bg);
+  color: var(--status-pending-text);
 }
 
 .status-active {
-  background-color: #d4edda;
-  color: #155724;
+  background-color: var(--status-progress-bg);
+  color: var(--status-progress-text);
 }
 
 .status-completed {
-  background-color: #e2e3e5;
-  color: #383d41;
+  background-color: var(--status-completed-bg);
+  color: var(--status-completed-text);
 }
 
 .status-cancelled {
-  background-color: #f8d7da;
-  color: #721c24;
+  background-color: var(--status-danger-bg);
+  color: var(--status-danger-text);
+}
+
+.status-accepted {
+  background-color: var(--status-accepted-bg);
+  color: var(--status-accepted-text);
 }
 
 .job-client {
   font-size: 13px;
-  color: #666;
+  color: var(--text-secondary);
   margin: 0 0 10px 0;
 }
 
 .job-description {
   font-size: 13px;
-  color: #777;
+  color: var(--text-secondary);
   margin: 0 0 15px 0;
   line-height: 1.5;
 }
@@ -268,9 +331,10 @@
 
 .job-btn {
   flex: 1;
+  min-height: 44px;
   padding: 8px 12px;
   border: none;
-  border-radius: 6px;
+  border-radius: 10px;
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
@@ -278,12 +342,12 @@
 }
 
 .job-btn-primary {
-  background-color: #0078D4;
+  background-color: var(--primary);
   color: white;
 }
 
 .job-btn-primary:hover {
-  background-color: #006BA6;
+  background-color: var(--primary-hover);
 }
 
 .job-btn-secondary {
@@ -315,12 +379,12 @@
 }
 
 .job-btn-on-way {
-  background-color: #f39c12;
+  background-color: #0f766e;
   color: white;
 }
 
 .job-btn-on-way:hover {
-  background-color: #d68910;
+  background-color: #115e59;
 }
 
 .job-btn-complete {
@@ -402,7 +466,7 @@
 
 /* Level Up Banner */
 .level-up-banner {
-  background: linear-gradient(135deg, #0078D4 0%, #00BCD4 100%);
+  background: linear-gradient(135deg, #0f4ca6 0%, #0f766e 100%);
   border-radius: 12px;
   padding: 40px;
   color: white;
@@ -427,7 +491,7 @@
 
 .btn-get-verified {
   background-color: white;
-  color: #20b87a;
+  color: #0f4ca6;
   border: none;
   padding: 12px 30px;
   border-radius: 6px;
@@ -456,6 +520,19 @@
 
   .welcome-content h1 {
     font-size: 24px;
+  }
+
+  .action-banner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .provider-stats-row {
+    grid-template-columns: 1fr;
+  }
+
+  .btn-review-requests {
+    width: 100%;
   }
 
   .tips-grid {
@@ -518,9 +595,14 @@
 
 [data-theme='dark'] .welcome-section,
 [data-theme='dark'] .tip-card,
-[data-theme='dark'] .job-card {
+[data-theme='dark'] .job-card,
+[data-theme='dark'] .provider-stat-card {
   background: var(--color-surface);
   box-shadow: 0 4px 6px var(--color-shadow);
+}
+
+[data-theme='dark'] .action-banner {
+  border-color: #5f4719;
 }
 
 [data-theme='dark'] .welcome-content h1,

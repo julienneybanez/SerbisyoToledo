@@ -207,7 +207,7 @@ function AdminReports() {
                       {actionLoading === `${report.id}-investigate` ? 'Working...' : 'Investigate'}
                     </button>
                     <button
-                      className="btn-view-details"
+                      className="btn-approve"
                       disabled={actionLoading === `${report.id}-resolve`}
                       onClick={() => handleReportAction(report.id, 'resolve')}
                     >

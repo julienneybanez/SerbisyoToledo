@@ -18,6 +18,22 @@ import HowItWorks from '../components/common/HowItWorks';
 
 function Home() {
   const navigate = useNavigate();
+
+  const trendingServices = [
+    { name: 'Manghihilot', image: manghihilot, category: 'Beauty' },
+    { name: 'Electrician', image: electrician, category: 'Electrical' },
+    { name: 'Panday', image: panday, category: 'Carpentry' },
+    { name: 'Tubo', image: tubo, category: 'Plumbing' },
+    { name: 'Cleaning', image: cleaning, category: 'Cleaning' },
+    { name: 'Gardening', image: gardening, category: 'Gardening' },
+    { name: 'Locksmith', image: locksmith, category: 'Repair' },
+    { name: 'Laundry', image: laundry, category: 'Others' },
+  ];
+
+  const openCategory = (category) => {
+    navigate(`/feed?category=${encodeURIComponent(category)}`);
+  };
+
   return (
     <>
       <section className="hero-section">
@@ -36,22 +52,22 @@ function Home() {
               <div className="image-grid">
                 <div className="row g-2">
                   <div className="col-6">
-                    <img src={carpenter} alt="Service 1" className="img-fluid rounded" />
+                    <img src={carpenter} alt="Carpenter working on wood cabinetry" className="img-fluid rounded non-draggable-image" draggable="false" />
                   </div>
                   <div className="col-6">
-                    <img src={masseuse} alt="Service 2" className="img-fluid rounded" />
+                    <img src={masseuse} alt="Massage therapist providing home service" className="img-fluid rounded non-draggable-image" draggable="false" />
                   </div>
                   <div className="col-6">
-                    <img src={caregiver} alt="Service 3" className="img-fluid rounded" />
+                    <img src={caregiver} alt="Caregiver assisting a client at home" className="img-fluid rounded non-draggable-image" draggable="false" />
                   </div>
                   <div className="col-6">
-                    <img src={mechanic} alt="Service 4" className="img-fluid rounded" />
+                    <img src={mechanic} alt="Mechanic checking motorcycle engine" className="img-fluid rounded non-draggable-image" draggable="false" />
                   </div>
                   <div className="col-6">
-                    <img src={plumber} alt="Service 5" className="img-fluid rounded" />
+                    <img src={plumber} alt="Plumber fixing a sink pipe" className="img-fluid rounded non-draggable-image" draggable="false" />
                   </div>
                   <div className="col-6">
-                    <img src={priest} alt="Service 6" className="img-fluid rounded" />
+                    <img src={priest} alt="Local community ceremonial service" className="img-fluid rounded non-draggable-image" draggable="false" />
                   </div>
                 </div>
               </div>
@@ -110,57 +126,23 @@ function Home() {
         <div className="container">
           <div className="text-center mb-4">
             <h2 className="section-title">Trending Services</h2>
-            <p className="section-subtitle">Over 50 active services</p>
+            <p className="section-subtitle">Popular categories clients browse this week</p>
           </div>
           <div className="services-scroll">
-            <div className="service-card">
-              <img src={manghihilot} alt="Manghihilot" className="service-image" />
-              <div className="service-overlay">
-                <h3 className="service-name">Manghihilot</h3>
-              </div>
-            </div>
-            <div className="service-card">
-              <img src={electrician} alt="Electrician" className="service-image" />
-              <div className="service-overlay">
-                <h3 className="service-name">Electrician</h3>
-              </div>
-            </div>
-            <div className="service-card">
-              <img src={panday} alt="Panday" className="service-image" />
-              <div className="service-overlay">
-                <h3 className="service-name">Panday</h3>
-              </div>
-            </div>
-            <div className="service-card">
-              <img src={tubo} alt="Tubo" className="service-image" />
-              <div className="service-overlay">
-                <h3 className="service-name">Tubo</h3>
-              </div>
-            </div>
-            <div className="service-card">
-              <img src={cleaning} alt="Cleaning" className="service-image" />
-              <div className="service-overlay">
-                <h3 className="service-name">Cleaning</h3>
-              </div>
-            </div>
-            <div className="service-card">
-              <img src={gardening} alt="Gardening" className="service-image" />
-              <div className="service-overlay">
-                <h3 className="service-name">Gardening</h3>
-              </div>
-            </div>
-            <div className="service-card">
-              <img src={locksmith} alt="Locksmith" className="service-image" />
-              <div className="service-overlay">
-                <h3 className="service-name">Locksmith</h3>
-              </div>
-            </div>
-            <div className="service-card">
-              <img src={laundry} alt="Laundry" className="service-image" />
-              <div className="service-overlay">
-                <h3 className="service-name">Laundry</h3>
-              </div>
-            </div>
+            {trendingServices.map((service) => (
+              <button
+                key={service.name}
+                type="button"
+                className="service-card"
+                onClick={() => openCategory(service.category)}
+                aria-label={`Browse ${service.name} providers`}
+              >
+                <img src={service.image} alt={`${service.name} service category`} className="service-image non-draggable-image" draggable="false" />
+                <div className="service-overlay">
+                  <h3 className="service-name">{service.name}</h3>
+                </div>
+              </button>
+            ))}
           </div>
         </div>
       </section>

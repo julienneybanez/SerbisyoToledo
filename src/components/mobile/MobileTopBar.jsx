@@ -104,7 +104,7 @@ export default function MobileTopBar({
         )}
         <div className="mobile-topbar-brand">
           <span className="mobile-topbar-mark" aria-hidden="true">
-            <img src={logo} alt="" className="mobile-topbar-logo" draggable="false" />
+            <img src={logo} alt="" className="mobile-topbar-logo non-draggable-image" draggable="false" />
           </span>
           <div>
             <p className="mobile-topbar-title">{title}</p>
@@ -133,7 +133,7 @@ export default function MobileTopBar({
           onClick={onToggleProfileMenu}
         >
           {user?.profileImage ? (
-            <img src={user.profileImage} alt="Profile" className="mobile-topbar-avatar-img" />
+            <img src={user.profileImage} alt="Profile" className="mobile-topbar-avatar-img non-draggable-image" draggable="false" />
           ) : (
             getInitials(user?.fullName)
           )}

@@ -12,6 +12,7 @@ export default function ServiceProviderDashboard() {
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showVerificationRequest, setShowVerificationRequest] = useState(false);
   const [requests, setRequests] = useState([]);
+  const [requestSummary, setRequestSummary] = useState({ pending: 0, upcoming: 0 });
   const [loadingRequests, setLoadingRequests] = useState(true);
   const [actionLoading, setActionLoading] = useState(null);
   const [checklistLoading, setChecklistLoading] = useState(true);
@@ -32,6 +33,9 @@ export default function ServiceProviderDashboard() {
         const activeJobs = response.data.requests.filter(
           r => ['pending', 'accepted', 'on_the_way', 'in_progress'].includes(r.status)
         );
+        const pending = response.data.requests.filter((r) => r.status === 'pending').length;
+        const upcoming = response.data.requests.filter((r) => ['accepted', 'on_the_way', 'in_progress'].includes(r.status)).length;
+        setRequestSummary({ pending, upcoming });
         setRequests(activeJobs.slice(0, 4)); // Show max 4 on dashboard
       }
     } catch (err) {
@@ -204,16 +208,43 @@ export default function ServiceProviderDashboard() {
       <div className="dashboard-wrapper">
         <section className="welcome-section">
           <div className="welcome-content">
-            <h1>Welcome back, <span className="user-name">{user?.fullName || 'Service Provider'}!</span></h1>
-            <p>Keep track of your ongoing jobs and continue building your reputation.</p>
+            <h1>Good day, <span className="user-name">{user?.fullName || 'Service Provider'}</span></h1>
+            <p>Here is what needs your attention today.</p>
           </div>
           <button 
             className="btn-post-service"
             data-tour="provider-profile-setup"
             onClick={() => setShowProfileModal(true)}
           >
-            Post Service Profile
+            Manage Service Profile
           </button>
+        </section>
+
+        {requestSummary.pending > 0 && (
+          <section className="action-banner" aria-live="polite">
+            <div>
+              <h2>{requestSummary.pending} request{requestSummary.pending > 1 ? 's' : ''} need your response</h2>
+              <p>Clients are waiting for you to accept or decline their booking requests.</p>
+            </div>
+            <button type="button" className="btn-review-requests" onClick={() => navigate('/requests')}>
+              Review Requests
+            </button>
+          </section>
+        )}
+
+        <section className="provider-stats-row" aria-label="Provider quick stats">
+          <article className="provider-stat-card">
+            <p>New Requests</p>
+            <strong>{requestSummary.pending}</strong>
+          </article>
+          <article className="provider-stat-card">
+            <p>Upcoming Jobs</p>
+            <strong>{requestSummary.upcoming}</strong>
+          </article>
+          <article className="provider-stat-card">
+            <p>Active Jobs</p>
+            <strong>{requests.length}</strong>
+          </article>
         </section>
 
         <ProfileCompletionChecklist
@@ -223,25 +254,6 @@ export default function ServiceProviderDashboard() {
           error={checklistError}
           initiallyCollapsed={false}
         />
-
-        <section className="tips-section">
-          <h2 className="section-title">Weekly Tips for Service Providers</h2>
-          <div className="tips-grid">
-            {tips.map((tip) => (
-              <div key={tip.id} className="tip-card">
-                <img src={tip.image} alt={tip.title} className="tip-image" />
-                <div className="tip-content">
-                  <h3 className="tip-title">{tip.title}</h3>
-                  <p className="tip-description">{tip.description}</p>
-                  <div className="tip-footer">
-                    <span>Read More</span>
-                    <span className="read-time">{tip.readTime}</span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
 
         <section className="jobs-section">
           <div className="jobs-header">
@@ -289,14 +301,14 @@ export default function ServiceProviderDashboard() {
                           onClick={() => handleStatusUpdate(job.id, 'accepted')}
                           disabled={actionLoading === job.id}
                         >
-                          {actionLoading === job.id ? 'Processing...' : 'Accept'}
+                          {actionLoading === job.id ? 'Processing...' : 'Accept Request'}
                         </button>
                         <button 
                           className="job-btn job-btn-secondary"
                           onClick={() => handleStatusUpdate(job.id, 'declined')}
                           disabled={actionLoading === job.id}
                         >
-                          Decline
+                          Decline Request
                         </button>
                       </>
                     )}
@@ -306,7 +318,7 @@ export default function ServiceProviderDashboard() {
                         onClick={() => handleStatusUpdate(job.id, 'on_the_way')}
                         disabled={actionLoading === job.id}
                       >
-                        <i className="bi bi-truck"></i> On My Way
+                        <i className="bi bi-truck"></i> Mark as On the Way
                       </button>
                     )}
                     {['on_the_way', 'in_progress'].includes(job.status) && (
@@ -315,7 +327,7 @@ export default function ServiceProviderDashboard() {
                         onClick={() => handleStatusUpdate(job.id, 'completed')}
                         disabled={actionLoading === job.id}
                       >
-                        <i className="bi bi-check-lg"></i> Complete
+                        <i className="bi bi-check-lg"></i> Mark Job as Completed
                       </button>
                     )}
                   </div>
@@ -329,6 +341,25 @@ export default function ServiceProviderDashboard() {
           <h2>Ready to Level Up?</h2>
           <p>Complete your profile and get verified to increase your reliability to clients and unlock more opportunities.</p>
           <button className="btn-get-verified" onClick={() => setShowVerificationRequest(true)}>GET VERIFIED NOW</button>
+        </section>
+
+        <section className="tips-section">
+          <h2 className="section-title">Weekly Tips for Service Providers</h2>
+          <div className="tips-grid">
+            {tips.map((tip) => (
+              <article key={tip.id} className="tip-card">
+                <img src={tip.image} alt="" className="tip-image non-draggable-image" draggable="false" />
+                <div className="tip-content">
+                  <h3 className="tip-title">{tip.title}</h3>
+                  <p className="tip-description">{tip.description}</p>
+                  <div className="tip-footer">
+                    <span>Learning Resource</span>
+                    <span className="read-time">{tip.readTime}</span>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
         </section>
 
         {showProfileModal && (

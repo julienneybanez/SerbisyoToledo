@@ -45,3 +45,84 @@ body {
 .bg-light-custom {
   background-color: color-mix(in srgb, var(--brand-primary, #5da9dd) 10%, transparent) !important;
 }
+
+.ui-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.ui-button {
+  min-height: 44px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  font-weight: 600;
+  transition: transform 0.15s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+.ui-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.ui-button-primary {
+  background: var(--primary);
+  color: #fff;
+  box-shadow: 0 10px 22px rgba(74, 159, 213, 0.25);
+}
+
+.ui-button-primary:hover:not(:disabled) {
+  background: var(--primary-hover);
+}
+
+.ui-button-secondary {
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--text-primary);
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  padding: 0.3rem 0.75rem;
+  font-size: 0.74rem;
+  line-height: 1.1;
+  font-weight: 700;
+}
+
+.status-pill.pending {
+  background: var(--status-pending-bg);
+  color: var(--status-pending-text);
+}
+
+.status-pill.accepted {
+  background: var(--status-accepted-bg);
+  color: var(--status-accepted-text);
+}
+
+.status-pill.attention {
+  background: var(--status-attention-bg);
+  color: var(--status-attention-text);
+}
+
+.status-pill.progress {
+  background: var(--status-progress-bg);
+  color: var(--status-progress-text);
+}
+
+.status-pill.completed {
+  background: var(--status-completed-bg);
+  color: var(--status-completed-text);
+}
+
+.status-pill.danger {
+  background: var(--status-danger-bg);
+  color: var(--status-danger-text);
+}
+
+.non-draggable-image {
+  -webkit-user-drag: none;
+  user-select: none;
+}

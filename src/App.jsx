@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useLocation } from 'react-router-dom';
 import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react';
 import './styles/App.css';
 import Navbar from './components/layout/Navbar';
@@ -107,6 +107,7 @@ const PROVIDER_TOUR_STEPS = [
 const MOBILE_BREAKPOINT_PX = 768;
 
 function App() {
+  const location = useLocation();
   const [isChatbotOpen, setIsChatbotOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState(getUser());
   const [showTourPrompt, setShowTourPrompt] = useState(false);
@@ -271,6 +272,7 @@ function App() {
     && ['client', 'tradesperson'].includes(currentUser.userType)
     && isAuthenticated()
   );
+  const shouldLiftChatbotButton = isMobileAuthenticated && location.pathname.startsWith('/provider/');
   const isMobileShellLayout = isMobileViewport;
 
   const mobileRole = currentUser?.userType || 'guest';
@@ -383,7 +385,7 @@ function App() {
               <Footer className={isMobileAuthenticated ? 'mobile-footer-minimized' : ''} />
               
               <button 
-                className="floating-btn"
+                className={`floating-btn ${shouldLiftChatbotButton ? 'floating-btn-avoid-sticky' : ''}`.trim()}
                 onClick={() => setIsChatbotOpen(true)}
                 aria-label="Open chat support"
               >

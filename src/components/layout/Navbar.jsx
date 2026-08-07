@@ -157,7 +157,7 @@ function Navbar() {
       <div className="container navbar-shell">
         <Link className="navbar-brand brand-link d-flex align-items-center" to={brandDestination} onClick={handleNavClick}>
           <div className="logo-wrapper" aria-hidden="true">
-            <img src={logo} alt="" width="56" height="56" draggable="false" />
+            <img src={logo} alt="" width="56" height="56" className="non-draggable-image" draggable="false" />
           </div>
           <div className="brand-text ms-3">
             <div className="brand-name">Serbisyo</div>
@@ -259,6 +259,7 @@ function Navbar() {
                         src={user.profileImage} 
                         alt="Profile" 
                         className="profile-avatar-img"
+                        draggable="false"
                       />
                     ) : (
                       <div className="profile-avatar-placeholder">

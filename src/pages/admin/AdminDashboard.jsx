@@ -125,13 +125,13 @@ function AdminDashboard() {
           className={`admin-tab ${activeTab === 'verifications' ? 'active' : ''}`}
           onClick={() => setActiveTab('verifications')}
         >
-          Verifications Request
+          Verification Requests
         </button>
         <button 
           className={`admin-tab ${activeTab === 'reports' ? 'active' : ''}`}
           onClick={() => setActiveTab('reports')}
         >
-          Users Reports
+          User Reports
         </button>
       </div>
 

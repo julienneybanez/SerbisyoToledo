@@ -131,7 +131,7 @@ const Register = () => {
           <div className="card-body p-4 p-md-5">
             {/* Logo and Header */}
             <div className="text-center mb-4">
-              <img src={logo} alt="SerbisyoToledo" className="logo-img" />
+              <img src={logo} alt="SerbisyoToledo" className="logo-img non-draggable-image" draggable="false" />
               <h1 className="app-title mb-2">
                 Serbisyo<span className="title-green">Toledo</span>
               </h1>

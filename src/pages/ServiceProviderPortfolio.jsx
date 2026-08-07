@@ -7,7 +7,6 @@ import {
   ArrowLeftIcon,
   StarIcon,
   CheckIcon,
-  BriefcaseIcon,
   CommentIcon,
   LocationIcon,
   ClockIcon,
@@ -99,9 +98,9 @@ const ProviderCard = ({ provider, profile, onBack, hideBackLink = false }) => {
   return (
     <section className="provider-section">
       {!hideBackLink && (
-        <div className="back-link" onClick={handleBack}>
+        <button type="button" className="back-link" onClick={handleBack}>
           <ArrowLeftIcon /> Back to Browse
-        </div>
+        </button>
       )}
 
       <div className="profile-header">
@@ -118,15 +117,16 @@ const ProviderCard = ({ provider, profile, onBack, hideBackLink = false }) => {
           <p className="profile-profession">{profile.profession || provider.tags?.[0] || 'Service Provider'}</p>
           <div className="profile-stats">
             <span className="stat-item">
-              <StarIcon /> {provider.rating} Rating
+              <StarIcon /> {provider.rating} rating
             </span>
             <span className="stat-item">
-              <BriefcaseIcon /> {profile.jobs} Jobs Complete
+              <CommentIcon /> {profile.reviews.length} reviews
             </span>
             <span className="stat-item">
-              <CommentIcon /> {profile.reviews.length} Reviews
+              <LocationIcon /> {profile.location || provider.location || 'Toledo City'}
             </span>
           </div>
+          <p className="profile-availability-note">Available this week based on posted schedule.</p>
         </div>
       </div>
 
@@ -192,7 +192,7 @@ const ProviderCard = ({ provider, profile, onBack, hideBackLink = false }) => {
                   className="portfolio-item clickable"
                   onClick={() => setExpandedImage(item.src)}
                 >
-                  <img src={item.src} alt="Portfolio image" className="portfolio-image" />
+                  <img src={item.src} alt="Portfolio image" className="portfolio-image non-draggable-image" draggable="false" />
                   {item.completedThroughPlatform && (
                     <span className="verified-badge" style={{ position: 'absolute', top: '8px', left: '8px' }}>
                       Completed through SerbisyoToledo
@@ -350,6 +350,7 @@ const ProviderCard = ({ provider, profile, onBack, hideBackLink = false }) => {
             src={expandedImage} 
             alt="Portfolio image" 
             className="lightbox-image"
+            draggable="false"
             onClick={(e) => e.stopPropagation()}
           />
         </div>

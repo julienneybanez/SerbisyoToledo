@@ -158,7 +158,7 @@ function AdminUsers() {
   return (
     <div className="admin-page admin-users-page">
       <div className="admin-page-header">
-        <h1 className="admin-page-title">Users Management</h1>
+        <h1 className="admin-page-title">User Management</h1>
         <p className="admin-page-subtitle">Manage all users in the system</p>
       </div>
 
@@ -185,7 +185,7 @@ function AdminUsers() {
           </select>
 
           <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
-            <option value="all">All Status</option>
+            <option value="all">All Statuses</option>
             <option value="active">Active</option>
             <option value="verified">Verified</option>
             <option value="pending">Pending</option>

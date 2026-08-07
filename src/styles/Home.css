@@ -2,8 +2,8 @@
    HOME PAGE - HERO SECTION
    =================================== */
 .hero-section {
-  padding: 4rem 0;
-  background-color: #f8f9fa;
+  padding: 4.5rem 0;
+  background: linear-gradient(180deg, #f2f8ff 0%, #f8fcff 100%);
 }
 
 .hero-content-stack {
@@ -13,17 +13,17 @@
 }
 
 .hero-title {
-  font-size: 2.5rem;
-  font-weight: bold;
-  color: #333;
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 800;
+  color: var(--text-primary);
   margin-bottom: 1rem;
 }
 
 .hero-subtitle {
   margin: -0.5rem 0 0;
   max-width: 520px;
-  color: #4b5b72;
-  font-size: 1rem;
+  color: var(--text-secondary);
+  font-size: 1.02rem;
   line-height: 1.55;
 }
 
@@ -120,13 +120,15 @@
    HOME PAGE - FEATURES SECTION
    =================================== */
 .features-section {
-  background-color: white;
+  background-color: var(--surface);
 }
 
 .feature-card {
-  background-color: #E3F2FD;
+  background: var(--surface);
   padding: 2rem;
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
   text-align: center;
   height: 100%;
 }
@@ -138,14 +140,14 @@
 
 .feature-title {
   font-size: 1.3rem;
-  font-weight: bold;
-  color: #333;
+  font-weight: 700;
+  color: var(--text-primary);
   margin-bottom: 1rem;
 }
 
 .feature-text {
-  color: #666;
-  font-size: 0.95rem;
+  color: var(--text-secondary);
+  font-size: 0.97rem;
   line-height: 1.6;
 }
 
@@ -153,33 +155,38 @@
    HOME PAGE - TRENDING SECTION
    =================================== */
 .trending-section {
-  background-color: white;
+  background-color: var(--surface);
 }
 
 .section-title {
   font-size: 2rem;
-  font-weight: bold;
-  color: #333;
+  font-weight: 800;
+  color: var(--text-primary);
 }
 
 .section-subtitle {
-  color: #666;
+  color: var(--text-secondary);
   font-size: 1rem;
 }
 
 .service-card {
   position: relative;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   overflow: hidden;
   height: 300px;
   cursor: pointer;
-  transition: transform 0.3s;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
   flex: 0 0 300px;
   min-width: 300px;
+  border: 1px solid var(--border);
+  background: transparent;
+  padding: 0;
+  text-align: left;
 }
 
 .service-card:hover {
-  transform: translateY(-5px);
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
 }
 
 .services-scroll {
@@ -200,12 +207,12 @@
 }
 
 .services-scroll::-webkit-scrollbar-thumb {
-  background: #4A9FF5;
+  background: var(--primary);
   border-radius: 10px;
 }
 
 .services-scroll::-webkit-scrollbar-thumb:hover {
-  background: #3a8fd5;
+  background: var(--primary-hover);
 }
 
 .service-image {
@@ -234,19 +241,32 @@
    HOME PAGE - CTA SECTION
    =================================== */
 .cta-section {
-  background-color: #f8f9fa;
+  background-color: #f3f8ff;
 }
 
 .cta-box {
-  background-color: #B3E5FC;
+  background: #dbeeff;
   padding: 3rem 2rem;
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
+  border: 1px solid #bfdaf7;
 }
 
 .cta-title {
   font-size: 1.8rem;
-  font-weight: bold;
-  color: #333;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.cta-box .btn-primary {
+  min-height: 46px;
+  border-radius: 12px;
+  border: none;
+  background: var(--primary);
+  font-weight: 700;
+}
+
+.cta-box .btn-primary:hover {
+  background: var(--primary-hover);
 }
 
 /* ===================================
