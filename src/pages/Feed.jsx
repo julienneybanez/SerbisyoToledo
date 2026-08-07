@@ -75,7 +75,7 @@ export default function Feed() {
       } catch (err) {
         if (!isCurrentRequest) return;
         console.error('Error fetching profiles:', err);
-        setError(err?.message || 'Failed to load service providers. Please try again.');
+        setError('We could not load service providers. Please try again.');
       } finally {
         if (isCurrentRequest) {
           setIsLoading(false);
@@ -191,7 +191,8 @@ export default function Feed() {
     <div className="feed-shell">
       <div className="feed-container">
         <div className="feed-page-header">
-          <h2 className="feed-page-title" data-tour="browse-services">Browse Service Providers</h2>
+          <h2 className="feed-page-title" data-tour="browse-services">Find a service provider</h2>
+          <p className="feed-page-subtitle">Compare providers by service, availability, location, and reviews.</p>
 
           {isClient && (
             <ProfileCompletionChecklist
@@ -226,7 +227,7 @@ export default function Feed() {
               <div className="filters-header">
                 <span className="filters-title">Advanced Filters</span>
                 <button className="clear-filters-btn" onClick={clearFilters}>
-                  Clear all
+                  Clear Filters
                 </button>
               </div>
               <div className="filters-grid">
@@ -366,7 +367,7 @@ export default function Feed() {
                       navigate(`/provider/${p.id}`)
                     }
                   >
-                    View Profile &amp; Request
+                    View Profile
                   </button>
                 </div>
               </div>

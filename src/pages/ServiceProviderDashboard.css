@@ -2,7 +2,7 @@
 
 .dashboard-container {
   min-height: calc(100vh - 120px);
-  background: linear-gradient(160deg, #f4f8fd 0%, #edf5ff 45%, #f2fbf8 100%);
+  background: var(--color-page-bg);
   padding: 40px 20px;
 }
 
@@ -126,6 +126,7 @@
 /* Weekly Tips Section */
 .tips-section {
   margin-bottom: 40px;
+  opacity: 0.95;
 }
 
 .section-title {
@@ -197,6 +198,12 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 25px;
+}
+
+.jobs-subtitle {
+  margin: 0.25rem 0 0;
+  color: var(--text-secondary);
+  font-size: 0.92rem;
 }
 
 .jobs-header h2 {
@@ -351,13 +358,13 @@
 }
 
 .job-btn-secondary {
-  background-color: #f0f0f0;
-  color: #666;
-  border: 1px solid #ddd;
+  background-color: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
 }
 
 .job-btn-secondary:hover {
-  background-color: #e8e8e8;
+  background-color: var(--surface-muted);
 }
 
 .job-btn-accept {
@@ -379,7 +386,7 @@
 }
 
 .job-btn-on-way {
-  background-color: #0f766e;
+  background-color: var(--primary-hover);
   color: white;
 }
 
@@ -388,12 +395,12 @@
 }
 
 .job-btn-complete {
-  background-color: #20b87a;
+  background-color: var(--primary);
   color: white;
 }
 
 .job-btn-complete:hover {
-  background-color: #1a9e68;
+  background-color: var(--primary-hover);
 }
 
 .job-btn:disabled {
@@ -466,12 +473,13 @@
 
 /* Level Up Banner */
 .level-up-banner {
-  background: linear-gradient(135deg, #0f4ca6 0%, #0f766e 100%);
+  background: color-mix(in srgb, var(--primary) 12%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--primary) 32%, var(--border));
   border-radius: 12px;
   padding: 40px;
-  color: white;
+  color: var(--text-primary);
   text-align: center;
-  box-shadow: 0 8px 24px rgba(0, 120, 212, 0.3);
+  box-shadow: var(--shadow-sm);
   margin-bottom: 40px;
 }
 
@@ -490,19 +498,20 @@
 }
 
 .btn-get-verified {
-  background-color: white;
-  color: #0f4ca6;
+  background-color: var(--primary);
+  color: #fff;
   border: none;
   padding: 12px 30px;
-  border-radius: 6px;
+  border-radius: 12px;
   font-size: 14px;
   font-weight: 600;
+  min-height: 44px;
   cursor: pointer;
   transition: all 0.3s ease;
 }
 
 .btn-get-verified:hover {
-  background-color: #f0f0f0;
+  background-color: var(--primary-hover);
   transform: translateY(-2px);
 }
 

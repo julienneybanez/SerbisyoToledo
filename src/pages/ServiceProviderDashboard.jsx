@@ -159,17 +159,20 @@ export default function ServiceProviderDashboard() {
           const messages = {
             accepted: 'Request accepted.',
             declined: 'Request declined.',
-            on_the_way: "I'm On My Way.",
-            completed: 'Mark Service Complete.',
+            on_the_way: "You're marked as on the way.",
+            completed: 'Service marked complete.',
           };
           alert(messages[status] || 'Status updated successfully.');
         }
+        return { success: true };
       }
+      return { success: false, message: response.message || 'Failed to update status' };
     } catch (err) {
       console.error('Status update error:', err);
       if (!suppressAlert) {
         alert(err.message || 'Failed to update status');
       }
+      return { success: false, message: err.message || 'Failed to update status' };
     } finally {
       setActionLoading(null);
     }
@@ -301,7 +304,10 @@ export default function ServiceProviderDashboard() {
 
         <section className="jobs-section">
           <div className="jobs-header">
-            <h2 className="section-title">Ongoing Jobs</h2>
+            <div>
+              <h2 className="section-title">Your Work Queue</h2>
+              <p className="jobs-subtitle">Review new requests first, then continue accepted jobs.</p>
+            </div>
             <Link to="/requests" className="view-all-link">View All</Link>
           </div>
           
@@ -338,6 +344,13 @@ export default function ServiceProviderDashboard() {
                     </div>
                   </div>
                   <div className="job-actions">
+                    <button
+                      className="job-btn job-btn-secondary"
+                      onClick={() => setSelectedRequest(job)}
+                      disabled={actionLoading === job.id}
+                    >
+                      View Details
+                    </button>
                     {job.status === 'pending' && (
                       <>
                         <button 

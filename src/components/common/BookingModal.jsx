@@ -18,9 +18,9 @@ const monthNames = [
 ];
 
 const timelineStages = [
-  { label: 'Schedule', description: 'Pick your date range', icon: CalendarIcon },
-  { label: 'Time Slot', description: 'Choose available time', icon: ClockIcon },
-  { label: 'Request Details', description: 'Share service details', icon: UserIcon },
+  { label: '1 Schedule', description: 'Pick your date range', icon: CalendarIcon },
+  { label: '2 Time', description: 'Choose available time', icon: ClockIcon },
+  { label: '3 Details', description: 'Share service details', icon: UserIcon },
 ];
 
 const formatDateInput = (date) => {
@@ -530,9 +530,10 @@ export default function BookingModal({ provider, onClose }) {
             <button
               key={`day-${cell}`}
               type="button"
-              className={`calendar-day ${available ? 'available' : 'muted'} ${selected ? 'selected' : ''}`}
+              className={`calendar-day ${available ? 'available' : 'unavailable'} ${selected ? 'selected' : ''}`}
               onClick={() => handleSelectDay(cell)}
               disabled={!available}
+              aria-label={available ? `Select ${monthNames[currentMonth]} ${cell}` : `${monthNames[currentMonth]} ${cell} unavailable`}
             >
               {cell}
             </button>
@@ -665,6 +666,9 @@ export default function BookingModal({ provider, onClose }) {
             <p className="hint-subtext">
               The displayed amount is an estimate based on the provider daily rate. Final price may vary depending on scope.
             </p>
+            <p className="hint-subtext">
+              The provider must accept your request before the booking is confirmed.
+            </p>
           </div>
         </form>
       );
@@ -720,13 +724,13 @@ export default function BookingModal({ provider, onClose }) {
           </button>
 
           <div className="booking-header">
-            <h2 className="booking-title">Booking</h2>
+            <h2 className="booking-title">Request Service</h2>
             <p className="booking-subtitle">
               {step === 4
                 ? 'All set. Feel free to close this window.'
                 : step === 3
-                  ? 'Share the specifics so the provider can prepare.'
-                  : 'Pick your preferred schedule using available dates.'}
+                  ? 'Review the details before sending your request.'
+                  : 'Choose an available schedule to continue.'}
             </p>
           </div>
 
@@ -743,7 +747,7 @@ export default function BookingModal({ provider, onClose }) {
           <div className="booking-actions">
             {step > 1 && step < 4 && (
               <button className="booking-btn booking-btn-outline" type="button" onClick={handlePrev} disabled={submitting}>
-                Prev
+                Back
               </button>
             )}
 
@@ -754,7 +758,7 @@ export default function BookingModal({ provider, onClose }) {
                 onClick={handleNext}
                 disabled={!canProceed() || submitting || dateLoading || slotLoading}
               >
-                {submitting ? 'Submitting...' : step === 3 ? 'Confirm Booking' : 'Next'}
+                {submitting ? 'Sending...' : step === 3 ? 'Send Request' : 'Continue'}
               </button>
             )}
 

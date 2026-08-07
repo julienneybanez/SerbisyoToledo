@@ -2,7 +2,7 @@
    PORTFOLIO PAGE - SHELL & NAVBAR
    =================================== */
 .portfolio-shell {
-  background: #f4f7fb;
+  background: var(--color-page-bg);
   min-height: 100vh;
 }
 
@@ -69,7 +69,7 @@
 }
 
 .provider-section {
-  background: #fff;
+  background: var(--surface);
   border-radius: var(--radius-lg);
   padding: 2rem;
   border: 1px solid var(--border);
@@ -199,9 +199,10 @@
 .skills-section,
 .contact-section {
   margin-top: 1.5rem;
-  background: #f4f7fb;
-  padding: 1.25rem 1.5rem;
-  border-radius: 16px;
+  background: transparent;
+  padding: 1.1rem 0;
+  border-radius: 0;
+  border-top: 1px solid var(--border);
 }
 
 .about-title,
@@ -226,11 +227,11 @@
 /* Note: .skill-tag is also defined in Auth.css for professional registration
    This version is for portfolio display, slightly different styling */
 .portfolio-shell .skill-tag {
-  background: #d3e6ff;
+  background: color-mix(in srgb, var(--primary) 12%, var(--surface));
   padding: 0.6rem 0.9rem;
   border-radius: 12px;
   font-weight: 600;
-  color: #1a3d5d;
+  color: var(--text-primary);
 }
 
 /* ===================================
@@ -244,20 +245,21 @@
 }
 
 .tab-btn {
-  border: none;
+  border: 1px solid var(--border);
   border-radius: 12px;
   padding: 0.75rem 1.5rem;
-  background: #e6ecf5;
+  background: var(--surface);
   font-weight: 600;
-  color: #4f6480;
+  color: var(--text-secondary);
   cursor: pointer;
-  transition: background 0.2s ease, color 0.2s ease;
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 }
 
 .tab-btn.active {
-  background: linear-gradient(120deg, #1a74ff, #18c27f);
+  background: var(--primary);
   color: #fff;
-  box-shadow: 0 10px 25px rgba(26, 116, 255, 0.35);
+  border-color: var(--primary);
+  box-shadow: var(--shadow-sm);
 }
 
 .portfolio-grid {
@@ -268,10 +270,10 @@
 }
 
 .portfolio-item {
-  background: #f7f9fc;
+  background: var(--surface);
   border-radius: 16px;
   padding: 0.75rem;
-  box-shadow: inset 0 0 0 1px rgba(26, 61, 93, 0.05);
+  border: 1px solid var(--border);
   display: flex;
   flex-direction: column;
 }
@@ -283,7 +285,7 @@
 
 .portfolio-item.clickable:hover {
   transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(26, 61, 93, 0.15);
+  box-shadow: var(--shadow-md);
 }
 
 .portfolio-item.clickable:hover .portfolio-image {
@@ -327,7 +329,7 @@
   display: flex;
   gap: 2rem;
   flex-wrap: wrap;
-  background: #f4f7fb;
+  background: var(--surface-muted);
   border-radius: 16px;
   padding: 1.5rem;
 }
@@ -483,8 +485,9 @@
 .pricing-section {
   margin-top: 1.5rem;
   padding: 1.25rem 1.5rem;
-  background: #f4f7fb;
+  background: var(--surface-muted);
   border-radius: var(--radius-md);
+  border: 1px solid var(--border);
   display: inline-flex;
   flex-direction: column;
   gap: 0.3rem;
@@ -517,7 +520,7 @@
   font-weight: 700;
   color: #fff;
   background: var(--primary);
-  box-shadow: 0 14px 28px rgba(74, 159, 213, 0.3);
+  box-shadow: var(--shadow-sm);
   cursor: pointer;
 }
 
@@ -647,9 +650,17 @@
 .about-empty,
 .skills-empty {
   padding: 1.5rem;
-  background: #f8f9fa;
+  background: var(--surface-muted);
   border-radius: 12px;
-  border: 2px dashed #e0e0e0;
+  border: 1px dashed var(--border);
+}
+
+.empty-subtext {
+  display: block;
+  margin-top: 0.5rem;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  text-align: center;
 }
 
 .empty-text {

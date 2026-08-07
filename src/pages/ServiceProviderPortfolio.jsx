@@ -131,18 +131,19 @@ const ProviderCard = ({ provider, profile, onBack, hideBackLink = false }) => {
       </div>
 
       <div className="about-section">
-        <h3 className="about-title">About Me</h3>
+        <h3 className="about-title">About</h3>
         {profile.about ? (
           <p className="about-text">{profile.about}</p>
         ) : (
           <div className="about-empty">
             <p className="empty-text">This provider hasn't added their bio yet.</p>
+            <small className="empty-subtext">More details may be added as their portfolio grows.</small>
           </div>
         )}
       </div>
 
       <div className="skills-section">
-        <h3 className="skills-title">Skills and Expertise</h3>
+        <h3 className="skills-title">Services and Skills</h3>
         {profile.skills && profile.skills.length > 0 ? (
           <div className="skills-grid">
             {profile.skills.map((skill) => (
@@ -157,7 +158,7 @@ const ProviderCard = ({ provider, profile, onBack, hideBackLink = false }) => {
       </div>
 
       <div className="about-section">
-        <h3 className="about-title">Languages Spoken</h3>
+        <h3 className="about-title">Languages</h3>
         {Array.isArray(profile.languages) && profile.languages.length > 0 ? (
           <p className="about-text">{profile.languages.join(', ')}</p>
         ) : (
@@ -172,13 +173,13 @@ const ProviderCard = ({ provider, profile, onBack, hideBackLink = false }) => {
           className={`tab-btn ${activeTab === 'portfolio' ? 'active' : ''}`}
           onClick={() => setActiveTab('portfolio')}
         >
-          Portfolio and Past Jobs ({profile.portfolio?.length || 0})
+          Portfolio ({profile.portfolio?.length || 0})
         </button>
         <button
           className={`tab-btn ${activeTab === 'reviews' ? 'active' : ''}`}
           onClick={() => setActiveTab('reviews')}
         >
-          Ratings and Reviews ({profile.reviews?.length || 0})
+          Reviews ({profile.reviews?.length || 0})
         </button>
       </div>
 

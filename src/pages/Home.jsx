@@ -41,9 +41,9 @@ function Home() {
           <div className="row align-items-center">
             <div className="col-lg-5">
               <div className="hero-content-stack">
-                <h1 className="hero-title">Quick and Easy Connection to Local Services</h1>
+                <h1 className="hero-title">What service do you need?</h1>
                 <p className="hero-subtitle">
-                  Find trusted local service providers in Toledo City for repairs, home care, and other everyday needs.
+                  Find trusted local service providers in Toledo City.
                 </p>
                 <LandingSearch />
               </div>
@@ -125,8 +125,8 @@ function Home() {
       <section className="trending-section py-5">
         <div className="container">
           <div className="text-center mb-4">
-            <h2 className="section-title">Trending Services</h2>
-            <p className="section-subtitle">Popular categories clients browse this week</p>
+            <h2 className="section-title">Popular Services</h2>
+            <p className="section-subtitle">Choose a category to start browsing providers.</p>
           </div>
           <div className="services-scroll">
             {trendingServices.map((service) => (
@@ -150,7 +150,7 @@ function Home() {
       <section className="cta-section py-5">
         <div className="container">
           <div className="cta-box text-center">
-            <h2 className="cta-title">Connect with local service providers with just a few clicks</h2>
+            <h2 className="cta-title">Need help today?</h2>
             <button className="btn btn-primary btn-lg mt-3" onClick={() => navigate('/register')}>Join Serbisyo Toledo</button>
           </div>
         </div>

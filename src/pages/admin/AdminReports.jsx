@@ -11,6 +11,13 @@ function AdminReports() {
   const [actionLoading, setActionLoading] = useState('');
   const [expandedReportId, setExpandedReportId] = useState(null);
   const [previewScreenshot, setPreviewScreenshot] = useState('');
+  const [decisionDialog, setDecisionDialog] = useState({
+    open: false,
+    reportId: null,
+    action: 'dismiss',
+    notes: '',
+    error: '',
+  });
 
   const fetchReports = async () => {
     try {
@@ -20,8 +27,8 @@ function AdminReports() {
       if (response.success) {
         setReports(response.data || []);
       }
-    } catch (err) {
-      setError(err.message || 'Failed to load reports');
+    } catch {
+      setError('We could not load reports. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -46,16 +53,22 @@ function AdminReports() {
     return undefined;
   }, [previewScreenshot]);
 
-  const handleReportAction = async (reportId, action) => {
+  const handleReportAction = async (reportId, action, payload = {}) => {
     try {
       setActionLoading(`${reportId}-${action}`);
       const needsResolution = ['dismiss', 'resolve', 'warn', 'suspend', 'ban'].includes(action);
-      const notes = window.prompt(needsResolution ? 'Resolution notes (required):' : 'Optional resolution notes:') || '';
+      const needsNotesPrompt = needsResolution;
+      const hasProvidedNotes = typeof payload.resolutionNotes === 'string';
+      const notes = hasProvidedNotes
+        ? payload.resolutionNotes
+        : (needsNotesPrompt ? (window.prompt('Resolution notes (required):') || '') : '');
       if (needsResolution && !notes.trim()) {
         alert('Resolution notes are required for this action.');
-        return;
+        return { success: false, message: 'Resolution notes are required.' };
       }
-      const moderationNotes = window.prompt('Optional moderation notes:') || '';
+      const moderationNotes = typeof payload.moderationNotes === 'string'
+        ? payload.moderationNotes
+        : (needsResolution ? (window.prompt('Optional moderation notes:') || '') : '');
       const response = await adminAPI.updateReportStatus(reportId, {
         action,
         resolutionNotes: notes,
@@ -63,12 +76,43 @@ function AdminReports() {
       });
       if (response.success) {
         await fetchReports();
+        return { success: true };
       }
+      return { success: false, message: response.message || 'Failed to update report' };
     } catch (err) {
       alert(err.message || 'Failed to update report');
+      return { success: false, message: err.message || 'Failed to update report' };
     } finally {
       setActionLoading('');
     }
+  };
+
+  const openDecisionDialog = (reportId) => {
+    setDecisionDialog({ open: true, reportId, action: 'dismiss', notes: '', error: '' });
+  };
+
+  const closeDecisionDialog = () => {
+    setDecisionDialog({ open: false, reportId: null, action: 'dismiss', notes: '', error: '' });
+  };
+
+  const handleSubmitDecision = async () => {
+    const notes = decisionDialog.notes.trim();
+    if (!notes) {
+      setDecisionDialog((prev) => ({ ...prev, error: 'Admin note is required before submitting a decision.' }));
+      return;
+    }
+
+    const result = await handleReportAction(decisionDialog.reportId, decisionDialog.action, {
+      resolutionNotes: notes,
+      moderationNotes: '',
+    });
+
+    if (result?.success) {
+      closeDecisionDialog();
+      return;
+    }
+
+    setDecisionDialog((prev) => ({ ...prev, error: result?.message || 'Failed to submit decision' }));
   };
 
   const filteredReports = reports.filter((report) => {
@@ -92,8 +136,8 @@ function AdminReports() {
   return (
     <div className="admin-page">
       <div className="admin-page-header">
-        <h1 className="admin-page-title">User Reports</h1>
-        <p className="admin-page-subtitle">Review and manage user complaints and reports</p>
+        <h1 className="admin-page-title">Reports</h1>
+        <p className="admin-page-subtitle">Review reported activity and decide what action should be taken.</p>
       </div>
 
       <div className="mini-stats">
@@ -126,7 +170,7 @@ function AdminReports() {
         </div>
 
         <div className="filter-group">
-          <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
+          <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} aria-label="Filter reports by status">
             <option value="all">All Status</option>
             <option value="pending">Pending</option>
             <option value="under_review">Under Review</option>
@@ -197,7 +241,7 @@ function AdminReports() {
               </div>
 
               <div className="request-actions report-actions">
-                {['pending', 'under_review'].includes(report.status) ? (
+                {report.status === 'pending' ? (
                   <>
                     <button
                       className="btn-investigate"
@@ -206,40 +250,16 @@ function AdminReports() {
                     >
                       {actionLoading === `${report.id}-investigate` ? 'Working...' : 'Review Report'}
                     </button>
+                  </>
+                ) : null}
+                {report.status === 'under_review' ? (
+                  <>
                     <button
                       className="btn-approve"
-                      disabled={actionLoading === `${report.id}-resolve`}
-                      onClick={() => handleReportAction(report.id, 'resolve')}
+                      disabled={actionLoading && actionLoading.startsWith(`${report.id}-`)}
+                      onClick={() => openDecisionDialog(report.id)}
                     >
-                      {actionLoading === `${report.id}-resolve` ? 'Working...' : 'Make Decision'}
-                    </button>
-                    <button
-                      className="btn-dismiss"
-                      disabled={actionLoading === `${report.id}-dismiss`}
-                      onClick={() => handleReportAction(report.id, 'dismiss')}
-                    >
-                      {actionLoading === `${report.id}-dismiss` ? 'Working...' : 'Dismiss'}
-                    </button>
-                    <button
-                      className="btn-view-details"
-                      disabled={actionLoading === `${report.id}-warn`}
-                      onClick={() => handleReportAction(report.id, 'warn')}
-                    >
-                      {actionLoading === `${report.id}-warn` ? 'Working...' : 'Warn'}
-                    </button>
-                    <button
-                      className="btn-dismiss"
-                      disabled={actionLoading === `${report.id}-suspend`}
-                      onClick={() => handleReportAction(report.id, 'suspend')}
-                    >
-                      {actionLoading === `${report.id}-suspend` ? 'Working...' : 'Suspend'}
-                    </button>
-                    <button
-                      className="btn-ban"
-                      disabled={actionLoading === `${report.id}-ban`}
-                      onClick={() => handleReportAction(report.id, 'ban')}
-                    >
-                      {actionLoading === `${report.id}-ban` ? 'Working...' : 'Ban User'}
+                      Make Decision
                     </button>
                   </>
                 ) : null}
@@ -283,8 +303,72 @@ function AdminReports() {
 
       {!loading && filteredReports.length === 0 && (
         <div className="empty-state">
-          <h3>No reports found</h3>
-          <p>Try adjusting your search or filter criteria</p>
+          <h3>No reports requiring attention.</h3>
+          <p>Try adjusting your search or filter criteria.</p>
+        </div>
+      )}
+
+      {decisionDialog.open && (
+        <div
+          className="admin-dialog-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="report-decision-title"
+          onClick={closeDecisionDialog}
+        >
+          <div className="admin-dialog-card" onClick={(event) => event.stopPropagation()}>
+            <div className="admin-dialog-header">
+              <h2 id="report-decision-title" className="admin-dialog-title">Make Decision</h2>
+              <button
+                type="button"
+                className="admin-dialog-close"
+                onClick={closeDecisionDialog}
+                aria-label="Close decision dialog"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="admin-dialog-body">
+              <label htmlFor="report-decision-action" className="settings-label">Decision</label>
+              <select
+                id="report-decision-action"
+                className="settings-input"
+                value={decisionDialog.action}
+                onChange={(event) => setDecisionDialog((prev) => ({ ...prev, action: event.target.value, error: '' }))}
+              >
+                <option value="dismiss">No violation - Dismiss</option>
+                <option value="warn">Minor violation - Warn</option>
+                <option value="suspend">Serious or repeated violation - Suspend</option>
+                <option value="ban">Severe violation - Ban</option>
+              </select>
+
+              <label htmlFor="report-decision-note" className="settings-label">Admin note</label>
+              <textarea
+                id="report-decision-note"
+                className="settings-textarea"
+                rows={4}
+                maxLength={800}
+                value={decisionDialog.notes}
+                onChange={(event) => setDecisionDialog((prev) => ({ ...prev, notes: event.target.value, error: '' }))}
+                placeholder="Explain the reason for this decision"
+              />
+
+              {decisionDialog.error ? <p className="admin-dialog-error">{decisionDialog.error}</p> : null}
+            </div>
+
+            <div className="admin-dialog-actions admin-dialog-actions-split">
+              <button type="button" className="btn-view-details" onClick={closeDecisionDialog}>Cancel</button>
+              <button
+                type="button"
+                className="btn-approve"
+                onClick={handleSubmitDecision}
+                disabled={Boolean(actionLoading)}
+              >
+                {actionLoading ? 'Submitting...' : 'Submit Decision'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

@@ -159,7 +159,7 @@ function AdminUsers() {
     <div className="admin-page admin-users-page">
       <div className="admin-page-header">
         <h1 className="admin-page-title">User Management</h1>
-        <p className="admin-page-subtitle">Manage all users in the system</p>
+        <p className="admin-page-subtitle">Review account status, verification, and user activity.</p>
       </div>
 
       <div className="filters-bar">
@@ -177,14 +177,14 @@ function AdminUsers() {
         </div>
 
         <div className="filter-group">
-          <select value={filterType} onChange={(e) => setFilterType(e.target.value)}>
+          <select value={filterType} onChange={(e) => setFilterType(e.target.value)} aria-label="Filter users by role">
             <option value="all">All Types</option>
             <option value="client">Clients</option>
             <option value="tradesperson">Service Providers</option>
             <option value="admin">Admins</option>
           </select>
 
-          <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
+          <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} aria-label="Filter users by account status">
             <option value="all">All Statuses</option>
             <option value="active">Active</option>
             <option value="verified">Verified</option>
@@ -215,8 +215,8 @@ function AdminUsers() {
               <div className="admin-user-mobile-body">
                 <p className="request-detail"><strong>Type:</strong> {user.type === 'tradesperson' ? 'Provider' : user.type}</p>
                 <p className="request-detail"><strong>Profession:</strong> {user.profession || '—'}</p>
-                <p className="request-detail"><strong>Status:</strong> {!user.isActive ? 'suspended' : user.isVerified ? 'verified' : 'active'}</p>
-                <p className="request-detail"><strong>Verification:</strong> {user.isVerified ? 'verified' : 'not verified'}</p>
+                <p className="request-detail"><strong>Status:</strong> {!user.isActive ? 'Suspended' : user.isVerified ? 'Verified' : 'Active'}</p>
+                <p className="request-detail"><strong>Verification:</strong> {user.isVerified ? 'Verified' : 'Not Verified'}</p>
                 <p className="request-detail"><strong>Join Date:</strong> {new Date(user.joinDate).toLocaleDateString()}</p>
               </div>
 
@@ -294,7 +294,7 @@ function AdminUsers() {
                   <td>{user.profession || '—'}</td>
                   <td>
                     <span className={`status-badge ${!user.isActive ? 'status-suspended' : user.isVerified ? 'status-verified' : 'status-pending'}`}>
-                      {!user.isActive ? 'suspended' : user.isVerified ? 'verified' : 'active'}
+                      {!user.isActive ? 'Suspended' : user.isVerified ? 'Verified' : 'Active'}
                     </span>
                   </td>
                   <td>{new Date(user.joinDate).toLocaleDateString()}</td>

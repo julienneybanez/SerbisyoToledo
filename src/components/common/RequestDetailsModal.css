@@ -112,25 +112,30 @@
 }
 
 .status-badge-large.badge-pending {
-  background: rgba(251, 191, 36, 0.3);
+  background: #fbbf24;
+  color: #78350f;
 }
 
 .status-badge-large.badge-accepted {
-  background: rgba(34, 197, 94, 0.3);
+  background: #bfdbfe;
+  color: #1e3a8a;
 }
 
 .status-badge-large.badge-declined,
 .status-badge-large.badge-cancelled {
-  background: rgba(239, 68, 68, 0.3);
+  background: #fecaca;
+  color: #7f1d1d;
 }
 
 .status-badge-large.badge-on-way,
 .status-badge-large.badge-in-progress {
-  background: rgba(59, 130, 246, 0.3);
+  background: #a7f3d0;
+  color: #065f46;
 }
 
 .status-badge-large.badge-completed {
-  background: rgba(34, 197, 94, 0.4);
+  background: #86efac;
+  color: #14532d;
 }
 
 /* ===================================
@@ -194,7 +199,8 @@
 }
 
 .info-label {
-  font-size: 0.85rem;
+  font-size: 0.9rem;
+  font-weight: 600;
   color: var(--text-secondary);
   flex-shrink: 0;
 }

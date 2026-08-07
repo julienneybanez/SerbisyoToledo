@@ -2,7 +2,7 @@
    FEED PAGE - SHELL & CONTAINER
    =================================== */
 .feed-shell {
-  background: #f3f8ff;
+  background: var(--color-page-bg);
   padding: 3rem 0;
 }
 
@@ -23,8 +23,15 @@
 
 .feed-page-title {
   font-size: 2rem;
-  font-weight: 700;
+  font-weight: 800;
   color: var(--text-primary);
+}
+
+.feed-page-subtitle {
+  margin: -0.45rem 0 0;
+  color: var(--text-secondary);
+  font-size: 0.98rem;
+  line-height: 1.55;
 }
 
 .search-filter-row {
@@ -57,7 +64,7 @@
 }
 
 .search-input-large input::placeholder {
-  color: #94a3b8;
+  color: #64748b;
 }
 
 .search-input-large svg {
@@ -166,10 +173,10 @@
 .clear-filters-btn {
   background: none;
   border: none;
-  color: #4a9ff5;
+  color: var(--primary);
   font-size: 0.85rem;
   cursor: pointer;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .clear-filters-btn:hover {
@@ -269,7 +276,7 @@
   background: var(--primary);
   color: white;
   border-color: var(--primary);
-  box-shadow: 0 10px 20px rgba(74, 159, 245, 0.25);
+  box-shadow: var(--shadow-sm);
 }
 
 /* ===================================
@@ -452,21 +459,22 @@
 }
 
 .btn-view-profile {
+  min-height: 44px;
   border: none;
-  border-radius: 30px;
-  padding: 0.45rem 1.1rem;
+  border-radius: 12px;
+  padding: 0.7rem 1rem;
   font-weight: 600;
-  font-size: 0.82rem;
+  font-size: 0.88rem;
   color: white;
   background: var(--primary);
-  box-shadow: 0 6px 18px rgba(26, 116, 255, 0.3);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
 
 .btn-view-profile:hover {
   transform: translateY(-2px);
   background: var(--primary-hover);
-  box-shadow: 0 18px 32px rgba(26, 116, 255, 0.35);
+  box-shadow: var(--shadow-md);
 }
 
 .mobile-filter-btn {
@@ -647,21 +655,21 @@
 }
 
 .error-container {
-  background-color: #fdf0f0;
-  border: 1px solid #f5c6cb;
+  background-color: color-mix(in srgb, var(--color-danger) 8%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--color-danger) 28%, var(--border));
 }
 
 .error-container p {
-  color: #721c24;
+  color: var(--color-danger);
 }
 
 .no-providers-container {
-  background-color: #f0f4ff;
-  border: 1px solid #d1deff;
+  background-color: color-mix(in srgb, var(--primary) 7%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--primary) 26%, var(--border));
 }
 
 .no-providers-container p {
-  color: #1a74ff;
+  color: var(--text-secondary);
 }
 
 /* ===================================

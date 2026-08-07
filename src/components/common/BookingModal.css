@@ -10,7 +10,7 @@
 }
 
 .booking-modal {
-  background: #fff;
+  background: var(--surface-elevated, #fff);
   width: min(1120px, 96vw);
   border-radius: 32px;
   box-shadow: 0 35px 60px rgba(9, 24, 66, 0.15);
@@ -21,8 +21,8 @@
 
 .booking-sidebar {
   width: 320px;
-  background: #f7fbff;
-  border-right: 1px solid #e6effc;
+  background: var(--surface-muted);
+  border-right: 1px solid var(--border);
   padding: 2.5rem 2rem;
   display: flex;
   flex-direction: column;
@@ -116,7 +116,7 @@
   top: 58px;
   width: 2px;
   height: calc(100% - 58px);
-  background: #d9e5f7;
+  background: color-mix(in srgb, var(--primary) 34%, var(--border));
 }
 
 .booking-stage:last-child::after {
@@ -181,10 +181,7 @@
 .booking-title {
   font-size: 2rem;
   font-weight: 700;
-  background: linear-gradient(90deg, #1f8ef1, #21c06e);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  color: var(--text-primary);
 }
 
 .booking-subtitle {
@@ -219,8 +216,8 @@
 }
 
 .booking-stage-content {
-  background: #fdfefe;
-  border: 1px solid #edf1fb;
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 20px;
   padding: 1.75rem;
   min-height: 280px;
@@ -235,9 +232,9 @@
 }
 
 .booking-calendar {
-  background: #fff;
+  background: var(--surface);
   border-radius: 18px;
-  border: 2px solid #e8effc;
+  border: 1px solid var(--border);
   padding: 1.5rem;
   min-width: 420px;
 }
@@ -350,8 +347,16 @@
 }
 
 .calendar-day.muted {
-  color: #c0c7da;
+  color: var(--text-secondary);
+  opacity: 0.45;
   background: transparent;
+}
+
+.calendar-day.unavailable {
+  color: var(--text-secondary);
+  opacity: 0.4;
+  background: transparent;
+  cursor: not-allowed;
 }
 
 .calendar-day.available {
@@ -370,12 +375,13 @@
 }
 
 .booking-hint-card {
-  background: #f0f6ff;
+  background: var(--surface-muted);
   border-radius: 18px;
   padding: 1.5rem;
-  color: #53607f;
+  color: var(--text-secondary);
   font-size: 0.95rem;
   margin-top: 1.25rem;
+  border: 1px solid var(--border);
 }
 
 .booking-hint-card .hint-subtext {
@@ -385,7 +391,7 @@
 }
 
 .booking-time-panel {
-  border-left: 2px solid #edeffa;
+  border-left: 1px solid var(--border);
   padding-left: 1.75rem;
   display: flex;
   flex-direction: column;
@@ -407,10 +413,10 @@
 
 .time-slot {
   border-radius: 999px;
-  border: 1px solid #d3def3;
+  border: 1px solid var(--border);
   padding: 0.75rem 1rem;
-  background: #f5f7fb;
-  color: #3d4a63;
+  background: var(--surface);
+  color: var(--text-primary);
   font-weight: 600;
   cursor: pointer;
 }
@@ -438,7 +444,7 @@
 .booking-textarea {
   width: 100%;
   border-radius: 18px;
-  border: 1px solid #d9e4fb;
+  border: 1px solid var(--border);
   padding: 0.85rem 1.25rem;
   font-size: 0.95rem;
   font-family: inherit;
@@ -486,14 +492,18 @@
 }
 
 .booking-btn-outline {
-  background: #fff;
-  border: 2px solid #1f8ef1;
-  color: #1f8ef1;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
 }
 
 .booking-btn-primary {
-  background: linear-gradient(135deg, #1f8ef1, #21c06e);
+  background: var(--primary);
   color: #fff;
+}
+
+.booking-btn-primary:hover:not(:disabled) {
+  background: var(--primary-hover);
 }
 
 .booking-btn:disabled {
