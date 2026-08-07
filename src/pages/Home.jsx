@@ -114,7 +114,7 @@ function Home() {
               <div className="feature-card">
                 <div className="feature-icon">
                   <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
-                    <rect width="40" height="40" rx="8" fill="#4A9FF5"/>
+                    <rect width="40" height="40" rx="8" fill="#22B8A5"/>
                     <path d="M20 10L22.5 17.5H30L24 22L26.5 30L20 25L13.5 30L16 22L10 17.5H17.5L20 10Z" fill="white"/>
                   </svg>
                 </div>

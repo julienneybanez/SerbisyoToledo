@@ -105,7 +105,7 @@
   min-width: 20px;
   height: 20px;
   border-radius: 999px;
-  background: #1a74ff;
+  background: var(--brand-primary);
   color: #fff;
   display: inline-flex;
   align-items: center;
@@ -271,7 +271,7 @@
 
 .category-btn:hover {
   border-color: rgba(74, 159, 245, 0.5);
-  color: #4a9ff5;
+  color: var(--brand-primary);
 }
 
 .category-btn.active {
@@ -403,7 +403,7 @@
 .meta-item svg {
   width: 14px;
   height: 14px;
-  color: #1a74ff;
+  color: var(--brand-primary);
 }
 
 .provider-status-badge {
@@ -414,8 +414,8 @@
 }
 
 .provider-status-badge.online {
-  background: rgba(32, 184, 122, 0.15);
-  color: #18895b;
+  background: color-mix(in srgb, var(--brand-accent) 16%, transparent);
+  color: var(--brand-accent-dark);
 }
 
 .provider-status-badge.offline {
@@ -433,7 +433,7 @@
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background: rgba(68, 201, 160, 0.15);
+  background: color-mix(in srgb, var(--brand-accent) 16%, transparent);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -464,7 +464,7 @@
   margin: 0;
   font-size: 0.78rem;
   font-weight: 600;
-  color: #18895b;
+  color: var(--brand-accent-dark);
 }
 
 .provider-tags {
@@ -477,7 +477,7 @@
   padding: 0.2rem 0.6rem;
   border-radius: 999px;
   background: rgba(74, 159, 245, 0.12);
-  color: #1a74ff;
+  color: var(--brand-primary);
   font-size: 0.72rem;
   font-weight: 600;
 }
@@ -667,7 +667,7 @@
   width: 50px;
   height: 50px;
   border: 4px solid #f0f0f0;
-  border-top: 4px solid #1a74ff;
+  border-top: 4px solid var(--brand-primary);
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }

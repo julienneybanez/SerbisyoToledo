@@ -48,7 +48,7 @@
 }
 
 .chatbot-header {
-  background: linear-gradient(135deg, #4a9ff5 0%, #5eb8ff 100%);
+  background: linear-gradient(135deg, var(--brand-accent) 0%, var(--brand-accent-dark) 100%);
   color: white;
   padding: 18px 20px;
   display: flex;
@@ -76,7 +76,7 @@
 .chatbot-robot-icon svg {
   width: 28px;
   height: 28px;
-  color: #4a9ff5;
+  color: var(--brand-accent);
 }
 
 .chatbot-header-info {
@@ -91,7 +91,7 @@
 }
 
 .chatbot-title span {
-  color: #a8e6cf;
+  color: #d8fff6;
 }
 
 .chatbot-status {
@@ -105,7 +105,7 @@
 .status-dot {
   width: 8px;
   height: 8px;
-  background: #4ade80;
+  background: #d8fff6;
   border-radius: 50%;
 }
 
@@ -187,14 +187,14 @@
 }
 
 .bot-avatar {
-  background: #e8f4fd;
-  border: 2px solid #4a9ff5;
+  background: var(--brand-teal-soft);
+  border: 2px solid var(--brand-accent);
 }
 
 .bot-avatar svg {
   width: 20px;
   height: 20px;
-  color: #4a9ff5;
+  color: var(--brand-accent);
 }
 
 .user-avatar {
@@ -222,7 +222,7 @@
 }
 
 .user-message .message-bubble {
-  background: linear-gradient(135deg, #4a9ff5 0%, #5eb8ff 100%);
+  background: var(--brand-primary);
   color: white;
   border-radius: 18px 18px 4px 18px;
 }
@@ -276,7 +276,7 @@
 }
 
 .chatbot-provider-card:hover {
-  border-color: #4a9ff5;
+  border-color: var(--brand-primary);
   background: #f0f7ff;
 }
 
@@ -351,8 +351,8 @@
 }
 
 .suggestion-chip:hover {
-  border-color: #4a9ff5;
-  color: #4a9ff5;
+  border-color: var(--brand-primary);
+  color: var(--brand-primary);
   background: #f0f7ff;
 }
 
@@ -376,9 +376,9 @@
 }
 
 .chatbot-input:focus {
-  border-color: #4a9ff5;
+  border-color: var(--brand-primary);
   background: white;
-  box-shadow: 0 0 0 3px rgba(74, 159, 245, 0.1);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-primary) 18%, transparent);
 }
 
 .chatbot-input::placeholder {
@@ -386,7 +386,7 @@
 }
 
 .chatbot-send-btn {
-  background: linear-gradient(135deg, #4a9ff5 0%, #5eb8ff 100%);
+  background: var(--brand-primary);
   border: none;
   color: white;
   width: 48px;
@@ -398,12 +398,13 @@
   cursor: pointer;
   transition: all 0.3s ease;
   flex-shrink: 0;
-  box-shadow: 0 4px 12px rgba(74, 159, 245, 0.3);
+  box-shadow: 0 4px 12px rgba(47, 125, 225, 0.3);
 }
 
 .chatbot-send-btn:hover {
   transform: scale(1.05);
-  box-shadow: 0 6px 16px rgba(74, 159, 245, 0.4);
+  background: var(--brand-primary-dark);
+  box-shadow: 0 6px 16px rgba(47, 125, 225, 0.4);
 }
 
 .chatbot-send-btn:active {

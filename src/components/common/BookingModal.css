@@ -33,7 +33,7 @@
   width: 88px;
   height: 88px;
   border-radius: 26px;
-  background: linear-gradient(135deg, #1f8ef1, #21c06e);
+  background: var(--gradient-brand);
   display: grid;
   place-items: center;
   color: #fff;
@@ -56,7 +56,7 @@
   width: 64px;
   height: 64px;
   border-radius: 50%;
-  background: #1f8ef1;
+  background: var(--primary);
   color: #fff;
   font-weight: 600;
   display: grid;
@@ -85,7 +85,7 @@
   justify-content: center;
   gap: 0.25rem;
   font-size: 0.85rem;
-  color: #1f8ef1;
+  color: var(--primary);
   margin-bottom: 0.35rem;
 }
 
@@ -134,15 +134,15 @@
 }
 
 .stage-indicator.active {
-  border-color: #1f8ef1;
-  background: rgba(31, 142, 241, 0.1);
-  color: #1f8ef1;
+  border-color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 14%, transparent);
+  color: var(--primary);
 }
 
 .stage-indicator.completed {
-  border-color: #21c06e;
-  background: rgba(33, 192, 110, 0.1);
-  color: #21c06e;
+  border-color: var(--brand-accent);
+  background: color-mix(in srgb, var(--brand-accent) 14%, transparent);
+  color: var(--brand-accent);
 }
 
 .stage-label {
@@ -211,7 +211,7 @@
   display: block;
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(120deg, #1f8ef1, #21c06e);
+  background: var(--primary);
   transition: width 0.25s ease;
 }
 
@@ -370,7 +370,7 @@
 }
 
 .calendar-day.selected {
-  background: #1f8ef1;
+  background: var(--primary);
   color: #fff;
 }
 
@@ -453,8 +453,8 @@
 
 .booking-input:focus,
 .booking-textarea:focus {
-  border-color: #1f8ef1;
-  box-shadow: 0 0 0 3px rgba(31, 142, 241, 0.1);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 15%, transparent);
 }
 
 .booking-error {
@@ -521,10 +521,10 @@
   height: 72px;
   margin: 0 auto 1rem;
   border-radius: 50%;
-  background: rgba(33, 192, 110, 0.1);
+  background: color-mix(in srgb, var(--brand-accent) 14%, transparent);
   display: grid;
   place-items: center;
-  color: #21c06e;
+  color: var(--brand-accent);
   font-size: 1.4rem;
 }
 

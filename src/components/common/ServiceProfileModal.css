@@ -16,9 +16,9 @@
 }
 
 .alert-success {
-  background-color: #d4edda;
-  color: #155724;
-  border: 1px solid #c3e6cb;
+  background-color: var(--brand-teal-soft);
+  color: var(--brand-accent-dark);
+  border: 1px solid color-mix(in srgb, var(--brand-accent) 35%, #c3e6cb);
 }
 
 .modal-overlay {
@@ -87,10 +87,7 @@
   font-size: 24px;
   font-weight: 700;
   margin: 0 0 8px 0;
-  background: linear-gradient(120deg, #1a74ff 0%, #20b87a 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--brand-primary);
 }
 
 .modal-subtitle {
@@ -162,8 +159,8 @@
 
 .form-input:focus {
   outline: none;
-  border-color: #0078D4;
-  box-shadow: 0 0 0 3px rgba(0, 120, 212, 0.1);
+  border-color: var(--brand-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-primary) 14%, transparent);
 }
 
 .form-input::placeholder {
@@ -268,19 +265,19 @@
 }
 
 .category-pill input {
-  accent-color: #0078D4;
+  accent-color: var(--brand-primary);
 }
 
 .category-pill:hover {
-  border-color: #0078D4;
-  color: #0078D4;
-  background-color: rgba(0, 120, 212, 0.05);
+  border-color: var(--brand-primary);
+  color: var(--brand-primary);
+  background-color: color-mix(in srgb, var(--brand-primary) 8%, var(--color-surface));
 }
 
 .category-pill.active {
-  background-color: #0078D4;
+  background-color: var(--brand-primary);
   color: white;
-  border-color: #0078D4;
+  border-color: var(--brand-primary);
 }
 
 /* Upload Area */
@@ -293,8 +290,8 @@
 }
 
 .upload-area:hover {
-  border-color: #0078D4;
-  background-color: rgba(0, 120, 212, 0.02);
+  border-color: var(--brand-primary);
+  background-color: color-mix(in srgb, var(--brand-primary) 5%, var(--color-surface));
 }
 
 .file-input {
@@ -336,10 +333,10 @@
 
 /* Important Notes */
 .important-notes {
-  background-color: #E3F2FD;
+  background-color: color-mix(in srgb, var(--brand-primary) 12%, white);
   padding: 16px;
   border-radius: 16px;
-  border-left: 4px solid #0078D4;
+  border-left: 4px solid var(--brand-primary);
 }
 
 .important-notes h4 {
@@ -370,7 +367,7 @@
 .btn-submit {
   width: auto;
   padding: 14px 40px;
-  background: linear-gradient(120deg, #1a74ff 0%, #20b87a 100%);
+  background: var(--brand-primary);
   color: white;
   border: none;
   border-radius: 999px !important;
@@ -385,7 +382,8 @@
 
 .btn-submit:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(32, 184, 122, 0.3);
+  background: var(--brand-primary-dark);
+  box-shadow: 0 8px 20px rgba(47, 125, 225, 0.3);
 }
 
 .btn-submit:active {
@@ -417,7 +415,7 @@
 }
 
 .terms-text a {
-  color: #0078D4;
+  color: var(--brand-primary);
   text-decoration: none;
   font-weight: 500;
 }

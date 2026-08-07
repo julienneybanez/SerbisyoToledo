@@ -96,7 +96,7 @@
 
 .text-warning { color: #f59e0b; }
 .text-orange { color: #f97316; }
-.text-success { color: #22c55e; }
+.text-success { color: var(--admin-success); }
 .text-primary { color: var(--admin-primary); }
 .text-danger { color: #ef4444; }
 
@@ -761,9 +761,9 @@
 }
 
 .profession-electrician {
-  background: #fef3c7;
-  color: #d97706;
-  border-color: #fcd34d;
+  background: #e7f0ff;
+  color: #1f56ba;
+  border-color: #b6ceff;
 }
 
 .profession-plumber {
@@ -773,21 +773,21 @@
 }
 
 .profession-carpenter {
-  background: #dcfce7;
-  color: #16a34a;
-  border-color: #86efac;
+  background: #e8f8f5;
+  color: #0f7c6a;
+  border-color: #7de4d2;
 }
 
 .profession-painter {
-  background: #fce7f3;
-  color: #db2777;
-  border-color: #f9a8d4;
+  background: #e8f8f5;
+  color: #0f7c6a;
+  border-color: #7de4d2;
 }
 
 .profession-cleaner {
-  background: #e0e7ff;
-  color: #4f46e5;
-  border-color: #a5b4fc;
+  background: #e7f0ff;
+  color: #1f56ba;
+  border-color: #b6ceff;
 }
 
 .status-badge {
@@ -810,8 +810,8 @@
 
 .status-verified,
 .status-active {
-  background: #dcfce7;
-  color: #16a34a;
+  background: #e8f8f5;
+  color: #0f7c6a;
 }
 
 .status-suspended {
@@ -855,13 +855,13 @@
 }
 
 .type-badge.client {
-  background: #e0e7ff;
-  color: #4f46e5;
+  background: #e7f0ff;
+  color: #1f56ba;
 }
 
 .type-badge.tradesperson {
-  background: #dcfce7;
-  color: #16a34a;
+  background: #e8f8f5;
+  color: #0f7c6a;
 }
 
 /* ===================================
@@ -925,7 +925,7 @@
 }
 
 .admin-page .filter-group select:focus {
-  border-color: #4A9FF5;
+  border-color: var(--admin-primary);
 }
 
 /* ===================================
@@ -1000,7 +1000,7 @@
 .user-avatar-small {
   width: 36px;
   height: 36px;
-  background: linear-gradient(135deg, #4A9FF5 0%, #3a8fd5 100%);
+  background: linear-gradient(135deg, var(--admin-primary) 0%, var(--admin-primary-dark) 100%);
   color: white;
   border-radius: 50%;
   display: flex;
@@ -1048,12 +1048,12 @@
 }
 
 .action-btn.view {
-  background: #e0e7ff;
-  color: #4f46e5;
+  background: #e7f0ff;
+  color: #1f56ba;
 }
 
 .action-btn.view:hover {
-  background: #c7d2fe;
+  background: #d8e6ff;
 }
 
 .action-btn.edit {
@@ -1134,7 +1134,7 @@
 }
 
 .pagination-page.active {
-  background: #4A9FF5;
+  background: var(--admin-primary);
   color: white;
 }
 
@@ -1390,7 +1390,7 @@
 }
 
 input:checked + .slider {
-  background-color: #4A9FF5;
+  background-color: var(--admin-primary);
 }
 
 input:checked + .slider:before {
@@ -1415,7 +1415,7 @@ input:checked + .slider:before {
 .admin-page .checkbox-label input {
   width: 18px;
   height: 18px;
-  accent-color: #4A9FF5;
+  accent-color: var(--admin-primary);
 }
 
 .admin-page .settings-actions {
@@ -1524,7 +1524,7 @@ input:checked + .slider:before {
 .btn-save {
   min-height: var(--control-height);
   padding: 0.7rem 1.2rem;
-  background: #4A9FF5;
+  background: var(--admin-primary);
   color: white;
   border: none;
   border-radius: var(--radius-control);
@@ -1534,7 +1534,7 @@ input:checked + .slider:before {
 }
 
 .btn-save:hover {
-  background: #3a8fd5;
+  background: var(--admin-primary-dark);
 }
 
 .admin-page .btn-cancel {
@@ -1564,14 +1564,14 @@ input:checked + .slider:before {
 }
 
 .quick-link {
-  color: #4A9FF5;
+  color: var(--admin-primary);
   font-weight: 500;
   text-decoration: none;
   transition: color 0.2s ease;
 }
 
 .quick-link:hover {
-  color: #3a8fd5;
+  color: var(--admin-primary-dark);
   text-decoration: underline;
 }
 

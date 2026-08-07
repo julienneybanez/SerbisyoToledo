@@ -10,7 +10,7 @@
 }
 
 .profile-checklist .progress-bar {
-  background: linear-gradient(120deg, var(--brand-primary) 0%, var(--brand-accent) 100%);
+  background: var(--brand-primary);
 }
 
 .profile-checklist .card-body,
