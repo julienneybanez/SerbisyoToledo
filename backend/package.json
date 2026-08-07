@@ -13,7 +13,8 @@
     "db:migrate:file": "node scripts/run-sql-file.js",
     "db:phase-a": "node scripts/run-sql-file.js migrations/20260807_002_canonical_phase_a_add_backfill.sql",
     "db:phase-b": "node scripts/run-sql-file.js migrations/20260807_003_canonical_phase_b_indexes_resync.sql",
-    "db:phase-c": "node scripts/run-sql-file.js migrations/20260807_004_canonical_phase_c_drop_legacy.sql"
+    "db:phase-c": "node scripts/run-sql-file.js migrations/20260807_004_canonical_phase_c_drop_legacy.sql",
+    "taxonomy:backfill": "node scripts/backfill-service-taxonomy.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

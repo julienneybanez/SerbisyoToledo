@@ -30,6 +30,7 @@ const credentialUpload = multer({
 });
 
 // Public routes
+router.get('/taxonomy', serviceProfileController.getTaxonomy);
 router.get('/all', serviceProfileController.getAllProfiles);
 router.get('/recommendations', serviceProfileController.getRecommendedProviders);
 router.get('/:id/available-dates', serviceProfileController.getAvailableDates);

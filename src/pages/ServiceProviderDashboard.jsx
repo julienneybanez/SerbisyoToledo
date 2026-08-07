@@ -105,6 +105,16 @@ export default function ServiceProviderDashboard() {
 
   const providerChecklistTasks = [
     {
+      key: 'taxonomy-refresh',
+      label: 'Review your service taxonomy',
+      description: 'Your profile has legacy or incomplete categories. Select updated categories and service types.',
+      completed: !Boolean(myProfile?.taxonomyNeedsReview),
+      isApplicable: Boolean(myProfile?.taxonomyNeedsReview),
+      actionType: 'button',
+      actionLabel: 'Update Services',
+      onAction: () => setShowProfileModal(true),
+    },
+    {
       key: 'service-category',
       label: 'Add your service category',
       description: 'Select at least one service category in your profile.',

@@ -1,4 +1,9 @@
 const db = require('../config/database');
+const { parseJsonArray } = require('../utils/jsonHelpers');
+const {
+  normalizeCategoryLabels,
+  getServiceTypesForProfile,
+} = require('../config/serviceTaxonomy');
 const {
   BLOCKING_STATUSES,
   parseDateOnly,
@@ -41,6 +46,8 @@ const getProviderProfile = async (connection, serviceProfileId) => {
       sp.id AS service_profile_id,
       sp.user_id AS provider_id,
       sp.starting_price,
+      sp.service_categories,
+      sp.service_types,
       sp.is_published,
       u.user_type,
       u.is_active
@@ -136,6 +143,7 @@ exports.createRequest = async (req, res) => {
     const {
       providerId,
       serviceProfileId,
+      serviceTypeKey,
       bookingType,
       startDate,
       endDate,
@@ -231,6 +239,39 @@ exports.createRequest = async (req, res) => {
       });
     }
 
+    const profileCategories = normalizeCategoryLabels(parseJsonArray(profile.service_categories, []), { preserveUnknown: true });
+    const profileServiceTypeKeys = parseJsonArray(profile.service_types, []);
+    const offeredServiceTypes = getServiceTypesForProfile({
+      categoryLabels: profileCategories,
+      serviceTypeKeys: profileServiceTypeKeys,
+    });
+
+    const offeredServiceTypeByKey = new Map(
+      offeredServiceTypes.map((item) => [item.key, item])
+    );
+
+    const requestedServiceTypeKey = String(serviceTypeKey || '').trim() || null;
+
+    if (requestedServiceTypeKey && !offeredServiceTypeByKey.has(requestedServiceTypeKey)) {
+      await connection.rollback();
+      return res.status(400).json({
+        success: false,
+        message: 'Selected service type is not offered by this provider',
+      });
+    }
+
+    if (!requestedServiceTypeKey && offeredServiceTypes.length > 1) {
+      await connection.rollback();
+      return res.status(400).json({
+        success: false,
+        message: 'Please select the specific service type you want to request',
+      });
+    }
+
+    const effectiveServiceType = requestedServiceTypeKey
+      ? offeredServiceTypeByKey.get(requestedServiceTypeKey)
+      : (offeredServiceTypes[0] || null);
+
     const [duplicateRows] = await connection.query(
       `SELECT id
        FROM service_requests
@@ -286,6 +327,8 @@ exports.createRequest = async (req, res) => {
          client_id,
          provider_id,
          service_profile_id,
+         service_type_key,
+         service_type_label,
          job_title,
          job_details,
          booking_type,
@@ -299,11 +342,13 @@ exports.createRequest = async (req, res) => {
          daily_rate_snapshot,
          estimated_total
        )
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         clientId,
         profile.provider_id,
         profile.service_profile_id,
+        effectiveServiceType?.key || null,
+        effectiveServiceType?.label || null,
         jobTitle,
         jobDetails,
         normalized.normalizedBookingType,
@@ -337,6 +382,8 @@ exports.createRequest = async (req, res) => {
       message: 'Service request created successfully',
       data: {
         requestId,
+        serviceTypeKey: effectiveServiceType?.key || null,
+        serviceTypeLabel: effectiveServiceType?.label || null,
         bookingType: normalized.normalizedBookingType,
         startDate: normalized.normalizedStartDate,
         endDate: normalized.normalizedEndDate,

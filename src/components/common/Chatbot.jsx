@@ -52,12 +52,12 @@ const SERVICE_KEYWORDS = [
   { keyword: 'electric', category: 'Electrical' },
   { keyword: 'carpent', category: 'Carpentry' },
   { keyword: 'clean', category: 'Cleaning' },
-  { keyword: 'garden', category: 'Gardening' },
-  { keyword: 'aircon', category: 'Aircon Repair' },
-  { keyword: 'ac ', category: 'Aircon Repair' },
-  { keyword: 'massage', category: 'Massage Therapy' },
+  { keyword: 'garden', category: 'Gardening & Landscaping' },
+  { keyword: 'aircon', category: 'Aircon & Refrigeration' },
+  { keyword: 'ac ', category: 'Aircon & Refrigeration' },
+  { keyword: 'massage', category: 'Beauty & Wellness' },
   { keyword: 'laundry', category: 'Laundry' },
-  { keyword: 'mechanic', category: 'Mechanic' },
+  { keyword: 'mechanic', category: 'Tech Repair' },
   { keyword: 'locksmith', category: 'Locksmith' },
 ];
 

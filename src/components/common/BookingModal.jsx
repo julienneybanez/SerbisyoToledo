@@ -100,11 +100,17 @@ export default function BookingModal({ provider, onClose }) {
   const [slotLoading, setSlotLoading] = useState(false);
 
   const [selectedTime, setSelectedTime] = useState('');
+  const [selectedServiceTypeKey, setSelectedServiceTypeKey] = useState('');
   const [jobTitle, setJobTitle] = useState('');
   const [jobDetails, setJobDetails] = useState('');
 
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
+
+  const providerServiceTypes = useMemo(() => {
+    const raw = Array.isArray(provider?.serviceTypes) ? provider.serviceTypes : [];
+    return raw.filter((item) => item && item.key && item.label);
+  }, [provider?.serviceTypes]);
 
   const dailyRate = Number(provider?.dailyRate ?? provider?.startingPrice ?? 0);
   const durationDays = useMemo(
@@ -141,7 +147,7 @@ export default function BookingModal({ provider, onClose }) {
 
   const safeProvider = {
     name: provider?.name || 'Service Provider',
-    profession: provider?.profession || provider?.tags?.[0] || 'Community Services',
+    profession: provider?.profession || provider?.categories?.[0] || provider?.tags?.[0] || 'Community Services',
     location: provider?.location || 'Toledo City',
     description: provider?.bio || provider?.description || 'Reliable service provider ready to help with your request.',
   };
@@ -270,6 +276,24 @@ export default function BookingModal({ provider, onClose }) {
       setEndDate(startDate);
     }
   }, [bookingType, startDate]);
+
+  useEffect(() => {
+    if (providerServiceTypes.length === 0) {
+      setSelectedServiceTypeKey('');
+      return;
+    }
+
+    if (providerServiceTypes.length === 1) {
+      setSelectedServiceTypeKey(providerServiceTypes[0].key);
+      return;
+    }
+
+    setSelectedServiceTypeKey((prev) => (
+      providerServiceTypes.some((item) => item.key === prev)
+        ? prev
+        : providerServiceTypes[0].key
+    ));
+  }, [providerServiceTypes]);
 
   useEffect(() => {
     const loadSlots = async () => {
@@ -418,7 +442,8 @@ export default function BookingModal({ provider, onClose }) {
     }
 
     if (step === 3) {
-      return jobTitle.trim().length > 0 && jobDetails.trim().length > 0;
+      const hasValidServiceTypeSelection = providerServiceTypes.length <= 1 || Boolean(selectedServiceTypeKey);
+      return hasValidServiceTypeSelection && jobTitle.trim().length > 0 && jobDetails.trim().length > 0;
     }
 
     return true;
@@ -461,6 +486,7 @@ export default function BookingModal({ provider, onClose }) {
       const payload = {
         providerId: provider.userId,
         serviceProfileId: provider.id,
+        serviceTypeKey: selectedServiceTypeKey || null,
         bookingType,
         startDate,
         endDate: bookingType === 'multi_day' ? endDate : startDate,
@@ -638,6 +664,29 @@ export default function BookingModal({ provider, onClose }) {
     if (step === 3) {
       return (
         <form className="booking-form" onSubmit={(event) => event.preventDefault()}>
+          {providerServiceTypes.length > 1 && (
+            <div className="booking-form-group">
+              <label htmlFor="booking-service-type">Service Type</label>
+              <select
+                id="booking-service-type"
+                className="booking-input"
+                value={selectedServiceTypeKey}
+                onChange={(event) => setSelectedServiceTypeKey(event.target.value)}
+              >
+                {providerServiceTypes.map((item) => (
+                  <option key={item.key} value={item.key}>{item.label}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {providerServiceTypes.length === 1 && (
+            <div className="booking-form-group">
+              <label>Service Type</label>
+              <input className="booking-input" value={providerServiceTypes[0].label} readOnly aria-readonly="true" />
+            </div>
+          )}
+
           <div className="booking-form-group">
             <label>Job Title</label>
             <input

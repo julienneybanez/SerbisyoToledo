@@ -1,29 +1,17 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { serviceProfileAPI } from '../../services/api';
+import useServiceTaxonomy from '../../hooks/useServiceTaxonomy';
 import './ServiceProfileModal.css';
 
-const SERVICE_CATEGORIES = [
-  'Carpentry',
-  'Masonry',
-  'House Cleaning',
-  'Plumbing',
-  'Wiring',
-  'Repair',
-  'Installation',
-  'Electrical',
-  'Painting',
-  'Gardening',
-  'Beauty',
-  'Others'
-];
-
 export default function ServiceProfileModal({ onClose }) {
+  const { categories, getCategory, getServiceTypesForCategory } = useServiceTaxonomy();
   const [formData, setFormData] = useState({
     fullName: '',
     barangayAddress: '',
     startingPrice: '',
     serviceCategories: [],
+    serviceTypes: [],
     bannerImage: null,
   });
 
@@ -43,13 +31,27 @@ export default function ServiceProfileModal({ onClose }) {
 
         if (response.success && response.data) {
           const profile = response.data;
+          const safeCategories = (Array.isArray(profile.categories) ? profile.categories : [])
+            .filter((category) => Boolean(getCategory(category)))
+            .map((category) => getCategory(category).label);
+
+          const allowedServiceTypeKeys = new Set(
+            safeCategories.flatMap((category) => getServiceTypesForCategory(category).map((item) => item.key))
+          );
+
+          const safeServiceTypeKeys = (Array.isArray(profile.serviceTypes)
+            ? profile.serviceTypes.map((item) => item.key).filter(Boolean)
+            : [])
+            .filter((key) => allowedServiceTypeKeys.has(key));
+
           setIsEditMode(true);
           setFormData(prev => ({
             ...prev,
             fullName: profile.name || '',
             barangayAddress: profile.location || '',
             startingPrice: profile.startingPrice ? String(profile.startingPrice) : '',
-            serviceCategories: Array.isArray(profile.categories) ? profile.categories : [],
+            serviceCategories: safeCategories,
+            serviceTypes: safeServiceTypeKeys,
             bannerImage: null,
           }));
 
@@ -73,11 +75,31 @@ export default function ServiceProfileModal({ onClose }) {
   };
 
   const handleCategoryToggle = (category) => {
-    setFormData(prev => ({
-      ...prev,
-      serviceCategories: prev.serviceCategories.includes(category)
+    setFormData((prev) => {
+      const nextCategories = prev.serviceCategories.includes(category)
         ? prev.serviceCategories.filter(c => c !== category)
-        : [...prev.serviceCategories, category]
+        : [...prev.serviceCategories, category];
+
+      const allowedServiceTypeKeys = new Set(
+        nextCategories.flatMap((selectedCategory) => getServiceTypesForCategory(selectedCategory).map((item) => item.key))
+      );
+
+      const nextServiceTypes = prev.serviceTypes.filter((key) => allowedServiceTypeKeys.has(key));
+
+      return {
+        ...prev,
+        serviceCategories: nextCategories,
+        serviceTypes: nextServiceTypes,
+      };
+    });
+  };
+
+  const handleServiceTypeToggle = (serviceTypeKey) => {
+    setFormData((prev) => ({
+      ...prev,
+      serviceTypes: prev.serviceTypes.includes(serviceTypeKey)
+        ? prev.serviceTypes.filter((key) => key !== serviceTypeKey)
+        : [...prev.serviceTypes, serviceTypeKey],
     }));
   };
 
@@ -110,6 +132,7 @@ export default function ServiceProfileModal({ onClose }) {
       submitData.append('barangayAddress', formData.barangayAddress);
       submitData.append('startingPrice', parseFloat(formData.startingPrice));
       submitData.append('serviceCategories', JSON.stringify(formData.serviceCategories));
+      submitData.append('serviceTypes', JSON.stringify(formData.serviceTypes));
       if (formData.bannerImage) {
         submitData.append('bannerImage', formData.bannerImage);
       }
@@ -135,6 +158,20 @@ export default function ServiceProfileModal({ onClose }) {
       setIsLoading(false);
     }
   };
+
+  const visibleServiceTypes = formData.serviceCategories.flatMap((selectedCategory) => {
+    const category = getCategory(selectedCategory);
+    const serviceTypes = getServiceTypesForCategory(selectedCategory);
+
+    return serviceTypes.map((item) => ({
+      ...item,
+      categoryLabel: category?.label || selectedCategory,
+    }));
+  });
+
+  const dedupedServiceTypes = Array.from(
+    new Map(visibleServiceTypes.map((item) => [item.key, item])).values()
+  );
 
   return createPortal(
     <div className="modal-overlay" onClick={onClose}>
@@ -226,18 +263,46 @@ export default function ServiceProfileModal({ onClose }) {
             <p className="section-description">Select all services you provide</p>
             
             <div className="categories-grid">
-              {SERVICE_CATEGORIES.map((category) => (
-                <button
-                  key={category}
-                  type="button"
-                  className={`category-pill ${formData.serviceCategories.includes(category) ? 'active' : ''}`}
-                  onClick={() => handleCategoryToggle(category)}
+              {categories.map((category) => (
+                <label
+                  key={category.key}
+                  className={`category-pill ${formData.serviceCategories.includes(category.label) ? 'active' : ''}`}
                 >
-                  {category}
-                </button>
+                  <input
+                    type="checkbox"
+                    checked={formData.serviceCategories.includes(category.label)}
+                    onChange={() => handleCategoryToggle(category.label)}
+                    aria-label={category.label}
+                  />
+                  <span>{category.label}</span>
+                </label>
               ))}
             </div>
           </section>
+
+          {dedupedServiceTypes.length > 0 && (
+            <section className="form-section">
+              <h3 className="section-header">Services Offered</h3>
+              <p className="section-description">Pick the specific service types clients can request from you.</p>
+
+              <div className="categories-grid">
+                {dedupedServiceTypes.map((serviceType) => (
+                  <label
+                    key={serviceType.key}
+                    className={`category-pill ${formData.serviceTypes.includes(serviceType.key) ? 'active' : ''}`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={formData.serviceTypes.includes(serviceType.key)}
+                      onChange={() => handleServiceTypeToggle(serviceType.key)}
+                      aria-label={`${serviceType.label} (${serviceType.categoryLabel})`}
+                    />
+                    <span>{serviceType.label}</span>
+                  </label>
+                ))}
+              </div>
+            </section>
+          )}
 
           {/* Banner Image Upload Section */}
           <section className="form-section">

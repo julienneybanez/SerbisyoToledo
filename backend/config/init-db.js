@@ -152,6 +152,8 @@ async function initializeDatabase() {
         barangay_address VARCHAR(255) NOT NULL,
         starting_price DECIMAL(10, 2) NOT NULL,
         service_categories JSON NOT NULL,
+        service_types JSON DEFAULT NULL,
+        taxonomy_needs_review BOOLEAN DEFAULT FALSE,
         banner_image LONGBLOB DEFAULT NULL,
         banner_image_url VARCHAR(500) DEFAULT NULL,
         banner_image_public_id VARCHAR(255) DEFAULT NULL,
@@ -165,6 +167,7 @@ async function initializeDatabase() {
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
         INDEX idx_user_id (user_id),
         INDEX idx_barangay (barangay_address),
+        INDEX idx_taxonomy_needs_review (taxonomy_needs_review),
         INDEX idx_is_published (is_published)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
@@ -177,6 +180,8 @@ async function initializeDatabase() {
         client_id INT NOT NULL,
         provider_id INT NOT NULL,
         service_profile_id INT NOT NULL,
+        service_type_key VARCHAR(120) DEFAULT NULL,
+        service_type_label VARCHAR(255) DEFAULT NULL,
         job_title VARCHAR(255) NOT NULL,
         job_details TEXT NOT NULL,
         scheduled_date DATE NOT NULL,
@@ -193,6 +198,7 @@ async function initializeDatabase() {
         FOREIGN KEY (service_profile_id) REFERENCES service_profiles(id) ON DELETE CASCADE,
         INDEX idx_client_id (client_id),
         INDEX idx_provider_id (provider_id),
+        INDEX idx_service_type_key (service_type_key),
         INDEX idx_status (status)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);

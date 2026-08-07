@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { getUser, isAuthenticated, serviceProfileAPI, serviceRequestAPI } from "../services/api";
-import { categories } from "../data/data";
+import useServiceTaxonomy from '../hooks/useServiceTaxonomy';
 import ProfileCompletionChecklist from "../components/common/ProfileCompletionChecklist";
 import { useLanguage } from "../context/LanguageContext";
 import {
@@ -14,7 +14,15 @@ import {
 
 export default function Feed() {
   const { t } = useLanguage();
+  const {
+    prominentCategories,
+    moreCategories,
+    getCategory,
+    getServiceTypesForCategory,
+  } = useServiceTaxonomy();
   const [activeCategory, setActiveCategory] = useState("All");
+  const [activeServiceType, setActiveServiceType] = useState('');
+  const [showMoreCategories, setShowMoreCategories] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const [serviceProviders, setServiceProviders] = useState([]);
@@ -42,6 +50,9 @@ export default function Feed() {
 
     const categoryValue = (searchParams.get('category') || '').trim();
     setActiveCategory(categoryValue || 'All');
+
+    const serviceTypeValue = (searchParams.get('serviceType') || '').trim();
+    setActiveServiceType(serviceTypeValue);
   }, [searchParams]);
 
   // Fetch service profiles on component mount or when filters change
@@ -57,6 +68,7 @@ export default function Feed() {
         
         const filterParams = {
           category: activeCategory,
+          serviceType: activeServiceType,
           location: filters.location,
           minPrice: filters.minPrice,
           maxPrice: filters.maxPrice,
@@ -92,7 +104,7 @@ export default function Feed() {
       isCurrentRequest = false;
       window.removeEventListener('profileCreated', fetchProfiles);
     };
-  }, [activeCategory, filters, searchTerm, t]);
+  }, [activeCategory, activeServiceType, filters, searchTerm, t]);
 
   useEffect(() => {
     const fetchClientChecklistData = async () => {
@@ -180,6 +192,7 @@ export default function Feed() {
   const clearFilters = () => {
     setSearchTerm('');
     setActiveCategory('All');
+    setActiveServiceType('');
     setFilters({
       location: "",
       minPrice: "",
@@ -210,18 +223,44 @@ export default function Feed() {
 
   const getPrimaryService = (provider) => {
     if (provider.profession) return provider.profession;
-    if (provider.tags?.length) return provider.tags[0];
+    if (provider.categories?.length) return provider.categories[0];
     return t('generalServices');
   };
 
-  const getVisibleSkills = (provider) => {
-    const allSkills = Array.isArray(provider.tags) ? provider.tags.filter(Boolean) : [];
-    const primary = getPrimaryService(provider);
-    const supporting = allSkills.filter((skill) => skill !== primary);
-    const visible = supporting.slice(0, 3);
-    const remaining = Math.max(0, supporting.length - visible.length);
+  const getVisibleServiceTypes = (provider) => {
+    const serviceTypeLabels = Array.isArray(provider.serviceTypes)
+      ? provider.serviceTypes.map((item) => item.label).filter(Boolean)
+      : [];
+    const visible = serviceTypeLabels.slice(0, 3);
+    const remaining = Math.max(0, serviceTypeLabels.length - visible.length);
     return { visible, remaining };
   };
+
+  const getVisibleSkills = (provider) => {
+    const skills = Array.isArray(provider.skills) ? provider.skills.filter(Boolean) : [];
+    return skills.slice(0, 2);
+  };
+
+  const activeCategoryServiceTypes = activeCategory && activeCategory !== 'All'
+    ? getServiceTypesForCategory(activeCategory)
+    : [];
+
+  const prominentLabels = prominentCategories.map((category) => category.label);
+  const moreLabels = moreCategories.map((category) => category.label);
+
+  const visiblePrimaryCategories = (() => {
+    const ordered = ['All', ...prominentLabels];
+
+    if (showMoreCategories) {
+      ordered.push(...moreLabels);
+    }
+
+    if (activeCategory && !ordered.includes(activeCategory)) {
+      ordered.push(activeCategory);
+    }
+
+    return ordered.filter((label, index, self) => self.indexOf(label) === index);
+  })();
 
   const getProviderInitials = (name) => {
     return String(name || '')
@@ -350,7 +389,7 @@ export default function Feed() {
           )}
 
           <div className="category-filters">
-            {categories.map((c) => (
+            {visiblePrimaryCategories.map((c) => (
               <button
                 key={c}
                 className={`category-btn ${
@@ -358,13 +397,52 @@ export default function Feed() {
                 }`}
                 onClick={() => {
                   setActiveCategory(c);
+                  setActiveServiceType('');
                   updateQueryParam('category', c === 'All' ? '' : c);
+                  updateQueryParam('serviceType', '');
                 }}
               >
                 {c}
               </button>
             ))}
+            {moreLabels.length > 0 && (
+              <button
+                type="button"
+                className={`category-btn ${showMoreCategories ? 'active' : ''}`}
+                onClick={() => setShowMoreCategories((prev) => !prev)}
+                aria-expanded={showMoreCategories}
+                aria-label="Toggle more service categories"
+              >
+                {showMoreCategories ? 'Less' : 'More'}
+              </button>
+            )}
           </div>
+
+          {activeCategoryServiceTypes.length > 0 && (
+            <div className="category-filters" aria-label="Service type filters">
+              <button
+                className={`category-btn ${activeServiceType === '' ? 'active' : ''}`}
+                onClick={() => {
+                  setActiveServiceType('');
+                  updateQueryParam('serviceType', '');
+                }}
+              >
+                All {getCategory(activeCategory)?.label || activeCategory}
+              </button>
+              {activeCategoryServiceTypes.map((serviceType) => (
+                <button
+                  key={serviceType.key}
+                  className={`category-btn ${activeServiceType === serviceType.key ? 'active' : ''}`}
+                  onClick={() => {
+                    setActiveServiceType(serviceType.key);
+                    updateQueryParam('serviceType', serviceType.key);
+                  }}
+                >
+                  {serviceType.label}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="providers-grid" id="providers-list">
@@ -439,8 +517,9 @@ export default function Feed() {
                 </p>
 
                 {(() => {
-                  const { visible, remaining } = getVisibleSkills(p);
-                  if (!visible.length && !remaining) return null;
+                  const { visible, remaining } = getVisibleServiceTypes(p);
+                  const skills = getVisibleSkills(p);
+                  if (!visible.length && !remaining && !skills.length) return null;
                   return (
                   <div className="provider-tags">
                     {visible.map((tag) => (
@@ -451,6 +530,11 @@ export default function Feed() {
                     {remaining > 0 && (
                       <span className="provider-tag provider-tag-more">+{remaining} more</span>
                     )}
+                    {skills.map((skill) => (
+                      <span className="provider-tag" key={`${p.id}-skill-${skill}`}>
+                        {skill}
+                      </span>
+                    ))}
                   </div>
                   );
                 })()}

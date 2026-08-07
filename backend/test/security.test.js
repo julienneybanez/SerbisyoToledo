@@ -569,4 +569,88 @@ describe('Backend Security Hardening', () => {
     const params = insertCall[1];
     expect(params[7]).toBe(JSON.stringify(['ceb', 'en']));
   });
+
+  it('22) rejects profile service type when it does not match selected category', async () => {
+    vi.spyOn(db, 'query').mockImplementation(async (sql) => {
+      if (sql === authUserSql) return [[{ id: 42, user_type: 'tradesperson', is_active: 1 }]];
+      return [[]];
+    });
+
+    const res = await request(app)
+      .post('/api/service-profiles/create')
+      .set('Authorization', `Bearer ${signToken(42)}`)
+      .field('fullName', 'Provider Mismatch')
+      .field('barangayAddress', 'Poblacion')
+      .field('startingPrice', '900')
+      .field('serviceCategories', JSON.stringify(['Plumbing']))
+      .field('serviceTypes', JSON.stringify(['electrical_troubleshooting']));
+
+    expect(res.status).toBe(400);
+    expect(res.body.success).toBe(false);
+    expect(res.body.message).toMatch(/does not belong/i);
+  });
+
+  it('23) rejects booking with service type not offered by provider', async () => {
+    vi.spyOn(db, 'query').mockImplementation(async (sql) => {
+      if (sql === authUserSql) return [[{ id: 10, user_type: 'client', is_active: 1 }]];
+      return [[]];
+    });
+
+    const conn = createConnectionMock(async (sql) => {
+      if (sql.includes('SELECT') && sql.includes('FROM service_profiles sp')) {
+        return [[{
+          service_profile_id: 7,
+          provider_id: 21,
+          starting_price: '700.00',
+          service_categories: JSON.stringify(['Plumbing']),
+          service_types: JSON.stringify(['leak_repair']),
+          is_published: 1,
+          user_type: 'tradesperson',
+          is_active: 1,
+        }]];
+      }
+      return [[]];
+    });
+
+    vi.spyOn(db, 'getConnection').mockResolvedValue(conn);
+
+    const res = await request(app)
+      .post('/api/service-requests/create')
+      .set('Authorization', `Bearer ${signToken(10)}`)
+      .send({
+        providerId: 21,
+        serviceProfileId: 7,
+        serviceTypeKey: 'electrical_troubleshooting',
+        jobTitle: 'Fix breaker panel',
+        jobDetails: 'Need urgent electrical work',
+        bookingType: 'one_day',
+        startDate: '2099-12-31',
+        endDate: '2099-12-31',
+        startTime: '09:00',
+        estimatedDurationMinutes: 120,
+      });
+
+    expect(res.status).toBe(400);
+    expect(res.body.success).toBe(false);
+    expect(res.body.message).toMatch(/not offered/i);
+  });
+
+  it('24) rejects creating/updating profile with legacy Repair category', async () => {
+    vi.spyOn(db, 'query').mockImplementation(async (sql) => {
+      if (sql === authUserSql) return [[{ id: 42, user_type: 'tradesperson', is_active: 1 }]];
+      return [[]];
+    });
+
+    const res = await request(app)
+      .post('/api/service-profiles/create')
+      .set('Authorization', `Bearer ${signToken(42)}`)
+      .field('fullName', 'Provider Legacy')
+      .field('barangayAddress', 'Poblacion')
+      .field('startingPrice', '700')
+      .field('serviceCategories', JSON.stringify(['Repair']));
+
+    expect(res.status).toBe(400);
+    expect(res.body.success).toBe(false);
+    expect(res.body.message).toMatch(/legacy category/i);
+  });
 });

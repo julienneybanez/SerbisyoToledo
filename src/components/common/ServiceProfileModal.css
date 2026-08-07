@@ -252,6 +252,9 @@
 }
 
 .category-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   padding: 9px 16px;
   border: 2px solid #ddd;
   background-color: #fff;
@@ -262,6 +265,10 @@
   cursor: pointer;
   transition: all 0.3s ease;
   white-space: nowrap;
+}
+
+.category-pill input {
+  accent-color: #0078D4;
 }
 
 .category-pill:hover {
