@@ -239,7 +239,7 @@ function Navbar() {
                 <li className="nav-item">
                   <NavLink 
                     className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
-                    to="/provider-settings?section=availability"
+                    to="/provider-settings?section=schedule"
                     onClick={handleNavClick}
                   >
                     {t('schedule')}
@@ -266,7 +266,7 @@ function Navbar() {
                     data-tour="nav-requests"
                     onClick={handleNavClick}
                   >
-                    {t('requests')}
+                    {t('myBookings')}
                   </NavLink>
                 </li>
               </>
@@ -330,7 +330,7 @@ function Navbar() {
                         }}
                       >
                         <i className="bi bi-pencil-square"></i>
-                        {t('editProfile')}
+                        {user?.userType === 'tradesperson' ? t('manageProfile') : t('editProfile')}
                       </button>
                       {user?.userType === 'tradesperson' && hasServiceProfile && (
                         <button 
@@ -365,7 +365,7 @@ function Navbar() {
                           }}
                         >
                           <i className="bi bi-shield-check"></i>
-                          {t('requestVerification')}
+                          {t('verification')}
                         </button>
                       )}
                       {user?.userType === 'tradesperson' && (
@@ -377,7 +377,7 @@ function Navbar() {
                             onClick={() => setDropdownOpen(false)}
                           >
                             <i className="bi bi-eye"></i>
-                            {t('viewProfileAsClient')}
+                            {t('viewPublicProfile')}
                           </Link>
                         ) : (
                           <button

@@ -149,8 +149,8 @@ function AdminUsers() {
     const matchesType = filterType === 'all' || user.type === filterType;
     const matchesStatus =
       filterStatus === 'all' ||
-      (filterStatus === 'active' && user.isActive && !user.isVerified) ||
-      (filterStatus === 'verified' && user.isVerified) ||
+      (filterStatus === 'active' && user.isActive) ||
+      (filterStatus === 'verified' && user.isActive && user.isVerified) ||
       (filterStatus === 'pending' && !user.isVerified && user.isActive) ||
       (filterStatus === 'suspended' && !user.isActive);
 

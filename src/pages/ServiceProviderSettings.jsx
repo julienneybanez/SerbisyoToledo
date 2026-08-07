@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { getUser, userProfileAPI, serviceProfileAPI } from '../services/api';
 import ThemeToggle from '../components/common/ThemeToggle';
+import SettingsFlash from '../components/settings/SettingsFlash';
 import { useLanguage } from '../context/LanguageContext';
 import '../styles/UserSettings.css';
 
@@ -28,6 +29,8 @@ function ServiceProviderSettings() {
   const [activeSection, setActiveSection] = useState('account');
   const [isSaving, setIsSaving] = useState(false);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
+  const [flash, setFlash] = useState({ type: 'info', message: '' });
+  const [initialSettings, setInitialSettings] = useState(null);
   const [availabilityLoading, setAvailabilityLoading] = useState(true);
   const [languageSaving, setLanguageSaving] = useState(false);
   const [credentialLoading, setCredentialLoading] = useState(true);
@@ -84,10 +87,14 @@ function ServiceProviderSettings() {
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const section = params.get('section');
-    const allowedSections = new Set(['account', 'business', 'availability', 'notifications', 'privacy']);
+    const aliasMap = {
+      availability: 'schedule',
+    };
+    const normalizedSection = aliasMap[section] || section;
+    const allowedSections = new Set(['account', 'business', 'schedule', 'profile', 'notifications', 'privacy']);
 
-    if (section && allowedSections.has(section)) {
-      setActiveSection(section);
+    if (normalizedSection && allowedSections.has(normalizedSection)) {
+      setActiveSection(normalizedSection);
     }
   }, [location.search]);
 
@@ -100,26 +107,35 @@ function ServiceProviderSettings() {
 
     const loadProfile = async () => {
       setIsLoadingProfile(true);
+      setFlash({ type: 'info', message: '' });
       try {
         const response = await userProfileAPI.getProfile();
         if (response.success) {
           const profile = response.data;
-          setSettings(prev => ({
-            ...prev,
-            fullName: profile.fullName || '',
-            email: profile.email || currentUser.email || '',
-            phone: profile.phone || '',
-            businessAddress: profile.address || '',
-          }));
+          setSettings((prev) => {
+            const mergedSettings = {
+              ...prev,
+              fullName: profile.fullName || '',
+              email: profile.email || currentUser.email || '',
+              phone: profile.phone || '',
+              businessAddress: profile.address || '',
+            };
+            setInitialSettings(mergedSettings);
+            return mergedSettings;
+          });
         }
       } catch {
-        setSettings(prev => ({
-          ...prev,
-          fullName: currentUser.fullName || '',
-          email: currentUser.email || '',
-          phone: currentUser.phone || '',
-          businessAddress: currentUser.address || '',
-        }));
+        setSettings((prev) => {
+          const fallbackSettings = {
+            ...prev,
+            fullName: currentUser.fullName || '',
+            email: currentUser.email || '',
+            phone: currentUser.phone || '',
+            businessAddress: currentUser.address || '',
+          };
+          setInitialSettings(fallbackSettings);
+          return fallbackSettings;
+        });
       } finally {
         setIsLoadingProfile(false);
       }
@@ -195,9 +211,12 @@ function ServiceProviderSettings() {
     setSettings(prev => ({ ...prev, [key]: value }));
   };
 
+  const getFriendlyErrorMessage = (fallbackMessage) => fallbackMessage;
+
   const handleSave = async () => {
     try {
       setIsSaving(true);
+      setFlash({ type: 'info', message: '' });
       const submitData = new FormData();
       submitData.append('fullName', settings.fullName || '');
       submitData.append('phone', settings.phone || '');
@@ -205,10 +224,16 @@ function ServiceProviderSettings() {
 
       const response = await userProfileAPI.updateProfile(submitData);
       if (response.success) {
-        alert(t('providerSettingsSavedSuccess'));
+        setInitialSettings((prev) => prev ? {
+          ...prev,
+          fullName: settings.fullName,
+          phone: settings.phone,
+          businessAddress: settings.businessAddress,
+        } : prev);
+        setFlash({ type: 'success', message: t('providerSettingsSavedSuccess') });
       }
-    } catch (err) {
-      alert(err.message || t('providerSettingsSaveFailed'));
+    } catch {
+      setFlash({ type: 'error', message: getFriendlyErrorMessage(t('providerSettingsSaveFailed')) });
     } finally {
       setIsSaving(false);
     }
@@ -217,13 +242,14 @@ function ServiceProviderSettings() {
   const handleAvailabilitySave = async () => {
     try {
       setIsSaving(true);
+      setFlash({ type: 'info', message: '' });
       await serviceProfileAPI.saveMyAvailability({
         settings: availabilitySettings,
         weeklyBlocks,
       });
-      alert(t('providerAvailabilityUpdatedSuccess'));
-    } catch (err) {
-      alert(err.message || t('providerAvailabilitySaveFailed'));
+      setFlash({ type: 'success', message: t('providerAvailabilityUpdatedSuccess') });
+    } catch {
+      setFlash({ type: 'error', message: getFriendlyErrorMessage(t('providerAvailabilitySaveFailed')) });
     } finally {
       setIsSaving(false);
     }
@@ -238,10 +264,11 @@ function ServiceProviderSettings() {
   const handleSaveLanguages = async () => {
     try {
       setLanguageSaving(true);
+      setFlash({ type: 'info', message: '' });
       await serviceProfileAPI.updateMyLanguages(selectedLanguages);
-      alert(t('providerLanguagesUpdatedSuccess'));
-    } catch (err) {
-      alert(err.message || t('providerLanguagesUpdateFailed'));
+      setFlash({ type: 'success', message: t('providerLanguagesUpdatedSuccess') });
+    } catch {
+      setFlash({ type: 'error', message: getFriendlyErrorMessage(t('providerLanguagesUpdateFailed')) });
     } finally {
       setLanguageSaving(false);
     }
@@ -264,17 +291,18 @@ function ServiceProviderSettings() {
 
   const handleAddAvailabilityException = async () => {
     if (!newException.exceptionDate) {
-      alert(t('providerExceptionDateRequired'));
+      setFlash({ type: 'error', message: t('providerExceptionDateRequired') });
       return;
     }
 
     if ((newException.startTime && !newException.endTime) || (!newException.startTime && newException.endTime)) {
-      alert(t('providerExceptionTimePairRequired'));
+      setFlash({ type: 'error', message: t('providerExceptionTimePairRequired') });
       return;
     }
 
     try {
       setExceptionSaving(true);
+      setFlash({ type: 'info', message: '' });
       await serviceProfileAPI.addAvailabilityException({
         exceptionDate: newException.exceptionDate,
         exceptionType: newException.exceptionType,
@@ -303,8 +331,9 @@ function ServiceProviderSettings() {
         endTime: '',
         reason: '',
       });
-    } catch (err) {
-      alert(err.message || t('providerAddExceptionFailed'));
+      setFlash({ type: 'success', message: t('providerAvailabilityUpdatedSuccess') });
+    } catch {
+      setFlash({ type: 'error', message: getFriendlyErrorMessage(t('providerAddExceptionFailed')) });
     } finally {
       setExceptionSaving(false);
     }
@@ -313,10 +342,12 @@ function ServiceProviderSettings() {
   const handleDeleteAvailabilityException = async (exceptionId) => {
     try {
       setExceptionSaving(true);
+      setFlash({ type: 'info', message: '' });
       await serviceProfileAPI.deleteAvailabilityException(exceptionId);
       setAvailabilityExceptions((prev) => prev.filter((item) => Number(item.id) !== Number(exceptionId)));
-    } catch (err) {
-      alert(err.message || t('providerDeleteExceptionFailed'));
+      setFlash({ type: 'success', message: t('providerAvailabilityUpdatedSuccess') });
+    } catch {
+      setFlash({ type: 'error', message: getFriendlyErrorMessage(t('providerDeleteExceptionFailed')) });
     } finally {
       setExceptionSaving(false);
     }
@@ -324,12 +355,13 @@ function ServiceProviderSettings() {
 
   const handleCreateCredential = async () => {
     if (!newCredential.credentialName.trim() || !newCredential.credentialType.trim()) {
-      alert(t('providerCredentialNameTypeRequired'));
+      setFlash({ type: 'error', message: t('providerCredentialNameTypeRequired') });
       return;
     }
 
     try {
       setCredentialSaving(true);
+      setFlash({ type: 'info', message: '' });
       const formData = new FormData();
       formData.append('credentialName', newCredential.credentialName.trim());
       formData.append('credentialType', newCredential.credentialType.trim());
@@ -360,9 +392,9 @@ function ServiceProviderSettings() {
         credentialUrl: '',
       });
       setCredentialFile(null);
-      alert(t('providerCredentialSavedSuccess'));
-    } catch (err) {
-      alert(err.message || t('providerCredentialCreateFailed'));
+      setFlash({ type: 'success', message: t('providerCredentialSavedSuccess') });
+    } catch {
+      setFlash({ type: 'error', message: getFriendlyErrorMessage(t('providerCredentialCreateFailed')) });
     } finally {
       setCredentialSaving(false);
     }
@@ -371,17 +403,27 @@ function ServiceProviderSettings() {
   const handleSubmitCredential = async (credentialId) => {
     try {
       setCredentialSaving(true);
+      setFlash({ type: 'info', message: '' });
       await serviceProfileAPI.submitCredentialForReview(credentialId);
       const updated = await serviceProfileAPI.getMyCredentials();
       if (updated.success) {
         setCredentials(updated.data?.credentials || []);
       }
-      alert(t('providerCredentialSubmittedSuccess'));
-    } catch (err) {
-      alert(err.message || t('providerCredentialSubmitFailed'));
+      setFlash({ type: 'success', message: t('providerCredentialSubmittedSuccess') });
+    } catch {
+      setFlash({ type: 'error', message: getFriendlyErrorMessage(t('providerCredentialSubmitFailed')) });
     } finally {
       setCredentialSaving(false);
     }
+  };
+
+  const handleResetAccountBusiness = () => {
+    if (!initialSettings) {
+      return;
+    }
+
+    setSettings(initialSettings);
+    setFlash({ type: 'info', message: t('changesWereReset') });
   };
 
   return (
@@ -420,9 +462,9 @@ function ServiceProviderSettings() {
             {t('providerSettingsNavBusiness')}
           </button>
           <button 
-            className={`settings-nav-item ${activeSection === 'availability' ? 'active' : ''}`}
-            data-tour="provider-availability-tab"
-            onClick={() => setActiveSection('availability')}
+            className={`settings-nav-item ${activeSection === 'schedule' ? 'active' : ''}`}
+            data-tour="provider-schedule-tab"
+            onClick={() => setActiveSection('schedule')}
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <circle cx="12" cy="12" r="1"></circle>
@@ -431,7 +473,16 @@ function ServiceProviderSettings() {
               <path d="M1 12h6m6 0h6"></path>
               <path d="M4.22 19.78l4.24-4.24m5.08-5.08l4.24-4.24"></path>
             </svg>
-            {t('providerSettingsNavAvailability')}
+            {t('schedule')}
+          </button>
+          <button 
+            className={`settings-nav-item ${activeSection === 'profile' ? 'active' : ''}`}
+            onClick={() => setActiveSection('profile')}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+            </svg>
+            {t('providerSettingsNavProfileDetails')}
           </button>
           <button 
             className={`settings-nav-item ${activeSection === 'notifications' ? 'active' : ''}`}
@@ -456,6 +507,8 @@ function ServiceProviderSettings() {
 
         {/* Settings Content */}
         <div className="settings-content">
+          <SettingsFlash type={flash.type} message={flash.message} />
+
           {activeSection === 'account' && (
             <div className="settings-section">
               <h2 className="settings-section-title">{t('providerAccountSettingsTitle')}</h2>
@@ -500,7 +553,7 @@ function ServiceProviderSettings() {
               <div className="settings-section-divider"></div>
 
               <h3 className="settings-subsection-title">{t('providerPasswordSecurityTitle')}</h3>
-              <button className="btn-change-password">
+              <button className="btn-change-password" type="button" onClick={() => navigate('/forgot-password')}>
                 {t('providerChangePassword')}
               </button>
               <small className="settings-help">{t('providerPasswordSecurityHelp')}</small>
@@ -585,9 +638,9 @@ function ServiceProviderSettings() {
             </div>
           )}
 
-          {activeSection === 'availability' && (
+          {activeSection === 'schedule' && (
             <div className="settings-section">
-              <h2 className="settings-section-title">{t('providerAvailabilityJobSettingsTitle')}</h2>
+              <h2 className="settings-section-title">{t('providerSettingsScheduleTitle')}</h2>
               
               <div className="settings-toggle-group">
                 <div className="settings-toggle">
@@ -825,7 +878,12 @@ function ServiceProviderSettings() {
                   </div>
                 ))}
               </div>
+            </div>
+          )}
 
+          {activeSection === 'profile' && (
+            <div className="settings-section">
+              <h2 className="settings-section-title">{t('providerSettingsProfileDetailsTitle')}</h2>
               <div className="settings-section-divider"></div>
               <h3 className="settings-subsection-title">{t('languagesSpoken')}</h3>
 
@@ -1062,14 +1120,16 @@ function ServiceProviderSettings() {
             </div>
           )}
 
-          <div className="settings-actions">
-            <button className="btn-save" onClick={handleSave} disabled={isSaving || isLoadingProfile}>
-              {isSaving ? t('saving') : t('saveChanges')}
-            </button>
-            <button className="btn-cancel" onClick={() => window.location.reload()}>
-              {t('reset')}
-            </button>
-          </div>
+          {(activeSection === 'account' || activeSection === 'business') && (
+            <div className="settings-actions">
+              <button className="btn-save" onClick={handleSave} disabled={isSaving || isLoadingProfile}>
+                {isSaving ? t('saving') : t('saveChanges')}
+              </button>
+              <button className="btn-cancel" type="button" onClick={handleResetAccountBusiness} disabled={isSaving || isLoadingProfile}>
+                {t('reset')}
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

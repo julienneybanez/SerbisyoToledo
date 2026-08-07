@@ -535,7 +535,7 @@ export default function Requests() {
     <div className="requests-container">
       <div className="requests-wrapper">
         <div className="requests-header">
-          <h1 data-tour={isProvider ? 'incoming-requests' : undefined}>{isProvider ? t('serviceRequests') : t('myRequests')}</h1>
+          <h1 data-tour={isProvider ? 'incoming-requests' : undefined}>{isProvider ? t('serviceRequests') : t('myBookings')}</h1>
           <p>{isProvider ? t('requestsProviderSubtitle') : t('requestsClientSubtitle')}</p>
         </div>
 

@@ -13,7 +13,7 @@ export default function ServiceProviderDashboard() {
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showVerificationRequest, setShowVerificationRequest] = useState(false);
   const [requests, setRequests] = useState([]);
-  const [requestSummary, setRequestSummary] = useState({ pending: 0, upcoming: 0 });
+  const [requestSummary, setRequestSummary] = useState({ pending: 0, active: 0, upcoming: 0 });
   const [loadingRequests, setLoadingRequests] = useState(true);
   const [actionLoading, setActionLoading] = useState(null);
   const [checklistLoading, setChecklistLoading] = useState(true);
@@ -38,13 +38,35 @@ export default function ServiceProviderDashboard() {
       setLoadingRequests(true);
       const response = await serviceRequestAPI.getProviderRequests();
       if (response.success) {
-        const activeJobs = response.data.requests.filter(
-          r => ['pending', 'accepted', 'on_the_way', 'in_progress'].includes(r.status)
-        );
-        const pending = response.data.requests.filter((r) => r.status === 'pending').length;
-        const upcoming = response.data.requests.filter((r) => ['accepted', 'on_the_way', 'in_progress'].includes(r.status)).length;
-        setRequestSummary({ pending, upcoming });
-        setRequests(activeJobs.slice(0, 4)); // Show max 4 on dashboard
+        const allRequests = response.data.requests || [];
+        const now = new Date();
+        const activeStatuses = ['accepted', 'on_the_way', 'in_progress'];
+        const queueStatuses = ['pending', ...activeStatuses];
+
+        const pending = allRequests.filter((request) => request.status === 'pending').length;
+        const active = allRequests.filter((request) => activeStatuses.includes(request.status)).length;
+        const upcoming = allRequests.filter((request) => {
+          if (!activeStatuses.includes(request.status)) {
+            return false;
+          }
+
+          const startAtRaw = request.scheduled_start_at
+            || (request.scheduled_date ? `${request.scheduled_date}T${request.scheduled_time || '00:00'}` : null);
+
+          if (!startAtRaw) {
+            return false;
+          }
+
+          const startAt = new Date(startAtRaw);
+          return !Number.isNaN(startAt.getTime()) && startAt > now;
+        }).length;
+
+        const visibleQueue = allRequests
+          .filter((request) => queueStatuses.includes(request.status))
+          .slice(0, 4);
+
+        setRequestSummary({ pending, active, upcoming });
+        setRequests(visibleQueue);
       }
     } catch (err) {
       console.error('Failed to fetch requests:', err);
@@ -290,7 +312,7 @@ export default function ServiceProviderDashboard() {
           </article>
           <article className="provider-stat-card">
             <p>Active Jobs</p>
-            <strong>{requests.length}</strong>
+            <strong>{requestSummary.active}</strong>
           </article>
         </section>
 

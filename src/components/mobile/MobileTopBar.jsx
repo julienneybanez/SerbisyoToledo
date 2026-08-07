@@ -30,7 +30,11 @@ function getInitials(name) {
     .toUpperCase();
 }
 
-function getTitle(pathname, t) {
+function getTitle(pathname, role, t) {
+  if (pathname.startsWith('/requests') && role === 'client') {
+    return t('myBookings');
+  }
+
   const match = TITLES.find((item) => item.test(pathname));
   return match ? t(match.key) : 'SerbisyoToledo';
 }
@@ -55,7 +59,7 @@ export default function MobileTopBar({
   const menuRef = useRef(null);
   const { isDark, toggleTheme } = useTheme();
   const { language, setLanguage, t } = useLanguage();
-  const title = getTitle(location.pathname, t);
+  const title = getTitle(location.pathname, role, t);
   const isLoggedIn = Boolean(user);
   const notificationsRoute = !isLoggedIn
     ? '/login'
@@ -127,22 +131,26 @@ export default function MobileTopBar({
             <i className={`bi ${isDark ? 'bi-sun-fill' : 'bi-moon-stars-fill'}`}></i>
           </button>
         )}
-        <Link to={notificationsRoute} className="mobile-topbar-icon-btn" aria-label={t('openNotifications')}>
-          <i className="bi bi-bell"></i>
-        </Link>
-        <button
-          type="button"
-          className="mobile-topbar-avatar"
-          aria-label={t('openProfileMenu')}
-          aria-expanded={profileMenuOpen}
-          onClick={onToggleProfileMenu}
-        >
-          {user?.profileImage ? (
-            <img src={user.profileImage} alt="Profile" className="mobile-topbar-avatar-img non-draggable-image" draggable="false" />
-          ) : (
-            getInitials(user?.fullName)
-          )}
-        </button>
+        {isLoggedIn && (
+          <>
+            <Link to={notificationsRoute} className="mobile-topbar-icon-btn" aria-label={t('openNotifications')}>
+              <i className="bi bi-bell"></i>
+            </Link>
+            <button
+              type="button"
+              className="mobile-topbar-avatar"
+              aria-label={t('openProfileMenu')}
+              aria-expanded={profileMenuOpen}
+              onClick={onToggleProfileMenu}
+            >
+              {user?.profileImage ? (
+                <img src={user.profileImage} alt="Profile" className="mobile-topbar-avatar-img non-draggable-image" draggable="false" />
+              ) : (
+                getInitials(user?.fullName)
+              )}
+            </button>
+          </>
+        )}
 
         {profileMenuOpen && (
           <div ref={menuRef} className="mobile-profile-menu" role="menu" aria-label="Mobile profile menu">
@@ -166,7 +174,7 @@ export default function MobileTopBar({
                   onClick={onEditProviderProfile}
                 >
                   <i className="bi bi-pencil-square"></i>
-                  {t('editProfile')}
+                  {t('manageProfile')}
                 </button>
                 <button
                   type="button"
@@ -184,7 +192,7 @@ export default function MobileTopBar({
                   onClick={onRequestVerification}
                 >
                   <i className="bi bi-shield-check"></i>
-                  {t('requestVerification')}
+                  {t('verification')}
                 </button>
                 <button
                   type="button"
@@ -193,7 +201,7 @@ export default function MobileTopBar({
                   onClick={hasServiceProfile ? onPreviewProfile : onManageServiceProfile}
                 >
                   <i className="bi bi-eye"></i>
-                  {hasServiceProfile ? t('viewProfileAsClient') : t('viewProfilePostFirst')}
+                  {hasServiceProfile ? t('viewPublicProfile') : t('viewProfilePostFirst')}
                 </button>
               </>
             ) : (

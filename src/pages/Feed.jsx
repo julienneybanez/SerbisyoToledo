@@ -21,7 +21,7 @@ export default function Feed() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [clientChecklistLoading, setClientChecklistLoading] = useState(false);
   const [clientChecklistError, setClientChecklistError] = useState('');
   const [hasClientRequest, setHasClientRequest] = useState(false);
@@ -40,9 +40,7 @@ export default function Feed() {
     setSearchTerm(queryValue);
 
     const categoryValue = (searchParams.get('category') || '').trim();
-    if (categoryValue) {
-      setActiveCategory(categoryValue);
-    }
+    setActiveCategory(categoryValue || 'All');
   }, [searchParams]);
 
   // Fetch service profiles on component mount or when filters change
@@ -168,13 +166,26 @@ export default function Feed() {
     },
   ];
 
+  const updateQueryParam = (key, value) => {
+    const nextParams = new URLSearchParams(searchParams);
+    if (value) {
+      nextParams.set(key, value);
+    } else {
+      nextParams.delete(key);
+    }
+    setSearchParams(nextParams, { replace: true });
+  };
+
   const clearFilters = () => {
+    setSearchTerm('');
+    setActiveCategory('All');
     setFilters({
       location: "",
       minPrice: "",
       maxPrice: "",
       minRating: "",
     });
+    setSearchParams(new URLSearchParams(), { replace: true });
   };
 
   const toggleFilters = () => {
@@ -212,7 +223,11 @@ export default function Feed() {
               <input
                 placeholder={t('feedSearchPlaceholder')}
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setSearchTerm(value);
+                  updateQueryParam('q', value.trim());
+                }}
                 aria-label={t('feedSearchAria')}
               />
             </div>
@@ -288,7 +303,10 @@ export default function Feed() {
                 className={`category-btn ${
                   activeCategory === c ? "active" : ""
                 }`}
-                onClick={() => setActiveCategory(c)}
+                onClick={() => {
+                  setActiveCategory(c);
+                  updateQueryParam('category', c === 'All' ? '' : c);
+                }}
               >
                 {c}
               </button>

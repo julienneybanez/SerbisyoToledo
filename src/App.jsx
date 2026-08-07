@@ -64,7 +64,7 @@ const CLIENT_TOUR_STEPS = [
   },
   {
     title: 'My Bookings',
-    description: 'Track your requests and booking progress in the Requests section.',
+    description: 'Track your bookings and progress updates from this section.',
     route: '/requests',
     selector: '[data-tour="nav-requests"]',
   },
@@ -84,18 +84,16 @@ const PROVIDER_TOUR_STEPS = [
     selector: '.profile-checklist',
   },
   {
-    title: 'Availability',
-    description: 'Set your typical response time in Edit Profile so clients know when to expect updates.',
-    route: '/dashboard',
-    action: 'openProviderEditProfile',
-    selector: '[data-tour="provider-response-time"]',
+    title: 'Schedule',
+    description: 'Configure weekly availability, booking windows, and date exceptions in Schedule settings.',
+    route: '/provider-settings?section=schedule',
+    selector: '[data-tour="provider-schedule-tab"]',
   },
   {
     title: 'Portfolio',
-    description: 'Upload portfolio images in Edit Profile to showcase your completed work.',
+    description: 'Use Manage Profile to update your public portfolio and service details.',
     route: '/dashboard',
-    action: 'openProviderEditProfile',
-    selector: '[data-tour="provider-portfolio-images"]',
+    selector: '[data-tour="provider-profile-setup"]',
   },
   {
     title: 'Incoming Booking Requests',

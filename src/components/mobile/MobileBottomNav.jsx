@@ -13,13 +13,13 @@ const ROLE_ITEMS = {
   client: [
     { to: '/', labelKey: 'home', icon: 'bi-house-door' },
     { to: '/feed', labelKey: 'browseShort', icon: 'bi-search' },
-    { to: '/requests', labelKey: 'requests', icon: 'bi-inbox' },
+    { to: '/requests', labelKey: 'myBookings', icon: 'bi-inbox' },
     { action: 'edit-profile', labelKey: 'profile', icon: 'bi-person' },
   ],
   tradesperson: [
     { to: '/dashboard', labelKey: 'dashboardShort', icon: 'bi-speedometer2' },
     { to: '/requests', labelKey: 'requests', icon: 'bi-inbox' },
-    { to: '/provider-settings?section=availability', labelKey: 'schedule', icon: 'bi-calendar3' },
+    { to: '/provider-settings?section=schedule', labelKey: 'schedule', icon: 'bi-calendar3' },
     { action: 'profile-menu', labelKey: 'profile', icon: 'bi-person-circle' },
   ],
   admin: [

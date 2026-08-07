@@ -183,10 +183,18 @@ describe('Settings pages', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Business' }));
     expect(await screen.findByText('Business Information')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Availability' }));
-    expect(await screen.findByText('Availability & Job Settings')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Schedule' }));
+    expect(await screen.findByText('Schedule & Booking Settings')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Save Changes' })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Profile Details' }));
+    expect(await screen.findByText('Languages Spoken')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Save Changes' })).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Account' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Change Password' }));
+    expect(mockNavigate).toHaveBeenCalledWith('/forgot-password');
+
     fireEvent.click(await screen.findByRole('button', { name: 'Save Changes' }));
 
     await waitFor(() => {
