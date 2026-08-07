@@ -273,6 +273,14 @@ function App() {
   );
   const shouldLiftChatbotButton = isMobileAuthenticated && location.pathname.startsWith('/provider/');
   const isMobileShellLayout = isMobileViewport;
+  const hideChatbotOnRoute = (
+    location.pathname === '/login'
+    || location.pathname === '/register'
+    || location.pathname === '/about'
+    || location.pathname === '/forgot-password'
+    || location.pathname.startsWith('/reset-password')
+    || location.pathname === '/verify-email'
+  );
 
   const mobileRole = currentUser?.userType || 'guest';
   const mobileSettingsRoute = mobileRole === 'tradesperson' ? '/provider-settings' : '/client-settings';
@@ -384,17 +392,21 @@ function App() {
               
               <Footer className={isMobileAuthenticated ? 'mobile-footer-minimized' : ''} />
               
-              <button 
-                className={`floating-btn ${shouldLiftChatbotButton ? 'floating-btn-avoid-sticky' : ''}`.trim()}
-                onClick={() => setIsChatbotOpen(true)}
-                aria-label="Open chat support"
-              >
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                </svg>
-              </button>
+              {!hideChatbotOnRoute && (
+                <>
+                  <button 
+                    className={`floating-btn ${shouldLiftChatbotButton ? 'floating-btn-avoid-sticky' : ''}`.trim()}
+                    onClick={() => setIsChatbotOpen(true)}
+                    aria-label="Open chat support"
+                  >
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                    </svg>
+                  </button>
 
-              <Chatbot isOpen={isChatbotOpen} onClose={() => setIsChatbotOpen(false)} />
+                  <Chatbot isOpen={isChatbotOpen} onClose={() => setIsChatbotOpen(false)} />
+                </>
+              )}
 
               {showMobileEditProfile && (
                 <EditProfileModal

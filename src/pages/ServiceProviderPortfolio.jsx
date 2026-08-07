@@ -7,7 +7,6 @@ import {
   ArrowLeftIcon,
   StarIcon,
   CheckIcon,
-  CommentIcon,
   LocationIcon,
   ClockIcon,
 } from '../components/common/Icons';
@@ -72,6 +71,16 @@ const ProviderCard = ({ provider, profile, onBack, hideBackLink = false }) => {
     .join('')
     .slice(0, 2)
     .toUpperCase();
+  const reviewCount = profile.reviews?.length || 0;
+  const numericRating = Number(provider.rating || 0);
+  const hasReviews = reviewCount > 0 && numericRating > 0;
+  const availabilitySummary = String(profile.availabilitySummary || '').trim();
+  const numericRate = Number(profile.rate);
+  const safeRateUnit = String(profile.rateUnit || '').trim();
+  const rateSuffix = safeRateUnit ? ` ${safeRateUnit}` : '';
+  const summaryPrice = Number.isFinite(numericRate) && numericRate > 0
+    ? `From ₱${numericRate.toLocaleString()}${rateSuffix}`
+    : 'Price on request';
 
   const handleBack = () => {
     if (onBack) {
@@ -103,31 +112,44 @@ const ProviderCard = ({ provider, profile, onBack, hideBackLink = false }) => {
         </button>
       )}
 
-      <div className="profile-header">
-        <div className="profile-avatar-large">{initials}</div>
-        <div className="profile-details">
-          <div className="profile-name-row">
-            <h1>{provider.name}</h1>
-            {provider.verified && (
-              <span className="verified-badge profile-verified-badge" title="Verified provider" aria-label="Verified provider">
-                <CheckIcon />
+      <div className="profile-summary">
+        <div className="profile-header">
+          <div className="profile-avatar-large">{initials}</div>
+          <div className="profile-details">
+            <div className="profile-name-row">
+              <h1>{provider.name}</h1>
+              {provider.verified && (
+                <span className="verified-badge profile-verified-badge" title="Verified provider" aria-label="Verified provider">
+                  <CheckIcon />
+                </span>
+              )}
+            </div>
+            <p className="profile-profession">{profile.profession || provider.tags?.[0] || 'Service Provider'}</p>
+            <div className="profile-stats">
+              <span className="stat-item">
+                <StarIcon /> {hasReviews ? `${numericRating.toFixed(1)} · ${reviewCount} ${reviewCount === 1 ? 'review' : 'reviews'}` : 'No reviews yet'}
               </span>
+              <span className="stat-item">
+                <LocationIcon /> {profile.location || provider.location || 'Toledo City'}
+              </span>
+            </div>
+            {availabilitySummary && (
+              <p className="profile-availability-note">{availabilitySummary}</p>
             )}
           </div>
-          <p className="profile-profession">{profile.profession || provider.tags?.[0] || 'Service Provider'}</p>
-          <div className="profile-stats">
-            <span className="stat-item">
-              <StarIcon /> {provider.rating} rating
-            </span>
-            <span className="stat-item">
-              <CommentIcon /> {profile.reviews.length} reviews
-            </span>
-            <span className="stat-item">
-              <LocationIcon /> {profile.location || provider.location || 'Toledo City'}
-            </span>
-          </div>
-          <p className="profile-availability-note">Available this week based on posted schedule.</p>
         </div>
+
+        <aside className="profile-summary-actions" aria-label="Price and booking actions">
+          <p className="profile-summary-price">{summaryPrice}</p>
+          <button
+            className="btn-request-service profile-summary-request-btn"
+            onClick={handleRequestService}
+            disabled={!canRequestService}
+            data-tour="provider-request-service"
+          >
+            {canRequestService ? 'Request Service' : 'Currently Unavailable'}
+          </button>
+        </aside>
       </div>
 
       <div className="about-section">
@@ -135,25 +157,20 @@ const ProviderCard = ({ provider, profile, onBack, hideBackLink = false }) => {
         {profile.about ? (
           <p className="about-text">{profile.about}</p>
         ) : (
-          <div className="about-empty">
-            <p className="empty-text">This provider hasn't added their bio yet.</p>
-            <small className="empty-subtext">More details may be added as their portfolio grows.</small>
-          </div>
+          <p className="compact-empty-text">This provider has not added an about section yet.</p>
         )}
       </div>
 
       <div className="skills-section">
-        <h3 className="skills-title">Services and Skills</h3>
+        <h3 className="skills-title">Services & Skills</h3>
         {profile.skills && profile.skills.length > 0 ? (
           <div className="skills-grid">
             {profile.skills.map((skill) => (
-              <div key={skill} className="skill-tag">• {skill}</div>
+              <span key={skill} className="skill-tag">{skill}</span>
             ))}
           </div>
         ) : (
-          <div className="skills-empty">
-            <p className="empty-text">No skills listed yet.</p>
-          </div>
+          <p className="compact-empty-text">No services or skills listed yet.</p>
         )}
       </div>
 
@@ -162,22 +179,24 @@ const ProviderCard = ({ provider, profile, onBack, hideBackLink = false }) => {
         {Array.isArray(profile.languages) && profile.languages.length > 0 ? (
           <p className="about-text">{profile.languages.join(', ')}</p>
         ) : (
-          <div className="about-empty">
-            <p className="empty-text">Language not specified</p>
-          </div>
+          <p className="compact-empty-text">Not specified.</p>
         )}
       </div>
 
-      <div className="portfolio-tabs">
+      <div className="portfolio-tabs" role="tablist" aria-label="Portfolio and reviews tabs">
         <button
           className={`tab-btn ${activeTab === 'portfolio' ? 'active' : ''}`}
           onClick={() => setActiveTab('portfolio')}
+          role="tab"
+          aria-selected={activeTab === 'portfolio'}
         >
           Portfolio ({profile.portfolio?.length || 0})
         </button>
         <button
           className={`tab-btn ${activeTab === 'reviews' ? 'active' : ''}`}
           onClick={() => setActiveTab('reviews')}
+          role="tab"
+          aria-selected={activeTab === 'reviews'}
         >
           Reviews ({profile.reviews?.length || 0})
         </button>
@@ -193,7 +212,7 @@ const ProviderCard = ({ provider, profile, onBack, hideBackLink = false }) => {
                   className="portfolio-item clickable"
                   onClick={() => setExpandedImage(item.src)}
                 >
-                  <img src={item.src} alt="Portfolio image" className="portfolio-image non-draggable-image" draggable="false" />
+                  <img src={item.src} alt={`${provider.name} portfolio item`} className="portfolio-image non-draggable-image" draggable="false" />
                   {item.completedThroughPlatform && (
                     <span className="verified-badge portfolio-item-badge">
                       Completed through SerbisyoToledo
@@ -203,17 +222,7 @@ const ProviderCard = ({ provider, profile, onBack, hideBackLink = false }) => {
               ))}
             </div>
           ) : (
-            <div className="portfolio-empty">
-              <div className="empty-portfolio-grid">
-                {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="portfolio-placeholder">
-                    <i className="bi bi-image"></i>
-                    <span>No image</span>
-                  </div>
-                ))}
-              </div>
-              <p className="empty-text">This provider hasn't uploaded portfolio items yet.</p>
-            </div>
+            <p className="compact-empty-text portfolio-empty-copy">No portfolio work added yet.</p>
           )}
         </>
       )}
@@ -247,31 +256,10 @@ const ProviderCard = ({ provider, profile, onBack, hideBackLink = false }) => {
               </div>
             </>
           ) : (
-            <div className="no-reviews">
-              <i className="bi bi-chat-square-text"></i>
-              <p>No reviews yet. Be the first to book and review this provider!</p>
-            </div>
+            <p className="compact-empty-text">No reviews yet.</p>
           )}
         </div>
       )}
-
-      <div className="pricing-section">
-        <div className="price-display">
-          <span className="price-currency">₱</span>
-          {profile.rate}
-          <span className="price-unit"> {profile.rateUnit}</span>
-        </div>
-        <p className="price-label">Daily rate</p>
-      </div>
-
-      <button
-        className="btn-request-service portfolio-desktop-request-btn"
-        onClick={handleRequestService}
-        disabled={!canRequestService}
-        data-tour="provider-request-service"
-      >
-        {canRequestService ? 'Request Service' : 'Currently Unavailable'}
-      </button>
 
       <div className="contact-section">
         <h3 className="contact-title">Additional Information</h3>
@@ -286,7 +274,7 @@ const ProviderCard = ({ provider, profile, onBack, hideBackLink = false }) => {
             <div className="contact-icon">{item.icon}</div>
             <div>
               <p className="contact-label">{item.label}</p>
-              <p className="contact-value">{item.value}</p>
+              <p className="contact-value">{item.value || 'Not specified'}</p>
             </div>
           </div>
         ))}
@@ -412,7 +400,8 @@ const ServiceProviderPortfolio = () => {
             location: apiProfile.location,
             response: apiProfile.responseTime || 'Within 24 hours',
             rate: apiProfile.dailyRate ?? apiProfile.startingPrice,
-            rateUnit: 'per day',
+            rateUnit: apiProfile.pricingUnit || (apiProfile.dailyRate != null ? '/day' : ''),
+            availabilitySummary: apiProfile.availabilitySummary || apiProfile.nextAvailableLabel || '',
           };
           
           setProvider(transformedProvider);

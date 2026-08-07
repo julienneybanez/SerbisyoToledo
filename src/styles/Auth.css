@@ -19,6 +19,14 @@
   box-shadow: 0 24px 50px rgba(15, 23, 42, 0.12);
 }
 
+.auth-page-card {
+  max-width: 500px;
+}
+
+.auth-card-body {
+  padding: 1.25rem 1.25rem 1.1rem !important;
+}
+
 .logo-circle {
   width: 48px;
   height: 48px;
@@ -31,16 +39,16 @@
 }
 
 .logo-img {
-  max-width: 120px;
+  max-width: 102px;
   height: auto;
-  margin-bottom: 16px;
+  margin-bottom: 10px;
   display: block;
   margin-left: auto;
   margin-right: auto;
 }
 
 .app-title {
-  font-size: 32px;
+  font-size: 29px;
   font-weight: 600;
   color: #5da9dd;
 }
@@ -53,6 +61,7 @@
   font-size: 14px;
   color: #666;
   font-weight: 400;
+  margin-bottom: 0;
 }
 
 /* ===================================
@@ -150,7 +159,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 18px;
+  padding: 12px 14px;
   background: white;
   border: 2px solid #e0e0e0;
   border-radius: 12px;
@@ -264,8 +273,8 @@
   background: rgba(68, 201, 160, 0.05);
   border: 1px solid rgba(68, 201, 160, 0.2);
   border-radius: 12px;
-  padding: 20px;
-  margin-top: 20px;
+  padding: 14px;
+  margin-top: 14px;
 }
 
 .professional-details h3 {
@@ -348,11 +357,11 @@
    =================================== */
 @media (max-width: 768px) {
   .content-card {
-    margin: 20px;
+    margin: 12px;
   }
   
   .app-title {
-    font-size: 28px;
+    font-size: 26px;
   }
   
   .feature-item {

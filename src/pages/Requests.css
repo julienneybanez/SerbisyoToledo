@@ -221,7 +221,8 @@
 .request-card-body {
   padding: 1.25rem 1.5rem;
   display: flex;
-  gap: 1.5rem;
+  flex-direction: column;
+  gap: 0.85rem;
 }
 
 @media (max-width: 767px) {
@@ -306,24 +307,36 @@
   min-width: 0;
 }
 
+.request-counterparty {
+  margin: 0 0 0.45rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.request-counterparty i {
+  color: var(--primary);
+}
+
 .request-details {
   color: var(--text-secondary);
   font-size: 0.9rem;
   line-height: 1.6;
   margin-bottom: 0;
   display: -webkit-box;
-  -webkit-line-clamp: 4;
-  line-clamp: 4;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
 
 .request-meta {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  flex-shrink: 0;
-  min-width: 180px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.45rem 0.85rem;
 }
 
 .meta-row {
@@ -342,16 +355,16 @@
 
 /* Discussion Section */
 .request-discussion-section {
-  padding: 1rem 1.5rem;
+  padding: 0.85rem 1.5rem;
   border-top: 1px dashed var(--border);
 }
 
 .phone-revealed {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem;
-  background: var(--status-completed-bg);
+  gap: 0.6rem;
+  padding: 0.65rem 0.8rem;
+  background: color-mix(in srgb, var(--status-completed-bg) 70%, var(--surface));
   border-radius: 12px;
 }
 
@@ -479,6 +492,7 @@
   padding: 1rem 1.5rem;
   border-top: 1px solid var(--border);
   display: flex;
+  flex-wrap: wrap;
   gap: 0.75rem;
   background: var(--surface-muted);
 }
@@ -496,7 +510,7 @@
 }
 
 .btn-action {
-  flex: 1;
+  flex: 1 1 180px;
   min-height: 44px;
   padding: 0.75rem 1rem;
   border: none;
@@ -507,7 +521,37 @@
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  transition: all 0.2s ease;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.btn-primary-action {
+  background: var(--primary);
+  color: #fff;
+}
+
+.btn-primary-action:hover:not(:disabled) {
+  background: var(--primary-hover);
+}
+
+.btn-view-details-secondary {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+
+.btn-view-details-secondary:hover {
+  background: var(--surface);
+  border-color: var(--color-border-strong);
+}
+
+.btn-danger-subtle {
+  background: transparent;
+  color: var(--color-danger);
+  border: 1px solid color-mix(in srgb, var(--color-danger) 36%, var(--border));
+}
+
+.btn-danger-subtle:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--color-danger) 9%, var(--surface));
 }
 
 .btn-action:focus-visible,

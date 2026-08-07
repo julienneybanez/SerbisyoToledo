@@ -25,6 +25,7 @@ export default function Feed() {
   const [clientChecklistLoading, setClientChecklistLoading] = useState(false);
   const [clientChecklistError, setClientChecklistError] = useState('');
   const [hasClientRequest, setHasClientRequest] = useState(false);
+  const [brokenImageIds, setBrokenImageIds] = useState(() => new Set());
   const [filters, setFilters] = useState({
     location: "",
     minPrice: "",
@@ -188,6 +189,58 @@ export default function Feed() {
     setSearchParams(new URLSearchParams(), { replace: true });
   };
 
+  const formatReviewsLabel = (reviews) => {
+    const reviewCount = Number(reviews || 0);
+    if (!reviewCount) return 'No reviews yet';
+    return `${reviewCount} ${reviewCount === 1 ? 'review' : 'reviews'}`;
+  };
+
+  const formatPriceLabel = (provider) => {
+    const amount = Number(provider.startingPrice ?? provider.dailyRate ?? 0);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      return 'Price on request';
+    }
+
+    const unitRaw = provider.pricingUnit || provider.rateUnit || '';
+    const unit = String(unitRaw).trim();
+    const unitSuffix = unit ? `/${unit.replace(/^per\s+/i, '')}` : '';
+
+    return `${t('startingAt')} ₱${amount.toLocaleString()}${unitSuffix}`;
+  };
+
+  const getPrimaryService = (provider) => {
+    if (provider.profession) return provider.profession;
+    if (provider.tags?.length) return provider.tags[0];
+    return t('generalServices');
+  };
+
+  const getVisibleSkills = (provider) => {
+    const allSkills = Array.isArray(provider.tags) ? provider.tags.filter(Boolean) : [];
+    const primary = getPrimaryService(provider);
+    const supporting = allSkills.filter((skill) => skill !== primary);
+    const visible = supporting.slice(0, 3);
+    const remaining = Math.max(0, supporting.length - visible.length);
+    return { visible, remaining };
+  };
+
+  const getProviderInitials = (name) => {
+    return String(name || '')
+      .split(' ')
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0])
+      .join('')
+      .toUpperCase() || 'ST';
+  };
+
+  const handleImageError = (providerId) => {
+    setBrokenImageIds((prev) => {
+      const next = new Set(prev);
+      next.add(providerId);
+      return next;
+    });
+  };
+
   const toggleFilters = () => {
     if (showFilters) {
       setIsClosing(true);
@@ -338,47 +391,73 @@ export default function Feed() {
 
           {!isLoading && serviceProviders.map((p) => (
             <div key={p.id} className="provider-card">
-              <img src={p.image} className="provider-image non-draggable-image" alt={`${p.name} profile`} draggable="false" />
+              {!brokenImageIds.has(p.id) && p.image ? (
+                <img
+                  src={p.image}
+                  className="provider-image non-draggable-image"
+                  alt={`${p.name} service banner`}
+                  draggable="false"
+                  onError={() => handleImageError(p.id)}
+                />
+              ) : (
+                <div className="provider-image provider-image-fallback" aria-hidden="true">
+                  <span className="provider-fallback-initials">{getProviderInitials(p.name)}</span>
+                  <span className="provider-fallback-service">{getPrimaryService(p)}</span>
+                </div>
+              )}
               <div className="provider-info">
                 <div className="provider-header">
-                  <span className="provider-name">{p.name}</span>
-                  {p.verified && (
-                    <span className="verified-badge">
-                      <CheckIcon />
-                    </span>
-                  )}
+                  <div className="provider-name-wrap">
+                    <span className="provider-name">{p.name}</span>
+                    {p.verified && (
+                      <span className="verified-badge" aria-label={t('verification')}>
+                        <CheckIcon />
+                      </span>
+                    )}
+                  </div>
                   <span className="provider-rating">
-                    <StarIcon /> {p.rating} ({p.reviews})
+                    <StarIcon /> {Number(p.reviews || 0) > 0 ? Number(p.rating || 0).toFixed(1) : '—'}
                   </span>
                 </div>
 
+                <p className="provider-service-line">{getPrimaryService(p)}</p>
+
                 <div className="provider-meta">
+                  <span className="meta-item provider-reviews-meta">{formatReviewsLabel(p.reviews)}</span>
                   <span className="meta-item">
                     <LocationIcon />
-                    {p.location}
+                    {p.location || t('location')}
                   </span>
                 </div>
+
+                {String(p.availabilitySummary || p.nextAvailableLabel || '').trim() && (
+                  <p className="provider-availability">{String(p.availabilitySummary || p.nextAvailableLabel).trim()}</p>
+                )}
 
                 <p className="provider-description">
                   {p.description}
                 </p>
 
-                <p className="provider-service-line">{p.tags?.[0] || t('generalServices')}</p>
-
-                {p.tags?.length > 0 && (
+                {(() => {
+                  const { visible, remaining } = getVisibleSkills(p);
+                  if (!visible.length && !remaining) return null;
+                  return (
                   <div className="provider-tags">
-                    {p.tags.map((tag) => (
+                    {visible.map((tag) => (
                       <span className="provider-tag" key={`${p.id}-${tag}`}>
                         {tag}
                       </span>
                     ))}
+                    {remaining > 0 && (
+                      <span className="provider-tag provider-tag-more">+{remaining} more</span>
+                    )}
                   </div>
-                )}
+                  );
+                })()}
 
                 <div className="provider-footer">
                   <div className="price-block">
-                    <span className="price-label">{t('startingAt')}</span>
-                    <span className="price">₱{p.startingPrice}</span>
+                    <span className="price-label">{formatPriceLabel(p)}</span>
                   </div>
                   <button
                     className="btn-view-profile tour-provider-request-step"

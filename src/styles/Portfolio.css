@@ -71,7 +71,7 @@
 .provider-section {
   background: var(--surface);
   border-radius: var(--radius-md);
-  padding: 2rem;
+  padding: 1.5rem 1.5rem 1.75rem;
   border: 1px solid var(--border);
   box-shadow: none;
 }
@@ -124,9 +124,16 @@
 /* ===================================
    PORTFOLIO PAGE - PROFILE HEADER
    =================================== */
+.profile-summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
 .profile-header {
   display: flex;
-  gap: 1.5rem;
+  gap: 1rem;
   align-items: center;
   flex-wrap: wrap;
 }
@@ -145,7 +152,7 @@
 }
 
 .profile-details h1 {
-  font-size: 1.75rem;
+  font-size: 1.6rem;
   margin-bottom: 0.2rem;
 }
 
@@ -173,15 +180,38 @@
 }
 
 .profile-availability-note {
-  margin: 0.65rem 0 0;
+  margin: 0.55rem 0 0;
   color: var(--text-secondary);
-  font-size: 0.9rem;
+  font-size: 0.86rem;
 }
 
 .profile-stats {
   display: flex;
-  gap: 1rem;
+  gap: 0.8rem;
   flex-wrap: wrap;
+}
+
+.profile-summary-actions {
+  min-width: 220px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface-muted);
+  padding: 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.profile-summary-price {
+  margin: 0;
+  font-size: 1.08rem;
+  font-weight: 800;
+  color: #1a3d5d;
+}
+
+.profile-summary-request-btn {
+  margin-top: 0;
+  width: 100%;
 }
 
 .stat-item {
@@ -198,9 +228,9 @@
 .about-section,
 .skills-section,
 .contact-section {
-  margin-top: 1.5rem;
+  margin-top: 1.15rem;
   background: transparent;
-  padding: 1.1rem 0;
+  padding: 0.95rem 0;
   border-radius: 0;
   border-top: 1px solid var(--border);
 }
@@ -219,19 +249,26 @@
 }
 
 .skills-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 0.75rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
 }
 
 /* Note: .skill-tag is also defined in Auth.css for professional registration
    This version is for portfolio display, slightly different styling */
 .portfolio-shell .skill-tag {
-  background: color-mix(in srgb, var(--primary) 12%, var(--surface));
-  padding: 0.6rem 0.9rem;
-  border-radius: 12px;
+  background: color-mix(in srgb, var(--primary) 11%, var(--surface));
+  padding: 0.34rem 0.72rem;
+  border-radius: 999px;
+  font-size: 0.82rem;
   font-weight: 600;
   color: var(--text-primary);
+}
+
+.compact-empty-text {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.92rem;
 }
 
 /* ===================================
@@ -239,15 +276,18 @@
    =================================== */
 .portfolio-tabs {
   display: flex;
-  gap: 1rem;
-  margin-top: 1.5rem;
+  gap: 0.6rem;
+  margin-top: 1.1rem;
   flex-wrap: wrap;
+  border-top: 1px solid var(--border);
+  padding-top: 1rem;
 }
 
 .tab-btn {
   border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 0.75rem 1.5rem;
+  border-radius: 999px;
+  min-height: 40px;
+  padding: 0.45rem 1rem;
   background: var(--surface);
   font-weight: 600;
   color: var(--text-secondary);
@@ -264,15 +304,15 @@
 
 .portfolio-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1.25rem;
-  margin-top: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.85rem;
+  margin-top: 1rem;
 }
 
 .portfolio-item {
   background: var(--surface);
-  border-radius: 16px;
-  padding: 0.75rem;
+  border-radius: 14px;
+  padding: 0.55rem;
   border: 1px solid var(--border);
   display: flex;
   flex-direction: column;
@@ -281,21 +321,20 @@
 .portfolio-item.clickable {
   cursor: pointer;
   position: relative;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: border-color 0.2s ease;
 }
 
 .portfolio-item.clickable:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-md);
+  border-color: var(--color-border-strong);
 }
 
 .portfolio-item.clickable:hover .portfolio-image {
-  filter: brightness(1.05);
+  filter: brightness(1.02);
 }
 
 .portfolio-image {
   width: 100%;
-  height: 160px;
+  height: 180px;
   object-fit: cover;
   border-radius: 12px;
 }
@@ -334,8 +373,8 @@
   background: transparent;
   border-radius: 0;
   border-top: 1px solid var(--border);
-  margin-top: 1.5rem;
-  padding-top: 1.25rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
@@ -348,7 +387,7 @@
   background: var(--surface-muted);
   border-radius: 12px;
   border: 1px solid var(--border);
-  padding: 1.5rem;
+  padding: 1.1rem;
 }
 
 .rating-score {
@@ -356,7 +395,7 @@
 }
 
 .rating-number {
-  font-size: 3rem;
+  font-size: 2.2rem;
   font-weight: 700;
   color: #1a3d5d;
 }
@@ -426,7 +465,7 @@
   border: none;
   border-top: 1px solid var(--border);
   border-radius: 0;
-  padding: 1rem 0;
+  padding: 0.85rem 0;
   background: transparent;
 }
 
@@ -505,36 +544,8 @@
 /* ===================================
    PORTFOLIO PAGE - PRICING & CONTACT
    =================================== */
-.pricing-section {
-  margin-top: 1.5rem;
-  padding: 1.25rem 1.5rem;
-  background: var(--surface-muted);
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border);
-  display: inline-flex;
-  flex-direction: column;
-  gap: 0.3rem;
-}
-
-.price-display {
-  font-size: 2rem;
-  font-weight: 700;
-  color: #1a3d5d;
-}
-
-.price-currency {
-  font-size: 1.25rem;
-  margin-right: 0.25rem;
-}
-
-.price-unit {
-  font-size: 1rem;
-  font-weight: 500;
-  color: #4f6480;
-}
-
 .btn-request-service {
-  margin-top: 1rem;
+  margin-top: 0.6rem;
   width: 100%;
   border: none;
   border-radius: 12px;
@@ -543,7 +554,7 @@
   font-weight: 700;
   color: #fff;
   background: var(--primary);
-  box-shadow: var(--shadow-sm);
+  box-shadow: none;
   cursor: pointer;
 }
 
@@ -592,6 +603,17 @@
 /* ===================================
    PORTFOLIO PAGE RESPONSIVE
    =================================== */
+@media (max-width: 900px) {
+  .profile-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-summary-actions {
+    min-width: 0;
+    width: 100%;
+  }
+}
+
 @media (max-width: 768px) {
   .portfolio-navbar {
     flex-direction: column;
@@ -599,7 +621,7 @@
   }
 
   .provider-section {
-    padding: 1.5rem;
+    padding: 1.2rem;
   }
 
   .rating-summary {
@@ -618,7 +640,7 @@
   }
 
   .portfolio-tabs {
-    flex-direction: column;
+    gap: 0.5rem;
   }
 }
 
@@ -670,81 +692,8 @@
 /* ===================================
    EMPTY STATES
    =================================== */
-.about-empty,
-.skills-empty {
-  padding: 1.5rem;
-  background: var(--surface-muted);
-  border-radius: 12px;
-  border: 1px dashed var(--border);
-}
-
-.empty-subtext {
-  display: block;
-  margin-top: 0.5rem;
-  color: var(--text-secondary);
-  font-size: 0.85rem;
-  text-align: center;
-}
-
-.empty-text {
-  color: #888;
-  font-style: italic;
-  text-align: center;
-  margin: 0;
-}
-
-.portfolio-empty {
-  padding: 2rem;
-  text-align: center;
-}
-
-.empty-portfolio-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-}
-
-.portfolio-placeholder {
-  aspect-ratio: 4/3;
-  background: linear-gradient(135deg, #f0f0f0 0%, #e8e8e8 100%);
-  border-radius: 12px;
-  border: 2px dashed #d0d0d0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  color: #aaa;
-}
-
-.portfolio-placeholder i {
-  font-size: 2rem;
-}
-
-.portfolio-placeholder span {
-  font-size: 0.85rem;
-}
-
-.no-reviews {
-  text-align: center;
-  padding: 3rem 2rem;
-  background: #f8f9fa;
-  border-radius: 12px;
-  border: 2px dashed #e0e0e0;
-}
-
-.no-reviews i {
-  font-size: 3rem;
-  color: #ccc;
-  margin-bottom: 1rem;
-  display: block;
-}
-
-.no-reviews p {
-  color: #888;
-  font-size: 1rem;
-  margin: 0;
+.portfolio-empty-copy {
+  margin-top: 1rem;
 }
 
 /* ===================================

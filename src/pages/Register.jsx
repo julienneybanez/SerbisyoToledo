@@ -127,10 +127,10 @@ const Register = () => {
   };
 
   return (
-    <div className="gradient-container">
-      <div className="container d-flex justify-content-center align-items-center min-vh-100 py-5">
-        <div className="card content-card shadow-lg">
-          <div className="card-body p-4 p-md-5">
+    <div className="gradient-container auth-page-shell">
+      <div className="container d-flex justify-content-center align-items-center min-vh-100 py-4">
+        <div className="card content-card shadow-lg auth-page-card">
+          <div className="card-body p-4 auth-card-body">
             {/* Logo and Header */}
             <div className="text-center mb-4">
               <img src={logo} alt="SerbisyoToledo" className="logo-img non-draggable-image" draggable="false" />

@@ -25,9 +25,11 @@ function Footer({ className = '' }) {
 
           <div className="footer-links-block">
             <h6 className="footer-heading">{t('footerContact')}</h6>
-            <span className="footer-muted-text">toledoserbisyo@gmail.com</span>
-            <span className="footer-muted-text">Toledo City, Cebu</span>
-            <span className="footer-muted-text">{t('footerOfflinePayments')}</span>
+            <div className="footer-contact-list" aria-label="Contact information">
+              <a className="footer-link footer-contact-link" href="mailto:toledoserbisyo@gmail.com">toledoserbisyo@gmail.com</a>
+              <p className="footer-muted-text footer-contact-line">Toledo City, Cebu</p>
+              <p className="footer-muted-text footer-contact-line">{t('footerOfflinePayments')}</p>
+            </div>
           </div>
         </div>
 

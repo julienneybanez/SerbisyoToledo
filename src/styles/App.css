@@ -12,6 +12,7 @@
 
 /* Page-specific styles */
 @import './Home.css';
+@import './About.css';
 @import './Auth.css';
 @import './Feed.css';
 @import './Portfolio.css';

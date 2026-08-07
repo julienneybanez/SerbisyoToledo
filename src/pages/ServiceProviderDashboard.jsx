@@ -272,6 +272,14 @@ export default function ServiceProviderDashboard() {
     },
   ]);
 
+  const checklistVisibleTasks = providerChecklistTasks.filter((task) => task && task.isApplicable !== false);
+  const checklistCompleted = checklistVisibleTasks.filter((task) => task.completed).length;
+  const checklistRemaining = checklistVisibleTasks.length - checklistCompleted;
+  const checklistProgress = checklistVisibleTasks.length > 0
+    ? Math.round((checklistCompleted / checklistVisibleTasks.length) * 100)
+    : 100;
+  const nextChecklistTasks = checklistVisibleTasks.filter((task) => !task.completed).slice(0, 3);
+
   return (
     <div className="dashboard-container">
       <div className="dashboard-wrapper">
@@ -321,8 +329,32 @@ export default function ServiceProviderDashboard() {
           tasks={providerChecklistTasks}
           loading={checklistLoading}
           error={checklistError}
-          initiallyCollapsed={false}
+          initiallyCollapsed
         />
+
+        {!checklistLoading && !checklistError && (
+          <section className="profile-setup-summary" aria-label="Profile setup summary">
+            <div className="profile-setup-summary-head">
+              <h2>Complete Your Profile - {checklistProgress}%</h2>
+              <p>{checklistRemaining} item{checklistRemaining === 1 ? '' : 's'} remaining</p>
+            </div>
+            <div className="profile-setup-summary-progress" role="progressbar" aria-valuenow={checklistProgress} aria-valuemin="0" aria-valuemax="100">
+              <span style={{ width: `${checklistProgress}%` }}></span>
+            </div>
+            {nextChecklistTasks.length > 0 && (
+              <ul className="profile-setup-next-tasks">
+                {nextChecklistTasks.map((task) => (
+                  <li key={task.key}>{task.label}</li>
+                ))}
+              </ul>
+            )}
+            <div className="profile-setup-actions">
+              <button type="button" className="btn-post-service" onClick={() => navigate('/provider-settings')}>
+                Continue Setup
+              </button>
+            </div>
+          </section>
+        )}
 
         <section className="jobs-section">
           <div className="jobs-header">
@@ -366,13 +398,6 @@ export default function ServiceProviderDashboard() {
                     </div>
                   </div>
                   <div className="job-actions">
-                    <button
-                      className="job-btn job-btn-secondary"
-                      onClick={() => setSelectedRequest(job)}
-                      disabled={actionLoading === job.id}
-                    >
-                      View Details
-                    </button>
                     {job.status === 'pending' && (
                       <>
                         <button 
@@ -382,8 +407,15 @@ export default function ServiceProviderDashboard() {
                         >
                           {actionLoading === job.id ? 'Processing...' : 'Accept Request'}
                         </button>
+                        <button
+                          className="job-btn job-btn-secondary"
+                          onClick={() => setSelectedRequest(job)}
+                          disabled={actionLoading === job.id}
+                        >
+                          View Details
+                        </button>
                         <button 
-                            className="job-btn job-btn-secondary"
+                            className="job-btn job-btn-decline-subtle"
                             onClick={() => openDeclineDialog(job.id)}
                           disabled={actionLoading === job.id}
                         >
@@ -392,22 +424,40 @@ export default function ServiceProviderDashboard() {
                       </>
                     )}
                     {job.status === 'accepted' && (
-                      <button 
-                        className="job-btn job-btn-on-way"
-                        onClick={() => handleStatusUpdate(job.id, 'on_the_way')}
-                        disabled={actionLoading === job.id}
-                      >
-                        <i className="bi bi-truck"></i> I'm On My Way
-                      </button>
+                      <>
+                        <button 
+                          className="job-btn job-btn-on-way"
+                          onClick={() => handleStatusUpdate(job.id, 'on_the_way')}
+                          disabled={actionLoading === job.id}
+                        >
+                          <i className="bi bi-truck"></i> I'm On My Way
+                        </button>
+                        <button
+                          className="job-btn job-btn-secondary"
+                          onClick={() => setSelectedRequest(job)}
+                          disabled={actionLoading === job.id}
+                        >
+                          View Details
+                        </button>
+                      </>
                     )}
                     {['on_the_way', 'in_progress'].includes(job.status) && (
-                      <button 
-                        className="job-btn job-btn-complete"
-                        onClick={() => handleStatusUpdate(job.id, 'completed')}
-                        disabled={actionLoading === job.id}
-                      >
-                        <i className="bi bi-check-lg"></i> Mark Service Complete
-                      </button>
+                      <>
+                        <button 
+                          className="job-btn job-btn-complete"
+                          onClick={() => handleStatusUpdate(job.id, 'completed')}
+                          disabled={actionLoading === job.id}
+                        >
+                          <i className="bi bi-check-lg"></i> Mark Service Complete
+                        </button>
+                        <button
+                          className="job-btn job-btn-secondary"
+                          onClick={() => setSelectedRequest(job)}
+                          disabled={actionLoading === job.id}
+                        >
+                          View Details
+                        </button>
+                      </>
                     )}
                   </div>
                 </div>
@@ -417,28 +467,21 @@ export default function ServiceProviderDashboard() {
         </section>
 
         <section className="level-up-banner">
-          <h2>Ready to Level Up?</h2>
-          <p>Complete your profile and get verified to increase your reliability to clients and unlock more opportunities.</p>
+          <p className="level-up-copy">Get verified to build more trust with clients.</p>
           <button className="btn-get-verified" onClick={() => setShowVerificationRequest(true)}>Get Verified</button>
         </section>
 
         <section className="tips-section">
-          <h2 className="section-title">Weekly Tips for Service Providers</h2>
-          <div className="tips-grid">
-            {tips.map((tip) => (
-              <article key={tip.id} className="tip-card">
-                <img src={tip.image} alt="" className="tip-image non-draggable-image" draggable="false" />
-                <div className="tip-content">
-                  <h3 className="tip-title">{tip.title}</h3>
-                  <p className="tip-description">{tip.description}</p>
-                  <div className="tip-footer">
-                    <span>Learning Resource</span>
-                    <span className="read-time">{tip.readTime}</span>
-                  </div>
-                </div>
-              </article>
+          <h2 className="section-title">Tips for Service Providers</h2>
+          <ul className="tips-list">
+            {tips.slice(0, 3).map((tip) => (
+              <li key={tip.id} className="tips-list-item">
+                <span className="tip-title">{tip.title}</span>
+                <span className="read-time">{tip.readTime}</span>
+              </li>
             ))}
-          </div>
+          </ul>
+          <p className="tips-view-all">View all tips</p>
         </section>
 
         {showProfileModal && (
