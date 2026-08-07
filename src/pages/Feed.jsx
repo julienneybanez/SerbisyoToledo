@@ -75,7 +75,7 @@ export default function Feed() {
       } catch (err) {
         if (!isCurrentRequest) return;
         console.error('Error fetching profiles:', err);
-        setError('Failed to load service providers. Please try again.');
+        setError(err?.message || 'Failed to load service providers. Please try again.');
       } finally {
         if (isCurrentRequest) {
           setIsLoading(false);

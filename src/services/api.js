@@ -4,8 +4,40 @@ export const API_BASE_URL = import.meta.env.VITE_API_URL || (isLocalHost ? 'http
 
 // Helper function to handle API responses
 const handleResponse = async (response) => {
-  const data = await response.json();
-  
+  const contentType = response.headers.get('content-type') || '';
+  const rawBody = await response.text();
+
+  let data = null;
+  if (rawBody) {
+    try {
+      data = JSON.parse(rawBody);
+    } catch {
+      data = null;
+    }
+  }
+
+  const looksLikeHtml = contentType.includes('text/html')
+    || /^\s*<!doctype html/i.test(rawBody)
+    || /^\s*<html/i.test(rawBody);
+
+  if (looksLikeHtml) {
+    throw {
+      status: response.status,
+      code: 'NON_JSON_API_RESPONSE',
+      errors: [],
+      message: 'The app received HTML instead of API data. Check VITE_API_URL or your production API rewrite configuration.',
+    };
+  }
+
+  if (!data) {
+    throw {
+      status: response.status,
+      code: 'INVALID_API_RESPONSE',
+      errors: [],
+      message: 'The server returned an invalid API response.',
+    };
+  }
+
   if (!response.ok) {
     throw {
       status: response.status,
@@ -14,7 +46,7 @@ const handleResponse = async (response) => {
       errors: data.errors || []
     };
   }
-  
+
   return data;
 };
 
