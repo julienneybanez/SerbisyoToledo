@@ -3,7 +3,11 @@
    =================================== */
 .hero-section {
   padding: 4.5rem 0;
-  background: linear-gradient(180deg, #f2f8ff 0%, #f8fcff 100%);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--primary) 16%, var(--color-page-bg)) 0%,
+    color-mix(in srgb, var(--color-surface) 78%, var(--color-page-bg)) 100%
+  );
 }
 
 .hero-content-stack {
@@ -58,8 +62,8 @@
   max-width: 500px;
   padding: 0.75rem 1rem;
   border-radius: 50px;
-  border: 1px solid #a8b8d8;
-  background: #c9d5eb;
+  border: 1px solid color-mix(in srgb, var(--primary) 28%, var(--color-border));
+  background: color-mix(in srgb, var(--primary) 12%, var(--color-surface));
 }
 
 .search-box-home input {
@@ -69,18 +73,18 @@
   outline: none;
   background: transparent;
   font-size: 1rem;
-  color: #1a3d5d;
+  color: var(--text-primary);
   padding: 0.25rem 0.5rem;
 }
 
 .search-box-home input::placeholder {
-  color: #6b7a94;
+  color: var(--color-placeholder);
 }
 
 .search-box-home .search-divider {
   width: 1px;
   height: 24px;
-  background: #8a9bb8;
+  background: color-mix(in srgb, var(--text-secondary) 55%, transparent);
   margin: 0 0.75rem;
 }
 
@@ -91,12 +95,12 @@
   background: transparent;
   border: none;
   padding: 0.25rem;
-  color: #3d4f6f;
+  color: var(--text-secondary);
   cursor: pointer;
 }
 
 .btn-search-home:hover {
-  color: #1a3d5d;
+  color: var(--text-primary);
 }
 
 .image-grid img {
@@ -202,7 +206,7 @@
 }
 
 .services-scroll::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: color-mix(in srgb, var(--color-surface-secondary) 86%, transparent);
   border-radius: 10px;
 }
 
@@ -241,14 +245,26 @@
    HOME PAGE - CTA SECTION
    =================================== */
 .cta-section {
-  background-color: #f3f8ff;
+  background-color: color-mix(in srgb, var(--primary) 10%, var(--color-page-bg));
 }
 
 .cta-box {
-  background: #dbeeff;
+  background: color-mix(in srgb, var(--primary) 14%, var(--color-surface));
   padding: 3rem 2rem;
   border-radius: var(--radius-lg);
-  border: 1px solid #bfdaf7;
+  border: 1px solid color-mix(in srgb, var(--primary) 30%, var(--color-border));
+}
+
+[data-theme='dark'] .hero-section {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--primary) 18%, var(--color-page-bg)) 0%,
+    var(--color-page-bg) 100%
+  );
+}
+
+[data-theme='dark'] .services-scroll::-webkit-scrollbar-track {
+  background: color-mix(in srgb, var(--color-surface-secondary) 75%, transparent);
 }
 
 .cta-title {

@@ -37,9 +37,9 @@
 }
 
 .popular-search-chip {
-  border: 1px solid rgba(26, 61, 93, 0.2);
-  background: rgba(255, 255, 255, 0.78);
-  color: #1a3d5d;
+  border: 1px solid color-mix(in srgb, var(--primary) 24%, var(--color-border));
+  background: color-mix(in srgb, var(--color-surface) 84%, transparent);
+  color: var(--text-primary);
   border-radius: 999px;
   padding: 0.32rem 0.78rem;
   font-size: 0.85rem;
@@ -51,7 +51,7 @@
 .popular-search-chip:focus-visible {
   border-color: var(--brand-primary);
   color: var(--brand-primary);
-  background: #fff;
+  background: var(--color-surface);
 }
 
 [data-theme='dark'] .landing-search-wrap .search-box-home {
