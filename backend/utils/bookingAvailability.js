@@ -196,7 +196,7 @@ const ensureAvailabilitySettings = async (connection, serviceProfileId) => {
 const getConfirmedBookingsForDate = async (connection, providerId, dateString, excludeRequestId = null) => {
   const params = [providerId, dateString, dateString, ...BLOCKING_STATUSES];
   let sql = `
-    SELECT id, start_date, end_date, start_time, estimated_duration_minutes, scheduled_start_at, scheduled_end_at
+    SELECT id, estimated_duration_minutes, scheduled_start_at, scheduled_end_at
     FROM service_requests
     WHERE provider_id = ?
       AND DATE(scheduled_start_at) <= ?
@@ -452,7 +452,7 @@ const getAvailableSlotsForDate = async (
       startFallback = row.scheduled_start_at.slice(11, 19);
     }
 
-    const parsed = parseTimeInputToSql(row.start_time || startFallback);
+    const parsed = parseTimeInputToSql(startFallback);
     const startMinutes = timeToMinutes(parsed);
     const bookingDuration = Number(row.estimated_duration_minutes || 0);
 
