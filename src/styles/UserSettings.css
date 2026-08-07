@@ -185,6 +185,73 @@
   margin-top: 0.25rem;
 }
 
+.settings-surface-block {
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 0.95rem;
+  background: var(--color-surface-secondary);
+}
+
+.settings-surface-block + .settings-surface-block {
+  margin-top: 0.75rem;
+}
+
+.settings-surface-block .settings-group:last-child {
+  margin-bottom: 0;
+}
+
+.settings-inline-tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.settings-inline-tag-list .btn-cancel {
+  margin: 0;
+}
+
+.settings-metadata-row {
+  margin: 0;
+  font-size: 0.92rem;
+  color: var(--color-text-secondary);
+}
+
+.settings-metadata-strong {
+  color: var(--color-text-primary);
+  font-weight: 600;
+}
+
+.settings-status-list {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-surface);
+  overflow: hidden;
+}
+
+.settings-status-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.95rem;
+}
+
+.settings-status-row + .settings-status-row {
+  border-top: 1px solid var(--color-border);
+}
+
+.settings-status-value {
+  text-align: right;
+  color: var(--color-text-primary);
+  font-weight: 600;
+}
+
+.settings-credential-actions {
+  margin-top: 0.6rem;
+}
+
 .settings-flash {
   margin-bottom: 1rem;
   border-radius: 10px;
@@ -213,15 +280,43 @@
 
 .settings-card {
   border: 1px solid var(--color-border);
-  border-radius: 12px;
-  padding: 1rem;
-  background: var(--color-surface-secondary);
+  border-radius: 10px;
+  padding: 0;
+  background: var(--color-surface);
   margin-bottom: 1rem;
 }
 
-.settings-card p {
-  margin: 0.2rem 0;
+.settings-card p,
+.settings-card h3 {
+  margin: 0;
+}
+
+.settings-card-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.95rem;
+}
+
+.settings-card-row + .settings-card-row {
+  border-top: 1px solid var(--color-border);
+}
+
+.settings-card-main {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.settings-card-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.settings-card-description {
   color: var(--color-text-secondary);
+  font-size: 0.88rem;
 }
 
 .settings-inline-actions {
@@ -257,18 +352,26 @@
 .settings-toggle-group {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-surface);
+  overflow: hidden;
 }
 
 .settings-toggle {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1rem;
-  background: var(--color-surface-secondary);
-  border-radius: 10px;
-  max-width: 600px;
+  padding: 0.95rem;
+  background: transparent;
+  border-radius: 0;
+  max-width: none;
   gap: 1rem;
+}
+
+.settings-toggle + .settings-toggle {
+  border-top: 1px solid var(--color-border);
 }
 
 .toggle-label {
@@ -478,7 +581,9 @@ input:checked + .slider:before {
   }
 
   .settings-card,
-  .settings-toggle {
+  .settings-toggle-group,
+  .settings-surface-block,
+  .settings-status-list {
     border-radius: 12px;
     margin-inline: 0;
   }
@@ -492,6 +597,18 @@ input:checked + .slider:before {
   .settings-toggle {
     flex-direction: column;
     align-items: flex-start;
+    padding: 0.85rem;
+  }
+
+  .settings-card-row,
+  .settings-status-row {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 0.85rem;
+  }
+
+  .settings-status-value {
+    text-align: left;
   }
 
   .settings-row {

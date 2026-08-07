@@ -292,12 +292,15 @@ function ClientSettings() {
               <h2 className="settings-section-title">{t('securityActions')}</h2>
 
               <div className="settings-card">
-                <p>
-                  {t('emailVerificationStatus')}: <strong>{settings.isVerified ? t('verified') : t('notVerified')}</strong>
-                </p>
-                <p className="settings-help">{t('resendVerificationDisabled')}</p>
-                {!settings.isVerified && (
-                  <div className="settings-inline-actions">
+                <div className="settings-card-row">
+                  <div className="settings-card-main">
+                    <p className="settings-card-title">{t('emailVerificationStatus')}</p>
+                    <p className="settings-card-description">
+                      <strong>{settings.isVerified ? t('verified') : t('notVerified')}</strong>
+                    </p>
+                    <p className="settings-help">{t('resendVerificationDisabled')}</p>
+                  </div>
+                  {!settings.isVerified && (
                     <button
                       className="btn-secondary"
                       onClick={handleResendVerification}
@@ -306,13 +309,15 @@ function ClientSettings() {
                     >
                       {isSendingVerification ? t('sending') : t('resendVerificationEmail')}
                     </button>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
 
               <div className="settings-card">
-                <p>{t('needChangePassword')}</p>
-                <div className="settings-inline-actions">
+                <div className="settings-card-row">
+                  <div className="settings-card-main">
+                    <p className="settings-card-title">{t('needChangePassword')}</p>
+                  </div>
                   <button className="btn-change-password" onClick={() => navigate('/forgot-password')}>
                     {t('openPasswordReset')}
                   </button>

@@ -682,13 +682,12 @@ function ServiceProviderSettings() {
               <div className="settings-section-divider"></div>
               <h3 className="settings-subsection-title">{t('providerWeeklyAvailabilityBlocksTitle')}</h3>
 
-              <div className="settings-group">
+              <div className="settings-group settings-inline-tag-list">
                 {WEEK_DAYS.map((day) => (
                   <button
                     key={day.key}
                     type="button"
                     className="btn-cancel"
-                    style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}
                     onClick={() => addWeekDayBlock(day.key)}
                     disabled={availabilityLoading || isSaving}
                   >
@@ -702,7 +701,7 @@ function ServiceProviderSettings() {
               )}
 
               {weeklyBlocks.map((block, index) => (
-                <div key={`${block.dayOfWeek}-${index}`} className="settings-group" style={{ border: '1px solid #e5e7eb', borderRadius: '10px', padding: '0.75rem' }}>
+                <div key={`${block.dayOfWeek}-${index}`} className="settings-surface-block">
                   <label className="settings-label">{t('providerDayLabel')}</label>
                   <select
                     className="settings-select"
@@ -739,7 +738,7 @@ function ServiceProviderSettings() {
                 </div>
               ))}
 
-              <div className="settings-actions" style={{ paddingLeft: 0, paddingRight: 0 }}>
+              <div className="settings-actions">
                 <button className="btn-save" onClick={handleAvailabilitySave} disabled={availabilityLoading || isSaving}>
                   {isSaving ? t('saving') : t('providerSaveAvailability')}
                 </button>
@@ -748,7 +747,7 @@ function ServiceProviderSettings() {
               <div className="settings-section-divider"></div>
               <h3 className="settings-subsection-title">{t('providerDateExceptionsTitle')}</h3>
 
-              <div className="settings-group" style={{ border: '1px solid #e5e7eb', borderRadius: '10px', padding: '0.75rem' }}>
+              <div className="settings-surface-block">
                 <label className="settings-label">{t('providerExceptionDateLabel')}</label>
                 <input
                   type="date"
@@ -807,13 +806,13 @@ function ServiceProviderSettings() {
               <div className="settings-group">
                 {availabilityExceptions.length === 0 && <small className="settings-help">{t('providerNoDateExceptionsConfigured')}</small>}
                 {availabilityExceptions.map((exception) => (
-                  <div key={exception.id} style={{ border: '1px solid #e5e7eb', borderRadius: '10px', padding: '0.75rem', marginBottom: '0.5rem' }}>
-                    <p style={{ margin: 0, fontWeight: 600 }}>{exception.exceptionDate} • {exception.exceptionType}</p>
+                  <div key={exception.id} className="settings-surface-block">
+                    <p className="settings-metadata-row settings-metadata-strong">{exception.exceptionDate} • {exception.exceptionType}</p>
                     <small className="settings-help">
                       {exception.startTime && exception.endTime ? `${exception.startTime} - ${exception.endTime}` : t('providerWholeDay')}
                       {exception.reason ? ` • ${exception.reason}` : ''}
                     </small>
-                    <div style={{ marginTop: '0.5rem' }}>
+                    <div className="settings-credential-actions">
                       <button
                         type="button"
                         className="btn-cancel"
@@ -845,7 +844,7 @@ function ServiceProviderSettings() {
                 ))}
               </div>
 
-              <div className="settings-actions" style={{ paddingLeft: 0, paddingRight: 0 }}>
+              <div className="settings-actions">
                 <button className="btn-save" onClick={handleSaveLanguages} disabled={languageSaving}>
                   {languageSaving ? t('saving') : t('providerSaveLanguages')}
                 </button>
@@ -939,7 +938,7 @@ function ServiceProviderSettings() {
                 />
               </div>
 
-              <div className="settings-actions" style={{ paddingLeft: 0, paddingRight: 0 }}>
+              <div className="settings-actions">
                 <button className="btn-save" onClick={handleCreateCredential} disabled={credentialSaving}>
                   {credentialSaving ? t('saving') : t('providerAddCredential')}
                 </button>
@@ -950,11 +949,11 @@ function ServiceProviderSettings() {
                 {credentialLoading && <small className="settings-help">{t('providerLoadingCredentials')}</small>}
                 {!credentialLoading && credentials.length === 0 && <small className="settings-help">{t('providerNoCredentialsYet')}</small>}
                 {credentials.map((credential) => (
-                  <div key={credential.id} style={{ border: '1px solid #e5e7eb', borderRadius: '10px', padding: '0.75rem', marginBottom: '0.6rem' }}>
-                    <p style={{ margin: 0, fontWeight: 600 }}>{credential.credential_name}</p>
+                  <div key={credential.id} className="settings-surface-block">
+                    <p className="settings-metadata-row settings-metadata-strong">{credential.credential_name}</p>
                     <small className="settings-help">{credential.credential_type} • {credential.verification_status}</small>
-                    {credential.verification_notes && <p style={{ marginTop: '0.35rem' }}>{credential.verification_notes}</p>}
-                    <div style={{ marginTop: '0.5rem' }}>
+                    {credential.verification_notes && <p className="settings-metadata-row">{credential.verification_notes}</p>}
+                    <div className="settings-credential-actions">
                       <button
                         type="button"
                         className="btn-save"

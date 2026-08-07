@@ -195,7 +195,7 @@ const ProviderCard = ({ provider, profile, onBack, hideBackLink = false }) => {
                 >
                   <img src={item.src} alt="Portfolio image" className="portfolio-image non-draggable-image" draggable="false" />
                   {item.completedThroughPlatform && (
-                    <span className="verified-badge" style={{ position: 'absolute', top: '8px', left: '8px' }}>
+                    <span className="verified-badge portfolio-item-badge">
                       Completed through SerbisyoToledo
                     </span>
                   )}

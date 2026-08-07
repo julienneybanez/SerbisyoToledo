@@ -46,21 +46,20 @@
   color: var(--text-secondary);
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: var(--shadow-sm);
+  box-shadow: none;
 }
 
 .filter-btn:hover {
   border-color: var(--primary);
   color: var(--primary);
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
+  box-shadow: none;
 }
 
 .filter-btn.active {
   background: var(--primary);
   border-color: var(--primary);
   color: white;
-  box-shadow: var(--shadow-md);
+  box-shadow: none;
 }
 
 /* Loading & Empty States */
@@ -140,9 +139,9 @@
 
 .request-card {
   background: var(--surface);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-md);
   border: 1px solid var(--border);
-  box-shadow: var(--shadow-sm);
+  box-shadow: none;
   overflow: hidden;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   display: flex;
@@ -150,8 +149,8 @@
 }
 
 .request-card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+  border-color: var(--color-border-strong);
 }
 
 .request-card-header {

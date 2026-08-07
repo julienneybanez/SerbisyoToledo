@@ -69,17 +69,16 @@
 }
 
 .stat-card {
-  background: linear-gradient(180deg, var(--admin-surface) 0%, var(--admin-surface-soft) 100%);
+  background: var(--admin-surface);
   border: 1px solid var(--admin-border);
   border-radius: 14px;
   padding: 1.25rem;
-  box-shadow: var(--admin-shadow-sm);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: none;
+  transition: border-color 0.2s ease;
 }
 
 .stat-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--admin-shadow-md);
+  border-color: color-mix(in srgb, var(--admin-primary) 34%, var(--admin-border));
 }
 
 .stat-label {
@@ -169,17 +168,16 @@
   grid-template-columns: auto 1fr auto auto;
   gap: 1.5rem;
   align-items: start;
-  background: linear-gradient(180deg, var(--admin-surface) 0%, var(--admin-surface-soft) 100%);
+  background: var(--admin-surface);
   border: 1px solid var(--admin-border);
-  border-radius: 18px;
+  border-radius: 14px;
   padding: 1.5rem;
-  box-shadow: var(--admin-shadow-sm);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: none;
+  transition: border-color 0.2s ease;
 }
 
 .admin-page .request-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--admin-shadow-md);
+  border-color: color-mix(in srgb, var(--admin-primary) 32%, var(--admin-border));
 }
 
 .admin-page .request-card.processed {
@@ -887,7 +885,7 @@
   background: var(--admin-surface);
   border-radius: 11px;
   border: 1px solid var(--admin-border);
-  box-shadow: var(--admin-shadow-sm);
+  box-shadow: none;
 }
 
 .admin-page .search-box svg {
@@ -923,7 +921,7 @@
   color: #475569;
   cursor: pointer;
   outline: none;
-  box-shadow: var(--admin-shadow-sm);
+  box-shadow: none;
 }
 
 .admin-page .filter-group select:focus {
@@ -934,17 +932,17 @@
    TABLE STYLES
    =================================== */
 .table-container {
-  background: linear-gradient(180deg, #ffffff 0%, #f9fcff 100%);
+  background: var(--admin-surface);
   border-radius: 14px;
   border: 1px solid var(--admin-border);
   overflow: hidden;
-  box-shadow: var(--admin-shadow-sm);
+  box-shadow: none;
   margin-bottom: 1rem;
   min-width: 0;
 }
 
 [data-theme='dark'] .table-container {
-  background: linear-gradient(180deg, var(--admin-surface) 0%, var(--admin-surface-soft) 100%);
+  background: var(--admin-surface);
 }
 
 .admin-table {
