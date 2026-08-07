@@ -370,7 +370,7 @@ export default function RequestDetailsModal({
                 onClick={() => onOpenDecline && onOpenDecline(request)}
                 disabled={actionLoading === request.id}
               >
-                <i className="bi bi-x-lg"></i> Decline
+                <i className="bi bi-x-lg"></i> Decline Request
               </button>
             </>
           )}
@@ -400,7 +400,7 @@ export default function RequestDetailsModal({
               {actionLoading === request.id ? (
                 <><span className="spinner-btn"></span> Confirming...</>
               ) : (
-                <><i className="bi bi-check-circle"></i> Confirm Completed</>
+                <><i className="bi bi-check-circle"></i> Mark Service Complete</>
               )}
             </button>
           )}
@@ -415,7 +415,7 @@ export default function RequestDetailsModal({
               {actionLoading === request.id ? (
                 <><span className="spinner-btn"></span> Confirming...</>
               ) : (
-                <><i className="bi bi-check-circle"></i> Confirm Completed</>
+                <><i className="bi bi-check-circle"></i> Mark Service Complete</>
               )}
             </button>
           )}

@@ -204,14 +204,14 @@ function AdminReports() {
                       disabled={actionLoading === `${report.id}-investigate`}
                       onClick={() => handleReportAction(report.id, 'investigate')}
                     >
-                      {actionLoading === `${report.id}-investigate` ? 'Working...' : 'Investigate'}
+                      {actionLoading === `${report.id}-investigate` ? 'Working...' : 'Review Report'}
                     </button>
                     <button
                       className="btn-approve"
                       disabled={actionLoading === `${report.id}-resolve`}
                       onClick={() => handleReportAction(report.id, 'resolve')}
                     >
-                      {actionLoading === `${report.id}-resolve` ? 'Working...' : 'Resolve'}
+                      {actionLoading === `${report.id}-resolve` ? 'Working...' : 'Make Decision'}
                     </button>
                     <button
                       className="btn-dismiss"

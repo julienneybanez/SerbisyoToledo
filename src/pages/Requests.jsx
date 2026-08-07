@@ -700,14 +700,14 @@ export default function Requests() {
                             onClick={() => handleStatusUpdate(request.id, 'accepted')}
                             disabled={actionLoading === request.id}
                           >
-                            {actionLoading === request.id ? 'Processing...' : 'Accept'}
+                            {actionLoading === request.id ? 'Processing...' : 'Accept Request'}
                           </button>
                           <button
                             className="btn-action btn-decline"
                             onClick={() => openDeclineDialog(request.id)}
                             disabled={actionLoading === request.id}
                           >
-                            Decline
+                            Decline Request
                           </button>
                         </>
                       )}
@@ -726,7 +726,7 @@ export default function Requests() {
                           onClick={() => handleStatusUpdate(request.id, 'completed')}
                           disabled={actionLoading === request.id}
                         >
-                          <i className="bi bi-check-lg"></i> Confirm Completed
+                          <i className="bi bi-check-lg"></i> Mark Service Complete
                         </button>
                       )}
                       {request.status === 'completed' && (
@@ -735,7 +735,7 @@ export default function Requests() {
                           onClick={() => handleHideRequest(request.id)}
                           disabled={actionLoading === request.id}
                         >
-                          <i className="bi bi-eye-slash"></i> Remove from View
+                          <i className="bi bi-eye-slash"></i> Remove from List
                         </button>
                       )}
                     </>
@@ -766,7 +766,7 @@ export default function Requests() {
                           onClick={() => handleStatusUpdate(request.id, 'completed')}
                           disabled={actionLoading === request.id}
                         >
-                          <i className="bi bi-check-lg"></i> Confirm Completed
+                          <i className="bi bi-check-lg"></i> Mark Service Complete
                         </button>
                       )}
                       {request.status === 'completed' && !request.has_review && (
@@ -789,7 +789,7 @@ export default function Requests() {
                           onClick={() => handleHideRequest(request.id)}
                           disabled={actionLoading === request.id}
                         >
-                          <i className="bi bi-eye-slash"></i> Remove from View
+                          <i className="bi bi-eye-slash"></i> Remove from List
                         </button>
                       )}
                     </>

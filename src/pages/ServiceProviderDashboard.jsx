@@ -4,6 +4,7 @@ import { getUser, serviceProfileAPI, serviceRequestAPI } from '../services/api';
 import ProfileCompletionChecklist from '../components/common/ProfileCompletionChecklist';
 import ServiceProfileModal from '../components/common/ServiceProfileModal';
 import VerificationRequestModal from '../components/common/VerificationRequestModal';
+import RequestDetailsModal from '../components/common/RequestDetailsModal';
 import './ServiceProviderDashboard.css';
 
 export default function ServiceProviderDashboard() {
@@ -19,6 +20,13 @@ export default function ServiceProviderDashboard() {
   const [checklistError, setChecklistError] = useState('');
   const [myProfile, setMyProfile] = useState(null);
   const [myPortfolio, setMyPortfolio] = useState(null);
+  const [selectedRequest, setSelectedRequest] = useState(null);
+  const [declineDialog, setDeclineDialog] = useState({
+    open: false,
+    requestId: null,
+    reason: '',
+    error: '',
+  });
 
   useEffect(() => {
     fetchRequests();
@@ -139,20 +147,56 @@ export default function ServiceProviderDashboard() {
     },
   ];
 
-  const handleStatusUpdate = async (requestId, status) => {
+  const handleStatusUpdate = async (requestId, status, reason = null, options = {}) => {
+    const { suppressAlert = false } = options;
     setActionLoading(requestId);
     try {
-      const response = await serviceRequestAPI.updateStatus(requestId, status);
+      const response = await serviceRequestAPI.updateStatus(requestId, status, reason);
       if (response.success) {
         // Refresh the requests list
         fetchRequests();
+        if (!suppressAlert) {
+          const messages = {
+            accepted: 'Request accepted.',
+            declined: 'Request declined.',
+            on_the_way: "I'm On My Way.",
+            completed: 'Mark Service Complete.',
+          };
+          alert(messages[status] || 'Status updated successfully.');
+        }
       }
     } catch (err) {
       console.error('Status update error:', err);
-      alert('Failed to update status');
+      if (!suppressAlert) {
+        alert(err.message || 'Failed to update status');
+      }
     } finally {
       setActionLoading(null);
     }
+  };
+
+  const openDeclineDialog = (requestId) => {
+    setDeclineDialog({ open: true, requestId, reason: '', error: '' });
+  };
+
+  const closeDeclineDialog = () => {
+    setDeclineDialog({ open: false, requestId: null, reason: '', error: '' });
+  };
+
+  const handleConfirmDecline = async () => {
+    const trimmedReason = declineDialog.reason.trim();
+    if (!trimmedReason) {
+      setDeclineDialog((prev) => ({ ...prev, error: 'Reason for declining is required.' }));
+      return;
+    }
+
+    const result = await handleStatusUpdate(declineDialog.requestId, 'declined', trimmedReason, { suppressAlert: true });
+    if (result?.success) {
+      closeDeclineDialog();
+      return;
+    }
+
+    setDeclineDialog((prev) => ({ ...prev, error: result?.message || 'Failed to decline request' }));
   };
 
   const getStatusClass = (status) => {
@@ -297,15 +341,15 @@ export default function ServiceProviderDashboard() {
                     {job.status === 'pending' && (
                       <>
                         <button 
-                          className="job-btn job-btn-primary"
-                          onClick={() => handleStatusUpdate(job.id, 'accepted')}
+                            className="job-btn job-btn-primary"
+                            onClick={() => handleStatusUpdate(job.id, 'accepted')}
                           disabled={actionLoading === job.id}
                         >
                           {actionLoading === job.id ? 'Processing...' : 'Accept Request'}
                         </button>
                         <button 
-                          className="job-btn job-btn-secondary"
-                          onClick={() => handleStatusUpdate(job.id, 'declined')}
+                            className="job-btn job-btn-secondary"
+                            onClick={() => openDeclineDialog(job.id)}
                           disabled={actionLoading === job.id}
                         >
                           Decline Request
@@ -318,7 +362,7 @@ export default function ServiceProviderDashboard() {
                         onClick={() => handleStatusUpdate(job.id, 'on_the_way')}
                         disabled={actionLoading === job.id}
                       >
-                        <i className="bi bi-truck"></i> Mark as On the Way
+                        <i className="bi bi-truck"></i> I'm On My Way
                       </button>
                     )}
                     {['on_the_way', 'in_progress'].includes(job.status) && (
@@ -327,7 +371,7 @@ export default function ServiceProviderDashboard() {
                         onClick={() => handleStatusUpdate(job.id, 'completed')}
                         disabled={actionLoading === job.id}
                       >
-                        <i className="bi bi-check-lg"></i> Mark Job as Completed
+                        <i className="bi bi-check-lg"></i> Mark Service Complete
                       </button>
                     )}
                   </div>
@@ -340,7 +384,7 @@ export default function ServiceProviderDashboard() {
         <section className="level-up-banner">
           <h2>Ready to Level Up?</h2>
           <p>Complete your profile and get verified to increase your reliability to clients and unlock more opportunities.</p>
-          <button className="btn-get-verified" onClick={() => setShowVerificationRequest(true)}>GET VERIFIED NOW</button>
+          <button className="btn-get-verified" onClick={() => setShowVerificationRequest(true)}>Get Verified</button>
         </section>
 
         <section className="tips-section">
@@ -368,6 +412,55 @@ export default function ServiceProviderDashboard() {
 
         {showVerificationRequest && (
           <VerificationRequestModal onClose={() => setShowVerificationRequest(false)} />
+        )}
+
+        {selectedRequest && (
+          <RequestDetailsModal
+            request={selectedRequest}
+            currentUserId={user?.id || user?.userId || null}
+            isProvider
+            onClose={() => setSelectedRequest(null)}
+            onStatusUpdate={handleStatusUpdate}
+            onOpenCancel={() => {}}
+            onOpenReschedule={() => {}}
+            onRespondReschedule={() => {}}
+            onRequestDiscussion={() => {}}
+            onAcceptDiscussion={() => {}}
+            onOpenReview={() => {}}
+            onOpenDecline={(request) => openDeclineDialog(request.id)}
+            onOpenReport={() => {}}
+            detailsLoading={false}
+            actionLoading={actionLoading}
+          />
+        )}
+
+        {declineDialog.open && (
+          <div className="decline-dialog-overlay" role="dialog" aria-modal="true" aria-labelledby="dashboard-decline-dialog-title" onClick={closeDeclineDialog}>
+            <div className="decline-dialog-card" onClick={(event) => event.stopPropagation()}>
+              <div className="decline-dialog-header">
+                <h2 id="dashboard-decline-dialog-title">Decline Request</h2>
+                <button type="button" className="decline-dialog-close" onClick={closeDeclineDialog} aria-label="Close decline dialog">×</button>
+              </div>
+              <div className="decline-dialog-body">
+                <label htmlFor="dashboard-decline-reason" className="decline-dialog-label">Reason for declining</label>
+                <textarea
+                  id="dashboard-decline-reason"
+                  className="decline-dialog-textarea"
+                  rows={4}
+                  value={declineDialog.reason}
+                  onChange={(event) => setDeclineDialog((prev) => ({ ...prev, reason: event.target.value, error: '' }))}
+                  placeholder="Tell the client why you can't take this request"
+                />
+                {declineDialog.error ? <p className="decline-dialog-error">{declineDialog.error}</p> : null}
+              </div>
+              <div className="decline-dialog-actions">
+                <button type="button" className="decline-btn-cancel" onClick={closeDeclineDialog} disabled={actionLoading === declineDialog.requestId}>Cancel</button>
+                <button type="button" className="decline-btn-confirm" onClick={handleConfirmDecline} disabled={actionLoading === declineDialog.requestId}>
+                  {actionLoading === declineDialog.requestId ? 'Declining...' : 'Decline Request'}
+                </button>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </div>

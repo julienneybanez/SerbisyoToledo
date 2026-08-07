@@ -404,14 +404,14 @@ function AdminVerifications() {
                       disabled={actionLoading === `${request.id}-approve`}
                       onClick={() => handleReview(request.id, 'approve')}
                     >
-                      {actionLoading === `${request.id}-approve` ? 'Approving...' : 'Approve'}
+                      {actionLoading === `${request.id}-approve` ? 'Approving...' : 'Approve Verification'}
                     </button>
                     <button
                       className="btn-reject"
                       disabled={actionLoading === `${request.id}-reject`}
                       onClick={() => openRejectDialog(request.id)}
                     >
-                      {actionLoading === `${request.id}-reject` ? 'Rejecting...' : 'Reject'}
+                      {actionLoading === `${request.id}-reject` ? 'Rejecting...' : 'Reject Verification'}
                     </button>
                   </>
                 ) : (
@@ -522,14 +522,14 @@ function AdminVerifications() {
                       disabled={credentialActionLoading === `${credential.id}-approve`}
                       onClick={() => handleCredentialReview(credential.id, 'approve')}
                     >
-                      {credentialActionLoading === `${credential.id}-approve` ? 'Approving...' : 'Approve'}
+                      {credentialActionLoading === `${credential.id}-approve` ? 'Approving...' : 'Approve Credential'}
                     </button>
                     <button
                       className="btn-reject"
                       disabled={credentialActionLoading === `${credential.id}-reject`}
                       onClick={() => openCredentialRejectDialog(credential.id)}
                     >
-                      {credentialActionLoading === `${credential.id}-reject` ? 'Rejecting...' : 'Reject'}
+                      {credentialActionLoading === `${credential.id}-reject` ? 'Rejecting...' : 'Reject Credential'}
                     </button>
                     <button
                       className="btn-view-details"
@@ -680,7 +680,7 @@ function AdminVerifications() {
                 onClick={() => handleReview(rejectDialog.requestId, 'reject', rejectDialog.reason)}
                 disabled={actionLoading === `${rejectDialog.requestId}-reject` || !rejectDialog.reason.trim()}
               >
-                {actionLoading === `${rejectDialog.requestId}-reject` ? 'Rejecting...' : 'Confirm Reject'}
+                {actionLoading === `${rejectDialog.requestId}-reject` ? 'Rejecting...' : 'Confirm Rejection'}
               </button>
             </div>
           </div>
@@ -746,7 +746,7 @@ function AdminVerifications() {
                 onClick={() => handleCredentialReview(credentialRejectDialog.credentialId, 'reject', credentialRejectDialog.reason)}
                 disabled={credentialActionLoading === `${credentialRejectDialog.credentialId}-reject` || !credentialRejectDialog.reason.trim()}
               >
-                {credentialActionLoading === `${credentialRejectDialog.credentialId}-reject` ? 'Rejecting...' : 'Confirm Reject'}
+                {credentialActionLoading === `${credentialRejectDialog.credentialId}-reject` ? 'Rejecting...' : 'Confirm Rejection'}
               </button>
             </div>
           </div>
