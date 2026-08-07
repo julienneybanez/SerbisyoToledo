@@ -52,7 +52,7 @@ function AdminLayout() {
           />
         </div>
         <div className="admin-desktop-navbar-wrap">
-          <AdminNavbar onToggleSidebar={toggleSidebar} />
+          <AdminNavbar onToggleSidebar={toggleSidebar} isSidebarOpen={sidebarOpen} />
         </div>
         
         <main className="admin-content authenticated-page-content">

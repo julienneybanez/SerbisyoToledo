@@ -1,73 +1,71 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useLanguage } from '../../context/LanguageContext';
 import './HowItWorks.css';
-
-const CLIENT_STEPS = [
-  {
-    title: 'Create an Account',
-    description: 'Register as a client using your basic information.',
-  },
-  {
-    title: 'Find a Service Provider',
-    description: 'Search by service, provider name, rating, or location.',
-  },
-  {
-    title: 'Send a Booking Request',
-    description: 'Select a provider and submit your preferred schedule and service details.',
-  },
-];
-
-const PROVIDER_STEPS = [
-  {
-    title: 'Register as a Provider',
-    description: 'Create an account and indicate the service you offer.',
-  },
-  {
-    title: 'Complete Your Profile',
-    description: 'Add your services, experience, location, rate, availability, and portfolio.',
-  },
-  {
-    title: 'Receive Service Requests',
-    description: 'Review incoming booking requests and accept or decline them.',
-  },
-];
-
-const ROLE_CONTENT = {
-  client: {
-    heading: 'For Clients',
-    steps: CLIENT_STEPS,
-    ctaLabel: 'Get Started as a Client',
-    ctaPath: '/register?role=client',
-    icon: 'bi bi-person-heart',
-  },
-  provider: {
-    heading: 'For Service Providers',
-    steps: PROVIDER_STEPS,
-    ctaLabel: 'Become a Service Provider',
-    ctaPath: '/register?role=provider',
-    icon: 'bi bi-briefcase',
-  },
-};
 
 export default function HowItWorks() {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [activeRole, setActiveRole] = useState('client');
 
-  const current = ROLE_CONTENT[activeRole];
+  const roleContent = {
+    client: {
+      heading: t('forClients'),
+      steps: [
+        {
+          title: t('howClientStep1Title'),
+          description: t('howClientStep1Description'),
+        },
+        {
+          title: t('howClientStep2Title'),
+          description: t('howClientStep2Description'),
+        },
+        {
+          title: t('howClientStep3Title'),
+          description: t('howClientStep3Description'),
+        },
+      ],
+      ctaLabel: t('howClientCta'),
+      ctaPath: '/register?role=client',
+      icon: 'bi bi-person-heart',
+    },
+    provider: {
+      heading: t('forServiceProviders'),
+      steps: [
+        {
+          title: t('howProviderStep1Title'),
+          description: t('howProviderStep1Description'),
+        },
+        {
+          title: t('howProviderStep2Title'),
+          description: t('howProviderStep2Description'),
+        },
+        {
+          title: t('howProviderStep3Title'),
+          description: t('howProviderStep3Description'),
+        },
+      ],
+      ctaLabel: t('howProviderCta'),
+      ctaPath: '/register?role=provider',
+      icon: 'bi bi-briefcase',
+    },
+  };
+
+  const current = roleContent[activeRole];
 
   return (
     <section className="how-it-works-section py-5" aria-labelledby="how-it-works-title">
       <div className="container">
         <div className="text-center mb-4">
           <h2 id="how-it-works-title" className="section-title mb-2">
-            How SerbisyoToledo Works
+            {t('howItWorksTitle')}
           </h2>
           <p className="section-subtitle mb-0">
-            Choose your role and follow a simple path to start connecting in Toledo City.
+            {t('howItWorksSubtitle')}
           </p>
         </div>
 
-        <div className="how-role-toggle" role="tablist" aria-label="Role guide toggle">
+        <div className="how-role-toggle" role="tablist" aria-label={t('roleGuideToggle')}>
           <button
             type="button"
             role="tab"
@@ -76,7 +74,7 @@ export default function HowItWorks() {
             onClick={() => setActiveRole('client')}
           >
             <i className="bi bi-people me-2" aria-hidden="true"></i>
-            For Clients
+            {t('forClients')}
           </button>
           <button
             type="button"
@@ -86,7 +84,7 @@ export default function HowItWorks() {
             onClick={() => setActiveRole('provider')}
           >
             <i className="bi bi-tools me-2" aria-hidden="true"></i>
-            For Service Providers
+            {t('forServiceProviders')}
           </button>
         </div>
 

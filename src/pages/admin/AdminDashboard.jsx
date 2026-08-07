@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { adminAPI } from '../../services/api';
+import { useLanguage } from '../../context/LanguageContext';
 import '../../styles/AdminPages.css';
 
 function AdminDashboard() {
+  const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState('verifications');
   const [stats, setStats] = useState({
     pendingVerifications: 0,
@@ -94,25 +96,25 @@ function AdminDashboard() {
       {/* Stats Cards */}
       <div className="stats-grid">
         <div className="stat-card">
-          <span className="stat-label">Pending Verifications</span>
+          <span className="stat-label">{t('pendingVerifications')}</span>
           <span className="stat-value text-warning">
             {loading ? '...' : stats.pendingVerifications}
           </span>
         </div>
         <div className="stat-card">
-          <span className="stat-label">Active Reports</span>
+          <span className="stat-label">{t('activeReports')}</span>
           <span className="stat-value text-orange">
             {loading ? '...' : stats.activeReports}
           </span>
         </div>
         <div className="stat-card">
-          <span className="stat-label">Verified Providers</span>
+          <span className="stat-label">{t('verifiedProviders')}</span>
           <span className="stat-value text-success">
             {loading ? '...' : stats.verifiedProviders}
           </span>
         </div>
         <div className="stat-card">
-          <span className="stat-label">Total Users</span>
+          <span className="stat-label">{t('totalUsers')}</span>
           <span className="stat-value text-primary">
             {loading ? '...' : stats.totalUsers}
           </span>
@@ -125,13 +127,13 @@ function AdminDashboard() {
           className={`admin-tab ${activeTab === 'verifications' ? 'active' : ''}`}
           onClick={() => setActiveTab('verifications')}
         >
-          Verification Requests
+          {t('verificationRequests')}
         </button>
         <button 
           className={`admin-tab ${activeTab === 'reports' ? 'active' : ''}`}
           onClick={() => setActiveTab('reports')}
         >
-          User Reports
+          {t('userReports')}
         </button>
       </div>
 
@@ -140,11 +142,11 @@ function AdminDashboard() {
         {activeTab === 'verifications' ? (
           <div className="requests-list">
             {tabLoading ? (
-              <div className="text-center py-4">Loading verification requests...</div>
+              <div className="text-center py-4">{t('loadingVerificationRequests')}</div>
             ) : topVerificationRequests.length === 0 ? (
               <div className="empty-state">
-                <h3>No verification requests found</h3>
-                <p>There are currently no verification requests in the database.</p>
+                <h3>{t('noVerificationRequestsFound')}</h3>
+                <p>{t('noVerificationRequestsInDatabase')}</p>
               </div>
             ) : topVerificationRequests.map((request) => (
               <div key={request.id} className="request-card verification-card">
@@ -164,18 +166,18 @@ function AdminDashboard() {
                       </span>
                     )}
                   </div>
-                  <p className="request-detail">Email: {request.email}</p>
-                  <p className="request-detail">Submitted: {new Date(request.createdAt).toLocaleString()}</p>
-                  <p className="request-detail">Status: {formatStatusLabel(request.status)}</p>
+                  <p className="request-detail">{t('emailLabel')}: {request.email}</p>
+                  <p className="request-detail">{t('submittedLabel')}: {new Date(request.createdAt).toLocaleString()}</p>
+                  <p className="request-detail">{t('statusLabel')}: {formatStatusLabel(request.status)}</p>
                 </div>
 
                 <div className="request-contact">
-                  <p>Phone: {request.phoneNumber || 'N/A'}</p>
+                  <p>{t('phoneLabel')}: {request.phoneNumber || 'N/A'}</p>
                 </div>
 
                 <div className="request-actions">
                   <Link to="/admin/verifications" className="btn-view-details">
-                    Review Request
+                    {t('reviewRequest')}
                   </Link>
                 </div>
               </div>
@@ -184,11 +186,11 @@ function AdminDashboard() {
         ) : (
           <div className="requests-list">
             {tabLoading ? (
-              <div className="text-center py-4">Loading reports...</div>
+              <div className="text-center py-4">{t('loadingReports')}</div>
             ) : topUserReports.length === 0 ? (
               <div className="empty-state">
-                <h3>No reports found</h3>
-                <p>There are currently no user reports in the database.</p>
+                <h3>{t('noReportsFound')}</h3>
+                <p>{t('noReportsInDatabase')}</p>
               </div>
             ) : topUserReports.map((report) => (
               <div key={report.id} className="request-card report-card">
@@ -205,17 +207,17 @@ function AdminDashboard() {
                       {formatStatusLabel(report.status)}
                     </span>
                   </div>
-                  <p className="request-detail">Reported by: {report.reportedBy}</p>
-                  <p className="request-detail">Reason: {report.reason}</p>
+                  <p className="request-detail">{t('reportedBy')}: {report.reportedBy}</p>
+                  <p className="request-detail">{t('reason')}: {report.reason}</p>
                   <p className="report-description">{report.description}</p>
                 </div>
 
                 <div className="request-contact">
-                  <p>Date: {new Date(report.date).toLocaleDateString()}</p>
+                  <p>{t('date')}: {new Date(report.date).toLocaleDateString()}</p>
                 </div>
 
                 <div className="request-actions report-actions">
-                  <Link to="/admin/reports" className="btn-view-details">View Report</Link>
+                  <Link to="/admin/reports" className="btn-view-details">{t('viewReport')}</Link>
                 </div>
               </div>
             ))}
@@ -226,10 +228,10 @@ function AdminDashboard() {
       {/* Quick Links */}
       <div className="quick-links">
         <Link to="/admin/verifications" className="quick-link">
-          View All Verifications →
+          {t('viewAllVerifications')}
         </Link>
         <Link to="/admin/reports" className="quick-link">
-          View All Reports →
+          {t('viewAllReports')}
         </Link>
       </div>
     </div>

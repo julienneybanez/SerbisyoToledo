@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { authAPI } from '../services/api';
+import { useLanguage } from '../context/LanguageContext';
 import logo from '../assets/logo.png';
 import '../styles/App.css';
 
 const Login = () => {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [showPassword, setShowPassword] = useState(false);
   const [loginAs, setLoginAs] = useState('client');
   const [isLoading, setIsLoading] = useState(false);
@@ -52,7 +54,7 @@ const Login = () => {
       
     } catch (err) {
       console.error('Login error:', err);
-      setError(err.message || 'Login failed. Please check your credentials.');
+      setError(err.message || t('loginFailedCheckCredentials'));
     } finally {
       setIsLoading(false);
     }
@@ -69,7 +71,7 @@ const Login = () => {
               <h1 className="app-title mb-2">
                 Serbisyo<span className="title-green">Toledo</span>
               </h1>
-              <p className="subtitle text-muted">login to your account</p>
+              <p className="subtitle text-muted">{t('loginSubtitle')}</p>
             </div>
 
             
@@ -82,11 +84,11 @@ const Login = () => {
             <form onSubmit={handleSubmit}>
               
               <div className="mb-3">
-                <label className="form-label">Email Address</label>
+                <label className="form-label">{t('emailAddress')}</label>
                 <input
                   type="email"
                   name="email"
-                  placeholder="internetgirl@gmail.com"
+                  placeholder={t('loginEmailPlaceholder')}
                   value={formData.email}
                   onChange={handleInputChange}
                   className="form-control"
@@ -96,12 +98,12 @@ const Login = () => {
 
             
               <div className="mb-3">
-                <label className="form-label">Password</label>
+                <label className="form-label">{t('password')}</label>
                 <div className="password-input-wrapper">
                   <input
                     type={showPassword ? 'text' : 'password'}
                     name="password"
-                    placeholder="password"
+                    placeholder={t('password')}
                     value={formData.password}
                     onChange={handleInputChange}
                     className="form-control"
@@ -111,7 +113,7 @@ const Login = () => {
                     type="button"
                     className="password-toggle"
                     onClick={() => setShowPassword(!showPassword)}
-                    aria-label="Toggle password visibility"
+                    aria-label={t('togglePasswordVisibility')}
                   >
                     {showPassword ? (
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -129,12 +131,12 @@ const Login = () => {
               </div>
 
               <div className="text-end mb-3">
-                <Link to="/forgot-password" className="link">Forgot Password?</Link>
+                <Link to="/forgot-password" className="link">{t('forgotPasswordQuestion')}</Link>
               </div>
 
             
               <div className="mb-4">
-                <label className="form-label">Login as</label>
+                <label className="form-label">{t('loginAs')}</label>
                 <div className="radio-pill-group">
                   <div className="radio-pill">
                     <input
@@ -148,7 +150,7 @@ const Login = () => {
                     <label htmlFor="login-client" className="radio-pill-label">
                       <div>
                         <div className="radio-pill-title">Client</div>
-                        <div className="radio-pill-desc">Looking for service provider</div>
+                        <div className="radio-pill-desc">{t('loginClientDesc')}</div>
                       </div>
                       <div className="radio-pill-indicator"></div>
                     </label>
@@ -164,8 +166,8 @@ const Login = () => {
                     />
                     <label htmlFor="login-tradesperson" className="radio-pill-label">
                       <div>
-                        <div className="radio-pill-title">Service Provider</div>
-                        <div className="radio-pill-desc">Offering services to clients</div>
+                        <div className="radio-pill-title">{t('serviceProvider')}</div>
+                        <div className="radio-pill-desc">{t('loginProviderDesc')}</div>
                       </div>
                       <div className="radio-pill-indicator"></div>
                     </label>
@@ -182,7 +184,7 @@ const Login = () => {
                     <label htmlFor="login-admin" className="radio-pill-label">
                       <div>
                         <div className="radio-pill-title">Admin</div>
-                        <div className="radio-pill-desc">Manage and oversee services</div>
+                        <div className="radio-pill-desc">{t('loginAdminDesc')}</div>
                       </div>
                       <div className="radio-pill-indicator"></div>
                     </label>
@@ -199,18 +201,18 @@ const Login = () => {
                 {isLoading ? (
                   <>
                     <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                    Logging in...
+                    {t('loggingIn')}
                   </>
                 ) : (
-                  'Login'
+                  t('logIn')
                 )}
               </button>
 
               {/* Register Link */}
               <div className="text-center">
                 <p className="footer-text mb-0">
-                  Don't have an account?{' '}
-                  <Link to="/register" className="link">Register here</Link>
+                  {t('dontHaveAccount')}{' '}
+                  <Link to="/register" className="link">{t('registerHere')}</Link>
                 </p>
               </div>
             </form>
@@ -218,7 +220,7 @@ const Login = () => {
             {/* Back to Home */}
             <div className="text-center mt-4">
               <Link to="/" className="back-link text-decoration-none">
-                ← Back to home
+                {t('backToHome')}
               </Link>
             </div>
           </div>

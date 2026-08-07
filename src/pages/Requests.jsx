@@ -3,6 +3,7 @@ import { getUser, serviceRequestAPI } from '../services/api';
 import RequestDetailsModal from '../components/common/RequestDetailsModal';
 import ReviewModal from '../components/common/ReviewModal';
 import ReportUserModal from '../components/common/ReportUserModal';
+import { useLanguage } from '../context/LanguageContext';
 import './Requests.css';
 
 const getHiddenRequestsStorageKey = (user) => {
@@ -40,7 +41,19 @@ const saveHiddenRequestIds = (user, ids) => {
   localStorage.setItem(key, JSON.stringify(ids));
 };
 
+const CANCELLATION_REASONS = {
+  SCHEDULE_CONFLICT: 'Schedule conflict',
+  NO_LONGER_NEEDED: 'No longer need the service',
+  PROVIDER_UNAVAILABLE: 'Provider unavailable',
+  CLIENT_UNAVAILABLE: 'Client unavailable',
+  INCORRECT_BOOKING: 'Incorrect booking information',
+  PROVIDER_NO_RESPONSE: 'Provider did not respond',
+  FOUND_ANOTHER_PROVIDER: 'Found another provider',
+  OTHER: 'Other',
+};
+
 export default function Requests() {
+  const { t } = useLanguage();
   const user = getUser();
   const isProvider = user?.userType === 'tradesperson';
   
@@ -63,7 +76,7 @@ export default function Requests() {
   const [cancelDialog, setCancelDialog] = useState({
     open: false,
     requestId: null,
-    cancellationReason: 'Schedule conflict',
+    cancellationReason: CANCELLATION_REASONS.SCHEDULE_CONFLICT,
     cancellationReasonOther: '',
     error: '',
   });
@@ -91,12 +104,12 @@ export default function Requests() {
         setRequests(visibleRequests);
       }
     } catch (err) {
-      setError('Failed to load requests');
+      setError(t('requestsLoadFailed'));
       console.error('Fetch requests error:', err);
     } finally {
       setLoading(false);
     }
-  }, [isProvider, user?.id, user?.userType]);
+  }, [isProvider, t, user?.id, user?.userType]);
 
   useEffect(() => {
     fetchRequests();
@@ -121,7 +134,7 @@ export default function Requests() {
               setSelectedRequest(prev => ({ ...prev, status: 'completed', provider_completed: true, client_completed: true }));
             }
             if (!suppressAlert) {
-              alert('Service has been completed by both parties!');
+              alert(t('requestsServiceCompletedBoth'));
             }
           } else {
             // Only one side confirmed
@@ -143,7 +156,7 @@ export default function Requests() {
               }));
             }
             if (!suppressAlert) {
-              alert('Completion confirmed! Waiting for the other party to confirm.');
+              alert(t('requestsCompletionConfirmedWaiting'));
             }
           }
         } else {
@@ -185,21 +198,21 @@ export default function Requests() {
     } catch (err) {
       console.error('Status update error:', err);
       if (!suppressAlert) {
-        alert(err.message || 'Failed to update status');
+        alert(err.message || t('requestsStatusUpdateFailed'));
       }
-      return { success: false, message: err.message || 'Failed to update status' };
+      return { success: false, message: err.message || t('requestsStatusUpdateFailed') };
     } finally {
       setActionLoading(null);
     }
 
-    return { success: false, message: 'Failed to update status' };
+    return { success: false, message: t('requestsStatusUpdateFailed') };
   };
 
   const openCancelDialog = (requestId) => {
     setCancelDialog({
       open: true,
       requestId,
-      cancellationReason: 'Schedule conflict',
+      cancellationReason: CANCELLATION_REASONS.SCHEDULE_CONFLICT,
       cancellationReasonOther: '',
       error: '',
     });
@@ -209,17 +222,17 @@ export default function Requests() {
     setCancelDialog({
       open: false,
       requestId: null,
-      cancellationReason: 'Schedule conflict',
+      cancellationReason: CANCELLATION_REASONS.SCHEDULE_CONFLICT,
       cancellationReasonOther: '',
       error: '',
     });
   };
 
   const handleConfirmCancellation = async () => {
-    if (cancelDialog.cancellationReason === 'Other' && !cancelDialog.cancellationReasonOther.trim()) {
+    if (cancelDialog.cancellationReason === CANCELLATION_REASONS.OTHER && !cancelDialog.cancellationReasonOther.trim()) {
       setCancelDialog((prev) => ({
         ...prev,
-        error: 'Please provide details for cancellation reason.',
+        error: t('requestsCancellationDetailsRequired'),
       }));
       return;
     }
@@ -239,7 +252,7 @@ export default function Requests() {
 
     setCancelDialog((prev) => ({
       ...prev,
-      error: result?.message || 'Failed to cancel request',
+      error: result?.message || t('requestsCancelFailed'),
     }));
   };
 
@@ -299,7 +312,7 @@ export default function Requests() {
   const handleSubmitReschedule = async () => {
     const trimmedReason = rescheduleDialog.reason.trim();
     if (!trimmedReason) {
-      setRescheduleDialog((prev) => ({ ...prev, error: 'Reschedule reason is required.' }));
+      setRescheduleDialog((prev) => ({ ...prev, error: t('requestsRescheduleReasonRequired') }));
       return;
     }
 
@@ -317,7 +330,7 @@ export default function Requests() {
       await fetchRequests();
       await refreshSelectedRequest(rescheduleDialog.requestId);
     } catch (err) {
-      setRescheduleDialog((prev) => ({ ...prev, error: err.message || 'Failed to send reschedule proposal.' }));
+      setRescheduleDialog((prev) => ({ ...prev, error: err.message || t('requestsRescheduleProposalFailed') }));
     } finally {
       setActionLoading(null);
     }
@@ -330,7 +343,7 @@ export default function Requests() {
       await fetchRequests();
       await refreshSelectedRequest(requestId);
     } catch (err) {
-      alert(err.message || 'Failed to respond to reschedule proposal');
+      alert(err.message || t('requestsRescheduleResponseFailed'));
     } finally {
       setActionLoading(null);
     }
@@ -359,7 +372,7 @@ export default function Requests() {
     if (!trimmedReason) {
       setDeclineDialog((prev) => ({
         ...prev,
-        error: 'Reason for declining is required.',
+        error: t('requestsDeclineReasonRequired'),
       }));
       return;
     }
@@ -372,7 +385,7 @@ export default function Requests() {
 
     setDeclineDialog((prev) => ({
       ...prev,
-      error: result?.message || 'Failed to decline request',
+      error: result?.message || t('requestsDeclineFailed'),
     }));
   };
 
@@ -386,11 +399,11 @@ export default function Requests() {
             req.id === requestId ? { ...req, discussion_requested: true } : req
           )
         );
-        alert('Discussion request sent! The provider will be notified.');
+        alert(t('requestsDiscussionRequestedSuccess'));
       }
     } catch (err) {
       console.error('Request discussion error:', err);
-      alert(err.message || 'Failed to request discussion');
+      alert(err.message || t('requestsDiscussionRequestFailed'));
     } finally {
       setActionLoading(null);
     }
@@ -408,14 +421,14 @@ export default function Requests() {
               : req
           )
         );
-        alert('Discussion accepted! Your phone number has been shared with the client.');
+        alert(t('requestsDiscussionAcceptedSuccess'));
       }
     } catch (err) {
       console.error('Accept discussion error:', err);
       if (err.code === 'NO_PHONE') {
-        alert('You haven\'t set a phone number yet.\n\nPlease click your profile icon in the navbar → Edit Profile, and add your phone number before accepting a discussion request.');
+        alert(t('requestsNoPhoneWarning'));
       } else {
-        alert(err.message || 'Failed to accept discussion');
+        alert(err.message || t('requestsDiscussionAcceptFailed'));
       }
     } finally {
       setActionLoading(null);
@@ -423,7 +436,7 @@ export default function Requests() {
   };
 
   const handleHideRequest = (requestId) => {
-    const shouldHide = window.confirm('Remove this request from your view? You can still see it again on another device/browser session.');
+    const shouldHide = window.confirm(t('requestsHideConfirm'));
     if (!shouldHide) {
       return;
     }
@@ -452,11 +465,11 @@ export default function Requests() {
           setSelectedRequest(prev => prev ? { ...prev, has_review: true } : null);
         }
         setReviewRequest(null);
-        alert('Review submitted successfully! Thank you for your feedback.');
+        alert(t('requestsReviewSubmittedSuccess'));
       }
     } catch (err) {
       console.error('Submit review error:', err);
-      alert(err.message || 'Failed to submit review');
+      alert(err.message || t('requestsReviewSubmitFailed'));
     } finally {
       setReviewLoading(false);
     }
@@ -476,7 +489,17 @@ export default function Requests() {
   };
 
   const formatStatus = (status) => {
-    return status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    const statusLabelMap = {
+      pending: t('statusPending'),
+      accepted: t('statusAccepted'),
+      declined: t('statusDeclined'),
+      on_the_way: t('statusOnTheWay'),
+      in_progress: t('statusInProgress'),
+      completed: t('statusCompleted'),
+      cancelled: t('statusCancelled'),
+    };
+
+    return statusLabelMap[status] || status.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase());
   };
 
   const formatDate = (dateString) => {
@@ -502,7 +525,7 @@ export default function Requests() {
       <div className="requests-container">
         <div className="requests-loading">
           <div className="spinner"></div>
-          <p>Loading requests...</p>
+            <p>{t('requestsLoading')}</p>
         </div>
       </div>
     );
@@ -512,8 +535,8 @@ export default function Requests() {
     <div className="requests-container">
       <div className="requests-wrapper">
         <div className="requests-header">
-          <h1 data-tour={isProvider ? 'incoming-requests' : undefined}>{isProvider ? 'Service Requests' : 'My Requests'}</h1>
-          <p>{isProvider ? 'Manage incoming service requests from clients' : 'Track and manage your service requests'}</p>
+          <h1 data-tour={isProvider ? 'incoming-requests' : undefined}>{isProvider ? t('serviceRequests') : t('myRequests')}</h1>
+          <p>{isProvider ? t('requestsProviderSubtitle') : t('requestsClientSubtitle')}</p>
         </div>
 
         <div className="requests-filters">
@@ -521,25 +544,25 @@ export default function Requests() {
             className={`filter-btn ${activeFilter === 'all' ? 'active' : ''}`}
             onClick={() => setActiveFilter('all')}
           >
-            All
+            {t('all')}
           </button>
           <button 
             className={`filter-btn ${activeFilter === 'active' ? 'active' : ''}`}
             onClick={() => setActiveFilter('active')}
           >
-            Active
+            {t('active')}
           </button>
           <button 
             className={`filter-btn ${activeFilter === 'completed' ? 'active' : ''}`}
             onClick={() => setActiveFilter('completed')}
           >
-            Completed
+            {t('completed')}
           </button>
           <button 
             className={`filter-btn ${activeFilter === 'cancelled' ? 'active' : ''}`}
             onClick={() => setActiveFilter('cancelled')}
           >
-            Cancelled
+            {t('cancelled')}
           </button>
         </div>
 
@@ -547,17 +570,17 @@ export default function Requests() {
           <div className="requests-error">
             <i className="bi bi-exclamation-triangle"></i>
             <p>{error}</p>
-            <button onClick={fetchRequests}>Try Again</button>
+            <button onClick={fetchRequests}>{t('tryAgain')}</button>
           </div>
         )}
 
         {filteredRequests.length === 0 ? (
           <div className="requests-empty">
             <i className="bi bi-inbox"></i>
-            <h3>No requests found</h3>
+            <h3>{t('requestsNoResultsTitle')}</h3>
             <p>{activeFilter === 'all' 
-              ? (isProvider ? 'You haven\'t received any service requests yet' : 'You haven\'t made any service requests yet')
-              : `No ${activeFilter} requests`
+              ? (isProvider ? t('requestsNoProviderRequestsYet') : t('requestsNoClientRequestsYet'))
+              : t('requestsNoFiltered', { filter: activeFilter })
             }</p>
           </div>
         ) : (
@@ -575,7 +598,7 @@ export default function Requests() {
                     className="btn-view-details"
                     onClick={() => void handleViewDetails(request)}
                   >
-                    <i className="bi bi-eye"></i> View Details
+                    <i className="bi bi-eye"></i> {t('viewDetails')}
                   </button>
                 </div>
 
@@ -596,7 +619,7 @@ export default function Requests() {
                     {(request.end_date && request.end_date !== request.start_date) && (
                       <div className="meta-row">
                         <i className="bi bi-calendar-range"></i>
-                        <span>Until {formatDate(request.end_date)}</span>
+                        <span>{t('untilDate', { date: formatDate(request.end_date) })}</span>
                       </div>
                     )}
                     <div className="meta-row">
@@ -606,7 +629,7 @@ export default function Requests() {
                     {request.estimated_total != null && (
                       <div className="meta-row">
                         <i className="bi bi-currency-exchange"></i>
-                        <span>Est. ₱{Number(request.estimated_total).toLocaleString()}</span>
+                        <span>{t('estimatedAmount', { amount: Number(request.estimated_total).toLocaleString() })}</span>
                       </div>
                     )}
                     {!isProvider && request.provider_location && (
@@ -619,10 +642,10 @@ export default function Requests() {
                 </div>
 
                 {request.status === 'declined' && request.decline_reason && (
-                  <p className="request-decline-reason"><strong>Reason for declining:</strong> {request.decline_reason}</p>
+                  <p className="request-decline-reason"><strong>{t('reasonForDeclining')}:</strong> {request.decline_reason}</p>
                 )}
                 {request.status === 'cancelled' && request.cancellation_reason && (
-                  <p className="request-decline-reason"><strong>Reason for cancellation:</strong> {request.cancellation_reason_other || request.cancellation_reason.replaceAll('_', ' ')}</p>
+                  <p className="request-decline-reason"><strong>{t('reasonForCancellation')}:</strong> {request.cancellation_reason_other || request.cancellation_reason.replaceAll('_', ' ')}</p>
                 )}
 
                 {/* Discussion/Phone Section */}
@@ -635,7 +658,7 @@ export default function Requests() {
                           <div className="phone-revealed">
                             <i className="bi bi-telephone-fill"></i>
                             <div>
-                              <span className="phone-label">Provider's Phone:</span>
+                              <span className="phone-label">{t('requestsProviderPhoneLabel')}</span>
                               <a href={`tel:${request.provider_phone}`} className="phone-number">
                                 {request.provider_phone}
                               </a>
@@ -644,7 +667,7 @@ export default function Requests() {
                         ) : request.discussion_requested ? (
                           <div className="discussion-pending">
                             <i className="bi bi-hourglass-split"></i>
-                            <span>Waiting for provider to accept discussion request...</span>
+                            <span>{t('requestsWaitingProviderDiscussion')}</span>
                           </div>
                         ) : (
                           <button
@@ -653,9 +676,9 @@ export default function Requests() {
                             disabled={actionLoading === request.id}
                           >
                             {actionLoading === request.id ? (
-                              <><span className="spinner-btn"></span> Sending...</>
+                              <><span className="spinner-btn"></span> {t('requestsSending')}</>
                             ) : (
-                              <><i className="bi bi-chat-dots"></i> Request to Discuss Details</>
+                              <><i className="bi bi-chat-dots"></i> {t('requestsRequestDiscussion')}</>
                             )}
                           </button>
                         )}
@@ -666,20 +689,20 @@ export default function Requests() {
                         {request.discussion_accepted ? (
                           <div className="discussion-accepted-badge">
                             <i className="bi bi-check-circle-fill"></i>
-                            <span>Phone number shared with client</span>
+                            <span>{t('requestsPhoneSharedWithClient')}</span>
                           </div>
                         ) : request.discussion_requested ? (
                           <div className="discussion-request-pending">
-                            <p><i className="bi bi-chat-dots-fill"></i> Client wants to discuss details</p>
+                            <p><i className="bi bi-chat-dots-fill"></i> {t('requestsClientWantsDiscuss')}</p>
                             <button
                               className="btn-accept-discussion"
                               onClick={() => handleAcceptDiscussion(request.id)}
                               disabled={actionLoading === request.id}
                             >
                               {actionLoading === request.id ? (
-                                <><span className="spinner-btn"></span> Accepting...</>
+                                <><span className="spinner-btn"></span> {t('requestsAccepting')}</>
                               ) : (
-                                <><i className="bi bi-telephone"></i> Accept & Share Phone</>
+                                <><i className="bi bi-telephone"></i> {t('requestsAcceptAndSharePhone')}</>
                               )}
                             </button>
                           </div>
@@ -700,14 +723,14 @@ export default function Requests() {
                             onClick={() => handleStatusUpdate(request.id, 'accepted')}
                             disabled={actionLoading === request.id}
                           >
-                            {actionLoading === request.id ? 'Processing...' : 'Accept Request'}
+                            {actionLoading === request.id ? t('requestsProcessing') : t('requestsAcceptRequest')}
                           </button>
                           <button
                             className="btn-action btn-decline"
                             onClick={() => openDeclineDialog(request.id)}
                             disabled={actionLoading === request.id}
                           >
-                            Decline Request
+                            {t('requestsDeclineRequest')}
                           </button>
                         </>
                       )}
@@ -717,7 +740,7 @@ export default function Requests() {
                           onClick={() => handleStatusUpdate(request.id, 'on_the_way')}
                           disabled={actionLoading === request.id}
                         >
-                          <i className="bi bi-truck"></i> I'm On My Way
+                          <i className="bi bi-truck"></i> {t('requestsImOnMyWay')}
                         </button>
                       )}
                       {['on_the_way', 'in_progress'].includes(request.status) && !request.provider_completed && (
@@ -726,7 +749,7 @@ export default function Requests() {
                           onClick={() => handleStatusUpdate(request.id, 'completed')}
                           disabled={actionLoading === request.id}
                         >
-                          <i className="bi bi-check-lg"></i> Mark Service Complete
+                          <i className="bi bi-check-lg"></i> {t('requestsMarkServiceComplete')}
                         </button>
                       )}
                       {request.status === 'completed' && (
@@ -735,7 +758,7 @@ export default function Requests() {
                           onClick={() => handleHideRequest(request.id)}
                           disabled={actionLoading === request.id}
                         >
-                          <i className="bi bi-eye-slash"></i> Remove from List
+                          <i className="bi bi-eye-slash"></i> {t('requestsRemoveFromList')}
                         </button>
                       )}
                     </>
@@ -748,7 +771,7 @@ export default function Requests() {
                           onClick={() => openCancelDialog(request.id)}
                           disabled={actionLoading === request.id}
                         >
-                          Cancel Request
+                          {t('requestsCancelRequest')}
                         </button>
                       )}
                       {['accepted', 'on_the_way', 'in_progress'].includes(request.status) && (
@@ -757,7 +780,7 @@ export default function Requests() {
                           onClick={() => openRescheduleDialog(request)}
                           disabled={actionLoading === request.id}
                         >
-                          <i className="bi bi-calendar2-week"></i> Propose Reschedule
+                          <i className="bi bi-calendar2-week"></i> {t('requestsProposeReschedule')}
                         </button>
                       )}
                       {['on_the_way', 'in_progress'].includes(request.status) && !request.client_completed && (
@@ -766,7 +789,7 @@ export default function Requests() {
                           onClick={() => handleStatusUpdate(request.id, 'completed')}
                           disabled={actionLoading === request.id}
                         >
-                          <i className="bi bi-check-lg"></i> Mark Service Complete
+                          <i className="bi bi-check-lg"></i> {t('requestsMarkServiceComplete')}
                         </button>
                       )}
                       {request.status === 'completed' && !request.has_review && (
@@ -774,13 +797,13 @@ export default function Requests() {
                           className="btn-action btn-review"
                           onClick={() => setReviewRequest(request)}
                         >
-                          <i className="bi bi-star"></i> Leave a Review
+                          <i className="bi bi-star"></i> {t('requestsLeaveReview')}
                         </button>
                       )}
                       {request.status === 'completed' && request.has_review && (
                         <div className="review-submitted-badge">
                           <i className="bi bi-star-fill"></i>
-                          <span>Review submitted</span>
+                          <span>{t('requestsReviewSubmitted')}</span>
                         </div>
                       )}
                       {request.status === 'completed' && (
@@ -789,7 +812,7 @@ export default function Requests() {
                           onClick={() => handleHideRequest(request.id)}
                           disabled={actionLoading === request.id}
                         >
-                          <i className="bi bi-eye-slash"></i> Remove from List
+                          <i className="bi bi-eye-slash"></i> {t('requestsRemoveFromList')}
                         </button>
                       )}
                     </>
@@ -838,13 +861,13 @@ export default function Requests() {
         <div className="decline-dialog-overlay" role="dialog" aria-modal="true" aria-labelledby="cancel-dialog-title" onClick={closeCancelDialog}>
           <div className="decline-dialog-card" onClick={(event) => event.stopPropagation()}>
             <div className="decline-dialog-header">
-              <h2 id="cancel-dialog-title">Cancel Service Request</h2>
-              <button type="button" className="decline-dialog-close" onClick={closeCancelDialog} aria-label="Close cancel dialog">
+              <h2 id="cancel-dialog-title">{t('cancelServiceRequest')}</h2>
+              <button type="button" className="decline-dialog-close" onClick={closeCancelDialog} aria-label={t('requestsCloseCancelDialog')}>
                 ×
               </button>
             </div>
             <div className="decline-dialog-body">
-              <label htmlFor="cancel-reason-select" className="decline-dialog-label">Reason for cancellation</label>
+              <label htmlFor="cancel-reason-select" className="decline-dialog-label">{t('requestsReasonForCancellationLabel')}</label>
               <select
                 id="cancel-reason-select"
                 className="decline-dialog-textarea"
@@ -858,18 +881,18 @@ export default function Requests() {
                   }));
                 }}
               >
-                <option value="Schedule conflict">Schedule conflict</option>
-                <option value="No longer need the service">No longer need the service</option>
-                <option value="Provider unavailable">Provider unavailable</option>
-                <option value="Client unavailable">Client unavailable</option>
-                <option value="Incorrect booking information">Incorrect booking information</option>
-                <option value="Provider did not respond">Provider did not respond</option>
-                <option value="Found another provider">Found another provider</option>
-                <option value="Other">Other</option>
+                <option value={CANCELLATION_REASONS.SCHEDULE_CONFLICT}>{t('requestsCancelReasonScheduleConflict')}</option>
+                <option value={CANCELLATION_REASONS.NO_LONGER_NEEDED}>{t('requestsCancelReasonNoLongerNeedService')}</option>
+                <option value={CANCELLATION_REASONS.PROVIDER_UNAVAILABLE}>{t('requestsCancelReasonProviderUnavailable')}</option>
+                <option value={CANCELLATION_REASONS.CLIENT_UNAVAILABLE}>{t('requestsCancelReasonClientUnavailable')}</option>
+                <option value={CANCELLATION_REASONS.INCORRECT_BOOKING}>{t('requestsCancelReasonIncorrectBookingInfo')}</option>
+                <option value={CANCELLATION_REASONS.PROVIDER_NO_RESPONSE}>{t('requestsCancelReasonProviderNoResponse')}</option>
+                <option value={CANCELLATION_REASONS.FOUND_ANOTHER_PROVIDER}>{t('requestsCancelReasonFoundAnotherProvider')}</option>
+                <option value={CANCELLATION_REASONS.OTHER}>{t('other')}</option>
               </select>
-              {cancelDialog.cancellationReason === 'Other' && (
+              {cancelDialog.cancellationReason === CANCELLATION_REASONS.OTHER && (
                 <>
-                  <label htmlFor="cancel-reason-other" className="decline-dialog-label">Please provide details</label>
+                  <label htmlFor="cancel-reason-other" className="decline-dialog-label">{t('requestsProvideCancellationDetails')}</label>
                   <textarea
                     id="cancel-reason-other"
                     className="decline-dialog-textarea"
@@ -884,7 +907,7 @@ export default function Requests() {
                       }));
                     }}
                     maxLength={500}
-                    placeholder="Tell us why you are cancelling"
+                    placeholder={t('requestsTellWhyCancelling')}
                   />
                 </>
               )}
@@ -897,7 +920,7 @@ export default function Requests() {
                 onClick={closeCancelDialog}
                 disabled={actionLoading === cancelDialog.requestId}
               >
-                Keep Request
+                {t('requestsKeepRequest')}
               </button>
               <button
                 type="button"
@@ -905,7 +928,7 @@ export default function Requests() {
                 onClick={handleConfirmCancellation}
                 disabled={actionLoading === cancelDialog.requestId}
               >
-                {actionLoading === cancelDialog.requestId ? 'Cancelling...' : 'Confirm Cancellation'}
+                {actionLoading === cancelDialog.requestId ? t('requestsCancelling') : t('requestsConfirmCancellation')}
               </button>
             </div>
           </div>
@@ -916,13 +939,13 @@ export default function Requests() {
         <div className="decline-dialog-overlay" role="dialog" aria-modal="true" aria-labelledby="reschedule-dialog-title" onClick={closeRescheduleDialog}>
           <div className="decline-dialog-card" onClick={(event) => event.stopPropagation()}>
             <div className="decline-dialog-header">
-              <h2 id="reschedule-dialog-title">Propose Reschedule</h2>
-              <button type="button" className="decline-dialog-close" onClick={closeRescheduleDialog} aria-label="Close reschedule dialog">
+              <h2 id="reschedule-dialog-title">{t('requestsProposeReschedule')}</h2>
+              <button type="button" className="decline-dialog-close" onClick={closeRescheduleDialog} aria-label={t('requestsCloseRescheduleDialog')}>
                 ×
               </button>
             </div>
             <div className="decline-dialog-body">
-              <label htmlFor="reschedule-start-date" className="decline-dialog-label">Start date</label>
+              <label htmlFor="reschedule-start-date" className="decline-dialog-label">{t('requestsStartDate')}</label>
               <input
                 id="reschedule-start-date"
                 className="decline-dialog-textarea"
@@ -931,7 +954,7 @@ export default function Requests() {
                 onChange={(event) => setRescheduleDialog((prev) => ({ ...prev, proposedStartDate: event.target.value, error: '' }))}
               />
 
-              <label htmlFor="reschedule-end-date" className="decline-dialog-label">End date</label>
+              <label htmlFor="reschedule-end-date" className="decline-dialog-label">{t('requestsEndDate')}</label>
               <input
                 id="reschedule-end-date"
                 className="decline-dialog-textarea"
@@ -940,7 +963,7 @@ export default function Requests() {
                 onChange={(event) => setRescheduleDialog((prev) => ({ ...prev, proposedEndDate: event.target.value, error: '' }))}
               />
 
-              <label htmlFor="reschedule-start-time" className="decline-dialog-label">Start time</label>
+              <label htmlFor="reschedule-start-time" className="decline-dialog-label">{t('requestsStartTime')}</label>
               <input
                 id="reschedule-start-time"
                 className="decline-dialog-textarea"
@@ -949,7 +972,7 @@ export default function Requests() {
                 onChange={(event) => setRescheduleDialog((prev) => ({ ...prev, proposedStartTime: event.target.value, error: '' }))}
               />
 
-              <label htmlFor="reschedule-duration" className="decline-dialog-label">Estimated duration (minutes)</label>
+              <label htmlFor="reschedule-duration" className="decline-dialog-label">{t('requestsEstimatedDurationMinutes')}</label>
               <input
                 id="reschedule-duration"
                 className="decline-dialog-textarea"
@@ -968,17 +991,17 @@ export default function Requests() {
                 value={rescheduleDialog.reason}
                 onChange={(event) => setRescheduleDialog((prev) => ({ ...prev, reason: event.target.value, error: '' }))}
                 maxLength={1000}
-                placeholder="Explain why you are proposing a new schedule"
+                placeholder={t('requestsExplainProposedSchedule')}
               />
 
               {rescheduleDialog.error ? <p className="decline-dialog-error">{rescheduleDialog.error}</p> : null}
             </div>
             <div className="decline-dialog-actions">
               <button type="button" className="decline-btn-cancel" onClick={closeRescheduleDialog} disabled={actionLoading === rescheduleDialog.requestId}>
-                Cancel
+                {t('requestsCancelAction')}
               </button>
               <button type="button" className="decline-btn-confirm" onClick={handleSubmitReschedule} disabled={actionLoading === rescheduleDialog.requestId}>
-                {actionLoading === rescheduleDialog.requestId ? 'Sending...' : 'Send Proposal'}
+                {actionLoading === rescheduleDialog.requestId ? t('requestsSending') : t('requestsSendProposal')}
               </button>
             </div>
           </div>
@@ -989,13 +1012,13 @@ export default function Requests() {
         <div className="decline-dialog-overlay" role="dialog" aria-modal="true" aria-labelledby="decline-dialog-title" onClick={closeDeclineDialog}>
           <div className="decline-dialog-card" onClick={(event) => event.stopPropagation()}>
             <div className="decline-dialog-header">
-              <h2 id="decline-dialog-title">Decline Service Request</h2>
-              <button type="button" className="decline-dialog-close" onClick={closeDeclineDialog} aria-label="Close decline dialog">
+              <h2 id="decline-dialog-title">{t('declineServiceRequest')}</h2>
+              <button type="button" className="decline-dialog-close" onClick={closeDeclineDialog} aria-label={t('requestsCloseDeclineDialog')}>
                 ×
               </button>
             </div>
             <div className="decline-dialog-body">
-              <label htmlFor="decline-reason-text" className="decline-dialog-label">Reason for declining</label>
+              <label htmlFor="decline-reason-text" className="decline-dialog-label">{t('reasonForDeclining')}</label>
               <textarea
                 id="decline-reason-text"
                 className="decline-dialog-textarea"
@@ -1010,7 +1033,7 @@ export default function Requests() {
                 }}
                 rows={4}
                 maxLength={500}
-                placeholder="Explain why you need to decline this request"
+                placeholder={t('requestsDeclineReasonPlaceholder')}
               />
               {declineDialog.error ? <p className="decline-dialog-error">{declineDialog.error}</p> : null}
             </div>
@@ -1021,7 +1044,7 @@ export default function Requests() {
                 onClick={closeDeclineDialog}
                 disabled={actionLoading === declineDialog.requestId}
               >
-                Cancel
+                {t('requestsCancelAction')}
               </button>
               <button
                 type="button"
@@ -1029,7 +1052,7 @@ export default function Requests() {
                 onClick={handleConfirmDecline}
                 disabled={actionLoading === declineDialog.requestId || !declineDialog.reason.trim()}
               >
-                {actionLoading === declineDialog.requestId ? 'Declining...' : 'Confirm Decline'}
+                {actionLoading === declineDialog.requestId ? t('requestsDeclining') : t('requestsConfirmDecline')}
               </button>
             </div>
           </div>

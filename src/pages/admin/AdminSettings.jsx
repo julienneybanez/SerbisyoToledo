@@ -1,10 +1,12 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import SettingsFlash from '../../components/settings/SettingsFlash';
 import { adminAPI, API_BASE_URL } from '../../services/api';
+import { useLanguage } from '../../context/LanguageContext';
 import '../../styles/AdminPages.css';
 
 function AdminSettings() {
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState('overview');
   const [isLoading, setIsLoading] = useState(true);
@@ -17,7 +19,7 @@ function AdminSettings() {
   const [reports, setReports] = useState([]);
   const [health, setHealth] = useState({ status: 'unknown', timestamp: null, database: 'unknown', message: '' });
 
-  const loadOperationalData = async ({ silent = false } = {}) => {
+  const loadOperationalData = useCallback(async ({ silent = false } = {}) => {
     if (silent) {
       setIsRefreshing(true);
     } else {
@@ -84,17 +86,17 @@ function AdminSettings() {
     }
 
     if (failures === 0 && silent) {
-      setFlash({ type: 'success', message: 'Operational data refreshed.' });
+      setFlash({ type: 'success', message: t('adminOperationalDataRefreshed') });
     } else if (failures > 0) {
       setFlash({
         type: 'error',
-        message: 'Some operational data could not be loaded. Review API health and retry refresh.',
+        message: t('adminOperationalDataPartialError'),
       });
     }
 
     setIsLoading(false);
     setIsRefreshing(false);
-  };
+  }, [t]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -102,7 +104,7 @@ function AdminSettings() {
     }, 0);
 
     return () => clearTimeout(timer);
-  }, []);
+  }, [loadOperationalData]);
 
   const derivedStatus = useMemo(() => {
     const suspendedUsers = users.filter((user) => !user.isActive).length;
@@ -141,14 +143,14 @@ function AdminSettings() {
     link.download = `admin-settings-snapshot-${Date.now()}.json`;
     link.click();
     URL.revokeObjectURL(url);
-    setFlash({ type: 'success', message: 'Operational snapshot exported.' });
+    setFlash({ type: 'success', message: t('adminOperationalSnapshotExported') });
   };
 
   return (
     <div className="admin-page">
       <div className="admin-page-header">
-        <h1 className="admin-page-title">Admin Settings</h1>
-        <p className="admin-page-subtitle">Live operations, moderation status, and admin control shortcuts.</p>
+        <h1 className="admin-page-title">{t('adminSettings')}</h1>
+        <p className="admin-page-subtitle">{t('adminSettingsSubtitle')}</p>
       </div>
 
       <div className="settings-layout">
@@ -157,19 +159,19 @@ function AdminSettings() {
             className={`settings-nav-item ${activeSection === 'overview' ? 'active' : ''}`}
             onClick={() => setActiveSection('overview')}
           >
-            Overview
+            {t('adminOverview')}
           </button>
           <button
             className={`settings-nav-item ${activeSection === 'moderation' ? 'active' : ''}`}
             onClick={() => setActiveSection('moderation')}
           >
-            Moderation
+            {t('adminModeration')}
           </button>
           <button
             className={`settings-nav-item ${activeSection === 'security' ? 'active' : ''}`}
             onClick={() => setActiveSection('security')}
           >
-            Security and Health
+            {t('adminSecurityHealth')}
           </button>
         </div>
 
@@ -178,58 +180,58 @@ function AdminSettings() {
 
           {activeSection === 'overview' && (
             <div className="settings-section">
-              <h2 className="settings-section-title">Platform Operations Overview</h2>
+              <h2 className="settings-section-title">{t('adminPlatformOperationsOverview')}</h2>
 
               <div className="settings-inline-actions">
                 <button className="btn-save" onClick={() => loadOperationalData({ silent: true })} disabled={isLoading || isRefreshing}>
-                  {isRefreshing ? 'Refreshing...' : 'Refresh Metrics'}
+                  {isRefreshing ? t('adminRefreshing') : t('adminRefreshMetrics')}
                 </button>
                 <button className="btn-cancel" onClick={exportSnapshot} disabled={isLoading}>
-                  Export Snapshot JSON
+                  {t('adminExportSnapshotJson')}
                 </button>
               </div>
 
               <div className="settings-stat-grid" style={{ marginTop: '1rem' }}>
                 <div className="settings-stat-card">
                   <h4>{stats?.totalUsers ?? '-'}</h4>
-                  <p>Total users</p>
+                  <p>{t('totalUsers')}</p>
                 </div>
                 <div className="settings-stat-card">
                   <h4>{stats?.totalTradespersons ?? '-'}</h4>
-                  <p>Service providers</p>
+                  <p>{t('serviceProviders')}</p>
                 </div>
                 <div className="settings-stat-card">
                   <h4>{stats?.pendingVerifications ?? '-'}</h4>
-                  <p>Pending verifications</p>
+                  <p>{t('pendingVerifications')}</p>
                 </div>
                 <div className="settings-stat-card">
                   <h4>{stats?.activeReports ?? '-'}</h4>
-                  <p>Active reports</p>
+                  <p>{t('activeReports')}</p>
                 </div>
               </div>
 
               <div className="settings-card">
-                <h3>Live Totals</h3>
+                <h3>{t('adminLiveTotals')}</h3>
                 <table className="settings-status-table">
                   <tbody>
                     <tr>
-                      <td>Clients</td>
+                      <td>{t('clients')}</td>
                       <td>{stats?.totalClients ?? '-'}</td>
                     </tr>
                     <tr>
-                      <td>Admins</td>
+                      <td>{t('admins')}</td>
                       <td>{stats?.totalAdmins ?? '-'}</td>
                     </tr>
                     <tr>
-                      <td>Verified providers</td>
+                      <td>{t('verifiedProviders')}</td>
                       <td>{stats?.verifiedProviders ?? '-'}</td>
                     </tr>
                     <tr>
-                      <td>Suspended users</td>
+                      <td>{t('adminSuspendedUsers')}</td>
                       <td>{derivedStatus.suspendedUsers}</td>
                     </tr>
                     <tr>
-                      <td>Unverified providers</td>
+                      <td>{t('adminUnverifiedProviders')}</td>
                       <td>{derivedStatus.unverifiedProviders}</td>
                     </tr>
                   </tbody>
@@ -240,39 +242,39 @@ function AdminSettings() {
 
           {activeSection === 'moderation' && (
             <div className="settings-section">
-              <h2 className="settings-section-title">Moderation Queues</h2>
+              <h2 className="settings-section-title">{t('adminModerationQueues')}</h2>
 
               <div className="settings-stat-grid">
                 <div className="settings-stat-card">
                   <h4>{derivedStatus.pendingVerifications}</h4>
-                  <p>Verification requests pending</p>
+                  <p>{t('adminVerificationRequestsPending')}</p>
                 </div>
                 <div className="settings-stat-card">
                   <h4>{derivedStatus.rejectedVerifications}</h4>
-                  <p>Rejected verification requests</p>
+                  <p>{t('adminRejectedVerificationRequests')}</p>
                 </div>
                 <div className="settings-stat-card">
                   <h4>{derivedStatus.reportPending}</h4>
-                  <p>Reports pending</p>
+                  <p>{t('adminReportsPending')}</p>
                 </div>
                 <div className="settings-stat-card">
                   <h4>{derivedStatus.reportReview}</h4>
-                  <p>Reports under review</p>
+                  <p>{t('adminReportsUnderReview')}</p>
                 </div>
               </div>
 
               <div className="settings-card">
-                <h3>Moderation Actions</h3>
-                <p>Open dedicated admin pages to process requests and enforce account actions.</p>
+                <h3>{t('adminModerationActions')}</h3>
+                <p>{t('adminModerationActionsHelp')}</p>
                 <div className="settings-inline-actions">
                   <button className="btn-save" onClick={() => navigate('/admin/verifications')}>
-                    Open Verification Queue
+                    {t('adminOpenVerificationQueue')}
                   </button>
                   <button className="btn-save" onClick={() => navigate('/admin/reports')}>
-                    Open Reports Queue
+                    {t('adminOpenReportsQueue')}
                   </button>
                   <button className="btn-save" onClick={() => navigate('/admin/users')}>
-                    Open User Management
+                    {t('adminOpenUserManagement')}
                   </button>
                 </div>
               </div>
@@ -281,26 +283,26 @@ function AdminSettings() {
 
           {activeSection === 'security' && (
             <div className="settings-section">
-              <h2 className="settings-section-title">Security and Health Status</h2>
+              <h2 className="settings-section-title">{t('adminSecurityHealthStatus')}</h2>
 
               <div className="settings-card">
-                <h3>API Health</h3>
+                <h3>{t('adminApiHealth')}</h3>
                 <table className="settings-status-table">
                   <tbody>
                     <tr>
-                      <td>Status</td>
+                      <td>{t('statusLabel')}</td>
                       <td>{health.status || 'unknown'}</td>
                     </tr>
                     <tr>
-                      <td>Timestamp</td>
-                      <td>{health.timestamp ? new Date(health.timestamp).toLocaleString() : 'Not available'}</td>
+                      <td>{t('adminTimestamp')}</td>
+                      <td>{health.timestamp ? new Date(health.timestamp).toLocaleString() : t('adminNotAvailable')}</td>
                     </tr>
                     <tr>
-                      <td>Endpoint</td>
+                      <td>{t('adminEndpoint')}</td>
                       <td>/api/health</td>
                     </tr>
                     <tr>
-                      <td>Database</td>
+                      <td>{t('adminDatabase')}</td>
                       <td>{health.database || 'unknown'}</td>
                     </tr>
                   </tbody>
@@ -309,9 +311,9 @@ function AdminSettings() {
               </div>
 
               <div className="settings-card">
-                <h3>Operational Notes</h3>
-                <p>Admin Settings is intentionally read-focused in this release to avoid fake system toggles.</p>
-                <p>Use dedicated moderation screens for user suspension, provider verification review, and report handling.</p>
+                <h3>{t('adminOperationalNotes')}</h3>
+                <p>{t('adminOperationalNotesLine1')}</p>
+                <p>{t('adminOperationalNotesLine2')}</p>
               </div>
             </div>
           )}

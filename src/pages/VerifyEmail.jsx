@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { verificationAPI } from '../services/api';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function VerifyEmail() {
+  const { t } = useLanguage();
   const [searchParams] = useSearchParams();
   const [status, setStatus] = useState('verifying'); // verifying, success, error, expired
   const [message, setMessage] = useState('');
@@ -13,7 +15,7 @@ export default function VerifyEmail() {
     if (!token) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setStatus('error');
-      setMessage('No verification token provided.');
+      setMessage(t('noVerificationToken'));
       return;
     }
 
@@ -28,12 +30,12 @@ export default function VerifyEmail() {
         } else {
           setStatus('error');
         }
-        setMessage(err.message || 'Verification failed.');
+        setMessage(err.message || t('verificationFailed'));
       }
     };
 
     verify();
-  }, [searchParams]);
+  }, [searchParams, t]);
 
   return (
     <div className="gradient-container">
@@ -43,10 +45,10 @@ export default function VerifyEmail() {
             {status === 'verifying' && (
               <>
                 <div className="spinner-border text-primary mb-4" role="status" style={{ width: '3rem', height: '3rem' }}>
-                  <span className="visually-hidden">Loading...</span>
+                  <span className="visually-hidden">{t('loading')}</span>
                 </div>
-                <h2 className="mb-3" style={{ fontWeight: 700 }}>Verifying Your Email...</h2>
-                <p className="text-muted">Please wait while we verify your account.</p>
+                <h2 className="mb-3" style={{ fontWeight: 700 }}>{t('verifyingEmail')}</h2>
+                <p className="text-muted">{t('verifyEmailPleaseWait')}</p>
               </>
             )}
 
@@ -68,10 +70,10 @@ export default function VerifyEmail() {
                     </svg>
                   </div>
                 </div>
-                <h2 className="mb-3" style={{ fontWeight: 700, color: '#20b87a' }}>Email Verified!</h2>
+                <h2 className="mb-3" style={{ fontWeight: 700, color: '#20b87a' }}>{t('emailVerified')}</h2>
                 <p className="text-muted mb-4">{message}</p>
                 <Link to="/login" className="btn btn-primary px-5 py-2" style={{ borderRadius: '10px', fontWeight: 600 }}>
-                  Go to Login
+                  {t('goToLogin')}
                 </Link>
               </>
             )}
@@ -95,10 +97,10 @@ export default function VerifyEmail() {
                     </svg>
                   </div>
                 </div>
-                <h2 className="mb-3" style={{ fontWeight: 700, color: '#dc3545' }}>Verification Failed</h2>
+                <h2 className="mb-3" style={{ fontWeight: 700, color: '#dc3545' }}>{t('verificationFailedTitle')}</h2>
                 <p className="text-muted mb-4">{message}</p>
                 <Link to="/register" className="btn btn-primary px-5 py-2" style={{ borderRadius: '10px', fontWeight: 600 }}>
-                  Back to Register
+                  {t('backToRegister')}
                 </Link>
               </>
             )}
@@ -122,10 +124,10 @@ export default function VerifyEmail() {
                     </svg>
                   </div>
                 </div>
-                <h2 className="mb-3" style={{ fontWeight: 700, color: '#e0a800' }}>Token Expired</h2>
+                <h2 className="mb-3" style={{ fontWeight: 700, color: '#e0a800' }}>{t('tokenExpired')}</h2>
                 <p className="text-muted mb-4">{message}</p>
                 <Link to="/login" className="btn btn-primary px-5 py-2" style={{ borderRadius: '10px', fontWeight: 600 }}>
-                  Go to Login
+                  {t('goToLogin')}
                 </Link>
               </>
             )}

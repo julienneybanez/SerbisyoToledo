@@ -15,9 +15,11 @@ import laundry from '../assets/laundry.webp';
 import { useNavigate } from 'react-router-dom';
 import LandingSearch from '../components/common/LandingSearch';
 import HowItWorks from '../components/common/HowItWorks';
+import { useLanguage } from '../context/LanguageContext';
 
 function Home() {
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   const trendingServices = [
     { name: 'Manghihilot', image: manghihilot, category: 'Beauty' },
@@ -41,9 +43,9 @@ function Home() {
           <div className="row align-items-center">
             <div className="col-lg-5">
               <div className="hero-content-stack">
-                <h1 className="hero-title">What service do you need?</h1>
+                <h1 className="hero-title">{t('homeHeroTitle')}</h1>
                 <p className="hero-subtitle">
-                  Find trusted local service providers in Toledo City.
+                  {t('homeHeroSubtitle')}
                 </p>
                 <LandingSearch />
               </div>
@@ -87,8 +89,8 @@ function Home() {
                     <path d="M20 12L14 20H20L18 28L26 18H20L22 12H20Z" fill="white" stroke="white" strokeWidth="1.5"/>
                   </svg>
                 </div>
-                <h3 className="feature-title">Skilled Professionals</h3>
-                <p className="feature-text">Connect with a vast selection of verified and experienced local service providers in Toledo City.</p>
+                <h3 className="feature-title">{t('homeFeature1Title')}</h3>
+                <p className="feature-text">{t('homeFeature1Text')}</p>
               </div>
             </div>
             <div className="col-md-4">
@@ -99,8 +101,8 @@ function Home() {
                     <path d="M20 10L22.5 17.5H30L24 22L26.5 30L20 25L13.5 30L16 22L10 17.5H17.5L20 10Z" fill="white"/>
                   </svg>
                 </div>
-                <h3 className="feature-title">Build Trust</h3>
-                <p className="feature-text">View ratings, past accomplished jobs, and profiles to find the right service provider for you.</p>
+                <h3 className="feature-title">{t('homeFeature2Title')}</h3>
+                <p className="feature-text">{t('homeFeature2Text')}</p>
               </div>
             </div>
             <div className="col-md-4">
@@ -112,8 +114,8 @@ function Home() {
                     <rect x="15" y="11" width="10" height="3" fill="white"/>
                   </svg>
                 </div>
-                <h3 className="feature-title">Quick Response</h3>
-                <p className="feature-text">Track your requests and connect with verified service providers fast and easily using the service requests tab.</p>
+                <h3 className="feature-title">{t('homeFeature3Title')}</h3>
+                <p className="feature-text">{t('homeFeature3Text')}</p>
               </div>
             </div>
           </div>
@@ -125,8 +127,8 @@ function Home() {
       <section className="trending-section py-5">
         <div className="container">
           <div className="text-center mb-4">
-            <h2 className="section-title">Popular Services</h2>
-            <p className="section-subtitle">Choose a category to start browsing providers.</p>
+            <h2 className="section-title">{t('popularServices')}</h2>
+            <p className="section-subtitle">{t('popularServicesSubtitle')}</p>
           </div>
           <div className="services-scroll">
             {trendingServices.map((service) => (
@@ -135,7 +137,7 @@ function Home() {
                 type="button"
                 className="service-card"
                 onClick={() => openCategory(service.category)}
-                aria-label={`Browse ${service.name} providers`}
+                aria-label={t('browseProvidersForService', { service: service.name })}
               >
                 <img src={service.image} alt={`${service.name} service category`} className="service-image non-draggable-image" draggable="false" />
                 <div className="service-overlay">
@@ -150,8 +152,8 @@ function Home() {
       <section className="cta-section py-5">
         <div className="container">
           <div className="cta-box text-center">
-            <h2 className="cta-title">Need help today?</h2>
-            <button className="btn btn-primary btn-lg mt-3" onClick={() => navigate('/register')}>Join Serbisyo Toledo</button>
+            <h2 className="cta-title">{t('homeCtaTitle')}</h2>
+            <button className="btn btn-primary btn-lg mt-3" onClick={() => navigate('/register')}>{t('homeCtaButton')}</button>
           </div>
         </div>
       </section>

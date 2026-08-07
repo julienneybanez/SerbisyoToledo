@@ -24,6 +24,7 @@ const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
 const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 const VerifyEmail = lazy(() => import('./pages/VerifyEmail'));
 const Feed = lazy(() => import('./pages/Feed'));
+const Notifications = lazy(() => import('./pages/Notifications'));
 const ServiceProviderPortfolio = lazy(() => import('./pages/ServiceProviderPortfolio'));
 const ServiceProviderDashboard = lazy(() => import('./pages/ServiceProviderDashboard'));
 const Requests = lazy(() => import('./pages/Requests'));
@@ -366,6 +367,7 @@ function App() {
                   <Route path="/reset-password/:token" element={<ResetPassword />} />
                   <Route path="/verify-email" element={<VerifyEmail />} />
                   <Route path="/feed" element={<Feed />} />
+                  <Route path="/notifications" element={<Notifications />} />
                   <Route path="/dashboard" element={<ServiceProviderDashboard />} />
                   <Route path="/provider/:id" element={<ServiceProviderPortfolio />} />
                   <Route path="/requests" element={<Requests />} />

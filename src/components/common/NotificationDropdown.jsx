@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { notificationAPI } from '../../services/api';
+import { useLanguage } from '../../context/LanguageContext';
 import './NotificationDropdown.css';
 
 export default function NotificationDropdown() {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -81,7 +83,7 @@ export default function NotificationDropdown() {
 
     // Navigate to requests page if there's a related request
     if (notification.related_request_id) {
-      navigate('/requests');
+      navigate(`/notifications?request=${encodeURIComponent(notification.related_request_id)}`);
       setIsOpen(false);
     }
   };
@@ -139,7 +141,7 @@ export default function NotificationDropdown() {
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
 
-    if (diffMins < 1) return 'Just now';
+    if (diffMins < 1) return t('notificationsJustNow');
     if (diffMins < 60) return `${diffMins}m ago`;
     if (diffHours < 24) return `${diffHours}h ago`;
     if (diffDays < 7) return `${diffDays}d ago`;
@@ -151,7 +153,7 @@ export default function NotificationDropdown() {
       <button 
         className="notification-bell-btn"
         onClick={handleToggle}
-        aria-label="Notifications"
+        aria-label={t('notifications')}
       >
         <i className="bi bi-bell"></i>
         {unreadCount > 0 && (
@@ -164,14 +166,14 @@ export default function NotificationDropdown() {
       {isOpen && (
         <div className="notification-dropdown-menu">
           <div className="notification-header">
-            <h4>Notifications</h4>
+            <h4>{t('notifications')}</h4>
             {notifications.length > 0 && (
               <div className="notification-actions">
                 <button onClick={handleMarkAllAsRead} className="action-btn">
-                  Mark all read
+                  {t('notificationsMarkAllRead')}
                 </button>
                 <button onClick={handleClearAll} className="action-btn clear-btn">
-                  Clear all
+                  {t('notificationsClearAll')}
                 </button>
               </div>
             )}
@@ -181,12 +183,12 @@ export default function NotificationDropdown() {
             {loading ? (
               <div className="notification-loading">
                 <div className="spinner-small"></div>
-                <span>Loading...</span>
+                <span>{t('notificationsLoading')}</span>
               </div>
             ) : notifications.length === 0 ? (
               <div className="notification-empty">
                 <i className="bi bi-bell-slash"></i>
-                <p>No notifications yet</p>
+                <p>{t('notificationsEmpty')}</p>
               </div>
             ) : (
               notifications.map((notification) => (
@@ -213,8 +215,8 @@ export default function NotificationDropdown() {
 
           {notifications.length > 0 && (
             <div className="notification-footer">
-              <button onClick={() => { navigate('/requests'); setIsOpen(false); }}>
-                View all requests
+              <button onClick={() => { navigate('/notifications'); setIsOpen(false); }}>
+                {t('notificationsOpenCenter')}
               </button>
             </div>
           )}

@@ -2,20 +2,22 @@ import { useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import logo from '../../assets/logo.png';
 import { useTheme } from '../../context/ThemeContext';
+import { useLanguage } from '../../context/LanguageContext';
 
 const TITLES = [
-  { test: (path) => path === '/', title: 'Home' },
-  { test: (path) => path.startsWith('/feed'), title: 'Browse Services' },
-  { test: (path) => path.startsWith('/provider/'), title: 'Provider Profile' },
-  { test: (path) => path.startsWith('/requests'), title: 'Requests' },
-  { test: (path) => path.startsWith('/dashboard'), title: 'Dashboard' },
-  { test: (path) => path.startsWith('/provider-settings'), title: 'Provider Settings' },
-  { test: (path) => path.startsWith('/client-settings'), title: 'Settings' },
-  { test: (path) => path.startsWith('/admin/dashboard'), title: 'Admin Dashboard' },
-  { test: (path) => path.startsWith('/admin/users'), title: 'Manage Users' },
-  { test: (path) => path.startsWith('/admin/verifications'), title: 'Verifications' },
-  { test: (path) => path.startsWith('/admin/reports'), title: 'Reports' },
-  { test: (path) => path.startsWith('/admin/settings'), title: 'Admin Settings' },
+  { test: (path) => path === '/', key: 'home' },
+  { test: (path) => path.startsWith('/feed'), key: 'browseServices' },
+  { test: (path) => path.startsWith('/provider/'), key: 'providerProfile' },
+  { test: (path) => path.startsWith('/requests'), key: 'requests' },
+  { test: (path) => path.startsWith('/notifications'), key: 'notifications' },
+  { test: (path) => path.startsWith('/dashboard'), key: 'myDashboard' },
+  { test: (path) => path.startsWith('/provider-settings'), key: 'providerSettings' },
+  { test: (path) => path.startsWith('/client-settings'), key: 'settings' },
+  { test: (path) => path.startsWith('/admin/dashboard'), key: 'adminDashboard' },
+  { test: (path) => path.startsWith('/admin/users'), key: 'manageUsers' },
+  { test: (path) => path.startsWith('/admin/verifications'), key: 'verifications' },
+  { test: (path) => path.startsWith('/admin/reports'), key: 'reports' },
+  { test: (path) => path.startsWith('/admin/settings'), key: 'adminSettings' },
 ];
 
 function getInitials(name) {
@@ -28,9 +30,9 @@ function getInitials(name) {
     .toUpperCase();
 }
 
-function getTitle(pathname) {
+function getTitle(pathname, t) {
   const match = TITLES.find((item) => item.test(pathname));
-  return match ? match.title : 'SerbisyoToledo';
+  return match ? t(match.key) : 'SerbisyoToledo';
 }
 
 export default function MobileTopBar({
@@ -52,13 +54,14 @@ export default function MobileTopBar({
   const location = useLocation();
   const menuRef = useRef(null);
   const { isDark, toggleTheme } = useTheme();
-  const title = getTitle(location.pathname);
+  const { language, setLanguage, t } = useLanguage();
+  const title = getTitle(location.pathname, t);
   const isLoggedIn = Boolean(user);
   const notificationsRoute = !isLoggedIn
     ? '/login'
     : role === 'admin'
       ? '/admin/reports'
-      : '/requests';
+      : '/notifications';
 
   useEffect(() => {
     onCloseProfileMenu?.();
@@ -114,21 +117,23 @@ export default function MobileTopBar({
       </div>
 
       <div className="mobile-topbar-actions">
-        <button
-          type="button"
-          className="mobile-topbar-icon-btn mobile-theme-icon-btn"
-          onClick={toggleTheme}
-          aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-        >
-          <i className={`bi ${isDark ? 'bi-sun-fill' : 'bi-moon-stars-fill'}`}></i>
-        </button>
-        <Link to={notificationsRoute} className="mobile-topbar-icon-btn" aria-label="Open notifications">
+        {!isLoggedIn && (
+          <button
+            type="button"
+            className="mobile-topbar-icon-btn mobile-theme-icon-btn"
+            onClick={toggleTheme}
+            aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+          >
+            <i className={`bi ${isDark ? 'bi-sun-fill' : 'bi-moon-stars-fill'}`}></i>
+          </button>
+        )}
+        <Link to={notificationsRoute} className="mobile-topbar-icon-btn" aria-label={t('openNotifications')}>
           <i className="bi bi-bell"></i>
         </Link>
         <button
           type="button"
           className="mobile-topbar-avatar"
-          aria-label="Open profile menu"
+          aria-label={t('openProfileMenu')}
           aria-expanded={profileMenuOpen}
           onClick={onToggleProfileMenu}
         >
@@ -145,11 +150,11 @@ export default function MobileTopBar({
               <>
                 <Link to="/login" className="mobile-profile-menu-item" role="menuitem" onClick={onCloseProfileMenu}>
                   <i className="bi bi-box-arrow-in-right"></i>
-                  Log In
+                  {t('logIn')}
                 </Link>
                 <Link to="/register" className="mobile-profile-menu-item" role="menuitem" onClick={onCloseProfileMenu}>
                   <i className="bi bi-person-plus"></i>
-                  Sign Up
+                  {t('signUp')}
                 </Link>
               </>
             ) : role === 'tradesperson' ? (
@@ -161,7 +166,7 @@ export default function MobileTopBar({
                   onClick={onEditProviderProfile}
                 >
                   <i className="bi bi-pencil-square"></i>
-                  Edit Profile
+                  {t('editProfile')}
                 </button>
                 <button
                   type="button"
@@ -170,7 +175,7 @@ export default function MobileTopBar({
                   onClick={onManageServiceProfile}
                 >
                   <i className={`bi ${hasServiceProfile ? 'bi-images' : 'bi-plus-circle'}`}></i>
-                  {hasServiceProfile ? 'Edit Service Profile' : 'Post Service Profile'}
+                  {hasServiceProfile ? t('editServiceProfile') : t('postServiceProfile')}
                 </button>
                 <button
                   type="button"
@@ -179,7 +184,7 @@ export default function MobileTopBar({
                   onClick={onRequestVerification}
                 >
                   <i className="bi bi-shield-check"></i>
-                  Request Verification
+                  {t('requestVerification')}
                 </button>
                 <button
                   type="button"
@@ -188,24 +193,48 @@ export default function MobileTopBar({
                   onClick={hasServiceProfile ? onPreviewProfile : onManageServiceProfile}
                 >
                   <i className="bi bi-eye"></i>
-                  {hasServiceProfile ? 'View Profile as Client' : 'View Profile as Client (Post first)'}
+                  {hasServiceProfile ? t('viewProfileAsClient') : t('viewProfilePostFirst')}
                 </button>
               </>
             ) : (
               <button type="button" className="mobile-profile-menu-item" role="menuitem" onClick={onEditClientProfile}>
                 <i className="bi bi-pencil-square"></i>
-                Edit Profile
+                {t('editProfile')}
               </button>
             )}
             {isLoggedIn && (
               <>
                 <Link to={settingsRoute} className="mobile-profile-menu-item" role="menuitem" onClick={onCloseProfileMenu}>
                   <i className="bi bi-gear"></i>
-                  Settings
+                  {t('settings')}
                 </Link>
+                <div className="mobile-profile-menu-divider" role="none"></div>
+                <div className="mobile-profile-preferences" role="group" aria-label="Display preferences">
+                  <label htmlFor="mobile-language-select" className="mobile-profile-preferences-label">{t('language')}</label>
+                  <select
+                    id="mobile-language-select"
+                    className="mobile-profile-language-select"
+                    value={language}
+                    onChange={(event) => setLanguage(event.target.value)}
+                    aria-label={t('language')}
+                  >
+                    <option value="en">EN</option>
+                    <option value="ceb">CEB</option>
+                  </select>
+                  <button
+                    type="button"
+                    className="mobile-profile-menu-item mobile-profile-theme-item"
+                    onClick={toggleTheme}
+                    aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+                  >
+                    <i className={`bi ${isDark ? 'bi-sun-fill' : 'bi-moon-stars-fill'}`}></i>
+                    {isDark ? t('useLightTheme') : t('useDarkTheme')}
+                  </button>
+                </div>
+                <div className="mobile-profile-menu-divider" role="none"></div>
                 <button type="button" className="mobile-profile-menu-item danger" role="menuitem" onClick={onLogout}>
                   <i className="bi bi-box-arrow-right"></i>
-                  Log Out
+                  {t('logOut')}
                 </button>
               </>
             )}

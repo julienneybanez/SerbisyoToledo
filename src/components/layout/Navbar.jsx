@@ -150,6 +150,8 @@ function Navbar() {
   };
 
   const isProvider = loggedIn && user?.userType === 'tradesperson';
+  const isAdmin = loggedIn && user?.userType === 'admin';
+  const isClient = loggedIn && user?.userType === 'client';
   const brandDestination = isProvider ? '/dashboard' : '/';
 
   return (
@@ -178,7 +180,7 @@ function Navbar() {
 
         <div id="serbisyo-navbar" className={`collapse navbar-collapse ${mobileMenuOpen ? 'show' : ''}`}>
           <ul className="navbar-nav primary-nav ms-lg-auto align-items-lg-center gap-lg-2">
-            {(!loggedIn || user?.userType !== 'tradesperson') && (
+            {!loggedIn && (
               <li className="nav-item">
                 <NavLink 
                   className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
@@ -189,27 +191,19 @@ function Navbar() {
                 </NavLink>
               </li>
             )}
-            <li className="nav-item">
-              <NavLink 
-                className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
-                to="/about"
-                onClick={handleNavClick}
-              >
-                {t('about')}
-              </NavLink>
-            </li>
-            
-            {isProvider ? (
+            {!loggedIn && (
               <li className="nav-item">
                 <NavLink 
                   className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
-                  to="/dashboard"
+                  to="/about"
                   onClick={handleNavClick}
                 >
-                  {t('myDashboard')}
+                  {t('about')}
                 </NavLink>
               </li>
-            ) : (
+            )}
+
+            {!loggedIn && (
               <li className="nav-item">
                 <NavLink 
                   className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
@@ -220,30 +214,80 @@ function Navbar() {
                 </NavLink>
               </li>
             )}
+
+            {isProvider && (
+              <>
+                <li className="nav-item">
+                  <NavLink 
+                    className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+                    to="/dashboard"
+                    onClick={handleNavClick}
+                  >
+                    {t('myDashboard')}
+                  </NavLink>
+                </li>
+                <li className="nav-item">
+                  <NavLink 
+                    className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+                    to="/requests"
+                    data-tour="nav-requests"
+                    onClick={handleNavClick}
+                  >
+                    {t('requests')}
+                  </NavLink>
+                </li>
+                <li className="nav-item">
+                  <NavLink 
+                    className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+                    to="/provider-settings?section=availability"
+                    onClick={handleNavClick}
+                  >
+                    {t('schedule')}
+                  </NavLink>
+                </li>
+              </>
+            )}
+
+            {isClient && (
+              <>
+                <li className="nav-item">
+                  <NavLink 
+                    className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+                    to="/feed"
+                    onClick={handleNavClick}
+                  >
+                    {t('browseServices')}
+                  </NavLink>
+                </li>
+                <li className="nav-item">
+                  <NavLink 
+                    className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+                    to="/requests"
+                    data-tour="nav-requests"
+                    onClick={handleNavClick}
+                  >
+                    {t('requests')}
+                  </NavLink>
+                </li>
+              </>
+            )}
+
+            {isAdmin && (
+              <li className="nav-item">
+                <NavLink 
+                  className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+                  to="/admin/dashboard"
+                  onClick={handleNavClick}
+                >
+                  {t('myDashboard')}
+                </NavLink>
+              </li>
+            )}
           </ul>
           
           <div className="navbar-actions ms-lg-4">
             {loggedIn ? (
               <div className="auth-block logged-in-block">
-                <NavLink 
-                  to="/requests" 
-                  className={({ isActive }) => `nav-link requests-link ${isActive ? 'active' : ''}`}
-                  data-tour="nav-requests"
-                  onClick={handleNavClick}
-                >
-                  {t('requests')}
-                </NavLink>
-                <select
-                  className="form-select form-select-sm"
-                  style={{ width: '88px' }}
-                  value={language}
-                  onChange={(event) => setLanguage(event.target.value)}
-                  aria-label={t('language')}
-                >
-                  <option value="en">EN</option>
-                  <option value="ceb">CEB</option>
-                </select>
-                <ThemeToggle compact className="navbar-theme-toggle" />
                 <div className="notification-wrap">
                   <NotificationDropdown />
                 </div>
@@ -356,6 +400,21 @@ function Navbar() {
                         <i className="bi bi-gear"></i>
                         {t('settings')}
                       </Link>
+                      <hr className="dropdown-divider" />
+                      <div className="dropdown-preferences" role="group" aria-label="Display preferences">
+                        <label className="dropdown-pref-label" htmlFor="navbar-language-select">{t('language')}</label>
+                        <select
+                          id="navbar-language-select"
+                          className="dropdown-language-select"
+                          value={language}
+                          onChange={(event) => setLanguage(event.target.value)}
+                          aria-label={t('language')}
+                        >
+                          <option value="en">EN</option>
+                          <option value="ceb">CEB</option>
+                        </select>
+                        <ThemeToggle compact className="dropdown-theme-toggle" />
+                      </div>
                       <hr className="dropdown-divider" />
                       <button 
                         className="dropdown-item logout-item"
