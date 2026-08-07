@@ -118,6 +118,18 @@ const dayOfWeekFromDate = (dateString) => {
   return date.getUTCDay();
 };
 
+const getDurationMinutesFromScheduledTimestamps = (startValue, endValue) => {
+  const start = startValue instanceof Date ? startValue : new Date(startValue);
+  const end = endValue instanceof Date ? endValue : new Date(endValue);
+
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+    return 0;
+  }
+
+  const diffMinutes = Math.round((end.getTime() - start.getTime()) / (60 * 1000));
+  return diffMinutes > 0 ? diffMinutes : 0;
+};
+
 const ensureAvailabilitySchema = async (connection) => {
   await connection.query(
     `CREATE TABLE IF NOT EXISTS provider_availability_settings (
@@ -196,7 +208,7 @@ const ensureAvailabilitySettings = async (connection, serviceProfileId) => {
 const getConfirmedBookingsForDate = async (connection, providerId, dateString, excludeRequestId = null) => {
   const params = [providerId, dateString, dateString, ...BLOCKING_STATUSES];
   let sql = `
-    SELECT id, estimated_duration_minutes, scheduled_start_at, scheduled_end_at
+    SELECT id, scheduled_start_at, scheduled_end_at
     FROM service_requests
     WHERE provider_id = ?
       AND DATE(scheduled_start_at) <= ?
@@ -338,7 +350,8 @@ const checkScheduleConflict = async (
             DATE(scheduled_start_at) AS effective_start_date,
             DATE(scheduled_end_at) AS effective_end_date,
             TIME(scheduled_start_at) AS effective_start_time,
-            estimated_duration_minutes
+            scheduled_start_at,
+            scheduled_end_at
      FROM service_requests
      WHERE provider_id = ?
        AND DATE(scheduled_start_at) <= ?
@@ -375,7 +388,7 @@ const checkScheduleConflict = async (
 
     const existingStartTime = parseTimeInputToSql(row.effective_start_time);
     const existingStartMinutes = timeToMinutes(existingStartTime);
-    const existingDuration = Number(row.estimated_duration_minutes || 0);
+    const existingDuration = getDurationMinutesFromScheduledTimestamps(row.scheduled_start_at, row.scheduled_end_at);
     const existingEndMinutes = existingStartMinutes != null && existingDuration > 0
       ? existingStartMinutes + existingDuration
       : null;
@@ -454,7 +467,7 @@ const getAvailableSlotsForDate = async (
 
     const parsed = parseTimeInputToSql(startFallback);
     const startMinutes = timeToMinutes(parsed);
-    const bookingDuration = Number(row.estimated_duration_minutes || 0);
+    const bookingDuration = getDurationMinutesFromScheduledTimestamps(row.scheduled_start_at, row.scheduled_end_at);
 
     if (startMinutes == null || bookingDuration <= 0) {
       return { fullDay: true };
