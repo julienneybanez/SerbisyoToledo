@@ -72,17 +72,20 @@ function AdminSidebar({ isOpen, onClose }) {
       <div 
         className={`sidebar-overlay ${isOpen ? 'show' : ''}`} 
         onClick={onClose}
+        aria-hidden="true"
       />
 
       <CSidebar 
+        id="admin-sidebar"
         className={`admin-sidebar-coreui ${isOpen ? 'show' : ''}`}
         visible={true}
+        aria-label="Admin sidebar"
       >
         <CSidebarBrand className="sidebar-brand-custom">
           <div className="brand-logo-wrapper">
             <img src={logo} alt="SerbisyoToledo" className="brand-logo-img" draggable="false" />
           </div>
-          <button className="sidebar-close-btn d-lg-none" onClick={onClose}>
+          <button type="button" className="sidebar-close-btn d-lg-none" onClick={onClose} aria-label="Close sidebar">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <line x1="18" y1="6" x2="6" y2="18"></line>
               <line x1="6" y1="6" x2="18" y2="18"></line>

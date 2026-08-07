@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { authAPI } from '../services/api';
 import RoleSelectionCards from '../components/common/RoleSelectionCards';
+import { useLanguage } from '../context/LanguageContext';
 import logo from '../assets/logo.png';
 import '../styles/App.css';
 
@@ -13,6 +14,7 @@ const LANGUAGE_OPTIONS = [
 
 const Register = () => {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [searchParams] = useSearchParams();
   const [userType, setUserType] = useState('client');
   const [showPassword, setShowPassword] = useState(false);
@@ -77,7 +79,7 @@ const Register = () => {
     setIsLoading(true);
 
     if (!['client', 'tradesperson'].includes(userType)) {
-      setError('Please select a valid account type.');
+      setError(t('selectValidAccountType'));
       setIsLoading(false);
       return;
     }
@@ -105,7 +107,7 @@ const Register = () => {
 
       await authAPI.register(registrationData);
       
-      setSuccess('Registration successful! A confirmation email was sent to your account. Redirecting...');
+      setSuccess(t('registrationSuccessRedirecting'));
       
       // Auto-redirect to dashboard for service providers, feed for clients
       setTimeout(() => {
@@ -118,7 +120,7 @@ const Register = () => {
       
     } catch (err) {
       console.error('Registration error:', err);
-      setError(err.message || 'Registration failed. Please try again.');
+      setError(err.message || t('registrationFailedTryAgain'));
     } finally {
       setIsLoading(false);
     }
@@ -135,7 +137,7 @@ const Register = () => {
               <h1 className="app-title mb-2">
                 Serbisyo<span className="title-green">Toledo</span>
               </h1>
-              <p className="subtitle text-muted">create your account</p>
+              <p className="subtitle text-muted">{t('createYourAccount')}</p>
             </div>
 
             {/* Error Alert */}
@@ -158,11 +160,11 @@ const Register = () => {
               {/* Full Name and Email */}
               <div className="row mb-3">
                 <div className="col-md-6 mb-3 mb-md-0">
-                  <label className="form-label">Full name</label>
+                  <label className="form-label">{t('fullName')}</label>
                   <input
                     type="text"
                     name="fullName"
-                    placeholder="Sophia Laforteza"
+                    placeholder={t('fullNamePlaceholder')}
                     value={formData.fullName}
                     onChange={handleInputChange}
                     className="form-control"
@@ -170,11 +172,11 @@ const Register = () => {
                   />
                 </div>
                 <div className="col-md-6">
-                  <label className="form-label">Email Address</label>
+                  <label className="form-label">{t('emailAddress')}</label>
                   <input
                     type="email"
                     name="email"
-                    placeholder="internetgirl@gmail.com"
+                    placeholder={t('loginEmailPlaceholder')}
                     value={formData.email}
                     onChange={handleInputChange}
                     className="form-control"
@@ -185,12 +187,12 @@ const Register = () => {
 
               {/* Password */}
               <div className="mb-3">
-                <label className="form-label">Password</label>
+                <label className="form-label">{t('password')}</label>
                 <div className="password-input-wrapper">
                   <input
                     type={showPassword ? 'text' : 'password'}
                     name="password"
-                    placeholder="Create a strong password"
+                    placeholder={t('createStrongPassword')}
                     value={formData.password}
                     onChange={handleInputChange}
                     className="form-control"
@@ -200,7 +202,7 @@ const Register = () => {
                     type="button"
                     className="password-toggle"
                     onClick={() => setShowPassword(!showPassword)}
-                    aria-label="Toggle password visibility"
+                    aria-label={t('togglePasswordVisibility')}
                   >
                     {showPassword ? (
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -221,14 +223,14 @@ const Register = () => {
               {userType === 'tradesperson' && (
                 /* Professional Details for Service Provider */
                 <div className="professional-details mb-4">
-                  <h3>Professional Details</h3>
+                  <h3>{t('professionalDetails')}</h3>
                   
                   <div className="mb-3">
-                    <label className="form-label">Profession</label>
+                    <label className="form-label">{t('profession')}</label>
                     <input
                       type="text"
                       name="profession"
-                      placeholder="e.g. Electrician, Plumber, Carpenter"
+                      placeholder={t('professionPlaceholder')}
                       value={formData.profession}
                       onChange={handleInputChange}
                       className="form-control"
@@ -236,11 +238,11 @@ const Register = () => {
                   </div>
 
                   <div className="mb-3">
-                    <label className="form-label">Skills & Specializations</label>
+                    <label className="form-label">{t('skillsAndSpecializations')}</label>
                     <div className="skill-input-group">
                       <input
                         type="text"
-                        placeholder="Add a skill (e.g. wiring, installation)"
+                        placeholder={t('addSkillPlaceholder')}
                         value={currentSkill}
                         onChange={(e) => setCurrentSkill(e.target.value)}
                         onKeyPress={(e) => {
@@ -279,7 +281,7 @@ const Register = () => {
                   </div>
 
                   <div className="mb-3">
-                    <label className="form-label">Languages Spoken</label>
+                    <label className="form-label">{t('languagesSpoken')}</label>
                     <div className="d-flex flex-wrap gap-2">
                       {LANGUAGE_OPTIONS.map((option) => (
                         <label key={option.value} className="d-inline-flex align-items-center gap-2 border rounded-pill px-3 py-2" style={{ cursor: 'pointer' }}>
@@ -293,7 +295,7 @@ const Register = () => {
                       ))}
                     </div>
                     <small className="text-muted d-block mt-2">
-                      This helps clients find providers by preferred language.
+                      {t('languagesSpokenHelp')}
                     </small>
                   </div>
                 </div>
@@ -308,18 +310,18 @@ const Register = () => {
                 {isLoading ? (
                   <>
                     <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                    Creating Account...
+                    {t('creatingAccount')}
                   </>
                 ) : (
-                  'Create Account'
+                  t('createAccount')
                 )}
               </button>
 
               {/* Login Link */}
               <div className="text-center">
                 <p className="footer-text mb-0">
-                  Already have an account?{' '}
-                  <Link to="/login" className="link">Login here</Link>
+                  {t('alreadyHaveAccount')}{' '}
+                  <Link to="/login" className="link">{t('loginHere')}</Link>
                 </p>
               </div>
             </form>
@@ -327,7 +329,7 @@ const Register = () => {
             {/* Back to Home */}
             <div className="text-center mt-4">
               <Link to="/" className="back-link text-decoration-none">
-                ← Back to home
+                {t('backToHome')}
               </Link>
             </div>
           </div>

@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { authAPI } from '../services/api';
+import { useLanguage } from '../context/LanguageContext';
 import logo from '../assets/logo.png';
 import '../styles/App.css';
 
 const ResetPassword = () => {
   const { token } = useParams();
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -29,7 +31,7 @@ const ResetPassword = () => {
     setSuccess('');
 
     if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match.');
+      setError(t('passwordsDoNotMatch'));
       return;
     }
 
@@ -41,14 +43,14 @@ const ResetPassword = () => {
         confirmPassword: formData.confirmPassword,
       });
 
-      setSuccess(response.message || 'Password reset successful. Redirecting to login...');
+      setSuccess(response.message || t('passwordResetSuccessRedirecting'));
       setFormData({ password: '', confirmPassword: '' });
 
       setTimeout(() => {
         navigate('/login');
       }, 1800);
     } catch (err) {
-      setError(err.message || 'Failed to reset password. Please try again.');
+      setError(err.message || t('resetPasswordFailed'));
     } finally {
       setIsLoading(false);
     }
@@ -64,7 +66,7 @@ const ResetPassword = () => {
               <h1 className="app-title mb-2">
                 Serbisyo<span className="title-green">Toledo</span>
               </h1>
-              <p className="subtitle text-muted">reset your password</p>
+              <p className="subtitle text-muted">{t('resetYourPassword')}</p>
             </div>
 
             {error && (
@@ -81,7 +83,7 @@ const ResetPassword = () => {
 
             <form onSubmit={handleSubmit}>
               <div className="mb-3">
-                <label className="form-label">New Password</label>
+                <label className="form-label">{t('newPassword')}</label>
                 <div className="password-input-wrapper">
                   <input
                     type={showPassword ? 'text' : 'password'}
@@ -89,7 +91,7 @@ const ResetPassword = () => {
                     value={formData.password}
                     onChange={handleInputChange}
                     className="form-control"
-                    placeholder="Enter new password"
+                    placeholder={t('enterNewPassword')}
                     minLength={6}
                     required
                   />
@@ -97,15 +99,15 @@ const ResetPassword = () => {
                     type="button"
                     className="password-toggle"
                     onClick={() => setShowPassword(!showPassword)}
-                    aria-label="Toggle password visibility"
+                    aria-label={t('togglePasswordVisibility')}
                   >
-                    {showPassword ? 'Hide' : 'Show'}
+                    {showPassword ? t('hide') : t('show')}
                   </button>
                 </div>
               </div>
 
               <div className="mb-4">
-                <label className="form-label">Confirm New Password</label>
+                <label className="form-label">{t('confirmNewPassword')}</label>
                 <div className="password-input-wrapper">
                   <input
                     type={showConfirmPassword ? 'text' : 'password'}
@@ -113,7 +115,7 @@ const ResetPassword = () => {
                     value={formData.confirmPassword}
                     onChange={handleInputChange}
                     className="form-control"
-                    placeholder="Confirm new password"
+                    placeholder={t('confirmNewPassword')}
                     minLength={6}
                     required
                   />
@@ -121,9 +123,9 @@ const ResetPassword = () => {
                     type="button"
                     className="password-toggle"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    aria-label="Toggle confirm password visibility"
+                    aria-label={t('toggleConfirmPasswordVisibility')}
                   >
-                    {showConfirmPassword ? 'Hide' : 'Show'}
+                    {showConfirmPassword ? t('hide') : t('show')}
                   </button>
                 </div>
               </div>
@@ -136,24 +138,24 @@ const ResetPassword = () => {
                 {isLoading ? (
                   <>
                     <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                    Updating Password...
+                    {t('updatingPassword')}
                   </>
                 ) : (
-                  'Reset Password'
+                  t('resetPassword')
                 )}
               </button>
             </form>
 
             <div className="text-center">
               <p className="footer-text mb-0">
-                Back to{' '}
-                <Link to="/login" className="link">Login</Link>
+              {t('backTo')}{' '}
+              <Link to="/login" className="link">{t('logIn')}</Link>
               </p>
             </div>
 
             <div className="text-center mt-4">
               <Link to="/" className="back-link text-decoration-none">
-                ← Back to home
+                {t('backToHome')}
               </Link>
             </div>
           </div>

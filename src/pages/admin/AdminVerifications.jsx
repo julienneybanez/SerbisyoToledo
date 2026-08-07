@@ -1,8 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { adminAPI } from '../../services/api';
+import { useLanguage } from '../../context/LanguageContext';
 import '../../styles/AdminPages.css';
 
 function AdminVerifications() {
+  const { t } = useLanguage();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('pending');
   const [verifications, setVerifications] = useState([]);
@@ -29,7 +31,7 @@ function AdminVerifications() {
     error: '',
   });
 
-  const fetchVerifications = async () => {
+  const fetchVerifications = useCallback(async () => {
     try {
       setLoading(true);
       setError('');
@@ -38,13 +40,13 @@ function AdminVerifications() {
         setVerifications(response.data || []);
       }
     } catch (err) {
-      setError(err.message || 'Failed to load verification requests');
+      setError(err.message || t('failedLoadVerificationRequests'));
     } finally {
       setLoading(false);
     }
-  };
+  }, [t]);
 
-  const fetchProviderCredentials = async () => {
+  const fetchProviderCredentials = useCallback(async () => {
     try {
       setCredentialsLoading(true);
       setCredentialsError('');
@@ -53,16 +55,16 @@ function AdminVerifications() {
         setProviderCredentials(response.data || []);
       }
     } catch (err) {
-      setCredentialsError(err.message || 'Failed to load provider credentials');
+      setCredentialsError(err.message || t('failedLoadProviderCredentials'));
     } finally {
       setCredentialsLoading(false);
     }
-  };
+  }, [t]);
 
   useEffect(() => {
     fetchVerifications();
     fetchProviderCredentials();
-  }, []);
+  }, [fetchProviderCredentials, fetchVerifications]);
 
   useEffect(() => {
     if (!documentPreview && !rejectDialog.open && !credentialRejectDialog.open) {
@@ -175,7 +177,7 @@ function AdminVerifications() {
         if (!trimmedReason) {
           setRejectDialog((prev) => ({
             ...prev,
-            error: 'Rejection reason is required.',
+            error: t('rejectionReasonRequired'),
           }));
           return;
         }
@@ -193,10 +195,10 @@ function AdminVerifications() {
       if (action === 'reject') {
         setRejectDialog((prev) => ({
           ...prev,
-          error: err.message || 'Failed to reject request',
+          error: err.message || t('failedRejectRequest'),
         }));
       } else {
-        alert(err.message || 'Failed to review request');
+        alert(err.message || t('failedReviewRequest'));
       }
     } finally {
       setActionLoading(null);
@@ -231,7 +233,7 @@ function AdminVerifications() {
         if (!trimmedReason) {
           setCredentialRejectDialog((prev) => ({
             ...prev,
-            error: 'Rejection reason is required.',
+            error: t('rejectionReasonRequired'),
           }));
           return;
         }
@@ -249,10 +251,10 @@ function AdminVerifications() {
       if (action === 'reject') {
         setCredentialRejectDialog((prev) => ({
           ...prev,
-          error: err.message || 'Failed to reject credential',
+          error: err.message || t('failedRejectCredential'),
         }));
       } else {
-        alert(err.message || 'Failed to review credential');
+        alert(err.message || t('failedReviewCredential'));
       }
     } finally {
       setCredentialActionLoading(null);
@@ -295,22 +297,22 @@ function AdminVerifications() {
   return (
     <div className="admin-page">
       <div className="admin-page-header">
-        <h1 className="admin-page-title">Verification Requests</h1>
-        <p className="admin-page-subtitle">Review and manage service provider verification requests</p>
+        <h1 className="admin-page-title">{t('verificationRequests')}</h1>
+        <p className="admin-page-subtitle">{t('verificationRequestsSubtitle')}</p>
       </div>
 
       <div className="mini-stats">
         <div className="mini-stat">
           <span className="mini-stat-value text-warning">{pendingCount}</span>
-          <span className="mini-stat-label">Pending</span>
+          <span className="mini-stat-label">{t('pending')}</span>
         </div>
         <div className="mini-stat">
           <span className="mini-stat-value text-success">{approvedCount}</span>
-          <span className="mini-stat-label">Approved</span>
+          <span className="mini-stat-label">{t('approved')}</span>
         </div>
         <div className="mini-stat">
           <span className="mini-stat-value text-danger">{rejectedCount}</span>
-          <span className="mini-stat-label">Rejected</span>
+          <span className="mini-stat-label">{t('rejected')}</span>
         </div>
       </div>
 
@@ -322,7 +324,7 @@ function AdminVerifications() {
           </svg>
           <input
             type="text"
-            placeholder="Search by name, email, or profession..."
+            placeholder={t('searchVerificationPlaceholder')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -330,10 +332,10 @@ function AdminVerifications() {
 
         <div className="filter-group">
           <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
-            <option value="all">All Status</option>
-            <option value="pending">Pending</option>
-            <option value="approved">Approved</option>
-            <option value="rejected">Rejected</option>
+            <option value="all">{t('allStatuses')}</option>
+            <option value="pending">{t('pending')}</option>
+            <option value="approved">{t('approved')}</option>
+            <option value="rejected">{t('rejected')}</option>
           </select>
         </div>
       </div>
@@ -342,7 +344,7 @@ function AdminVerifications() {
 
       <div className="requests-list">
         {loading ? (
-          <div className="text-center py-4">Loading verification requests...</div>
+          <div className="text-center py-4">{t('loadingVerificationRequests')}</div>
         ) : (
           filteredVerifications.map((request) => (
             <div key={request.id} className={`request-card verification-card ${request.status !== 'pending' ? 'processed' : ''}`}>
@@ -369,7 +371,7 @@ function AdminVerifications() {
                 <p className="request-detail">Service Details: {request.serviceDescription}</p>
 
                 {request.rejectionReason && (
-                  <p className="rejection-reason"><strong>Rejection Reason:</strong> {request.rejectionReason}</p>
+                  <p className="rejection-reason"><strong>{t('adminRejectionReason')}:</strong> {request.rejectionReason}</p>
                 )}
 
                 <div className="request-documents">
@@ -377,22 +379,22 @@ function AdminVerifications() {
                     className="btn-view-details"
                     onClick={() => openDocumentPreview(request.documents?.governmentId, 'Government ID')}
                     disabled={!request.documents?.governmentId}
-                    aria-label="Preview government ID document"
+                    aria-label={t('adminPreviewGovernmentIdDocument')}
                   >
-                    View Government ID
+                    {t('adminViewGovernmentId')}
                   </button>
                   <button
                     className="btn-view-details"
                     onClick={() => openDocumentPreview(request.documents?.certifications, 'Certifications')}
                     disabled={!request.documents?.certifications}
-                    aria-label="Preview certifications document"
+                    aria-label={t('adminPreviewCertificationsDocument')}
                   >
-                    View Certifications
+                    {t('adminViewCertifications')}
                   </button>
                 </div>
 
                 {!request.documents?.governmentId && !request.documents?.certifications && (
-                  <p className="request-detail">No document submitted</p>
+                  <p className="request-detail">{t('adminNoDocumentSubmitted')}</p>
                 )}
               </div>
 
@@ -404,14 +406,14 @@ function AdminVerifications() {
                       disabled={actionLoading === `${request.id}-approve`}
                       onClick={() => handleReview(request.id, 'approve')}
                     >
-                      {actionLoading === `${request.id}-approve` ? 'Approving...' : 'Approve Verification'}
+                      {actionLoading === `${request.id}-approve` ? t('adminApproving') : t('adminApproveVerification')}
                     </button>
                     <button
                       className="btn-reject"
                       disabled={actionLoading === `${request.id}-reject`}
                       onClick={() => openRejectDialog(request.id)}
                     >
-                      {actionLoading === `${request.id}-reject` ? 'Rejecting...' : 'Reject Verification'}
+                      {actionLoading === `${request.id}-reject` ? t('requestsDeclining') : t('adminRejectVerification')}
                     </button>
                   </>
                 ) : (
@@ -419,9 +421,9 @@ function AdminVerifications() {
                     className="btn-view-details"
                     onClick={() => openDocumentPreview(request.documents?.governmentId || request.documents?.certifications, 'Verification Document')}
                     disabled={!request.documents?.governmentId && !request.documents?.certifications}
-                    aria-label="Preview verification document"
+                    aria-label={t('adminPreviewVerificationDocument')}
                   >
-                    View Details
+                    {t('viewDetails')}
                   </button>
                 )}
               </div>
@@ -432,40 +434,40 @@ function AdminVerifications() {
 
       {!loading && filteredVerifications.length === 0 && (
         <div className="empty-state">
-          <h3>No verification requests found</h3>
-          <p>Try adjusting your search or filter criteria</p>
+          <h3>{t('noVerificationRequestsFound')}</h3>
+          <p>{t('adminTryAdjustingSearchFilter')}</p>
         </div>
       )}
 
       <div className="admin-page-header" style={{ marginTop: '2rem' }}>
-        <h2 className="admin-page-title" style={{ fontSize: '1.4rem' }}>Provider Credential Reviews</h2>
-        <p className="admin-page-subtitle">Review submitted credentials from service providers</p>
+        <h2 className="admin-page-title" style={{ fontSize: '1.4rem' }}>{t('adminProviderCredentialReviews')}</h2>
+        <p className="admin-page-subtitle">{t('adminReviewSubmittedCredentials')}</p>
       </div>
 
       <div className="mini-stats">
         <div className="mini-stat">
           <span className="mini-stat-value text-warning">{credentialPendingCount}</span>
-          <span className="mini-stat-label">Pending</span>
+          <span className="mini-stat-label">{t('pending')}</span>
         </div>
         <div className="mini-stat">
           <span className="mini-stat-value text-success">{credentialVerifiedCount}</span>
-          <span className="mini-stat-label">Verified</span>
+          <span className="mini-stat-label">{t('verified')}</span>
         </div>
         <div className="mini-stat">
           <span className="mini-stat-value text-danger">{credentialRejectedCount}</span>
-          <span className="mini-stat-label">Rejected</span>
+          <span className="mini-stat-label">{t('rejected')}</span>
         </div>
       </div>
 
       <div className="filters-bar">
         <div className="filter-group">
           <select value={credentialFilterStatus} onChange={(e) => setCredentialFilterStatus(e.target.value)}>
-            <option value="all">All Status</option>
-            <option value="pending">Pending</option>
-            <option value="verified">Verified</option>
-            <option value="rejected">Rejected</option>
-            <option value="expired">Expired</option>
-            <option value="unverified">Unverified</option>
+            <option value="all">{t('allStatuses')}</option>
+            <option value="pending">{t('pending')}</option>
+            <option value="verified">{t('verified')}</option>
+            <option value="rejected">{t('rejected')}</option>
+            <option value="expired">{t('adminExpired')}</option>
+            <option value="unverified">{t('adminUnverified')}</option>
           </select>
         </div>
       </div>
@@ -474,7 +476,7 @@ function AdminVerifications() {
 
       <div className="requests-list">
         {credentialsLoading ? (
-          <div className="text-center py-4">Loading provider credentials...</div>
+          <div className="text-center py-4">{t('adminLoadingProviderCredentials')}</div>
         ) : (
           filteredCredentials.map((credential) => (
             <div key={credential.id} className={`request-card verification-card ${credential.verificationStatus !== 'pending' ? 'processed' : ''}`}>
@@ -487,19 +489,19 @@ function AdminVerifications() {
 
               <div className="request-info">
                 <div className="request-header">
-                  <h4 className="request-name">{credential.provider?.name || 'Unknown Provider'}</h4>
-                  <span className="document-tag">{credential.credentialType || 'Credential'}</span>
+                  <h4 className="request-name">{credential.provider?.name || t('adminUnknownProvider')}</h4>
+                  <span className="document-tag">{credential.credentialType || t('adminCredentialLabel')}</span>
                   <span className={`status-badge status-${credential.verificationStatus === 'verified' ? 'verified' : credential.verificationStatus === 'rejected' ? 'suspended' : 'pending'}`}>
                     {credential.verificationStatus || 'unverified'}
                   </span>
                 </div>
 
-                <p className="request-detail">Credential: {credential.credentialName || 'Unnamed credential'}</p>
-                <p className="request-detail">Issuer: {credential.issuingOrganization || 'Not provided'}</p>
-                <p className="request-detail">Credential ID: {credential.credentialId || 'Not provided'}</p>
-                <p className="request-detail">Submitted: {new Date(credential.createdAt).toLocaleString()}</p>
+                <p className="request-detail">{t('adminCredentialField')}: {credential.credentialName || t('adminUnnamedCredential')}</p>
+                <p className="request-detail">{t('adminIssuerField')}: {credential.issuingOrganization || t('adminNotProvided')}</p>
+                <p className="request-detail">{t('providerCredentialIdLabel')}: {credential.credentialId || t('adminNotProvided')}</p>
+                <p className="request-detail">{t('submittedLabel')}: {new Date(credential.createdAt).toLocaleString()}</p>
                 {credential.verificationNotes && (
-                  <p className="rejection-reason"><strong>Review Note:</strong> {credential.verificationNotes}</p>
+                  <p className="rejection-reason"><strong>{t('adminReviewNote')}:</strong> {credential.verificationNotes}</p>
                 )}
 
                 <div className="request-documents">
@@ -507,9 +509,9 @@ function AdminVerifications() {
                     className="btn-view-details"
                     onClick={() => openDocumentPreview(credential.document, 'Credential Document')}
                     disabled={!credential.document}
-                    aria-label="Preview credential document"
+                    aria-label={t('adminPreviewCredentialDocument')}
                   >
-                    View Credential Document
+                    {t('adminViewCredentialDocument')}
                   </button>
                 </div>
               </div>
@@ -522,21 +524,21 @@ function AdminVerifications() {
                       disabled={credentialActionLoading === `${credential.id}-approve`}
                       onClick={() => handleCredentialReview(credential.id, 'approve')}
                     >
-                      {credentialActionLoading === `${credential.id}-approve` ? 'Approving...' : 'Approve Credential'}
+                      {credentialActionLoading === `${credential.id}-approve` ? t('adminApproving') : t('adminApproveCredential')}
                     </button>
                     <button
                       className="btn-reject"
                       disabled={credentialActionLoading === `${credential.id}-reject`}
                       onClick={() => openCredentialRejectDialog(credential.id)}
                     >
-                      {credentialActionLoading === `${credential.id}-reject` ? 'Rejecting...' : 'Reject Credential'}
+                      {credentialActionLoading === `${credential.id}-reject` ? t('requestsDeclining') : t('adminRejectCredential')}
                     </button>
                     <button
                       className="btn-view-details"
                       disabled={credentialActionLoading === `${credential.id}-expire`}
                       onClick={() => handleCredentialReview(credential.id, 'expire')}
                     >
-                      {credentialActionLoading === `${credential.id}-expire` ? 'Expiring...' : 'Mark Expired'}
+                      {credentialActionLoading === `${credential.id}-expire` ? t('adminExpiring') : t('adminMarkExpired')}
                     </button>
                   </>
                 ) : (
@@ -544,9 +546,9 @@ function AdminVerifications() {
                     className="btn-view-details"
                     onClick={() => openDocumentPreview(credential.document, 'Credential Document')}
                     disabled={!credential.document}
-                    aria-label="Preview credential document"
+                    aria-label={t('adminPreviewCredentialDocument')}
                   >
-                    View Details
+                    {t('viewDetails')}
                   </button>
                 )}
               </div>
@@ -557,8 +559,8 @@ function AdminVerifications() {
 
       {!credentialsLoading && filteredCredentials.length === 0 && (
         <div className="empty-state">
-          <h3>No provider credentials found</h3>
-          <p>Try adjusting your search or filter criteria</p>
+          <h3>{t('adminNoProviderCredentialsFound')}</h3>
+          <p>{t('adminTryAdjustingSearchFilter')}</p>
         </div>
       )}
 
@@ -575,7 +577,7 @@ function AdminVerifications() {
               type="button"
               className="admin-document-preview-close"
               onClick={closeDocumentPreview}
-              aria-label="Close document preview"
+              aria-label={t('adminCloseDocumentPreview')}
             >
               ×
             </button>
@@ -586,9 +588,9 @@ function AdminVerifications() {
                   type="button"
                   className="admin-document-zoom-toggle"
                   onClick={() => setIsImageZoomed((prev) => !prev)}
-                  aria-label={isImageZoomed ? 'Reset image zoom' : 'Enlarge image'}
+                  aria-label={isImageZoomed ? t('adminResetImageZoom') : t('adminEnlargeImage')}
                 >
-                  {isImageZoomed ? 'Reset Zoom' : 'Enlarge'}
+                  {isImageZoomed ? t('adminResetZoom') : t('adminEnlarge')}
                 </button>
                 <img
                   src={documentPreview.dataUrl}
@@ -607,14 +609,14 @@ function AdminVerifications() {
                   className="admin-document-preview-pdf"
                 />
                 <p className="admin-document-preview-fallback">
-                  If the PDF cannot be previewed in this browser, download support may be required in your environment.
+                  {t('adminPdfPreviewFallback')}
                 </p>
               </div>
             ) : null}
 
             {documentPreview.kind === 'unknown' ? (
               <div className="admin-document-preview-unsupported">
-                <p>Preview is not available for this document type.</p>
+                <p>{t('adminPreviewUnavailableForType')}</p>
               </div>
             ) : null}
           </div>
@@ -631,12 +633,12 @@ function AdminVerifications() {
         >
           <div className="admin-dialog-card danger" onClick={(event) => event.stopPropagation()}>
             <div className="admin-dialog-header">
-              <h2 id="verification-reject-title" className="admin-dialog-title">Reject Verification Request</h2>
+              <h2 id="verification-reject-title" className="admin-dialog-title">{t('adminRejectVerificationRequest')}</h2>
               <button
                 type="button"
                 className="admin-dialog-close"
                 onClick={closeRejectDialog}
-                aria-label="Close rejection dialog"
+                aria-label={t('adminCloseRejectionDialog')}
               >
                 ×
               </button>
@@ -644,7 +646,7 @@ function AdminVerifications() {
 
             <div className="admin-dialog-body">
               <label htmlFor="verification-rejection-reason" className="settings-label">
-                Rejection reason
+                {t('adminRejectionReason')}
               </label>
               <textarea
                 id="verification-rejection-reason"
@@ -672,7 +674,7 @@ function AdminVerifications() {
                 onClick={closeRejectDialog}
                 disabled={actionLoading === `${rejectDialog.requestId}-reject`}
               >
-                Cancel
+                {t('requestsCancelAction')}
               </button>
               <button
                 type="button"
@@ -680,7 +682,7 @@ function AdminVerifications() {
                 onClick={() => handleReview(rejectDialog.requestId, 'reject', rejectDialog.reason)}
                 disabled={actionLoading === `${rejectDialog.requestId}-reject` || !rejectDialog.reason.trim()}
               >
-                {actionLoading === `${rejectDialog.requestId}-reject` ? 'Rejecting...' : 'Confirm Rejection'}
+                {actionLoading === `${rejectDialog.requestId}-reject` ? t('requestsDeclining') : t('adminConfirmRejection')}
               </button>
             </div>
           </div>
@@ -697,12 +699,12 @@ function AdminVerifications() {
         >
           <div className="admin-dialog-card danger" onClick={(event) => event.stopPropagation()}>
             <div className="admin-dialog-header">
-              <h2 id="credential-reject-title" className="admin-dialog-title">Reject Credential</h2>
+              <h2 id="credential-reject-title" className="admin-dialog-title">{t('adminRejectCredential')}</h2>
               <button
                 type="button"
                 className="admin-dialog-close"
                 onClick={closeCredentialRejectDialog}
-                aria-label="Close credential rejection dialog"
+                aria-label={t('adminCloseCredentialRejectionDialog')}
               >
                 ×
               </button>
@@ -710,7 +712,7 @@ function AdminVerifications() {
 
             <div className="admin-dialog-body">
               <label htmlFor="credential-rejection-reason" className="settings-label">
-                Rejection reason
+                {t('adminRejectionReason')}
               </label>
               <textarea
                 id="credential-rejection-reason"
@@ -738,7 +740,7 @@ function AdminVerifications() {
                 onClick={closeCredentialRejectDialog}
                 disabled={credentialActionLoading === `${credentialRejectDialog.credentialId}-reject`}
               >
-                Cancel
+                {t('requestsCancelAction')}
               </button>
               <button
                 type="button"
@@ -746,7 +748,7 @@ function AdminVerifications() {
                 onClick={() => handleCredentialReview(credentialRejectDialog.credentialId, 'reject', credentialRejectDialog.reason)}
                 disabled={credentialActionLoading === `${credentialRejectDialog.credentialId}-reject` || !credentialRejectDialog.reason.trim()}
               >
-                {credentialActionLoading === `${credentialRejectDialog.credentialId}-reject` ? 'Rejecting...' : 'Confirm Rejection'}
+                {credentialActionLoading === `${credentialRejectDialog.credentialId}-reject` ? t('requestsDeclining') : t('adminConfirmRejection')}
               </button>
             </div>
           </div>

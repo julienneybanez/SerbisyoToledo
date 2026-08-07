@@ -1,36 +1,38 @@
 import { useEffect, useMemo, useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { serviceRequestAPI } from '../../services/api';
+import { useLanguage } from '../../context/LanguageContext';
 
 const ROLE_ITEMS = {
   guest: [
-    { to: '/', label: 'Home', icon: 'bi-house-door' },
-    { to: '/feed', label: 'Browse', icon: 'bi-search' },
-    { to: '/login', label: 'Log In', icon: 'bi-box-arrow-in-right' },
-    { to: '/register', label: 'Sign Up', icon: 'bi-person-plus' },
+    { to: '/', labelKey: 'home', icon: 'bi-house-door' },
+    { to: '/feed', labelKey: 'browseShort', icon: 'bi-search' },
+    { to: '/login', labelKey: 'logInShort', icon: 'bi-box-arrow-in-right' },
+    { to: '/register', labelKey: 'signUpShort', icon: 'bi-person-plus' },
   ],
   client: [
-    { to: '/', label: 'Home', icon: 'bi-house-door' },
-    { to: '/feed', label: 'Browse', icon: 'bi-search' },
-    { to: '/requests', label: 'Requests', icon: 'bi-inbox' },
-    { action: 'edit-profile', label: 'Profile', icon: 'bi-person' },
+    { to: '/', labelKey: 'home', icon: 'bi-house-door' },
+    { to: '/feed', labelKey: 'browseShort', icon: 'bi-search' },
+    { to: '/requests', labelKey: 'requests', icon: 'bi-inbox' },
+    { action: 'edit-profile', labelKey: 'profile', icon: 'bi-person' },
   ],
   tradesperson: [
-    { to: '/dashboard', label: 'Dashboard', icon: 'bi-speedometer2' },
-    { to: '/requests', label: 'Requests', icon: 'bi-inbox' },
-    { action: 'profile-menu', label: 'Profile', icon: 'bi-person-circle' },
-    { to: '/provider-settings', label: 'Settings', icon: 'bi-gear' },
+    { to: '/dashboard', labelKey: 'dashboardShort', icon: 'bi-speedometer2' },
+    { to: '/requests', labelKey: 'requests', icon: 'bi-inbox' },
+    { to: '/provider-settings?section=availability', labelKey: 'schedule', icon: 'bi-calendar3' },
+    { action: 'profile-menu', labelKey: 'profile', icon: 'bi-person-circle' },
   ],
   admin: [
-    { to: '/admin/dashboard', label: 'Dashboard', icon: 'bi-speedometer2' },
-    { to: '/admin/users', label: 'Users', icon: 'bi-people' },
-    { to: '/admin/verifications', label: 'Verify', icon: 'bi-patch-check' },
-    { to: '/admin/reports', label: 'Reports', icon: 'bi-flag' },
-    { to: '/admin/settings', label: 'More', icon: 'bi-three-dots' },
+    { to: '/admin/dashboard', labelKey: 'dashboardShort', icon: 'bi-speedometer2' },
+    { to: '/admin/users', labelKey: 'usersShort', icon: 'bi-people' },
+    { to: '/admin/verifications', labelKey: 'verifyShort', icon: 'bi-patch-check' },
+    { to: '/admin/reports', labelKey: 'reports', icon: 'bi-flag' },
+    { to: '/admin/settings', labelKey: 'more', icon: 'bi-three-dots' },
   ],
 };
 
 export default function MobileBottomNav({ role = 'client', profileMenuOpen = false, onProfileTap }) {
+  const { t } = useLanguage();
   const [pendingRequests, setPendingRequests] = useState(0);
   const items = useMemo(() => ROLE_ITEMS[role] || ROLE_ITEMS.client, [role]);
 
@@ -67,39 +69,45 @@ export default function MobileBottomNav({ role = 'client', profileMenuOpen = fal
 
   return (
     <nav className="mobile-bottom-nav" aria-label="Mobile navigation">
-      {items.map((item) => (
-        item.action === 'profile-menu' || item.action === 'edit-profile' ? (
+      {items.map((item) => {
+        const label = t(item.labelKey || item.label || '');
+
+        if (item.action === 'profile-menu' || item.action === 'edit-profile') {
+          return (
           <button
-            key={item.label}
+            key={label}
             type="button"
             className={`mobile-bottom-nav-item mobile-bottom-nav-action ${profileMenuOpen ? 'active' : ''}`}
             onClick={onProfileTap}
-            aria-label={item.action === 'edit-profile' ? 'Edit profile' : 'Open profile menu'}
+            aria-label={item.action === 'edit-profile' ? t('editProfile') : t('openProfileMenu')}
             aria-pressed={profileMenuOpen}
           >
             <span className="mobile-bottom-nav-icon-wrap">
               <i className={`bi ${item.icon}`} aria-hidden="true"></i>
             </span>
-            <span className="mobile-bottom-nav-label">{item.label}</span>
+            <span className="mobile-bottom-nav-label">{label}</span>
           </button>
-        ) : (
+          );
+        }
+
+        return (
           <NavLink
-            key={item.label}
+            key={label}
             to={item.to}
             className={({ isActive }) => `mobile-bottom-nav-item ${isActive ? 'active' : ''}`}
           >
             <span className="mobile-bottom-nav-icon-wrap">
               <i className={`bi ${item.icon}`} aria-hidden="true"></i>
-              {role === 'tradesperson' && item.label === 'Requests' && pendingRequests > 0 && (
+              {role === 'tradesperson' && item.labelKey === 'requests' && pendingRequests > 0 && (
                 <span className="mobile-bottom-nav-badge" aria-label={`${pendingRequests} pending requests`}>
                   {pendingRequests > 99 ? '99+' : pendingRequests}
                 </span>
               )}
             </span>
-            <span className="mobile-bottom-nav-label">{item.label}</span>
+            <span className="mobile-bottom-nav-label">{label}</span>
           </NavLink>
-        )
-      ))}
+        );
+      })}
     </nav>
   );
 }

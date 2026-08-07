@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { getUser, isAuthenticated, serviceProfileAPI, serviceRequestAPI } from "../services/api";
 import { categories } from "../data/data";
 import ProfileCompletionChecklist from "../components/common/ProfileCompletionChecklist";
+import { useLanguage } from "../context/LanguageContext";
 import {
   SearchIcon,
   FilterIcon,
@@ -12,6 +13,7 @@ import {
 } from "../components/common/Icons";
 
 export default function Feed() {
+  const { t } = useLanguage();
   const [activeCategory, setActiveCategory] = useState("All");
   const [showFilters, setShowFilters] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
@@ -70,12 +72,12 @@ export default function Feed() {
         if (result.success) {
           setServiceProviders(result.data);
         } else {
-          setError(result.message || 'Failed to fetch service providers');
+          setError(result.message || t('feedFetchFailed'));
         }
       } catch (err) {
         if (!isCurrentRequest) return;
         console.error('Error fetching profiles:', err);
-        setError('We could not load service providers. Please try again.');
+        setError(t('feedLoadError'));
       } finally {
         if (isCurrentRequest) {
           setIsLoading(false);
@@ -91,7 +93,7 @@ export default function Feed() {
       isCurrentRequest = false;
       window.removeEventListener('profileCreated', fetchProfiles);
     };
-  }, [activeCategory, filters, searchTerm]);
+  }, [activeCategory, filters, searchTerm, t]);
 
   useEffect(() => {
     const fetchClientChecklistData = async () => {
@@ -106,63 +108,63 @@ export default function Feed() {
           setHasClientRequest((response.data.requests || []).length > 0);
         }
       } catch {
-        setClientChecklistError('Unable to load some onboarding progress right now.');
+        setClientChecklistError(t('feedChecklistLoadError'));
       } finally {
         setClientChecklistLoading(false);
       }
     };
 
     fetchClientChecklistData();
-  }, [isClient]);
+  }, [isClient, t]);
 
   const clientChecklistTasks = [
     {
       key: 'basic-profile',
-      label: 'Complete your basic profile',
-      description: 'Make sure your name and email are set.',
+      label: t('feedChecklistBasicProfileLabel'),
+      description: t('feedChecklistBasicProfileDescription'),
       completed: Boolean(user?.fullName && user?.email),
       actionType: 'link',
       to: '/client-settings',
-      actionLabel: 'Open Settings',
+      actionLabel: t('feedChecklistOpenSettings'),
     },
     {
       key: 'contact-info',
-      label: 'Add your contact information',
-      description: 'Add a phone number so providers can reach you when needed.',
+      label: t('feedChecklistContactLabel'),
+      description: t('feedChecklistContactDescription'),
       completed: Boolean(user?.phone),
       actionType: 'link',
       to: '/client-settings',
-      actionLabel: 'Add Contact',
+      actionLabel: t('feedChecklistAddContact'),
     },
     {
       key: 'location',
-      label: 'Add or confirm your location',
-      description: 'Set your address to help with nearby service matching.',
+      label: t('feedChecklistLocationLabel'),
+      description: t('feedChecklistLocationDescription'),
       completed: Boolean(user?.address),
       actionType: 'link',
       to: '/client-settings?section=address',
-      actionLabel: 'Update Location',
+      actionLabel: t('feedChecklistUpdateLocation'),
     },
     {
       key: 'browse-services',
-      label: 'Browse available services',
-      description: 'Explore providers and service categories.',
+      label: t('feedChecklistBrowseLabel'),
+      description: t('feedChecklistBrowseDescription'),
       completed: true,
       actionType: 'link',
       to: '/feed',
-      actionLabel: 'Browse',
+      actionLabel: t('browseShort'),
     },
     {
       key: 'first-booking',
-      label: 'Send your first booking request',
-      description: 'Open a provider profile and submit a service request.',
+      label: t('feedChecklistFirstBookingLabel'),
+      description: t('feedChecklistFirstBookingDescription'),
       completed: hasClientRequest,
       actionType: 'button',
       onAction: () => {
         const providerList = document.getElementById('providers-list');
         providerList?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       },
-      actionLabel: 'Find Providers',
+      actionLabel: t('feedChecklistFindProviders'),
     },
   ];
 
@@ -191,12 +193,12 @@ export default function Feed() {
     <div className="feed-shell">
       <div className="feed-container">
         <div className="feed-page-header">
-          <h2 className="feed-page-title" data-tour="browse-services">Find a service provider</h2>
-          <p className="feed-page-subtitle">Compare providers by service, availability, location, and reviews.</p>
+          <h2 className="feed-page-title" data-tour="browse-services">{t('feedTitle')}</h2>
+          <p className="feed-page-subtitle">{t('feedSubtitle')}</p>
 
           {isClient && (
             <ProfileCompletionChecklist
-              title="Getting Started"
+              title={t('feedGettingStarted')}
               tasks={clientChecklistTasks}
               loading={clientChecklistLoading}
               error={clientChecklistError}
@@ -208,41 +210,41 @@ export default function Feed() {
             <div className="search-input-large">
               <SearchIcon />
               <input
-                placeholder="Search by provider, service, skill, or location"
+                placeholder={t('feedSearchPlaceholder')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                aria-label="Search by service, provider, or location"
+                aria-label={t('feedSearchAria')}
               />
             </div>
             <button 
               className={`btn-filter ${showFilters ? "active" : ""}`}
               onClick={toggleFilters}
             >
-              <FilterIcon /> Filters
+              <FilterIcon /> {t('filters')}
             </button>
           </div>
 
           {showFilters && (
             <div className={`advanced-filters ${isClosing ? "closing" : ""}`}>
               <div className="filters-header">
-                <span className="filters-title">Advanced Filters</span>
+                <span className="filters-title">{t('advancedFilters')}</span>
                 <button className="clear-filters-btn" onClick={clearFilters}>
-                  Clear Filters
+                  {t('clearFilters')}
                 </button>
               </div>
               <div className="filters-grid">
                 <div className="feed-filter-group">
-                  <label className="feed-filter-label">Location</label>
+                  <label className="feed-filter-label">{t('location')}</label>
                   <input
                     type="text"
                     className="feed-filter-input"
-                    placeholder="Enter location"
+                    placeholder={t('feedEnterLocation')}
                     value={filters.location}
                     onChange={(e) => setFilters({ ...filters, location: e.target.value })}
                   />
                 </div>
                 <div className="feed-filter-group">
-                  <label className="feed-filter-label">Min. Price</label>
+                  <label className="feed-filter-label">{t('minPrice')}</label>
                   <input
                     type="number"
                     className="feed-filter-input"
@@ -252,7 +254,7 @@ export default function Feed() {
                   />
                 </div>
                 <div className="feed-filter-group">
-                  <label className="feed-filter-label">Max. Price</label>
+                  <label className="feed-filter-label">{t('maxPrice')}</label>
                   <input
                     type="number"
                     className="feed-filter-input"
@@ -262,17 +264,17 @@ export default function Feed() {
                   />
                 </div>
                 <div className="feed-filter-group">
-                  <label className="feed-filter-label">Minimum Rating</label>
+                  <label className="feed-filter-label">{t('minimumRating')}</label>
                   <select
                     className="feed-filter-select"
                     value={filters.minRating}
                     onChange={(e) => setFilters({ ...filters, minRating: e.target.value })}
                   >
-                    <option value="">Any rating</option>
-                    <option value="4.5">4.5+ stars</option>
-                    <option value="4">4+ stars</option>
-                    <option value="3.5">3.5+ stars</option>
-                    <option value="3">3+ stars</option>
+                    <option value="">{t('anyRating')}</option>
+                    <option value="4.5">{t('rating45')}</option>
+                    <option value="4">{t('rating4')}</option>
+                    <option value="3.5">{t('rating35')}</option>
+                    <option value="3">{t('rating3')}</option>
                   </select>
                 </div>
               </div>
@@ -298,7 +300,7 @@ export default function Feed() {
           {isLoading && (
             <div className="loading-container">
               <div className="spinner"></div>
-              <p>Loading service providers...</p>
+              <p>{t('feedLoadingProviders')}</p>
             </div>
           )}
 
@@ -310,9 +312,9 @@ export default function Feed() {
 
           {!isLoading && !error && serviceProviders.length === 0 && (
             <div className="no-providers-container">
-              <h3>No providers match your filters.</h3>
-              <p>Try changing your category, search term, or advanced filters.</p>
-              <button type="button" className="btn-view-profile" onClick={clearFilters}>Clear Filters</button>
+              <h3>{t('feedNoProvidersTitle')}</h3>
+              <p>{t('feedNoProvidersSubtitle')}</p>
+              <button type="button" className="btn-view-profile" onClick={clearFilters}>{t('clearFilters')}</button>
             </div>
           )}
 
@@ -343,7 +345,7 @@ export default function Feed() {
                   {p.description}
                 </p>
 
-                <p className="provider-service-line">{p.tags?.[0] || 'General Services'}</p>
+                <p className="provider-service-line">{p.tags?.[0] || t('generalServices')}</p>
 
                 {p.tags?.length > 0 && (
                   <div className="provider-tags">
@@ -357,7 +359,7 @@ export default function Feed() {
 
                 <div className="provider-footer">
                   <div className="price-block">
-                    <span className="price-label">Starting at</span>
+                    <span className="price-label">{t('startingAt')}</span>
                     <span className="price">₱{p.startingPrice}</span>
                   </div>
                   <button
@@ -367,7 +369,7 @@ export default function Feed() {
                       navigate(`/provider/${p.id}`)
                     }
                   >
-                    View Profile
+                    {t('viewProfile')}
                   </button>
                 </div>
               </div>

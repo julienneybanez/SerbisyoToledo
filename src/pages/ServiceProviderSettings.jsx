@@ -1,27 +1,30 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { getUser, userProfileAPI, serviceProfileAPI } from '../services/api';
 import ThemeToggle from '../components/common/ThemeToggle';
+import { useLanguage } from '../context/LanguageContext';
 import '../styles/UserSettings.css';
 
 const LANGUAGE_OPTIONS = [
-  { value: 'ceb', label: 'Cebuano' },
-  { value: 'en', label: 'English' },
-  { value: 'fil', label: 'Filipino' },
+  { value: 'ceb', labelKey: 'languageOptionCebuano' },
+  { value: 'en', labelKey: 'languageOptionEnglish' },
+  { value: 'fil', labelKey: 'languageOptionFilipino' },
 ];
 
 const WEEK_DAYS = [
-  { key: 1, label: 'Monday' },
-  { key: 2, label: 'Tuesday' },
-  { key: 3, label: 'Wednesday' },
-  { key: 4, label: 'Thursday' },
-  { key: 5, label: 'Friday' },
-  { key: 6, label: 'Saturday' },
-  { key: 0, label: 'Sunday' },
+  { key: 1, labelKey: 'weekdayMonday' },
+  { key: 2, labelKey: 'weekdayTuesday' },
+  { key: 3, labelKey: 'weekdayWednesday' },
+  { key: 4, labelKey: 'weekdayThursday' },
+  { key: 5, labelKey: 'weekdayFriday' },
+  { key: 6, labelKey: 'weekdaySaturday' },
+  { key: 0, labelKey: 'weekdaySunday' },
 ];
 
 function ServiceProviderSettings() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { t } = useLanguage();
   const [activeSection, setActiveSection] = useState('account');
   const [isSaving, setIsSaving] = useState(false);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
@@ -77,6 +80,16 @@ function ServiceProviderSettings() {
     showAvailability: true,
     minimumJobAmount: ''
   });
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const section = params.get('section');
+    const allowedSections = new Set(['account', 'business', 'availability', 'notifications', 'privacy']);
+
+    if (section && allowedSections.has(section)) {
+      setActiveSection(section);
+    }
+  }, [location.search]);
 
   useEffect(() => {
     const currentUser = getUser();
@@ -192,10 +205,10 @@ function ServiceProviderSettings() {
 
       const response = await userProfileAPI.updateProfile(submitData);
       if (response.success) {
-        alert('Settings saved successfully!');
+        alert(t('providerSettingsSavedSuccess'));
       }
     } catch (err) {
-      alert(err.message || 'Failed to save settings');
+      alert(err.message || t('providerSettingsSaveFailed'));
     } finally {
       setIsSaving(false);
     }
@@ -208,9 +221,9 @@ function ServiceProviderSettings() {
         settings: availabilitySettings,
         weeklyBlocks,
       });
-      alert('Availability updated successfully.');
+      alert(t('providerAvailabilityUpdatedSuccess'));
     } catch (err) {
-      alert(err.message || 'Failed to save availability settings');
+      alert(err.message || t('providerAvailabilitySaveFailed'));
     } finally {
       setIsSaving(false);
     }
@@ -226,9 +239,9 @@ function ServiceProviderSettings() {
     try {
       setLanguageSaving(true);
       await serviceProfileAPI.updateMyLanguages(selectedLanguages);
-      alert('Languages updated successfully.');
+      alert(t('providerLanguagesUpdatedSuccess'));
     } catch (err) {
-      alert(err.message || 'Failed to update languages');
+      alert(err.message || t('providerLanguagesUpdateFailed'));
     } finally {
       setLanguageSaving(false);
     }
@@ -251,12 +264,12 @@ function ServiceProviderSettings() {
 
   const handleAddAvailabilityException = async () => {
     if (!newException.exceptionDate) {
-      alert('Please choose an exception date.');
+      alert(t('providerExceptionDateRequired'));
       return;
     }
 
     if ((newException.startTime && !newException.endTime) || (!newException.startTime && newException.endTime)) {
-      alert('Provide both start and end time, or leave both blank for whole-day exception.');
+      alert(t('providerExceptionTimePairRequired'));
       return;
     }
 
@@ -291,7 +304,7 @@ function ServiceProviderSettings() {
         reason: '',
       });
     } catch (err) {
-      alert(err.message || 'Failed to add availability exception');
+      alert(err.message || t('providerAddExceptionFailed'));
     } finally {
       setExceptionSaving(false);
     }
@@ -303,7 +316,7 @@ function ServiceProviderSettings() {
       await serviceProfileAPI.deleteAvailabilityException(exceptionId);
       setAvailabilityExceptions((prev) => prev.filter((item) => Number(item.id) !== Number(exceptionId)));
     } catch (err) {
-      alert(err.message || 'Failed to delete exception');
+      alert(err.message || t('providerDeleteExceptionFailed'));
     } finally {
       setExceptionSaving(false);
     }
@@ -311,7 +324,7 @@ function ServiceProviderSettings() {
 
   const handleCreateCredential = async () => {
     if (!newCredential.credentialName.trim() || !newCredential.credentialType.trim()) {
-      alert('Credential name and type are required.');
+      alert(t('providerCredentialNameTypeRequired'));
       return;
     }
 
@@ -347,9 +360,9 @@ function ServiceProviderSettings() {
         credentialUrl: '',
       });
       setCredentialFile(null);
-      alert('Credential saved successfully. Submit it for review when ready.');
+      alert(t('providerCredentialSavedSuccess'));
     } catch (err) {
-      alert(err.message || 'Failed to create credential');
+      alert(err.message || t('providerCredentialCreateFailed'));
     } finally {
       setCredentialSaving(false);
     }
@@ -363,9 +376,9 @@ function ServiceProviderSettings() {
       if (updated.success) {
         setCredentials(updated.data?.credentials || []);
       }
-      alert('Credential submitted for review.');
+      alert(t('providerCredentialSubmittedSuccess'));
     } catch (err) {
-      alert(err.message || 'Failed to submit credential');
+      alert(err.message || t('providerCredentialSubmitFailed'));
     } finally {
       setCredentialSaving(false);
     }
@@ -374,10 +387,10 @@ function ServiceProviderSettings() {
   return (
     <div className="user-settings-container">
       <div className="page-header">
-        <h1 className="page-title">Service Provider Settings</h1>
-        <p className="page-subtitle">Manage your business and account preferences</p>
+        <h1 className="page-title">{t('providerSettingsPageTitle')}</h1>
+        <p className="page-subtitle">{t('providerSettingsPageSubtitle')}</p>
         <div className="settings-theme-row">
-          <span className="settings-theme-label">Appearance</span>
+          <span className="settings-theme-label">{t('appearance')}</span>
           <ThemeToggle />
         </div>
       </div>
@@ -393,7 +406,7 @@ function ServiceProviderSettings() {
               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
               <circle cx="12" cy="7" r="4"></circle>
             </svg>
-            Account
+            {t('account')}
           </button>
           <button 
             className={`settings-nav-item ${activeSection === 'business' ? 'active' : ''}`}
@@ -404,7 +417,7 @@ function ServiceProviderSettings() {
               <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
               <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"></path>
             </svg>
-            Business
+            {t('providerSettingsNavBusiness')}
           </button>
           <button 
             className={`settings-nav-item ${activeSection === 'availability' ? 'active' : ''}`}
@@ -418,7 +431,7 @@ function ServiceProviderSettings() {
               <path d="M1 12h6m6 0h6"></path>
               <path d="M4.22 19.78l4.24-4.24m5.08-5.08l4.24-4.24"></path>
             </svg>
-            Availability
+            {t('providerSettingsNavAvailability')}
           </button>
           <button 
             className={`settings-nav-item ${activeSection === 'notifications' ? 'active' : ''}`}
@@ -428,7 +441,7 @@ function ServiceProviderSettings() {
               <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
               <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
             </svg>
-            Notifications
+            {t('notifications')}
           </button>
           <button 
             className={`settings-nav-item ${activeSection === 'privacy' ? 'active' : ''}`}
@@ -437,7 +450,7 @@ function ServiceProviderSettings() {
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
             </svg>
-            Privacy
+            {t('providerSettingsNavPrivacy')}
           </button>
         </div>
 
@@ -445,128 +458,128 @@ function ServiceProviderSettings() {
         <div className="settings-content">
           {activeSection === 'account' && (
             <div className="settings-section">
-              <h2 className="settings-section-title">Account Settings</h2>
+              <h2 className="settings-section-title">{t('providerAccountSettingsTitle')}</h2>
               
               <div className="settings-group">
-                <label className="settings-label">Full Name</label>
+                <label className="settings-label">{t('fullName')}</label>
                 <input
                   type="text"
                   className="settings-input"
                   value={settings.fullName}
                   onChange={(e) => handleChange('fullName', e.target.value)}
-                  placeholder="Your full name"
+                  placeholder={t('providerPlaceholderFullName')}
                   disabled={isLoadingProfile || isSaving}
                 />
               </div>
 
               <div className="settings-group">
-                <label className="settings-label">Email Address</label>
+                <label className="settings-label">{t('emailAddress')}</label>
                 <input
                   type="email"
                   className="settings-input"
                   value={settings.email}
                   readOnly
-                  placeholder="your.email@example.com"
+                  placeholder={t('providerPlaceholderEmail')}
                   disabled
                 />
-                <small className="settings-help">Your email address is used for login and service notifications</small>
+                <small className="settings-help">{t('providerEmailHelpText')}</small>
               </div>
 
               <div className="settings-group">
-                <label className="settings-label">Personal Phone Number</label>
+                <label className="settings-label">{t('providerPersonalPhoneLabel')}</label>
                 <input
                   type="tel"
                   className="settings-input"
                   value={settings.phone}
                   onChange={(e) => handleChange('phone', e.target.value)}
-                  placeholder="+63 912 345 6789"
+                  placeholder={t('providerPlaceholderPhone')}
                   disabled={isLoadingProfile || isSaving}
                 />
               </div>
 
               <div className="settings-section-divider"></div>
 
-              <h3 className="settings-subsection-title">Password & Security</h3>
+              <h3 className="settings-subsection-title">{t('providerPasswordSecurityTitle')}</h3>
               <button className="btn-change-password">
-                Change Password
+                {t('providerChangePassword')}
               </button>
-              <small className="settings-help">Keep your account secure by using a strong, unique password</small>
+              <small className="settings-help">{t('providerPasswordSecurityHelp')}</small>
             </div>
           )}
 
           {activeSection === 'business' && (
             <div className="settings-section">
-              <h2 className="settings-section-title">Business Information</h2>
+              <h2 className="settings-section-title">{t('providerBusinessInformationTitle')}</h2>
               
               <div className="settings-group">
-                <label className="settings-label">Business Name</label>
+                <label className="settings-label">{t('providerBusinessNameLabel')}</label>
                 <input
                   type="text"
                   className="settings-input"
                   value={settings.businessName}
                   onChange={(e) => handleChange('businessName', e.target.value)}
-                  placeholder="Your business name"
+                  placeholder={t('providerPlaceholderBusinessName')}
                 />
               </div>
 
               <div className="settings-group">
-                <label className="settings-label">Business Phone Number</label>
+                <label className="settings-label">{t('providerBusinessPhoneLabel')}</label>
                 <input
                   type="tel"
                   className="settings-input"
                   value={settings.businessPhone}
                   onChange={(e) => handleChange('businessPhone', e.target.value)}
-                  placeholder="+63 912 345 6789"
+                  placeholder={t('providerPlaceholderPhone')}
                 />
               </div>
 
               <div className="settings-group">
-                <label className="settings-label">Business Address</label>
+                <label className="settings-label">{t('providerBusinessAddressLabel')}</label>
                 <input
                   type="text"
                   className="settings-input"
                   value={settings.businessAddress}
                   onChange={(e) => handleChange('businessAddress', e.target.value)}
-                  placeholder="123 Business Street"
+                  placeholder={t('providerPlaceholderBusinessAddress')}
                   disabled={isLoadingProfile || isSaving}
                 />
               </div>
 
               <div className="settings-group">
-                <label className="settings-label">Business City</label>
+                <label className="settings-label">{t('providerBusinessCityLabel')}</label>
                 <input
                   type="text"
                   className="settings-input"
                   value={settings.businessCity}
                   onChange={(e) => handleChange('businessCity', e.target.value)}
-                  placeholder="Toledo"
+                  placeholder={t('providerPlaceholderBusinessCity')}
                 />
               </div>
 
               <div className="settings-group">
-                <label className="settings-label">Minimum Job Amount (₱)</label>
+                <label className="settings-label">{t('providerMinimumJobAmountLabel')}</label>
                 <input
                   type="number"
                   className="settings-input"
                   value={settings.minimumJobAmount}
                   onChange={(e) => handleChange('minimumJobAmount', e.target.value)}
-                  placeholder="500"
+                  placeholder={t('providerPlaceholderMinimumAmount')}
                   min="0"
                 />
-                <small className="settings-help">Leave blank for no minimum. Clients can still request, but you can decline.</small>
+                <small className="settings-help">{t('providerMinimumJobAmountHelp')}</small>
               </div>
 
               <div className="settings-group">
-                <label className="settings-label">Service Area</label>
+                <label className="settings-label">{t('providerServiceAreaLabel')}</label>
                 <select 
                   className="settings-select"
                   value={settings.serviceArea}
                   onChange={(e) => handleChange('serviceArea', e.target.value)}
                 >
-                  <option value="Toledo City">Toledo City</option>
-                  <option value="Toledo City + Barangays">Toledo City + Barangays</option>
-                  <option value="Extended Area">Extended Area (30km)</option>
-                  <option value="Province-wide">Province-wide</option>
+                  <option value="Toledo City">{t('providerServiceAreaToledoCity')}</option>
+                  <option value="Toledo City + Barangays">{t('providerServiceAreaToledoPlusBarangays')}</option>
+                  <option value="Extended Area">{t('providerServiceAreaExtended')}</option>
+                  <option value="Province-wide">{t('providerServiceAreaProvinceWide')}</option>
                 </select>
               </div>
             </div>
@@ -574,29 +587,29 @@ function ServiceProviderSettings() {
 
           {activeSection === 'availability' && (
             <div className="settings-section">
-              <h2 className="settings-section-title">Availability & Job Settings</h2>
+              <h2 className="settings-section-title">{t('providerAvailabilityJobSettingsTitle')}</h2>
               
               <div className="settings-toggle-group">
                 <div className="settings-toggle">
                   <label className="toggle-label">
-                    <span>Availability Status</span>
-                    <small>Let clients know if you're currently accepting jobs</small>
+                    <span>{t('providerAvailabilityStatusLabel')}</span>
+                    <small>{t('providerAvailabilityStatusHelp')}</small>
                   </label>
                   <select 
                     className="settings-select"
                     value={settings.availability}
                     onChange={(e) => handleChange('availability', e.target.value)}
                   >
-                    <option value="available">Available</option>
-                    <option value="busy">Busy (Limited)</option>
-                    <option value="unavailable">Unavailable</option>
+                    <option value="available">{t('providerAvailabilityStatusAvailable')}</option>
+                    <option value="busy">{t('providerAvailabilityStatusBusy')}</option>
+                    <option value="unavailable">{t('providerAvailabilityStatusUnavailable')}</option>
                   </select>
                 </div>
 
                 <div className="settings-toggle">
                   <label className="toggle-label">
-                    <span>Show Availability Status</span>
-                    <small>Display your availability on your profile</small>
+                    <span>{t('providerShowAvailabilityStatusLabel')}</span>
+                    <small>{t('providerShowAvailabilityStatusHelp')}</small>
                   </label>
                   <label className="switch">
                     <input
@@ -610,8 +623,8 @@ function ServiceProviderSettings() {
 
                 <div className="settings-toggle">
                   <label className="toggle-label">
-                    <span>Auto-Accept Service Requests</span>
-                    <small>Automatically accept requests from verified clients</small>
+                    <span>{t('providerAutoAcceptRequestsLabel')}</span>
+                    <small>{t('providerAutoAcceptRequestsHelp')}</small>
                   </label>
                   <label className="switch">
                     <input
@@ -625,10 +638,10 @@ function ServiceProviderSettings() {
               </div>
 
               <div className="settings-section-divider"></div>
-              <h3 className="settings-subsection-title">Booking Configuration</h3>
+              <h3 className="settings-subsection-title">{t('providerBookingConfigurationTitle')}</h3>
 
               <div className="settings-group">
-                <label className="settings-label">Allow same-day booking</label>
+                <label className="settings-label">{t('providerAllowSameDayBookingLabel')}</label>
                 <label className="switch">
                   <input
                     type="checkbox"
@@ -641,7 +654,7 @@ function ServiceProviderSettings() {
               </div>
 
               <div className="settings-group">
-                <label className="settings-label">Minimum advance notice (minutes)</label>
+                <label className="settings-label">{t('providerMinAdvanceNoticeLabel')}</label>
                 <input
                   type="number"
                   className="settings-input"
@@ -654,7 +667,7 @@ function ServiceProviderSettings() {
               </div>
 
               <div className="settings-group">
-                <label className="settings-label">Maximum advance booking days</label>
+                <label className="settings-label">{t('providerMaxAdvanceBookingDaysLabel')}</label>
                 <input
                   type="number"
                   className="settings-input"
@@ -667,7 +680,7 @@ function ServiceProviderSettings() {
               </div>
 
               <div className="settings-section-divider"></div>
-              <h3 className="settings-subsection-title">Weekly Availability Blocks</h3>
+              <h3 className="settings-subsection-title">{t('providerWeeklyAvailabilityBlocksTitle')}</h3>
 
               <div className="settings-group">
                 {WEEK_DAYS.map((day) => (
@@ -679,18 +692,18 @@ function ServiceProviderSettings() {
                     onClick={() => addWeekDayBlock(day.key)}
                     disabled={availabilityLoading || isSaving}
                   >
-                    Add {day.label}
+                    {t('providerAddDayBlock', { day: t(day.labelKey) })}
                   </button>
                 ))}
               </div>
 
               {weeklyBlocks.length === 0 && (
-                <small className="settings-help">No weekly availability blocks yet.</small>
+                <small className="settings-help">{t('providerNoWeeklyAvailabilityBlocks')}</small>
               )}
 
               {weeklyBlocks.map((block, index) => (
                 <div key={`${block.dayOfWeek}-${index}`} className="settings-group" style={{ border: '1px solid #e5e7eb', borderRadius: '10px', padding: '0.75rem' }}>
-                  <label className="settings-label">Day</label>
+                  <label className="settings-label">{t('providerDayLabel')}</label>
                   <select
                     className="settings-select"
                     value={block.dayOfWeek}
@@ -698,11 +711,11 @@ function ServiceProviderSettings() {
                     disabled={availabilityLoading || isSaving}
                   >
                     {WEEK_DAYS.map((day) => (
-                      <option key={day.key} value={day.key}>{day.label}</option>
+                      <option key={day.key} value={day.key}>{t(day.labelKey)}</option>
                     ))}
                   </select>
 
-                  <label className="settings-label">Start time</label>
+                  <label className="settings-label">{t('requestsStartTime')}</label>
                   <input
                     type="time"
                     className="settings-input"
@@ -711,7 +724,7 @@ function ServiceProviderSettings() {
                     disabled={availabilityLoading || isSaving}
                   />
 
-                  <label className="settings-label">End time</label>
+                  <label className="settings-label">{t('requestsEndTime')}</label>
                   <input
                     type="time"
                     className="settings-input"
@@ -721,22 +734,22 @@ function ServiceProviderSettings() {
                   />
 
                   <button type="button" className="btn-cancel" onClick={() => removeWeekDayBlock(index)} disabled={availabilityLoading || isSaving}>
-                    Remove Block
+                    {t('providerRemoveBlock')}
                   </button>
                 </div>
               ))}
 
               <div className="settings-actions" style={{ paddingLeft: 0, paddingRight: 0 }}>
                 <button className="btn-save" onClick={handleAvailabilitySave} disabled={availabilityLoading || isSaving}>
-                  {isSaving ? 'Saving...' : 'Save Availability'}
+                  {isSaving ? t('saving') : t('providerSaveAvailability')}
                 </button>
               </div>
 
               <div className="settings-section-divider"></div>
-              <h3 className="settings-subsection-title">Date Exceptions</h3>
+              <h3 className="settings-subsection-title">{t('providerDateExceptionsTitle')}</h3>
 
               <div className="settings-group" style={{ border: '1px solid #e5e7eb', borderRadius: '10px', padding: '0.75rem' }}>
-                <label className="settings-label">Exception date</label>
+                <label className="settings-label">{t('providerExceptionDateLabel')}</label>
                 <input
                   type="date"
                   className="settings-input"
@@ -745,20 +758,20 @@ function ServiceProviderSettings() {
                   disabled={exceptionSaving}
                 />
 
-                <label className="settings-label">Exception type</label>
+                <label className="settings-label">{t('providerExceptionTypeLabel')}</label>
                 <select
                   className="settings-select"
                   value={newException.exceptionType}
                   onChange={(e) => setNewException((prev) => ({ ...prev, exceptionType: e.target.value }))}
                   disabled={exceptionSaving}
                 >
-                  <option value="available">Available override</option>
-                  <option value="unavailable">Unavailable</option>
-                  <option value="booked">Booked</option>
-                  <option value="vacation">Vacation</option>
+                  <option value="available">{t('providerExceptionTypeAvailableOverride')}</option>
+                  <option value="unavailable">{t('providerExceptionTypeUnavailable')}</option>
+                  <option value="booked">{t('providerExceptionTypeBooked')}</option>
+                  <option value="vacation">{t('providerExceptionTypeVacation')}</option>
                 </select>
 
-                <label className="settings-label">Start time (optional)</label>
+                <label className="settings-label">{t('providerExceptionStartTimeOptional')}</label>
                 <input
                   type="time"
                   className="settings-input"
@@ -767,7 +780,7 @@ function ServiceProviderSettings() {
                   disabled={exceptionSaving}
                 />
 
-                <label className="settings-label">End time (optional)</label>
+                <label className="settings-label">{t('providerExceptionEndTimeOptional')}</label>
                 <input
                   type="time"
                   className="settings-input"
@@ -776,7 +789,7 @@ function ServiceProviderSettings() {
                   disabled={exceptionSaving}
                 />
 
-                <label className="settings-label">Reason (optional)</label>
+                <label className="settings-label">{t('providerExceptionReasonOptional')}</label>
                 <input
                   type="text"
                   className="settings-input"
@@ -787,17 +800,17 @@ function ServiceProviderSettings() {
                 />
 
                 <button type="button" className="btn-save" onClick={handleAddAvailabilityException} disabled={exceptionSaving}>
-                  {exceptionSaving ? 'Saving...' : 'Add Exception'}
+                  {exceptionSaving ? t('saving') : t('providerAddException')}
                 </button>
               </div>
 
               <div className="settings-group">
-                {availabilityExceptions.length === 0 && <small className="settings-help">No date exceptions configured.</small>}
+                {availabilityExceptions.length === 0 && <small className="settings-help">{t('providerNoDateExceptionsConfigured')}</small>}
                 {availabilityExceptions.map((exception) => (
                   <div key={exception.id} style={{ border: '1px solid #e5e7eb', borderRadius: '10px', padding: '0.75rem', marginBottom: '0.5rem' }}>
                     <p style={{ margin: 0, fontWeight: 600 }}>{exception.exceptionDate} • {exception.exceptionType}</p>
                     <small className="settings-help">
-                      {exception.startTime && exception.endTime ? `${exception.startTime} - ${exception.endTime}` : 'Whole day'}
+                      {exception.startTime && exception.endTime ? `${exception.startTime} - ${exception.endTime}` : t('providerWholeDay')}
                       {exception.reason ? ` • ${exception.reason}` : ''}
                     </small>
                     <div style={{ marginTop: '0.5rem' }}>
@@ -807,7 +820,7 @@ function ServiceProviderSettings() {
                         onClick={() => handleDeleteAvailabilityException(exception.id)}
                         disabled={exceptionSaving}
                       >
-                        Remove
+                        {t('providerRemoveException')}
                       </button>
                     </div>
                   </div>
@@ -815,7 +828,7 @@ function ServiceProviderSettings() {
               </div>
 
               <div className="settings-section-divider"></div>
-              <h3 className="settings-subsection-title">Languages</h3>
+              <h3 className="settings-subsection-title">{t('languagesSpoken')}</h3>
 
               <div className="settings-group">
                 {LANGUAGE_OPTIONS.map((option) => (
@@ -827,22 +840,22 @@ function ServiceProviderSettings() {
                       disabled={languageSaving}
                       style={{ marginRight: '0.45rem' }}
                     />
-                    {option.label}
+                    {t(option.labelKey)}
                   </label>
                 ))}
               </div>
 
               <div className="settings-actions" style={{ paddingLeft: 0, paddingRight: 0 }}>
                 <button className="btn-save" onClick={handleSaveLanguages} disabled={languageSaving}>
-                  {languageSaving ? 'Saving...' : 'Save Languages'}
+                  {languageSaving ? t('saving') : t('providerSaveLanguages')}
                 </button>
               </div>
 
               <div className="settings-section-divider"></div>
-              <h3 className="settings-subsection-title">Credentials and Certificates</h3>
+              <h3 className="settings-subsection-title">{t('providerCredentialsCertificatesTitle')}</h3>
 
               <div className="settings-group">
-                <label className="settings-label">Credential name</label>
+                <label className="settings-label">{t('providerCredentialNameLabel')}</label>
                 <input
                   type="text"
                   className="settings-input"
@@ -851,7 +864,7 @@ function ServiceProviderSettings() {
                   disabled={credentialSaving}
                 />
 
-                <label className="settings-label">Credential type</label>
+                <label className="settings-label">{t('providerCredentialTypeLabel')}</label>
                 <input
                   type="text"
                   className="settings-input"
@@ -860,7 +873,7 @@ function ServiceProviderSettings() {
                   disabled={credentialSaving}
                 />
 
-                <label className="settings-label">Issuing organization</label>
+                <label className="settings-label">{t('providerIssuingOrganizationLabel')}</label>
                 <input
                   type="text"
                   className="settings-input"
@@ -869,7 +882,7 @@ function ServiceProviderSettings() {
                   disabled={credentialSaving}
                 />
 
-                <label className="settings-label">Credential ID</label>
+                <label className="settings-label">{t('providerCredentialIdLabel')}</label>
                 <input
                   type="text"
                   className="settings-input"
@@ -878,7 +891,7 @@ function ServiceProviderSettings() {
                   disabled={credentialSaving}
                 />
 
-                <label className="settings-label">Issue date</label>
+                <label className="settings-label">{t('providerIssueDateLabel')}</label>
                 <input
                   type="date"
                   className="settings-input"
@@ -887,7 +900,7 @@ function ServiceProviderSettings() {
                   disabled={credentialSaving}
                 />
 
-                <label className="settings-label">Expiration date</label>
+                <label className="settings-label">{t('providerExpirationDateLabel')}</label>
                 <input
                   type="date"
                   className="settings-input"
@@ -904,10 +917,10 @@ function ServiceProviderSettings() {
                     disabled={credentialSaving}
                     style={{ marginRight: '0.45rem' }}
                   />
-                  This credential does not expire
+                  {t('providerCredentialDoesNotExpire')}
                 </label>
 
-                <label className="settings-label">Credential URL</label>
+                <label className="settings-label">{t('providerCredentialUrlLabel')}</label>
                 <input
                   type="url"
                   className="settings-input"
@@ -916,7 +929,7 @@ function ServiceProviderSettings() {
                   disabled={credentialSaving}
                 />
 
-                <label className="settings-label">Document (PDF/JPG/PNG)</label>
+                <label className="settings-label">{t('providerCredentialDocumentLabel')}</label>
                 <input
                   type="file"
                   className="settings-input"
@@ -928,14 +941,14 @@ function ServiceProviderSettings() {
 
               <div className="settings-actions" style={{ paddingLeft: 0, paddingRight: 0 }}>
                 <button className="btn-save" onClick={handleCreateCredential} disabled={credentialSaving}>
-                  {credentialSaving ? 'Saving...' : 'Add Credential'}
+                  {credentialSaving ? t('saving') : t('providerAddCredential')}
                 </button>
               </div>
 
               <div className="settings-group">
-                <h4 className="settings-subsection-title" style={{ marginBottom: '0.5rem' }}>Saved Credentials</h4>
-                {credentialLoading && <small className="settings-help">Loading credentials...</small>}
-                {!credentialLoading && credentials.length === 0 && <small className="settings-help">No credentials yet.</small>}
+                <h4 className="settings-subsection-title" style={{ marginBottom: '0.5rem' }}>{t('providerSavedCredentialsTitle')}</h4>
+                {credentialLoading && <small className="settings-help">{t('providerLoadingCredentials')}</small>}
+                {!credentialLoading && credentials.length === 0 && <small className="settings-help">{t('providerNoCredentialsYet')}</small>}
                 {credentials.map((credential) => (
                   <div key={credential.id} style={{ border: '1px solid #e5e7eb', borderRadius: '10px', padding: '0.75rem', marginBottom: '0.6rem' }}>
                     <p style={{ margin: 0, fontWeight: 600 }}>{credential.credential_name}</p>
@@ -949,7 +962,7 @@ function ServiceProviderSettings() {
                         disabled={credentialSaving || credential.verification_status === 'pending'}
                         style={{ minHeight: '40px' }}
                       >
-                        {credential.verification_status === 'pending' ? 'Pending Review' : 'Submit for Review'}
+                        {credential.verification_status === 'pending' ? t('providerPendingReview') : t('providerSubmitForReview')}
                       </button>
                     </div>
                   </div>
@@ -960,13 +973,13 @@ function ServiceProviderSettings() {
 
           {activeSection === 'notifications' && (
             <div className="settings-section">
-              <h2 className="settings-section-title">Notification Settings</h2>
+              <h2 className="settings-section-title">{t('providerNotificationSettingsTitle')}</h2>
               
               <div className="settings-toggle-group">
                 <div className="settings-toggle">
                   <label className="toggle-label">
-                    <span>Push Notifications</span>
-                    <small>Receive browser notifications for new service requests</small>
+                    <span>{t('providerPushNotificationsLabel')}</span>
+                    <small>{t('providerPushNotificationsHelp')}</small>
                   </label>
                   <label className="switch">
                     <input
@@ -980,8 +993,8 @@ function ServiceProviderSettings() {
 
                 <div className="settings-toggle">
                   <label className="toggle-label">
-                    <span>Email Alerts</span>
-                    <small>Get notified about new requests and messages via email</small>
+                    <span>{t('providerEmailAlertsLabel')}</span>
+                    <small>{t('providerEmailAlertsHelp')}</small>
                   </label>
                   <label className="switch">
                     <input
@@ -995,8 +1008,8 @@ function ServiceProviderSettings() {
 
                 <div className="settings-toggle">
                   <label className="toggle-label">
-                    <span>SMS Notifications</span>
-                    <small>Get urgent alerts via SMS (may incur charges)</small>
+                    <span>{t('providerSmsNotificationsLabel')}</span>
+                    <small>{t('providerSmsNotificationsHelp')}</small>
                   </label>
                   <label className="switch">
                     <input
@@ -1013,29 +1026,29 @@ function ServiceProviderSettings() {
 
           {activeSection === 'privacy' && (
             <div className="settings-section">
-              <h2 className="settings-section-title">Privacy Settings</h2>
+              <h2 className="settings-section-title">{t('providerPrivacySettingsTitle')}</h2>
               
               <div className="settings-toggle-group">
                 <div className="settings-toggle">
                   <label className="toggle-label">
-                    <span>Profile Visibility</span>
-                    <small>Who can see your profile and services</small>
+                    <span>{t('providerProfileVisibilityLabel')}</span>
+                    <small>{t('providerProfileVisibilityHelp')}</small>
                   </label>
                   <select 
                     className="settings-select"
                     value={settings.profileVisibility}
                     onChange={(e) => handleChange('profileVisibility', e.target.value)}
                   >
-                    <option value="public">Public</option>
-                    <option value="private">Private (By Appointment)</option>
-                    <option value="verified-only">Verified Clients Only</option>
+                    <option value="public">{t('providerVisibilityPublic')}</option>
+                    <option value="private">{t('providerVisibilityPrivate')}</option>
+                    <option value="verified-only">{t('providerVisibilityVerifiedOnly')}</option>
                   </select>
                 </div>
 
                 <div className="settings-toggle">
                   <label className="toggle-label">
-                    <span>Allow Direct Messages</span>
-                    <small>Allow clients to send you direct messages</small>
+                    <span>{t('providerAllowDirectMessagesLabel')}</span>
+                    <small>{t('providerAllowDirectMessagesHelp')}</small>
                   </label>
                   <label className="switch">
                     <input
@@ -1052,10 +1065,10 @@ function ServiceProviderSettings() {
 
           <div className="settings-actions">
             <button className="btn-save" onClick={handleSave} disabled={isSaving || isLoadingProfile}>
-              {isSaving ? 'Saving...' : 'Save Changes'}
+              {isSaving ? t('saving') : t('saveChanges')}
             </button>
             <button className="btn-cancel" onClick={() => window.location.reload()}>
-              Reset
+              {t('reset')}
             </button>
           </div>
         </div>

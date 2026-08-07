@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { authAPI } from '../services/api';
+import { useLanguage } from '../context/LanguageContext';
 import logo from '../assets/logo.png';
 import '../styles/App.css';
 
 const ForgotPassword = () => {
+  const { t } = useLanguage();
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -18,10 +20,10 @@ const ForgotPassword = () => {
 
     try {
       const response = await authAPI.forgotPassword({ email });
-      setSuccess(response.message || 'If this email is registered, a password reset link has been sent.');
+      setSuccess(response.message || t('forgotPasswordSuccess'));
       setEmail('');
     } catch (err) {
-      setError(err.message || 'Failed to send reset link. Please try again.');
+      setError(err.message || t('forgotPasswordFailed'));
     } finally {
       setIsLoading(false);
     }
@@ -37,7 +39,7 @@ const ForgotPassword = () => {
               <h1 className="app-title mb-2">
                 Serbisyo<span className="title-green">Toledo</span>
               </h1>
-              <p className="subtitle text-muted">Forgot password? Enter your email so we can send you a reset link.</p>
+              <p className="subtitle text-muted">{t('forgotPasswordSubtitle')}</p>
             </div>
 
             {error && (
@@ -54,13 +56,13 @@ const ForgotPassword = () => {
 
             <form onSubmit={handleSubmit}>
               <div className="mb-3">
-                <label className="form-label">Registered Email Address</label>
+                <label className="form-label">{t('registeredEmailAddress')}</label>
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="form-control"
-                  placeholder="you@example.com"
+                  placeholder={t('registeredEmailPlaceholder')}
                   required
                 />
               </div>
@@ -73,24 +75,24 @@ const ForgotPassword = () => {
                 {isLoading ? (
                   <>
                     <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                    Sending Link...
+                    {t('sendingLink')}
                   </>
                 ) : (
-                  'Send Reset Link'
+                  t('sendResetLink')
                 )}
               </button>
             </form>
 
             <div className="text-center">
               <p className="footer-text mb-0">
-                Remembered your password?{' '}
-                <Link to="/login" className="link">Back to Login</Link>
+              {t('rememberedPassword')}{' '}
+              <Link to="/login" className="link">{t('backToLogin')}</Link>
               </p>
             </div>
 
             <div className="text-center mt-4">
               <Link to="/" className="back-link text-decoration-none">
-                ← Back to home
+                {t('backToHome')}
               </Link>
             </div>
           </div>

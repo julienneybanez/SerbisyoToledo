@@ -1,8 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { adminAPI } from '../../services/api';
+import { useLanguage } from '../../context/LanguageContext';
 import '../../styles/AdminPages.css';
 
 function AdminUsers() {
+  const { t } = useLanguage();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
@@ -25,7 +27,7 @@ function AdminUsers() {
     setDialog((prev) => ({ ...prev, open: false }));
   };
 
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       setLoading(true);
       setError('');
@@ -34,15 +36,15 @@ function AdminUsers() {
         setUsers(response.data || []);
       }
     } catch (err) {
-      setError(err.message || 'Failed to load users');
+      setError(err.message || t('failedLoadUsers'));
     } finally {
       setLoading(false);
     }
-  };
+  }, [t]);
 
   useEffect(() => {
     fetchUsers();
-  }, []);
+  }, [fetchUsers]);
 
   const handleViewDetails = async (userId) => {
     try {
@@ -50,23 +52,23 @@ function AdminUsers() {
       if (response.success) {
         const u = response.data;
         openDialog({
-          title: 'User Details Overview',
+          title: t('adminUserDetailsOverview'),
           lines: [
-            `Name: ${u.name}`,
-            `Email: ${u.email}`,
-            `Type: ${u.type}`,
-            `Profession: ${u.profession || 'N/A'}`,
-            `Phone: ${u.phone || 'N/A'}`,
-            `Address: ${u.address || 'N/A'}`,
-            `Verified: ${u.isVerified ? 'Yes' : 'No'}`,
-            `Active: ${u.isActive ? 'Yes' : 'No'}`,
+            `${t('fullName')}: ${u.name}`,
+            `${t('emailLabel')}: ${u.email}`,
+            `${t('adminType')}: ${u.type}`,
+            `${t('profession')}: ${u.profession || t('adminNotAvailableShort')}`,
+            `${t('phoneLabel')}: ${u.phone || t('adminNotAvailableShort')}`,
+            `${t('address')}: ${u.address || t('adminNotAvailableShort')}`,
+            `${t('verified')}: ${u.isVerified ? t('adminYes') : t('adminNo')}`,
+            `${t('active')}: ${u.isActive ? t('adminYes') : t('adminNo')}`,
           ],
         });
       }
     } catch (err) {
       openDialog({
-        title: 'Unable to Load Details',
-        lines: [err.message || 'Failed to fetch user details'],
+        title: t('unableLoadDetails'),
+        lines: [err.message || t('failedFetchUserDetails')],
         tone: 'danger',
       });
     }
@@ -81,8 +83,8 @@ function AdminUsers() {
       }
     } catch (err) {
       openDialog({
-        title: 'Update Failed',
-        lines: [err.message || 'Failed to update user status'],
+        title: t('updateFailed'),
+        lines: [err.message || t('failedUpdateUserStatus')],
         tone: 'danger',
       });
     } finally {
@@ -101,8 +103,8 @@ function AdminUsers() {
       }
     } catch (err) {
       openDialog({
-        title: 'Update Failed',
-        lines: [err.message || 'Failed to update verification status'],
+        title: t('updateFailed'),
+        lines: [err.message || t('failedUpdateVerificationStatus')],
         tone: 'danger',
       });
     } finally {
@@ -116,22 +118,22 @@ function AdminUsers() {
       if (response.success) {
         const summary = response.data.summary;
         openDialog({
-          title: 'User Activity Summary',
+          title: t('adminUserActivitySummary'),
           lines: [
-            `Total Requests: ${summary.totalRequests}`,
-            `Completed Requests: ${summary.completedRequests}`,
-            `Active Requests: ${summary.activeRequests}`,
-            `Reports Submitted: ${summary.reportsSubmitted}`,
-            `Reports Received: ${summary.reportsReceived}`,
-            `Last Request Activity: ${summary.lastRequestActivity || 'N/A'}`,
-            `Last Report Activity: ${summary.lastReportActivity || 'N/A'}`,
+            `${t('adminTotalRequests')}: ${summary.totalRequests}`,
+            `${t('adminCompletedRequests')}: ${summary.completedRequests}`,
+            `${t('adminActiveRequests')}: ${summary.activeRequests}`,
+            `${t('adminReportsSubmitted')}: ${summary.reportsSubmitted}`,
+            `${t('adminReportsReceived')}: ${summary.reportsReceived}`,
+            `${t('adminLastRequestActivity')}: ${summary.lastRequestActivity || t('adminNotAvailableShort')}`,
+            `${t('adminLastReportActivity')}: ${summary.lastReportActivity || t('adminNotAvailableShort')}`,
           ],
         });
       }
     } catch (err) {
       openDialog({
-        title: 'Unable to Load Activity',
-        lines: [err.message || 'Failed to fetch user activity'],
+        title: t('unableLoadActivity'),
+        lines: [err.message || t('failedFetchUserActivity')],
         tone: 'danger',
       });
     }
@@ -158,8 +160,8 @@ function AdminUsers() {
   return (
     <div className="admin-page admin-users-page">
       <div className="admin-page-header">
-        <h1 className="admin-page-title">User Management</h1>
-        <p className="admin-page-subtitle">Review account status, verification, and user activity.</p>
+        <h1 className="admin-page-title">{t('userManagement')}</h1>
+        <p className="admin-page-subtitle">{t('userManagementSubtitle')}</p>
       </div>
 
       <div className="filters-bar">
@@ -170,26 +172,26 @@ function AdminUsers() {
           </svg>
           <input
             type="text"
-            placeholder="Search users..."
+            placeholder={t('searchUsersPlaceholder')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
 
         <div className="filter-group">
-          <select value={filterType} onChange={(e) => setFilterType(e.target.value)} aria-label="Filter users by role">
-            <option value="all">All Types</option>
-            <option value="client">Clients</option>
-            <option value="tradesperson">Service Providers</option>
-            <option value="admin">Admins</option>
+          <select value={filterType} onChange={(e) => setFilterType(e.target.value)} aria-label={t('filterUsersByRole')}>
+            <option value="all">{t('allTypes')}</option>
+            <option value="client">{t('clients')}</option>
+            <option value="tradesperson">{t('serviceProviders')}</option>
+            <option value="admin">{t('admins')}</option>
           </select>
 
-          <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} aria-label="Filter users by account status">
-            <option value="all">All Statuses</option>
-            <option value="active">Active</option>
-            <option value="verified">Verified</option>
-            <option value="pending">Pending</option>
-            <option value="suspended">Suspended</option>
+          <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} aria-label={t('filterUsersByStatus')}>
+            <option value="all">{t('allStatuses')}</option>
+            <option value="active">{t('active')}</option>
+            <option value="verified">{t('verified')}</option>
+            <option value="pending">{t('pending')}</option>
+            <option value="suspended">{t('suspended')}</option>
           </select>
         </div>
       </div>
@@ -197,7 +199,7 @@ function AdminUsers() {
       {error && <div className="alert alert-danger mt-3">{error}</div>}
 
       {!loading && (
-        <div className="admin-users-mobile-list" aria-label="Users list for mobile">
+        <div className="admin-users-mobile-list" aria-label={t('adminUsersListMobileAria')}>
           {filteredUsers.map((user) => (
             <div key={`mobile-${user.id}`} className="admin-user-mobile-card">
               <div className="admin-user-mobile-header">
@@ -213,16 +215,16 @@ function AdminUsers() {
               </div>
 
               <div className="admin-user-mobile-body">
-                <p className="request-detail"><strong>Type:</strong> {user.type === 'tradesperson' ? 'Provider' : user.type}</p>
-                <p className="request-detail"><strong>Profession:</strong> {user.profession || '—'}</p>
-                <p className="request-detail"><strong>Status:</strong> {!user.isActive ? 'Suspended' : user.isVerified ? 'Verified' : 'Active'}</p>
-                <p className="request-detail"><strong>Verification:</strong> {user.isVerified ? 'Verified' : 'Not Verified'}</p>
-                <p className="request-detail"><strong>Join Date:</strong> {new Date(user.joinDate).toLocaleDateString()}</p>
+                <p className="request-detail"><strong>{t('adminType')}:</strong> {user.type === 'tradesperson' ? t('serviceProvider') : user.type}</p>
+                <p className="request-detail"><strong>{t('profession')}:</strong> {user.profession || '—'}</p>
+                <p className="request-detail"><strong>{t('statusLabel')}:</strong> {!user.isActive ? t('suspended') : user.isVerified ? t('verified') : t('active')}</p>
+                <p className="request-detail"><strong>{t('adminVerification')}:</strong> {user.isVerified ? t('verified') : t('notVerified')}</p>
+                <p className="request-detail"><strong>{t('adminJoinDate')}:</strong> {new Date(user.joinDate).toLocaleDateString()}</p>
               </div>
 
               <div className="table-actions-stack admin-user-mobile-actions">
                 <button className="btn-view-details btn-users-action" onClick={() => handleViewDetails(user.id)}>
-                  View Details
+                  {t('viewDetails')}
                 </button>
                 <button
                   className="btn-dismiss btn-users-action"
@@ -230,10 +232,10 @@ function AdminUsers() {
                   onClick={() => handleToggleActive(user)}
                 >
                   {actionLoading === `active-${user.id}`
-                    ? 'Updating...'
+                    ? t('updating')
                     : user.isActive
-                      ? 'Deactivate'
-                      : 'Reactivate'}
+                      ? t('deactivate')
+                      : t('reactivate')}
                 </button>
                 {user.type === 'tradesperson' && (
                   <button
@@ -242,14 +244,14 @@ function AdminUsers() {
                     onClick={() => handleToggleVerification(user)}
                   >
                     {actionLoading === `verify-${user.id}`
-                      ? 'Updating...'
+                      ? t('updating')
                       : user.isVerified
-                        ? 'Unverify Provider'
-                        : 'Verify Provider'}
+                        ? t('unverifyProvider')
+                        : t('verifyProvider')}
                   </button>
                 )}
                 <button className="btn-approve btn-users-action" onClick={() => handleViewActivity(user.id)}>
-                  View Activity
+                  {t('viewActivity')}
                 </button>
               </div>
             </div>
@@ -259,17 +261,17 @@ function AdminUsers() {
 
       <div className="table-container">
         {loading ? (
-          <div className="text-center py-4">Loading users...</div>
+          <div className="text-center py-4">{t('loadingUsers')}</div>
         ) : (
           <table className="admin-table">
             <thead>
               <tr>
-                <th>User</th>
-                <th>Type</th>
-                <th>Profession</th>
-                <th>Status</th>
-                <th>Join Date</th>
-                <th>Actions</th>
+                <th>{t('adminUser')}</th>
+                <th>{t('adminType')}</th>
+                <th>{t('profession')}</th>
+                <th>{t('statusLabel')}</th>
+                <th>{t('adminJoinDate')}</th>
+                <th>{t('adminActions')}</th>
               </tr>
             </thead>
             <tbody>
@@ -288,20 +290,20 @@ function AdminUsers() {
                   </td>
                   <td>
                     <span className={`type-badge ${user.type}`}>
-                      {user.type === 'tradesperson' ? 'Provider' : user.type}
+                      {user.type === 'tradesperson' ? t('serviceProvider') : user.type}
                     </span>
                   </td>
                   <td>{user.profession || '—'}</td>
                   <td>
                     <span className={`status-badge ${!user.isActive ? 'status-suspended' : user.isVerified ? 'status-verified' : 'status-pending'}`}>
-                      {!user.isActive ? 'Suspended' : user.isVerified ? 'Verified' : 'Active'}
+                      {!user.isActive ? t('suspended') : user.isVerified ? t('verified') : t('active')}
                     </span>
                   </td>
                   <td>{new Date(user.joinDate).toLocaleDateString()}</td>
                   <td>
                     <div className="table-actions table-actions-stack">
                       <button className="btn-view-details btn-users-action" onClick={() => handleViewDetails(user.id)}>
-                        View Details
+                        {t('viewDetails')}
                       </button>
                       <button
                         className="btn-dismiss btn-users-action"
@@ -309,10 +311,10 @@ function AdminUsers() {
                         onClick={() => handleToggleActive(user)}
                       >
                         {actionLoading === `active-${user.id}`
-                          ? 'Updating...'
+                          ? t('updating')
                           : user.isActive
-                            ? 'Deactivate'
-                            : 'Reactivate'}
+                            ? t('deactivate')
+                            : t('reactivate')}
                       </button>
                       {user.type === 'tradesperson' && (
                         <button
@@ -321,14 +323,14 @@ function AdminUsers() {
                           onClick={() => handleToggleVerification(user)}
                         >
                           {actionLoading === `verify-${user.id}`
-                            ? 'Updating...'
+                            ? t('updating')
                             : user.isVerified
-                              ? 'Unverify Provider'
-                              : 'Verify Provider'}
+                              ? t('unverifyProvider')
+                              : t('verifyProvider')}
                         </button>
                       )}
                       <button className="btn-approve" onClick={() => handleViewActivity(user.id)}>
-                        View Activity
+                        {t('viewActivity')}
                       </button>
                     </div>
                   </td>
@@ -348,7 +350,7 @@ function AdminUsers() {
                 type="button"
                 className="admin-dialog-close"
                 onClick={closeDialog}
-                aria-label="Close dialog"
+                aria-label={t('adminCloseDialog')}
               >
                 ×
               </button>
@@ -362,7 +364,7 @@ function AdminUsers() {
 
             <div className="admin-dialog-actions">
               <button type="button" className="btn-approve" onClick={closeDialog}>
-                Okay
+                {t('adminOkay')}
               </button>
             </div>
           </div>

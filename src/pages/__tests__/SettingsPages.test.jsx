@@ -4,11 +4,13 @@ import ClientSettings from '../ClientSettings';
 import ServiceProviderSettings from '../ServiceProviderSettings';
 import AdminSettings from '../admin/AdminSettings';
 import { adminAPI, authAPI, getUser, serviceProfileAPI, userProfileAPI } from '../../services/api';
+import { LanguageProvider } from '../../context/LanguageContext';
 
 const mockNavigate = vi.fn();
 
 vi.mock('react-router-dom', () => ({
   useNavigate: () => mockNavigate,
+  useLocation: () => ({ pathname: '/provider-settings', search: '' }),
   useSearchParams: () => [new URLSearchParams('')],
 }));
 
@@ -56,6 +58,10 @@ vi.mock('../../services/api', () => ({
 }));
 
 describe('Settings pages', () => {
+  const renderWithProviders = (ui) => render(
+    <LanguageProvider>{ui}</LanguageProvider>,
+  );
+
   beforeEach(() => {
     vi.clearAllMocks();
     mockNavigate.mockReset();
@@ -96,7 +102,7 @@ describe('Settings pages', () => {
       },
     });
 
-    render(<ClientSettings />);
+    renderWithProviders(<ClientSettings />);
 
     expect(await screen.findByText('Client Settings')).toBeInTheDocument();
 
@@ -170,7 +176,7 @@ describe('Settings pages', () => {
       data: { credentials: [] },
     });
 
-    render(<ServiceProviderSettings />);
+    renderWithProviders(<ServiceProviderSettings />);
 
     expect(await screen.findByText('Service Provider Settings')).toBeInTheDocument();
 
@@ -220,7 +226,7 @@ describe('Settings pages', () => {
       data: [{ id: 21, status: 'pending' }, { id: 22, status: 'under_review' }],
     });
 
-    render(<AdminSettings />);
+    renderWithProviders(<AdminSettings />);
 
     expect(await screen.findByText('Admin Settings')).toBeInTheDocument();
 

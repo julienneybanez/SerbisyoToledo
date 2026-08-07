@@ -1,8 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { adminAPI } from '../../services/api';
+import { useLanguage } from '../../context/LanguageContext';
 import '../../styles/AdminPages.css';
 
 function AdminReports() {
+  const { t } = useLanguage();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [reports, setReports] = useState([]);
@@ -19,7 +21,7 @@ function AdminReports() {
     error: '',
   });
 
-  const fetchReports = async () => {
+  const fetchReports = useCallback(async () => {
     try {
       setLoading(true);
       setError('');
@@ -28,15 +30,15 @@ function AdminReports() {
         setReports(response.data || []);
       }
     } catch {
-      setError('We could not load reports. Please try again.');
+      setError(t('adminReportsLoadError'));
     } finally {
       setLoading(false);
     }
-  };
+  }, [t]);
 
   useEffect(() => {
     fetchReports();
-  }, []);
+  }, [fetchReports]);
 
   useEffect(() => {
     const handleKeyDown = (event) => {
@@ -61,14 +63,14 @@ function AdminReports() {
       const hasProvidedNotes = typeof payload.resolutionNotes === 'string';
       const notes = hasProvidedNotes
         ? payload.resolutionNotes
-        : (needsNotesPrompt ? (window.prompt('Resolution notes (required):') || '') : '');
+        : (needsNotesPrompt ? (window.prompt(t('adminReportsResolutionNotesRequiredPrompt')) || '') : '');
       if (needsResolution && !notes.trim()) {
-        alert('Resolution notes are required for this action.');
-        return { success: false, message: 'Resolution notes are required.' };
+        alert(t('adminReportsResolutionNotesRequiredAlert'));
+        return { success: false, message: t('adminReportsResolutionNotesRequiredMessage') };
       }
       const moderationNotes = typeof payload.moderationNotes === 'string'
         ? payload.moderationNotes
-        : (needsResolution ? (window.prompt('Optional moderation notes:') || '') : '');
+        : (needsResolution ? (window.prompt(t('adminReportsOptionalModerationNotesPrompt')) || '') : '');
       const response = await adminAPI.updateReportStatus(reportId, {
         action,
         resolutionNotes: notes,
@@ -78,10 +80,10 @@ function AdminReports() {
         await fetchReports();
         return { success: true };
       }
-      return { success: false, message: response.message || 'Failed to update report' };
+      return { success: false, message: response.message || t('adminReportsUpdateFailed') };
     } catch (err) {
-      alert(err.message || 'Failed to update report');
-      return { success: false, message: err.message || 'Failed to update report' };
+      alert(err.message || t('adminReportsUpdateFailed'));
+      return { success: false, message: err.message || t('adminReportsUpdateFailed') };
     } finally {
       setActionLoading('');
     }
@@ -98,7 +100,7 @@ function AdminReports() {
   const handleSubmitDecision = async () => {
     const notes = decisionDialog.notes.trim();
     if (!notes) {
-      setDecisionDialog((prev) => ({ ...prev, error: 'Admin note is required before submitting a decision.' }));
+      setDecisionDialog((prev) => ({ ...prev, error: t('adminReportsDecisionNoteRequired') }));
       return;
     }
 
@@ -112,7 +114,7 @@ function AdminReports() {
       return;
     }
 
-    setDecisionDialog((prev) => ({ ...prev, error: result?.message || 'Failed to submit decision' }));
+    setDecisionDialog((prev) => ({ ...prev, error: result?.message || t('adminReportsSubmitDecisionFailed') }));
   };
 
   const filteredReports = reports.filter((report) => {
@@ -136,22 +138,22 @@ function AdminReports() {
   return (
     <div className="admin-page">
       <div className="admin-page-header">
-        <h1 className="admin-page-title">Reports</h1>
-        <p className="admin-page-subtitle">Review reported activity and decide what action should be taken.</p>
+        <h1 className="admin-page-title">{t('reports')}</h1>
+        <p className="admin-page-subtitle">{t('adminReportsSubtitle')}</p>
       </div>
 
       <div className="mini-stats">
         <div className="mini-stat">
           <span className="mini-stat-value text-warning">{pendingCount}</span>
-          <span className="mini-stat-label">Pending</span>
+          <span className="mini-stat-label">{t('pending')}</span>
         </div>
         <div className="mini-stat">
           <span className="mini-stat-value text-orange">{reviewCount}</span>
-          <span className="mini-stat-label">Under Review</span>
+          <span className="mini-stat-label">{t('adminUnderReview')}</span>
         </div>
         <div className="mini-stat">
           <span className="mini-stat-value text-success">{resolvedCount}</span>
-          <span className="mini-stat-label">Processed</span>
+          <span className="mini-stat-label">{t('adminProcessed')}</span>
         </div>
       </div>
 
@@ -163,19 +165,19 @@ function AdminReports() {
           </svg>
           <input
             type="text"
-            placeholder="Search reports..."
+            placeholder={t('adminSearchReportsPlaceholder')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
 
         <div className="filter-group">
-          <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} aria-label="Filter reports by status">
-            <option value="all">All Status</option>
-            <option value="pending">Pending</option>
-            <option value="under_review">Under Review</option>
-            <option value="dismissed">Dismissed</option>
-            <option value="resolved">Resolved</option>
+          <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} aria-label={t('adminFilterReportsByStatus')}>
+            <option value="all">{t('allStatuses')}</option>
+            <option value="pending">{t('pending')}</option>
+            <option value="under_review">{t('adminUnderReview')}</option>
+            <option value="dismissed">{t('adminDismissed')}</option>
+            <option value="resolved">{t('adminResolved')}</option>
           </select>
         </div>
       </div>
@@ -184,7 +186,7 @@ function AdminReports() {
 
       <div className="requests-list">
         {loading ? (
-          <div className="text-center py-4">Loading reports...</div>
+          <div className="text-center py-4">{t('loadingReports')}</div>
         ) : (
           filteredReports.map((report) => (
             <div key={report.id} className={`request-card report-card ${['dismissed', 'resolved'].includes(report.status) ? 'processed' : ''}`}>
@@ -204,25 +206,25 @@ function AdminReports() {
                 </div>
 
                 {report.actionTaken && report.actionTaken !== 'none' && (
-                  <p className="request-detail"><strong>Action taken:</strong> {report.actionTaken}</p>
+                  <p className="request-detail"><strong>{t('adminActionTaken')}:</strong> {report.actionTaken}</p>
                 )}
 
-                <p className="request-detail">Reported by: {report.reportedBy} ({report.reporterType})</p>
-                <p className="request-detail">Reason: {report.reason}</p>
+                <p className="request-detail">{t('reportedBy')}: {report.reportedBy} ({report.reporterType})</p>
+                <p className="request-detail">{t('reason')}: {report.reason}</p>
                 <p className="report-description">{report.description}</p>
-                <p className="request-detail">Request: {report.jobTitle}</p>
-                <p className="request-detail">Date: {new Date(report.date).toLocaleString()}</p>
+                <p className="request-detail">{t('requests')}: {report.jobTitle}</p>
+                <p className="request-detail">{t('date')}: {new Date(report.date).toLocaleString()}</p>
 
                 {expandedReportId === report.id && (
                   <div className="admin-inline-details">
                     {report.screenshot ? (
                       <>
-                        <p className="request-detail admin-evidence-label">Evidence image:</p>
+                        <p className="request-detail admin-evidence-label">{t('adminEvidenceImage')}:</p>
                         <button
                           type="button"
                           className="admin-report-screenshot-button"
                           onClick={() => setPreviewScreenshot(report.screenshot)}
-                          aria-label="View attached evidence image"
+                          aria-label={t('adminViewAttachedEvidenceImage')}
                         >
                           <img
                             src={report.screenshot}
@@ -234,7 +236,7 @@ function AdminReports() {
                       </>
                     ) : null}
                     {report.resolution && (
-                      <p className="resolution-text"><strong>Resolution:</strong> {report.resolution}</p>
+                      <p className="resolution-text"><strong>{t('adminResolution')}:</strong> {report.resolution}</p>
                     )}
                   </div>
                 )}
@@ -248,7 +250,7 @@ function AdminReports() {
                       disabled={actionLoading === `${report.id}-investigate`}
                       onClick={() => handleReportAction(report.id, 'investigate')}
                     >
-                      {actionLoading === `${report.id}-investigate` ? 'Working...' : 'Review Report'}
+                      {actionLoading === `${report.id}-investigate` ? t('adminWorking') : t('adminReviewReport')}
                     </button>
                   </>
                 ) : null}
@@ -259,7 +261,7 @@ function AdminReports() {
                       disabled={actionLoading && actionLoading.startsWith(`${report.id}-`)}
                       onClick={() => openDecisionDialog(report.id)}
                     >
-                      Make Decision
+                      {t('adminMakeDecision')}
                     </button>
                   </>
                 ) : null}
@@ -267,7 +269,7 @@ function AdminReports() {
                   className="btn-view-details"
                   onClick={() => setExpandedReportId((prev) => (prev === report.id ? null : report.id))}
                 >
-                  {expandedReportId === report.id ? 'Hide Details' : 'View Details'}
+                  {expandedReportId === report.id ? t('adminHideDetails') : t('viewDetails')}
                 </button>
               </div>
             </div>
@@ -280,7 +282,7 @@ function AdminReports() {
           className="admin-report-preview-overlay"
           role="dialog"
           aria-modal="true"
-          aria-label="Evidence image preview"
+          aria-label={t('adminEvidenceImagePreview')}
           onClick={() => setPreviewScreenshot('')}
         >
           <div className="admin-report-preview-dialog" onClick={(event) => event.stopPropagation()}>
@@ -288,7 +290,7 @@ function AdminReports() {
               type="button"
               className="admin-report-preview-close"
               onClick={() => setPreviewScreenshot('')}
-              aria-label="Close image preview"
+              aria-label={t('adminCloseImagePreview')}
             >
               ×
             </button>
@@ -303,8 +305,8 @@ function AdminReports() {
 
       {!loading && filteredReports.length === 0 && (
         <div className="empty-state">
-          <h3>No reports requiring attention.</h3>
-          <p>Try adjusting your search or filter criteria.</p>
+          <h3>{t('adminNoReportsRequiringAttention')}</h3>
+          <p>{t('adminTryAdjustingSearchFilter')}</p>
         </div>
       )}
 
@@ -318,32 +320,32 @@ function AdminReports() {
         >
           <div className="admin-dialog-card" onClick={(event) => event.stopPropagation()}>
             <div className="admin-dialog-header">
-              <h2 id="report-decision-title" className="admin-dialog-title">Make Decision</h2>
+              <h2 id="report-decision-title" className="admin-dialog-title">{t('adminMakeDecision')}</h2>
               <button
                 type="button"
                 className="admin-dialog-close"
                 onClick={closeDecisionDialog}
-                aria-label="Close decision dialog"
+                aria-label={t('adminCloseDecisionDialog')}
               >
                 ×
               </button>
             </div>
 
             <div className="admin-dialog-body">
-              <label htmlFor="report-decision-action" className="settings-label">Decision</label>
+              <label htmlFor="report-decision-action" className="settings-label">{t('adminDecision')}</label>
               <select
                 id="report-decision-action"
                 className="settings-input"
                 value={decisionDialog.action}
                 onChange={(event) => setDecisionDialog((prev) => ({ ...prev, action: event.target.value, error: '' }))}
               >
-                <option value="dismiss">No violation - Dismiss</option>
-                <option value="warn">Minor violation - Warn</option>
-                <option value="suspend">Serious or repeated violation - Suspend</option>
-                <option value="ban">Severe violation - Ban</option>
+                <option value="dismiss">{t('adminDecisionDismiss')}</option>
+                <option value="warn">{t('adminDecisionWarn')}</option>
+                <option value="suspend">{t('adminDecisionSuspend')}</option>
+                <option value="ban">{t('adminDecisionBan')}</option>
               </select>
 
-              <label htmlFor="report-decision-note" className="settings-label">Admin note</label>
+              <label htmlFor="report-decision-note" className="settings-label">{t('adminNote')}</label>
               <textarea
                 id="report-decision-note"
                 className="settings-textarea"
@@ -351,21 +353,21 @@ function AdminReports() {
                 maxLength={800}
                 value={decisionDialog.notes}
                 onChange={(event) => setDecisionDialog((prev) => ({ ...prev, notes: event.target.value, error: '' }))}
-                placeholder="Explain the reason for this decision"
+                placeholder={t('adminDecisionReasonPlaceholder')}
               />
 
               {decisionDialog.error ? <p className="admin-dialog-error">{decisionDialog.error}</p> : null}
             </div>
 
             <div className="admin-dialog-actions admin-dialog-actions-split">
-              <button type="button" className="btn-view-details" onClick={closeDecisionDialog}>Cancel</button>
+              <button type="button" className="btn-view-details" onClick={closeDecisionDialog}>{t('requestsCancelAction')}</button>
               <button
                 type="button"
                 className="btn-approve"
                 onClick={handleSubmitDecision}
                 disabled={Boolean(actionLoading)}
               >
-                {actionLoading ? 'Submitting...' : 'Submit Decision'}
+                {actionLoading ? t('adminSubmitting') : t('adminSubmitDecision')}
               </button>
             </div>
           </div>

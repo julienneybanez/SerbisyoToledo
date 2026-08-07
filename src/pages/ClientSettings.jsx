@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { authAPI, getUser, userProfileAPI } from '../services/api';
+import { useLanguage } from '../context/LanguageContext';
 import ThemeToggle from '../components/common/ThemeToggle';
 import SettingsFlash from '../components/settings/SettingsFlash';
 import '../styles/UserSettings.css';
 
 function ClientSettings() {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [searchParams] = useSearchParams();
   const isVerificationResendDisabled = true;
 
@@ -101,7 +103,7 @@ function ClientSettings() {
 
   const handleSave = async () => {
     if (!hasProfileChanges) {
-      setFlash({ type: 'info', message: 'No changes to save.' });
+      setFlash({ type: 'info', message: t('noChangesToSave') });
       return;
     }
 
@@ -125,10 +127,10 @@ function ClientSettings() {
         };
         setSettings(updated);
         setInitialProfile(updated);
-        setFlash({ type: 'success', message: 'Profile settings saved successfully.' });
+        setFlash({ type: 'success', message: t('profileSettingsSaved') });
       }
     } catch (err) {
-      setFlash({ type: 'error', message: err.message || 'Failed to save profile settings.' });
+      setFlash({ type: 'error', message: err.message || t('failedSaveProfileSettings') });
     } finally {
       setIsSaving(false);
     }
@@ -137,18 +139,18 @@ function ClientSettings() {
   const handleReset = () => {
     if (initialProfile) {
       setSettings(initialProfile);
-      setFlash({ type: 'info', message: 'Changes were reset.' });
+      setFlash({ type: 'info', message: t('changesWereReset') });
     }
   };
 
   const handleResendVerification = async () => {
     if (isVerificationResendDisabled) {
-      setFlash({ type: 'info', message: 'Resend verification email is temporarily disabled.' });
+      setFlash({ type: 'info', message: t('resendVerificationDisabled') });
       return;
     }
 
     if (!settings.email) {
-      setFlash({ type: 'error', message: 'No email address available for verification.' });
+      setFlash({ type: 'error', message: t('noEmailForVerification') });
       return;
     }
 
@@ -156,9 +158,9 @@ function ClientSettings() {
       setIsSendingVerification(true);
       setFlash({ type: 'info', message: '' });
       await authAPI.resendVerification({ email: settings.email });
-      setFlash({ type: 'success', message: 'Verification email sent. Please check your inbox.' });
+      setFlash({ type: 'success', message: t('verificationEmailSent') });
     } catch (err) {
-      setFlash({ type: 'error', message: err.message || 'Failed to send verification email.' });
+      setFlash({ type: 'error', message: err.message || t('failedSendVerificationEmail') });
     } finally {
       setIsSendingVerification(false);
     }
@@ -167,10 +169,10 @@ function ClientSettings() {
   return (
     <div className="user-settings-container">
       <div className="page-header">
-        <h1 className="page-title">Client Settings</h1>
-        <p className="page-subtitle">Update your account details and security actions.</p>
+        <h1 className="page-title">{t('clientSettings')}</h1>
+        <p className="page-subtitle">{t('clientSettingsSubtitle')}</p>
         <div className="settings-theme-row">
-          <span className="settings-theme-label">Appearance</span>
+          <span className="settings-theme-label">{t('appearance')}</span>
           <ThemeToggle />
         </div>
       </div>
@@ -181,19 +183,19 @@ function ClientSettings() {
             className={`settings-nav-item ${activeSection === 'account' ? 'active' : ''}`}
             onClick={() => setActiveSection('account')}
           >
-            Account
+            {t('account')}
           </button>
           <button
             className={`settings-nav-item ${activeSection === 'contact' ? 'active' : ''}`}
             onClick={() => setActiveSection('contact')}
           >
-            Contact
+            {t('contact')}
           </button>
           <button
             className={`settings-nav-item ${activeSection === 'security' ? 'active' : ''}`}
             onClick={() => setActiveSection('security')}
           >
-            Security
+            {t('security')}
           </button>
         </div>
 
@@ -202,10 +204,10 @@ function ClientSettings() {
 
           {activeSection === 'account' && (
             <div className="settings-section">
-              <h2 className="settings-section-title">Account Details</h2>
+              <h2 className="settings-section-title">{t('accountDetails')}</h2>
 
               <div className="settings-group">
-                <label className="settings-label" htmlFor="client-full-name">Full Name</label>
+                <label className="settings-label" htmlFor="client-full-name">{t('fullName')}</label>
                 <input
                   id="client-full-name"
                   type="text"
@@ -218,7 +220,7 @@ function ClientSettings() {
               </div>
 
               <div className="settings-group">
-                <label className="settings-label" htmlFor="client-email">Email Address</label>
+                <label className="settings-label" htmlFor="client-email">{t('emailAddress')}</label>
                 <input
                   id="client-email"
                   type="email"
@@ -228,11 +230,11 @@ function ClientSettings() {
                   autoComplete="email"
                   disabled
                 />
-                <small className="settings-help">Email changes are not supported from settings.</small>
+                <small className="settings-help">{t('emailChangesNotSupported')}</small>
               </div>
 
               <div className="settings-group">
-                <label className="settings-label" htmlFor="client-bio">Bio</label>
+                <label className="settings-label" htmlFor="client-bio">{t('bio')}</label>
                 <textarea
                   id="client-bio"
                   className="settings-textarea"
@@ -246,7 +248,7 @@ function ClientSettings() {
 
               {!!settings.createdAt && (
                 <small className="settings-help">
-                  Account created: {new Date(settings.createdAt).toLocaleDateString()}
+                  {t('accountCreatedOn', { date: new Date(settings.createdAt).toLocaleDateString() })}
                 </small>
               )}
             </div>
@@ -254,10 +256,10 @@ function ClientSettings() {
 
           {activeSection === 'contact' && (
             <div className="settings-section">
-              <h2 className="settings-section-title">Contact Information</h2>
+              <h2 className="settings-section-title">{t('contactInformation')}</h2>
 
               <div className="settings-group">
-                <label className="settings-label" htmlFor="client-phone">Phone Number</label>
+                <label className="settings-label" htmlFor="client-phone">{t('phoneNumber')}</label>
                 <input
                   id="client-phone"
                   type="tel"
@@ -271,7 +273,7 @@ function ClientSettings() {
               </div>
 
               <div className="settings-group">
-                <label className="settings-label" htmlFor="client-address">Address</label>
+                <label className="settings-label" htmlFor="client-address">{t('address')}</label>
                 <input
                   id="client-address"
                   type="text"
@@ -287,13 +289,13 @@ function ClientSettings() {
 
           {activeSection === 'security' && (
             <div className="settings-section">
-              <h2 className="settings-section-title">Security Actions</h2>
+              <h2 className="settings-section-title">{t('securityActions')}</h2>
 
               <div className="settings-card">
                 <p>
-                  Email verification status: <strong>{settings.isVerified ? 'Verified' : 'Not verified'}</strong>
+                  {t('emailVerificationStatus')}: <strong>{settings.isVerified ? t('verified') : t('notVerified')}</strong>
                 </p>
-                <p className="settings-help">Resend verification email is temporarily disabled.</p>
+                <p className="settings-help">{t('resendVerificationDisabled')}</p>
                 {!settings.isVerified && (
                   <div className="settings-inline-actions">
                     <button
@@ -302,17 +304,17 @@ function ClientSettings() {
                       disabled={isSendingVerification || isVerificationResendDisabled}
                       type="button"
                     >
-                      {isSendingVerification ? 'Sending...' : 'Resend Verification Email'}
+                      {isSendingVerification ? t('sending') : t('resendVerificationEmail')}
                     </button>
                   </div>
                 )}
               </div>
 
               <div className="settings-card">
-                <p>Need to change your password? Use the secure reset flow.</p>
+                <p>{t('needChangePassword')}</p>
                 <div className="settings-inline-actions">
                   <button className="btn-change-password" onClick={() => navigate('/forgot-password')}>
-                    Open Password Reset
+                    {t('openPasswordReset')}
                   </button>
                 </div>
               </div>
@@ -321,10 +323,10 @@ function ClientSettings() {
 
           <div className="settings-actions">
             <button className="btn-save" onClick={handleSave} disabled={isSaving || isLoadingProfile || !hasProfileChanges}>
-              {isSaving ? 'Saving...' : 'Save Changes'}
+              {isSaving ? t('saving') : t('saveChanges')}
             </button>
             <button className="btn-cancel" onClick={handleReset} disabled={isSaving || isLoadingProfile || !hasProfileChanges}>
-              Reset
+              {t('reset')}
             </button>
           </div>
         </div>

@@ -108,6 +108,14 @@
     font-size: 1.1rem;
     font-weight: 700;
     overflow: hidden;
+    transition: border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+  }
+
+  .mobile-topbar-icon-btn:focus-visible,
+  .mobile-topbar-avatar:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--brand-primary, #5da9dd) 58%, transparent);
+    outline-offset: 2px;
+    border-color: color-mix(in srgb, var(--brand-primary, #5da9dd) 48%, var(--color-border, #d7dce3));
   }
 
   .mobile-topbar-avatar-img {
@@ -170,6 +178,51 @@
     background: var(--color-surface-secondary, #f8fbff);
   }
 
+  .mobile-profile-menu-item:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--brand-primary, #5da9dd) 58%, transparent);
+    outline-offset: 1px;
+  }
+
+  .mobile-profile-menu-divider {
+    height: 1px;
+    margin: 0.45rem 0;
+    background: var(--color-border, #d7dce3);
+  }
+
+  .mobile-profile-preferences {
+    display: grid;
+    gap: 0.4rem;
+    padding: 0.1rem 0.25rem 0.15rem;
+  }
+
+  .mobile-profile-preferences-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: var(--color-text-secondary, #64748b);
+  }
+
+  .mobile-profile-language-select {
+    min-height: 40px;
+    border-radius: 8px;
+    border: 1px solid var(--color-border, #d7dce3);
+    background: var(--color-surface, #ffffff);
+    color: var(--color-text-primary, #1e293b);
+    font-weight: 600;
+    font-size: 0.82rem;
+    padding: 0.4rem 0.55rem;
+  }
+
+  .mobile-profile-language-select:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--brand-primary, #5da9dd) 58%, transparent);
+    outline-offset: 1px;
+  }
+
+  .mobile-profile-theme-item {
+    min-height: 40px;
+  }
+
   .mobile-profile-menu-item.danger {
     color: #dc2626;
   }
@@ -205,6 +258,7 @@
     color: var(--color-text-secondary, #64748b);
     font-size: 0.74rem;
     font-weight: 600;
+    transition: background-color 0.18s ease, color 0.18s ease;
   }
 
   .mobile-bottom-nav-action {
@@ -215,6 +269,11 @@
   .mobile-bottom-nav-item.active {
     color: var(--brand-primary, #5da9dd);
     background: color-mix(in srgb, var(--brand-primary, #5da9dd) 14%, transparent);
+  }
+
+  .mobile-bottom-nav-item:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--brand-primary, #5da9dd) 58%, transparent);
+    outline-offset: 1px;
   }
 
   .mobile-bottom-nav-icon-wrap {
