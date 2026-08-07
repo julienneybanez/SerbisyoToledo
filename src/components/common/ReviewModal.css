@@ -295,8 +295,15 @@
    RESPONSIVE
    =================================== */
 @media (max-width: 540px) {
+  .review-modal-overlay {
+    padding: 0;
+    align-items: flex-end;
+  }
+
   .review-modal {
-    margin: 1rem;
+    margin: 0;
+    max-height: 100dvh;
+    border-radius: 20px 20px 0 0;
   }
 
   .review-modal-header {
@@ -308,12 +315,17 @@
   }
 
   .review-modal-actions {
-    padding: 0 1.5rem 1.5rem;
+    padding: 0 1rem calc(1rem + env(safe-area-inset-bottom));
   }
 
   .star-wrapper {
     width: 36px;
     height: 36px;
+  }
+
+  .review-modal-close {
+    top: 0.8rem;
+    right: 0.8rem;
   }
 }
 

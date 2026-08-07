@@ -1700,7 +1700,8 @@ input:checked + .slider:before {
 
   .admin-page .filter-group {
     width: 100%;
-    flex-direction: column;
+    flex-direction: row;
+    flex-wrap: wrap;
   }
 
   .admin-page {
@@ -1793,7 +1794,7 @@ input:checked + .slider:before {
   }
 
   .admin-page .filter-group select {
-    flex: 1;
+    flex: 1 1 160px;
     width: 100%;
     min-height: 44px;
   }
@@ -1923,9 +1924,9 @@ input:checked + .slider:before {
 .admin-page.admin-users-page .admin-user-mobile-card {
   background: linear-gradient(180deg, var(--admin-surface) 0%, var(--admin-surface-soft) 100%);
   border: 1px solid var(--admin-border);
-  border-radius: 14px;
+  border-radius: 16px;
   box-shadow: var(--admin-shadow-sm);
-  padding: 0.9rem;
+  padding: 1rem;
   margin-bottom: 0.85rem;
 }
 
@@ -1947,7 +1948,30 @@ input:checked + .slider:before {
 .admin-page.admin-users-page .admin-user-mobile-actions .btn-investigate,
 .admin-page.admin-users-page .admin-user-mobile-actions .btn-approve {
   width: 100%;
-  min-height: 44px;
+  min-height: 46px;
+  font-size: 0.88rem;
+}
+
+.admin-page.admin-users-page .admin-user-mobile-body .request-detail {
+  margin: 0 0 0.35rem;
+  color: var(--admin-muted);
+}
+
+@media (max-width: 430px) {
+  .admin-page.admin-users-page .admin-user-mobile-card {
+    padding: 0.85rem;
+  }
+
+  .admin-page .request-card {
+    padding: 0.85rem;
+  }
+
+  .admin-page .request-actions > button,
+  .admin-page .request-documents > button {
+    font-size: 0.84rem;
+    padding-left: 0.65rem;
+    padding-right: 0.65rem;
+  }
 }
 
 @media (max-width: 768px) {

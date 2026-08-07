@@ -538,15 +538,42 @@
 
 /* Responsive */
 @media (max-width: 600px) {
+  .edit-portfolio-overlay {
+    padding: 0;
+    align-items: flex-end;
+  }
+
   .edit-portfolio-modal {
-    max-height: 100vh;
-    border-radius: 0;
+    max-height: 100dvh;
+    border-radius: 20px 20px 0 0 !important;
   }
   
   .edit-portfolio-header,
   .edit-portfolio-form {
-    padding-left: 20px;
-    padding-right: 20px;
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .edit-portfolio-form {
+    padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+  }
+
+  .edit-portfolio-form .form-actions {
+    position: sticky;
+    bottom: 0;
+    margin: 0 -16px -1rem;
+    padding: 0.8rem 16px calc(0.8rem + env(safe-area-inset-bottom));
+    background: var(--color-surface, #fff);
+    border-top: 1px solid var(--color-border, #e2e8f0);
+    flex-direction: column;
+  }
+
+  .edit-portfolio-form .btn-cancel,
+  .edit-portfolio-form .btn-save {
+    width: 100%;
+    min-width: 0;
+    min-height: 44px;
+    border-radius: 12px !important;
   }
   
   .add-skill-row {
