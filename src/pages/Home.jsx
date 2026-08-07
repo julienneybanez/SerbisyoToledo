@@ -3,8 +3,6 @@ import masseuse from '../assets/masseuse.jpg';
 import caregiver from '../assets/caregiver.jpg';
 import mechanic from '../assets/mechanic.jpg';
 import plumber from '../assets/plumber.jpg';
-import priest from '../assets/priest.png';
-import manghihilot from '../assets/manghihilot.jpg';
 import electrician from '../assets/electrician.png';
 import panday from '../assets/panday.png';
 import tubo from '../assets/tubo.png';
@@ -12,6 +10,7 @@ import cleaning from '../assets/cleaning.jpg';
 import gardening from '../assets/gardening.jpg';
 import locksmith from '../assets/locksmith.jpg';
 import laundry from '../assets/laundry.webp';
+import { useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import LandingSearch from '../components/common/LandingSearch';
 import HowItWorks from '../components/common/HowItWorks';
@@ -20,9 +19,10 @@ import { useLanguage } from '../context/LanguageContext';
 function Home() {
   const navigate = useNavigate();
   const { t } = useLanguage();
+  const servicesScrollRef = useRef(null);
 
   const trendingServices = [
-    { name: 'Manghihilot', image: manghihilot, category: 'Beauty' },
+    { name: 'Manghihilot', image: masseuse, category: 'Beauty' },
     { name: 'Electrician', image: electrician, category: 'Electrical' },
     { name: 'Panday', image: panday, category: 'Carpentry' },
     { name: 'Tubo', image: tubo, category: 'Plumbing' },
@@ -34,6 +34,19 @@ function Home() {
 
   const openCategory = (category) => {
     navigate(`/feed?category=${encodeURIComponent(category)}`);
+  };
+
+  const scrollServicesBy = (direction) => {
+    const scroller = servicesScrollRef.current;
+    if (!scroller) {
+      return;
+    }
+
+    const cardWidth = 324;
+    scroller.scrollBy({
+      left: direction * cardWidth,
+      behavior: 'smooth',
+    });
   };
 
   return (
@@ -69,7 +82,7 @@ function Home() {
                     <img src={plumber} alt="Plumber fixing a sink pipe" className="img-fluid rounded non-draggable-image" draggable="false" />
                   </div>
                   <div className="col-6">
-                    <img src={priest} alt="Local community ceremonial service" className="img-fluid rounded non-draggable-image" draggable="false" />
+                    <img src={gardening} alt="Gardener preparing plants for residential service" className="img-fluid rounded non-draggable-image" draggable="false" />
                   </div>
                 </div>
               </div>
@@ -126,11 +139,31 @@ function Home() {
 
       <section className="trending-section py-5">
         <div className="container">
-          <div className="text-center mb-4">
-            <h2 className="section-title">{t('popularServices')}</h2>
-            <p className="section-subtitle">{t('popularServicesSubtitle')}</p>
+          <div className="trending-head mb-4">
+            <div className="text-center text-lg-start">
+              <h2 className="section-title">{t('popularServices')}</h2>
+              <p className="section-subtitle mb-0">{t('popularServicesSubtitle')}</p>
+            </div>
+            <div className="trending-controls" aria-label="Popular services navigation">
+              <button
+                type="button"
+                className="trending-nav-btn"
+                aria-label="Previous services"
+                onClick={() => scrollServicesBy(-1)}
+              >
+                <span aria-hidden="true">&#8249;</span>
+              </button>
+              <button
+                type="button"
+                className="trending-nav-btn"
+                aria-label="Next services"
+                onClick={() => scrollServicesBy(1)}
+              >
+                <span aria-hidden="true">&#8250;</span>
+              </button>
+            </div>
           </div>
-          <div className="services-scroll">
+          <div className="services-scroll" ref={servicesScrollRef} tabIndex={0} aria-label="Popular service categories">
             {trendingServices.map((service) => (
               <button
                 key={service.name}
@@ -139,7 +172,7 @@ function Home() {
                 onClick={() => openCategory(service.category)}
                 aria-label={t('browseProvidersForService', { service: service.name })}
               >
-                <img src={service.image} alt={`${service.name} service category`} className="service-image non-draggable-image" draggable="false" />
+                <img src={service.image} alt={`${service.name} service category`} className="service-image non-draggable-image" draggable="false" loading="lazy" />
                 <div className="service-overlay">
                   <h3 className="service-name">{service.name}</h3>
                 </div>
@@ -151,9 +184,14 @@ function Home() {
 
       <section className="cta-section py-5">
         <div className="container">
-          <div className="cta-box text-center">
-            <h2 className="cta-title">{t('homeCtaTitle')}</h2>
-            <button className="btn btn-primary btn-lg mt-3" onClick={() => navigate('/register')}>{t('homeCtaButton')}</button>
+          <div className="cta-box cta-box-compact">
+            <div className="cta-copy">
+              <h2 className="cta-title mb-2">{t('homeCtaTitle')}</h2>
+              <p className="cta-text mb-0">Create an account and connect with trusted local service providers in Toledo City.</p>
+            </div>
+            <button className="btn btn-primary cta-btn" onClick={() => navigate('/register')}>
+              {t('homeCtaButton')}
+            </button>
           </div>
         </div>
       </section>

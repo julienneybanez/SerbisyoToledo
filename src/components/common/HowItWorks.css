@@ -6,7 +6,7 @@
   display: flex;
   justify-content: center;
   flex-wrap: wrap;
-  gap: 0.75rem;
+  gap: 0.5rem;
   margin-bottom: 1.25rem;
 }
 
@@ -14,8 +14,8 @@
   border: 1px solid rgba(93, 169, 221, 0.35);
   background: #fff;
   color: #1a3d5d;
-  border-radius: 999px;
-  padding: 0.55rem 1.1rem;
+  border-radius: 12px;
+  padding: 0.58rem 1rem;
   font-weight: 600;
   transition: all 0.2s ease;
 }
@@ -30,24 +30,36 @@
   border-radius: 16px;
   background: var(--color-surface);
   color: var(--color-text-primary);
+  border: 1px solid var(--color-border);
 }
 
 .how-step {
-  border: 1px solid #e4edf6;
-  border-radius: 12px;
-  background: #fff;
-  padding: 1rem;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 0 1rem;
+  transition: none;
+  height: 100%;
+  position: relative;
 }
 
-.how-step:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+.how-step::before {
+  content: '';
+  position: absolute;
+  top: 0.2rem;
+  bottom: 0.2rem;
+  left: 0;
+  width: 1px;
+  background: color-mix(in srgb, var(--color-border) 85%, transparent);
+}
+
+.col-md-4:first-child .how-step::before {
+  display: none;
 }
 
 .how-step-number {
-  width: 2rem;
-  height: 2rem;
+  width: 2.05rem;
+  height: 2.05rem;
   border-radius: 999px;
   display: inline-flex;
   align-items: center;
@@ -59,9 +71,10 @@
 }
 
 .how-step-title {
-  font-size: 1rem;
-  font-weight: 700;
+  font-size: 1.02rem;
+  font-weight: 650;
   color: #1f2c3d;
+  margin-bottom: 0.5rem;
 }
 
 .how-step-description {
@@ -97,8 +110,12 @@
 }
 
 [data-theme='dark'] .how-step {
-  background: var(--color-surface-secondary);
-  border-color: var(--color-border);
+  background: transparent;
+  border-color: transparent;
+}
+
+[data-theme='dark'] .how-step::before {
+  background: color-mix(in srgb, var(--color-border) 80%, transparent);
 }
 
 [data-theme='dark'] .how-step-title {
@@ -107,4 +124,30 @@
 
 [data-theme='dark'] .how-step-description {
   color: var(--color-text-secondary);
+}
+
+@media (max-width: 767.98px) {
+  .how-role-card .card-body {
+    padding: 1.25rem !important;
+  }
+
+  .how-step {
+    padding: 0.25rem 0;
+  }
+
+  .how-step::before {
+    display: none;
+  }
+
+  .how-step {
+    border-bottom: 1px solid color-mix(in srgb, var(--color-border) 82%, transparent);
+    padding-bottom: 0.9rem;
+    margin-bottom: 0.9rem;
+  }
+
+  .col-12:last-child .how-step {
+    border-bottom: 0;
+    margin-bottom: 0;
+    padding-bottom: 0;
+  }
 }

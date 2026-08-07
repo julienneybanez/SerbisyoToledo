@@ -6,6 +6,7 @@
   max-width: 560px;
   width: 100%;
   overflow: hidden;
+  min-height: 58px;
 }
 
 .landing-search-wrap .search-box-home input {
@@ -13,12 +14,13 @@
 }
 
 .landing-search-wrap .btn-search-home {
-  border-radius: 999px;
-  padding: 0.45rem 0.95rem;
-  background: linear-gradient(120deg, var(--brand-primary) 0%, var(--brand-accent) 100%);
+  border-radius: 12px;
+  padding: 0.68rem 1rem;
+  min-height: 42px;
+  background: var(--primary);
   color: #fff;
-  font-size: 0.9rem;
-  font-weight: 600;
+  font-size: 0.92rem;
+  font-weight: 700;
   line-height: 1;
   white-space: nowrap;
   flex-shrink: 0;
@@ -26,7 +28,13 @@
 
 .landing-search-wrap .btn-search-home:hover {
   color: #fff;
-  filter: brightness(0.95);
+  background: var(--primary-hover);
+}
+
+.landing-search-wrap .btn-search-home:focus-visible,
+.popular-search-chip:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--primary) 34%, transparent);
+  outline-offset: 2px;
 }
 
 .popular-searches {
@@ -41,7 +49,8 @@
   background: color-mix(in srgb, var(--color-surface) 84%, transparent);
   color: var(--text-primary);
   border-radius: 999px;
-  padding: 0.32rem 0.78rem;
+  min-height: 34px;
+  padding: 0.32rem 0.84rem;
   font-size: 0.85rem;
   font-weight: 500;
   transition: all 0.2s ease;
@@ -88,7 +97,8 @@
 
 @media (max-width: 576px) {
   .landing-search-wrap .search-box-home {
-    padding: 0.65rem 0.85rem;
+    min-height: 54px;
+    padding: 0.6rem 0.75rem;
   }
 
   .landing-search-wrap .search-box-home .search-divider {
@@ -96,7 +106,25 @@
   }
 
   .landing-search-wrap .btn-search-home {
-    padding: 0.4rem 0.75rem;
+    padding: 0.56rem 0.8rem;
+    min-height: 38px;
     font-size: 0.82rem;
+  }
+
+  .popular-searches {
+    gap: 0.45rem;
+    overflow-x: auto;
+    padding-bottom: 0.1rem;
+    flex-wrap: nowrap;
+    scrollbar-width: none;
+  }
+
+  .popular-searches::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+  }
+
+  .popular-search-chip {
+    flex: 0 0 auto;
   }
 }

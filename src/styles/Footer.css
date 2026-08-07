@@ -92,14 +92,14 @@
   position: fixed;
   bottom: 2rem;
   right: 2rem;
-  width: 60px;
-  height: 60px;
+  width: 56px;
+  height: 56px;
   background: linear-gradient(135deg, var(--brand-primary, #5da9dd) 0%, var(--brand-accent, #44c9a0) 100%);
   border: none;
   border-radius: 50%;
-  box-shadow: 0 8px 20px rgba(74, 159, 245, 0.35);
+  box-shadow: 0 6px 16px rgba(74, 159, 245, 0.27);
   cursor: pointer;
-  transition: transform 0.3s;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
   z-index: 1000;
 }
 
@@ -108,7 +108,13 @@
 }
 
 .floating-btn:hover {
-  transform: scale(1.08);
+  transform: translateY(-1px) scale(1.04);
+  box-shadow: 0 10px 22px rgba(74, 159, 245, 0.35);
+}
+
+.floating-btn:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--brand-primary, #5da9dd) 34%, transparent);
+  outline-offset: 2px;
 }
 
 /* ===================================
@@ -125,8 +131,8 @@
   }
 
   .floating-btn {
-    width: 50px;
-    height: 50px;
+    width: 52px;
+    height: 52px;
     bottom: 1.5rem;
     left: 1.5rem;
   }
@@ -134,8 +140,8 @@
 
 @media (max-width: 576px) {
   .floating-btn {
-    width: 45px;
-    height: 45px;
+    width: 50px;
+    height: 50px;
     bottom: 1rem;
     left: 1rem;
   }
