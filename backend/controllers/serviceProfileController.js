@@ -14,6 +14,15 @@ const {
 } = require('../utils/bookingAvailability');
 
 const SUPPORTED_LANGUAGE_CODES = new Set(['ceb', 'en', 'fil']);
+const SUPPORTED_PRICING_UNITS = new Set(['per_job', 'per_hour', 'per_day']);
+const PRESENCE_WINDOW_MINUTES = 5;
+
+const deriveOnlineFromLastSeen = (lastSeenAt) => {
+  if (!lastSeenAt) return false;
+  const seenTime = new Date(lastSeenAt).getTime();
+  if (!Number.isFinite(seenTime)) return false;
+  return (Date.now() - seenTime) <= PRESENCE_WINDOW_MINUTES * 60 * 1000;
+};
 
 const normalizeLanguageCodes = (payload) => Array.from(
   new Set(
@@ -47,9 +56,9 @@ exports.createOrUpdateProfile = async (req, res) => {
     }
 
     const { fullName, barangayAddress, startingPrice, description } = req.body;
+    const pricingUnit = String(req.body.pricingUnit || 'per_day').trim().toLowerCase();
     let serviceCategories = req.body.serviceCategories;
     let languages = req.body.languages;
-    let bannerImage = null;
     let bannerImageUrl = null;
     let bannerImagePublicId = null;
 
@@ -78,6 +87,13 @@ exports.createOrUpdateProfile = async (req, res) => {
       });
     }
 
+    if (!SUPPORTED_PRICING_UNITS.has(pricingUnit)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Unsupported pricing unit provided',
+      });
+    }
+
     // Validate required fields
     if (!fullName || !barangayAddress || !startingPrice || !serviceCategories || serviceCategories.length === 0) {
       return res.status(400).json({
@@ -97,10 +113,10 @@ exports.createOrUpdateProfile = async (req, res) => {
 
         bannerImageUrl = uploadResult.secure_url;
         bannerImagePublicId = uploadResult.public_id;
-      } else {
-        bannerImage = req.file.buffer;
       }
     }
+
+    await db.query('UPDATE users SET full_name = ? WHERE id = ?', [fullName, userId]);
 
     // Check if profile already exists for this user
     const [existingProfile] = await db.query(
@@ -111,17 +127,17 @@ exports.createOrUpdateProfile = async (req, res) => {
     if (existingProfile.length > 0) {
       // Update existing profile
       const updates = [
-        'full_name = ?',
         'barangay_address = ?',
         'starting_price = ?',
+        'pricing_unit = ?',
         'service_categories = ?',
         'description = ?',
       ];
 
       const params = [
-        fullName,
         barangayAddress,
         parseFloat(startingPrice),
+        pricingUnit,
         JSON.stringify(serviceCategories),
         description || null
       ];
@@ -131,10 +147,6 @@ exports.createOrUpdateProfile = async (req, res) => {
         params.push(bannerImageUrl);
         updates.push('banner_image_public_id = ?');
         params.push(bannerImagePublicId);
-        updates.push('banner_image = NULL');
-      } else if (bannerImage) {
-        updates.push('banner_image = ?');
-        params.push(bannerImage);
       }
 
       params.push(userId);
@@ -161,16 +173,15 @@ exports.createOrUpdateProfile = async (req, res) => {
       // Create new profile
       const [result] = await db.query(
         `INSERT INTO service_profiles 
-         (user_id, full_name, barangay_address, starting_price, service_categories, description, banner_image, banner_image_url, banner_image_public_id) 
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         (user_id, barangay_address, starting_price, pricing_unit, service_categories, description, banner_image_url, banner_image_public_id) 
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           userId,
-          fullName,
           barangayAddress,
           parseFloat(startingPrice),
+          pricingUnit,
           JSON.stringify(serviceCategories),
           description || null,
-          bannerImage,
           bannerImageUrl,
           bannerImagePublicId,
         ]
@@ -227,16 +238,16 @@ exports.getAllProfiles = async (req, res) => {
       SELECT 
         sp.id,
         sp.user_id,
-        sp.full_name,
+        u.full_name AS provider_name,
+        u.last_seen_at,
         sp.barangay_address,
         sp.starting_price,
+        sp.pricing_unit,
         sp.service_categories,
         sp.description,
-        sp.banner_image,
         sp.banner_image_url,
         sp.rating,
         sp.reviews_count,
-        sp.online,
         sp.created_at,
         u.profession,
         u.skills,
@@ -270,7 +281,7 @@ exports.getAllProfiles = async (req, res) => {
     }
 
     if (search) {
-      query += ' AND (sp.full_name LIKE ? OR u.profession LIKE ? OR u.skills LIKE ? OR sp.barangay_address LIKE ? OR sp.description LIKE ? OR sp.service_categories LIKE ?)';
+      query += ' AND (u.full_name LIKE ? OR u.profession LIKE ? OR u.skills LIKE ? OR sp.barangay_address LIKE ? OR sp.description LIKE ? OR sp.service_categories LIKE ?)';
       params.push(`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`);
     }
 
@@ -291,16 +302,16 @@ exports.getAllProfiles = async (req, res) => {
       return {
         id: profile.id,
         userId: profile.user_id,
-        name: profile.full_name,
+        name: profile.provider_name,
         location: profile.barangay_address,
         startingPrice: parseFloat(profile.starting_price),
-        dailyRate: parseFloat(profile.starting_price),
+        pricingUnit: profile.pricing_unit || 'per_day',
         description: profile.description,
-        image: profile.banner_image_url || (profile.banner_image ? `data:image/jpeg;base64,${Buffer.from(profile.banner_image).toString('base64')}` : null),
+        image: profile.banner_image_url || null,
         tags: [...skills, ...categories],
         rating: parseFloat(profile.rating),
         reviews: profile.reviews_count,
-        online: profile.online,
+        online: deriveOnlineFromLastSeen(profile.last_seen_at),
         verified: Boolean(profile.is_verified),
         profession: profile.profession,
         categories,
@@ -366,16 +377,16 @@ exports.getRecommendedProviders = async (req, res) => {
       SELECT
         sp.id,
         sp.user_id,
-        sp.full_name,
+        u.full_name AS provider_name,
+        u.last_seen_at,
         sp.barangay_address,
         sp.starting_price,
+        sp.pricing_unit,
         sp.service_categories,
         sp.description,
-        sp.banner_image,
         sp.banner_image_url,
         sp.rating,
         sp.reviews_count,
-        sp.online,
         u.profession,
         u.skills,
         u.is_verified
@@ -402,7 +413,7 @@ exports.getRecommendedProviders = async (req, res) => {
     }
 
     if (search) {
-      query += ' AND (sp.full_name LIKE ? OR u.profession LIKE ? OR u.skills LIKE ? OR sp.description LIKE ? OR sp.service_categories LIKE ?)';
+      query += ' AND (u.full_name LIKE ? OR u.profession LIKE ? OR u.skills LIKE ? OR sp.description LIKE ? OR sp.service_categories LIKE ?)';
       params.push(`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`);
     }
 
@@ -452,16 +463,16 @@ exports.getRecommendedProviders = async (req, res) => {
       recommended.push({
         id: profile.id,
         userId: profile.user_id,
-        name: profile.full_name,
+        name: profile.provider_name,
         location: profile.barangay_address,
         startingPrice: parseFloat(profile.starting_price),
-        dailyRate: parseFloat(profile.starting_price),
+        pricingUnit: profile.pricing_unit || 'per_day',
         description: profile.description,
-        image: profile.banner_image_url || (profile.banner_image ? `data:image/jpeg;base64,${Buffer.from(profile.banner_image).toString('base64')}` : null),
+        image: profile.banner_image_url || null,
         tags: [...skills, ...categories],
         rating: parseFloat(profile.rating),
         reviews: profile.reviews_count,
-        online: Boolean(profile.online),
+        online: deriveOnlineFromLastSeen(profile.last_seen_at),
         verified: Boolean(profile.is_verified),
         profession: profile.profession,
         categories,
@@ -497,6 +508,8 @@ exports.getProfileById = async (req, res) => {
     const [profiles] = await db.query(
       `SELECT 
         sp.*,
+        u.full_name,
+        u.last_seen_at,
         u.profession,
         u.skills,
         u.email,
@@ -521,7 +534,7 @@ exports.getProfileById = async (req, res) => {
     let portfolioItems = [];
     try {
       const [rows] = await db.query(
-        `SELECT id, image_url, image_data, caption, display_order,
+        `SELECT id, image_url, caption, display_order,
                 service_request_id, job_title, job_description, service_category,
                 completed_at, is_published, is_featured, completed_through_platform
          FROM portfolio_items
@@ -537,7 +550,7 @@ exports.getProfileById = async (req, res) => {
       }
 
       const [legacyRows] = await db.query(
-        `SELECT id, image_url, image_data, caption, display_order,
+        `SELECT id, image_url, caption, display_order,
                 NULL AS service_request_id,
                 NULL AS job_title,
                 NULL AS job_description,
@@ -599,7 +612,7 @@ exports.getProfileById = async (req, res) => {
     // Format portfolio items
     const formattedPortfolio = portfolioItems.map(item => ({
       id: item.id,
-      src: item.image_url || (item.image_data ? `data:image/jpeg;base64,${Buffer.from(item.image_data).toString('base64')}` : null),
+      src: item.image_url || null,
       caption: item.caption,
       jobTitle: item.job_title,
       jobDescription: item.job_description,
@@ -627,16 +640,16 @@ exports.getProfileById = async (req, res) => {
       name: profile.full_name,
       location: profile.barangay_address,
       startingPrice: parseFloat(profile.starting_price),
-      dailyRate: parseFloat(profile.starting_price),
+      pricingUnit: profile.pricing_unit || 'per_day',
       description: profile.description,
       aboutMe: profile.about_me,
       responseTime: profile.response_time || 'Within 24 hours',
       jobsCompleted: profile.jobs_completed || 0,
-      image: profile.banner_image_url || (profile.banner_image ? `data:image/jpeg;base64,${Buffer.from(profile.banner_image).toString('base64')}` : null),
+      image: profile.banner_image_url || null,
       tags: [...skills, ...categories],
       rating: parseFloat(profile.rating),
       reviewsCount: profile.reviews_count,
-      online: profile.online,
+      online: deriveOnlineFromLastSeen(profile.last_seen_at),
       verified: Boolean(profile.is_verified),
       profession: profile.profession,
       categories,
@@ -696,6 +709,8 @@ exports.getMyProfile = async (req, res) => {
     const [profiles] = await db.query(
       `SELECT 
         sp.*,
+        u.full_name,
+        u.last_seen_at,
         u.profession,
         u.skills,
         u.email,
@@ -728,13 +743,13 @@ exports.getMyProfile = async (req, res) => {
       name: profile.full_name,
       location: profile.barangay_address,
       startingPrice: parseFloat(profile.starting_price),
-      dailyRate: parseFloat(profile.starting_price),
+      pricingUnit: profile.pricing_unit || 'per_day',
       description: profile.description,
-      image: profile.banner_image_url || (profile.banner_image ? `data:image/jpeg;base64,${Buffer.from(profile.banner_image).toString('base64')}` : null),
+      image: profile.banner_image_url || null,
       tags: [...skills, ...categories],
       rating: parseFloat(profile.rating),
       reviews: profile.reviews_count,
-      online: profile.online,
+      online: deriveOnlineFromLastSeen(profile.last_seen_at),
       verified: Boolean(profile.is_verified),
       profession: profile.profession,
       categories,
@@ -878,7 +893,6 @@ exports.addPortfolioImage = async (req, res) => {
     }
 
     const { caption } = req.body;
-    let imageData = null;
     let imageUrl = null;
     let imagePublicId = null;
 
@@ -892,8 +906,6 @@ exports.addPortfolioImage = async (req, res) => {
 
         imageUrl = uploadResult.secure_url;
         imagePublicId = uploadResult.public_id;
-      } else {
-        imageData = req.file.buffer;
       }
     } else {
       return res.status(400).json({
@@ -924,9 +936,9 @@ exports.addPortfolioImage = async (req, res) => {
     );
 
     const [result] = await db.query(
-      `INSERT INTO portfolio_items (service_profile_id, image_url, image_public_id, image_data, caption, display_order)
-       VALUES (?, ?, ?, ?, ?, ?)`,
-      [serviceProfileId, imageUrl, imagePublicId, imageData, caption || '', orderResult[0].nextOrder]
+      `INSERT INTO portfolio_items (service_profile_id, image_url, image_public_id, caption, display_order)
+       VALUES (?, ?, ?, ?, ?)`,
+      [serviceProfileId, imageUrl, imagePublicId, caption || '', orderResult[0].nextOrder]
     );
 
     res.status(201).json({
@@ -1027,7 +1039,7 @@ exports.getMyPortfolio = async (req, res) => {
 
     // Get portfolio items
     const [portfolioItems] = await db.query(
-      `SELECT id, image_url, image_data, caption, display_order,
+      `SELECT id, image_url, caption, display_order,
               service_request_id, job_title, job_description, service_category,
               completed_at, is_published, is_featured, completed_through_platform
        FROM portfolio_items
@@ -1038,7 +1050,7 @@ exports.getMyPortfolio = async (req, res) => {
 
     const formattedPortfolio = portfolioItems.map(item => ({
       id: item.id,
-      src: item.image_url || (item.image_data ? `data:image/jpeg;base64,${Buffer.from(item.image_data).toString('base64')}` : null),
+      src: item.image_url || null,
       caption: item.caption,
       serviceRequestId: item.service_request_id,
       jobTitle: item.job_title,
@@ -1704,7 +1716,6 @@ exports.createPortfolioFromCompletedRequest = async (req, res) => {
          service_request_id,
          image_url,
          image_public_id,
-         image_data,
          caption,
          display_order,
          job_title,
@@ -1715,7 +1726,7 @@ exports.createPortfolioFromCompletedRequest = async (req, res) => {
          is_featured,
          completed_through_platform
        )
-       VALUES (?, ?, NULL, NULL, NULL, ?, ?, ?, ?, ?, NOW(), ?, ?, TRUE)`,
+      VALUES (?, ?, NULL, NULL, ?, ?, ?, ?, ?, NOW(), ?, ?, TRUE)`,
       [
         serviceProfileId,
         serviceRequestId,

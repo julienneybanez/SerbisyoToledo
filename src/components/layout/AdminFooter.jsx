@@ -11,7 +11,7 @@ function AdminFooter() {
         <div className="footer-left">
           <div className="footer-brand">
             <div className="brand-logo">
-              <img src={logo} alt="SerbisyoToledo" className="footer-logo-img" />
+              <img src={logo} alt="SerbisyoToledo" className="footer-logo-img" draggable="false" />
             </div>
             <span className="brand-name">
               Serbisyo<span className="highlight">Toledo</span>

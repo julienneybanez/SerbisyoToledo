@@ -439,6 +439,7 @@ exports.getReports = async (req, res) => {
   try {
     const [rows] = await db.query(
       `SELECT r.id, r.request_id, r.reason, r.description, r.status, r.priority, r.resolution_notes,
+              r.report_status, r.action_taken, r.moderation_notes,
               r.screenshot_data, r.screenshot_mime, r.created_at,
               reporter.full_name as reporter_name, reporter.user_type as reporter_type,
               reported.full_name as reported_user_name, reported.user_type as reported_user_type,
@@ -448,12 +449,11 @@ exports.getReports = async (req, res) => {
        JOIN users reported ON r.reported_user_id = reported.id
        JOIN service_requests sr ON r.request_id = sr.id
        ORDER BY
-         CASE r.status
+         CASE COALESCE(r.report_status, r.status)
            WHEN 'pending' THEN 1
            WHEN 'under_review' THEN 2
            WHEN 'dismissed' THEN 3
            WHEN 'resolved' THEN 4
-           WHEN 'banned' THEN 5
            ELSE 6
          END,
          r.created_at DESC`
@@ -464,13 +464,15 @@ exports.getReports = async (req, res) => {
       requestId: row.request_id,
       reportedUser: row.reported_user_name,
       reportedUserType: row.reported_user_type,
-      status: row.status,
+      status: row.report_status || row.status,
+      actionTaken: row.action_taken || 'none',
       reportedBy: row.reporter_name,
       reporterType: row.reporter_type,
       reason: row.reason,
       description: row.description,
       priority: row.priority,
       resolution: row.resolution_notes,
+      moderationNotes: row.moderation_notes,
       date: row.created_at,
       jobTitle: row.job_title,
       screenshot: row.screenshot_data
@@ -496,18 +498,18 @@ exports.getReports = async (req, res) => {
 exports.updateReportStatus = async (req, res) => {
   try {
     const { id } = req.params;
-    const { action, resolutionNotes } = req.body;
+    const { action, resolutionNotes, moderationNotes } = req.body;
     const adminId = req.user.userId;
 
-    if (!['investigate', 'dismiss', 'ban'].includes(action)) {
+    if (!['investigate', 'dismiss', 'resolve', 'warn', 'suspend', 'ban'].includes(action)) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid action. Use investigate, dismiss, or ban.'
+        message: 'Invalid action.'
       });
     }
 
     const [reports] = await db.query(
-      'SELECT id, reported_user_id, status FROM user_reports WHERE id = ?',
+      'SELECT id, reported_user_id, COALESCE(report_status, status) AS lifecycle_status FROM user_reports WHERE id = ?',
       [id]
     );
 
@@ -518,17 +520,43 @@ exports.updateReportStatus = async (req, res) => {
       });
     }
 
-    const currentStatus = reports[0].status;
-    if (['dismissed', 'resolved', 'banned'].includes(currentStatus)) {
+    const currentStatus = reports[0].lifecycle_status;
+    if (['dismissed', 'resolved'].includes(currentStatus)) {
       return res.status(409).json({
         success: false,
         message: `Cannot apply action to a ${currentStatus} report`
       });
     }
 
-    let nextStatus = 'under_review';
-    if (action === 'dismiss') nextStatus = 'dismissed';
-    if (action === 'ban') nextStatus = 'banned';
+    const trimmedResolution = String(resolutionNotes || '').trim();
+    const trimmedModeration = String(moderationNotes || '').trim();
+
+    let nextStatus = currentStatus;
+    let nextActionTaken = 'none';
+
+    if (action === 'investigate') {
+      nextStatus = 'under_review';
+    }
+
+    if (action === 'dismiss') {
+      nextStatus = 'dismissed';
+    }
+
+    if (action === 'resolve') {
+      nextStatus = 'resolved';
+    }
+
+    if (['warn', 'suspend', 'ban'].includes(action)) {
+      nextStatus = 'resolved';
+      nextActionTaken = action === 'warn' ? 'warning' : action;
+    }
+
+    if (['dismiss', 'resolve', 'warn', 'suspend', 'ban'].includes(action) && !trimmedResolution) {
+      return res.status(400).json({
+        success: false,
+        message: 'Resolution notes are required for this action.'
+      });
+    }
 
     if (currentStatus === nextStatus) {
       return res.status(409).json({
@@ -539,9 +567,14 @@ exports.updateReportStatus = async (req, res) => {
 
     await db.query(
       `UPDATE user_reports
-       SET status = ?, resolution_notes = ?, handled_by = ?, handled_at = NOW()
+       SET report_status = ?,
+           action_taken = ?,
+           resolution_notes = ?,
+           moderation_notes = ?,
+           handled_by = ?,
+           handled_at = NOW()
        WHERE id = ?`,
-      [nextStatus, resolutionNotes || null, adminId, id]
+      [nextStatus, nextActionTaken, trimmedResolution || null, trimmedModeration || null, adminId, id]
     );
 
     if (action === 'ban') {
@@ -551,9 +584,16 @@ exports.updateReportStatus = async (req, res) => {
       );
     }
 
+    if (action === 'suspend') {
+      await db.query(
+        'UPDATE users SET is_active = FALSE WHERE id = ?',
+        [reports[0].reported_user_id]
+      );
+    }
+
     res.json({
       success: true,
-      message: `Report marked as ${nextStatus}`
+      message: `Report updated: ${nextStatus}${nextActionTaken !== 'none' ? ` (${nextActionTaken})` : ''}`
     });
   } catch (error) {
     console.error('Error updating report status:', error);

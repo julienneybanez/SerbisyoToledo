@@ -21,6 +21,15 @@ const SUPPORTED_LANGUAGE_CODES = new Set(['ceb', 'en', 'fil']);
 
 const hashToken = (value) => crypto.createHash('sha256').update(value).digest('hex');
 
+const isUrlLikeImageValue = (value) => {
+  if (!value) {
+    return false;
+  }
+
+  const normalized = String(value).trim();
+  return /^(https?:\/\/|data:image\/)/i.test(normalized);
+};
+
 const shouldThrottleResend = (email) => {
   const key = String(email || '').toLowerCase();
   const now = Date.now();
@@ -35,11 +44,11 @@ const shouldThrottleResend = (email) => {
 };
 
 const resolveUserProfileImage = (user) => {
-  if (user.profile_photo_url) {
+  if (isUrlLikeImageValue(user.profile_photo_url)) {
     return user.profile_photo_url;
   }
 
-  if (user.profile_image) {
+  if (isUrlLikeImageValue(user.profile_image)) {
     return user.profile_image;
   }
 
@@ -458,6 +467,11 @@ exports.login = async (req, res) => {
     // Generate token
     const token = generateToken(user.id);
 
+    await db.query(
+      'UPDATE users SET is_online = TRUE, last_seen_at = NOW() WHERE id = ?',
+      [user.id]
+    );
+
     // Parse skills if JSON string
     let skills = [];
     if (user.skills) {
@@ -562,9 +576,14 @@ exports.getMe = async (req, res) => {
 // Logout user
 exports.logout = async (req, res) => {
   try {
-    // In a more complete implementation, you would invalidate the token here
-    // For now, we'll just return a success message
-    // The frontend should remove the token from storage
+    const userId = req.user?.userId;
+
+    if (userId) {
+      await db.query(
+        'UPDATE users SET is_online = FALSE, last_seen_at = NOW() WHERE id = ?',
+        [userId]
+      );
+    }
     
     res.json({
       success: true,

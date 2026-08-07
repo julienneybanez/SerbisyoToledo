@@ -80,7 +80,7 @@ function AdminSidebar({ isOpen, onClose }) {
       >
         <CSidebarBrand className="sidebar-brand-custom">
           <div className="brand-logo-wrapper">
-            <img src={logo} alt="SerbisyoToledo" className="brand-logo-img" />
+            <img src={logo} alt="SerbisyoToledo" className="brand-logo-img" draggable="false" />
           </div>
           <button className="sidebar-close-btn d-lg-none" onClick={onClose}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

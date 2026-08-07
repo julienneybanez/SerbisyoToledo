@@ -27,6 +27,9 @@ router.get('/profile', userController.getProfile);
 // Update user profile (with optional photo upload)
 router.patch('/profile', uploadLimiter, upload.single('profilePhoto'), validateSingleUpload({ allowedKinds: ['image'], required: false, fieldName: 'profilePhoto' }), userController.updateProfile);
 
+// Update online presence heartbeat
+router.patch('/presence', userController.updatePresence);
+
 // Remove profile photo
 router.delete('/profile/photo', userController.removeProfilePhoto);
 

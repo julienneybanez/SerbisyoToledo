@@ -5,16 +5,55 @@ const {
   deleteImageByPublicId,
 } = require('../utils/cloudinaryService');
 
+const isUrlLikeImageValue = (value) => {
+  if (!value) {
+    return false;
+  }
+
+  return /^(https?:\/\/|data:image\/)/i.test(String(value).trim());
+};
+
 const formatProfilePhoto = (user) => {
-  if (user.profile_photo_url) {
+  if (isUrlLikeImageValue(user.profile_photo_url)) {
     return user.profile_photo_url;
   }
 
-  if (user.profile_photo) {
-    return `data:image/jpeg;base64,${user.profile_photo.toString('base64')}`;
+  if (isUrlLikeImageValue(user.profile_image)) {
+    return user.profile_image;
   }
 
   return null;
+};
+
+exports.updatePresence = async (req, res) => {
+  try {
+    const userId = req.user?.userId;
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required'
+      });
+    }
+
+    const online = req.body?.online !== false;
+
+    await db.query(
+      'UPDATE users SET is_online = ?, last_seen_at = NOW() WHERE id = ?',
+      [online, userId]
+    );
+
+    return res.json({
+      success: true,
+      message: 'Presence updated'
+    });
+  } catch (error) {
+    console.error('Error updating presence:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to update presence'
+    });
+  }
 };
 
 // Get current user profile
@@ -30,7 +69,7 @@ exports.getProfile = async (req, res) => {
     }
 
     const [users] = await db.query(
-      `SELECT id, full_name, email, user_type, phone, address, bio, profile_photo, profile_photo_url, created_at
+      `SELECT id, full_name, email, user_type, phone, address, bio, profile_photo_url, profile_image, created_at
        FROM users WHERE id = ?`,
       [userId]
     );
@@ -80,7 +119,6 @@ exports.updateProfile = async (req, res) => {
     }
 
     const { fullName, phone, address, bio } = req.body;
-    let profilePhoto = null;
     let profilePhotoUrl = null;
     let profilePhotoPublicId = null;
 
@@ -102,8 +140,6 @@ exports.updateProfile = async (req, res) => {
 
         profilePhotoUrl = uploadResult.secure_url;
         profilePhotoPublicId = uploadResult.public_id;
-      } else {
-        profilePhoto = req.file.buffer;
       }
     }
 
@@ -136,12 +172,6 @@ exports.updateProfile = async (req, res) => {
       params.push(profilePhotoUrl);
       updates.push('profile_photo_public_id = ?');
       params.push(profilePhotoPublicId);
-      updates.push('profile_image = ?');
-      params.push(profilePhotoUrl);
-      updates.push('profile_photo = NULL');
-    } else if (profilePhoto) {
-      updates.push('profile_photo = ?');
-      params.push(profilePhoto);
     }
 
     if (updates.length === 0) {
@@ -221,7 +251,7 @@ exports.removeProfilePhoto = async (req, res) => {
     const previousPublicId = existingUsers[0]?.profile_photo_public_id;
 
     await db.query(
-      'UPDATE users SET profile_photo = NULL, profile_photo_url = NULL, profile_photo_public_id = NULL, profile_image = NULL WHERE id = ?',
+      'UPDATE users SET profile_photo_url = NULL, profile_photo_public_id = NULL WHERE id = ?',
       [userId]
     );
 

@@ -104,7 +104,7 @@ export default function MobileTopBar({
         )}
         <div className="mobile-topbar-brand">
           <span className="mobile-topbar-mark" aria-hidden="true">
-            <img src={logo} alt="" className="mobile-topbar-logo" />
+            <img src={logo} alt="" className="mobile-topbar-logo" draggable="false" />
           </span>
           <div>
             <p className="mobile-topbar-title">{title}</p>

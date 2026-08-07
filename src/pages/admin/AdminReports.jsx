@@ -49,10 +49,17 @@ function AdminReports() {
   const handleReportAction = async (reportId, action) => {
     try {
       setActionLoading(`${reportId}-${action}`);
-      const notes = window.prompt('Optional admin notes:') || '';
+      const needsResolution = ['dismiss', 'resolve', 'warn', 'suspend', 'ban'].includes(action);
+      const notes = window.prompt(needsResolution ? 'Resolution notes (required):' : 'Optional resolution notes:') || '';
+      if (needsResolution && !notes.trim()) {
+        alert('Resolution notes are required for this action.');
+        return;
+      }
+      const moderationNotes = window.prompt('Optional moderation notes:') || '';
       const response = await adminAPI.updateReportStatus(reportId, {
         action,
         resolutionNotes: notes,
+        moderationNotes,
       });
       if (response.success) {
         await fetchReports();
@@ -80,7 +87,7 @@ function AdminReports() {
 
   const pendingCount = reports.filter((r) => r.status === 'pending').length;
   const reviewCount = reports.filter((r) => r.status === 'under_review').length;
-  const resolvedCount = reports.filter((r) => ['resolved', 'dismissed', 'banned'].includes(r.status)).length;
+  const resolvedCount = reports.filter((r) => ['resolved', 'dismissed'].includes(r.status)).length;
 
   return (
     <div className="admin-page">
@@ -125,7 +132,6 @@ function AdminReports() {
             <option value="under_review">Under Review</option>
             <option value="dismissed">Dismissed</option>
             <option value="resolved">Resolved</option>
-            <option value="banned">Banned</option>
           </select>
         </div>
       </div>
@@ -137,7 +143,7 @@ function AdminReports() {
           <div className="text-center py-4">Loading reports...</div>
         ) : (
           filteredReports.map((report) => (
-            <div key={report.id} className={`request-card report-card ${['dismissed', 'resolved', 'banned'].includes(report.status) ? 'processed' : ''}`}>
+            <div key={report.id} className={`request-card report-card ${['dismissed', 'resolved'].includes(report.status) ? 'processed' : ''}`}>
               <div className="request-avatar report-avatar">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                   <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
@@ -152,6 +158,10 @@ function AdminReports() {
                     {report.status.replace('_', ' ')}
                   </span>
                 </div>
+
+                {report.actionTaken && report.actionTaken !== 'none' && (
+                  <p className="request-detail"><strong>Action taken:</strong> {report.actionTaken}</p>
+                )}
 
                 <p className="request-detail">Reported by: {report.reportedBy} ({report.reporterType})</p>
                 <p className="request-detail">Reason: {report.reason}</p>
@@ -197,11 +207,32 @@ function AdminReports() {
                       {actionLoading === `${report.id}-investigate` ? 'Working...' : 'Investigate'}
                     </button>
                     <button
+                      className="btn-view-details"
+                      disabled={actionLoading === `${report.id}-resolve`}
+                      onClick={() => handleReportAction(report.id, 'resolve')}
+                    >
+                      {actionLoading === `${report.id}-resolve` ? 'Working...' : 'Resolve'}
+                    </button>
+                    <button
                       className="btn-dismiss"
                       disabled={actionLoading === `${report.id}-dismiss`}
                       onClick={() => handleReportAction(report.id, 'dismiss')}
                     >
                       {actionLoading === `${report.id}-dismiss` ? 'Working...' : 'Dismiss'}
+                    </button>
+                    <button
+                      className="btn-view-details"
+                      disabled={actionLoading === `${report.id}-warn`}
+                      onClick={() => handleReportAction(report.id, 'warn')}
+                    >
+                      {actionLoading === `${report.id}-warn` ? 'Working...' : 'Warn'}
+                    </button>
+                    <button
+                      className="btn-dismiss"
+                      disabled={actionLoading === `${report.id}-suspend`}
+                      onClick={() => handleReportAction(report.id, 'suspend')}
+                    >
+                      {actionLoading === `${report.id}-suspend` ? 'Working...' : 'Suspend'}
                     </button>
                     <button
                       className="btn-ban"

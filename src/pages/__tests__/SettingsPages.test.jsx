@@ -41,6 +41,11 @@ vi.mock('../../services/api', () => ({
     createProfile: vi.fn(),
     togglePublish: vi.fn(),
     updatePortfolioDetails: vi.fn(),
+    getMyAvailability: vi.fn(),
+    saveMyAvailability: vi.fn(),
+    getMyLanguages: vi.fn(),
+    updateMyLanguages: vi.fn(),
+    getMyCredentials: vi.fn(),
   },
   adminAPI: {
     getDashboardStats: vi.fn(),
@@ -114,7 +119,7 @@ describe('Settings pages', () => {
     expect(authAPI.resendVerification).not.toHaveBeenCalled();
   });
 
-  it('provider settings toggles publish and opens verification modal', async () => {
+  it('provider settings loads current sections and supports account save', async () => {
     getUser.mockReturnValue({
       userType: 'tradesperson',
       fullName: 'Provider User',
@@ -133,45 +138,54 @@ describe('Settings pages', () => {
       },
     });
 
-    serviceProfileAPI.getMyProfile.mockResolvedValue({
+    userProfileAPI.updateProfile.mockResolvedValue({
       success: true,
       data: {
-        name: 'Provider User',
-        location: 'Poblacion',
-        startingPrice: 500,
-        description: 'Repairs',
-        categories: ['Plumbing'],
-        isPublished: false,
+        fullName: 'Provider User Updated',
+        phone: '09120000000',
+        address: 'Provider Address',
       },
     });
 
-    serviceProfileAPI.getMyPortfolio.mockResolvedValue({
+    serviceProfileAPI.getMyAvailability.mockResolvedValue({
       success: true,
       data: {
-        aboutMe: 'About provider',
-        responseTime: 'Within 24 hours',
-        skills: ['Repairs'],
-        portfolio: [],
+        settings: {
+          allowSameDayBooking: false,
+          minAdvanceNoticeMinutes: 720,
+          maxAdvanceBookingDays: 60,
+        },
+        weeklyBlocks: [],
+        exceptions: [],
       },
     });
 
-    serviceProfileAPI.togglePublish.mockResolvedValue({ success: true });
+    serviceProfileAPI.getMyLanguages.mockResolvedValue({
+      success: true,
+      data: { languages: ['en'] },
+    });
+
+    serviceProfileAPI.getMyCredentials.mockResolvedValue({
+      success: true,
+      data: { credentials: [] },
+    });
 
     render(<ServiceProviderSettings />);
 
     expect(await screen.findByText('Service Provider Settings')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Service Profile' }));
-    fireEvent.click(await screen.findByRole('button', { name: 'Publish Profile' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Business' }));
+    expect(await screen.findByText('Business Information')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Availability' }));
+    expect(await screen.findByText('Availability & Job Settings')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Account' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Save Changes' }));
 
     await waitFor(() => {
-      expect(serviceProfileAPI.togglePublish).toHaveBeenCalledWith(true);
+      expect(userProfileAPI.updateProfile).toHaveBeenCalledTimes(1);
     });
-
-    fireEvent.click(screen.getByRole('button', { name: 'Verification' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Submit Verification Request' }));
-
-    expect(await screen.findByTestId('verification-modal')).toBeInTheDocument();
   });
 
   it('admin settings loads metrics and navigates to moderation queue', async () => {

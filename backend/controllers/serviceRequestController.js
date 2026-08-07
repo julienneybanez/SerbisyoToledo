@@ -114,9 +114,9 @@ const validateBookingPayload = ({
 };
 
 const normalizeRequestSchedule = (requestRow) => {
-  const startDate = requestRow.start_date || requestRow.scheduled_date;
-  const endDate = requestRow.end_date || requestRow.scheduled_date;
-  const startTime = parseTimeInputToSql(requestRow.start_time || requestRow.scheduled_time);
+  const startDate = requestRow.start_date;
+  const endDate = requestRow.end_date;
+  const startTime = parseTimeInputToSql(requestRow.start_time);
   const durationMinutes = Number(requestRow.estimated_duration_minutes || 0);
 
   return {
@@ -237,9 +237,9 @@ exports.createRequest = async (req, res) => {
        WHERE client_id = ?
          AND provider_id = ?
          AND service_profile_id = ?
-         AND COALESCE(start_date, scheduled_date) = ?
-         AND COALESCE(end_date, scheduled_date) = ?
-         AND COALESCE(start_time, ?) = ?
+         AND start_date = ?
+         AND end_date = ?
+         AND start_time = ?
          AND LOWER(job_title) = LOWER(?)
          AND status IN ('pending', 'accepted', 'on_the_way', 'in_progress')
        LIMIT 1`,
@@ -249,7 +249,6 @@ exports.createRequest = async (req, res) => {
         profile.service_profile_id,
         normalized.normalizedStartDate,
         normalized.normalizedEndDate,
-        normalized.normalizedStartTime,
         normalized.normalizedStartTime,
         jobTitle,
       ]
@@ -293,12 +292,12 @@ exports.createRequest = async (req, res) => {
          start_date,
          end_date,
          start_time,
+         scheduled_start_at,
+         scheduled_end_at,
          estimated_duration_minutes,
          duration_days,
          daily_rate_snapshot,
-         estimated_total,
-         scheduled_date,
-         scheduled_time
+         estimated_total
        )
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
@@ -311,12 +310,12 @@ exports.createRequest = async (req, res) => {
         normalized.normalizedStartDate,
         normalized.normalizedEndDate,
         normalized.normalizedStartTime,
+        `${normalized.normalizedStartDate} ${normalized.normalizedStartTime}`,
+        `${normalized.normalizedEndDate} ${normalized.normalizedStartTime}`,
         normalized.normalizedDurationMinutes,
         normalized.durationDays,
         dailyRate,
         estimatedTotal,
-        normalized.normalizedStartDate,
-        scheduledTime || normalized.normalizedStartTime,
       ]
     );
 
@@ -1007,14 +1006,16 @@ exports.respondToReschedule = async (req, res) => {
       const durationDays = calculateDurationDays(proposal.proposed_start_date, proposal.proposed_end_date) || 1;
       const dailyRateSnapshot = Number(request.daily_rate_snapshot || 0);
       const estimatedTotal = dailyRateSnapshot * durationDays;
+      const proposedStartAt = `${proposal.proposed_start_date} ${proposal.proposed_start_time}`;
+      const proposedEndAt = `${proposal.proposed_end_date} ${proposal.proposed_start_time}`;
 
       await connection.query(
         `UPDATE service_requests
          SET start_date = ?,
              end_date = ?,
              start_time = ?,
-             scheduled_date = ?,
-             scheduled_time = ?,
+             scheduled_start_at = ?,
+             scheduled_end_at = ?,
              duration_days = ?,
              estimated_total = ?
          WHERE id = ?`,
@@ -1022,8 +1023,8 @@ exports.respondToReschedule = async (req, res) => {
           proposal.proposed_start_date,
           proposal.proposed_end_date,
           proposal.proposed_start_time,
-          proposal.proposed_start_date,
-          proposal.proposed_start_time,
+          proposedStartAt,
+          proposedEndAt,
           durationDays,
           estimatedTotal,
           request.id,

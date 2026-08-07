@@ -1,0 +1,4497 @@
+{
+  "generatedAt": "2026-08-07T05:47:14.980Z",
+  "database": "railway",
+  "tables": [
+    {
+      "TABLE_NAME": "notifications"
+    },
+    {
+      "TABLE_NAME": "password_reset_tokens"
+    },
+    {
+      "TABLE_NAME": "portfolio_items"
+    },
+    {
+      "TABLE_NAME": "refresh_tokens"
+    },
+    {
+      "TABLE_NAME": "reviews"
+    },
+    {
+      "TABLE_NAME": "service_profiles"
+    },
+    {
+      "TABLE_NAME": "service_requests"
+    },
+    {
+      "TABLE_NAME": "user_reports"
+    },
+    {
+      "TABLE_NAME": "users"
+    },
+    {
+      "TABLE_NAME": "verification_requests"
+    }
+  ],
+  "columns": [
+    {
+      "TABLE_NAME": "notifications",
+      "ORDINAL_POSITION": 1,
+      "COLUMN_NAME": "id",
+      "COLUMN_TYPE": "int",
+      "DATA_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "auto_increment"
+    },
+    {
+      "TABLE_NAME": "notifications",
+      "ORDINAL_POSITION": 2,
+      "COLUMN_NAME": "user_id",
+      "COLUMN_TYPE": "int",
+      "DATA_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "notifications",
+      "ORDINAL_POSITION": 3,
+      "COLUMN_NAME": "type",
+      "COLUMN_TYPE": "enum('request_received','request_accepted','request_declined','provider_on_way','service_completed','discussion_requested','discussion_accepted','phone_revealed','completion_confirmed','review_received','verification_approved','verification_rejected')",
+      "DATA_TYPE": "enum",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "notifications",
+      "ORDINAL_POSITION": 4,
+      "COLUMN_NAME": "title",
+      "COLUMN_TYPE": "varchar(255)",
+      "DATA_TYPE": "varchar",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "notifications",
+      "ORDINAL_POSITION": 5,
+      "COLUMN_NAME": "message",
+      "COLUMN_TYPE": "text",
+      "DATA_TYPE": "text",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "notifications",
+      "ORDINAL_POSITION": 6,
+      "COLUMN_NAME": "related_request_id",
+      "COLUMN_TYPE": "int",
+      "DATA_TYPE": "int",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "notifications",
+      "ORDINAL_POSITION": 7,
+      "COLUMN_NAME": "is_read",
+      "COLUMN_TYPE": "tinyint(1)",
+      "DATA_TYPE": "tinyint",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "0",
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "notifications",
+      "ORDINAL_POSITION": 8,
+      "COLUMN_NAME": "created_at",
+      "COLUMN_TYPE": "timestamp",
+      "DATA_TYPE": "timestamp",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": "CURRENT_TIMESTAMP",
+      "EXTRA": "DEFAULT_GENERATED"
+    },
+    {
+      "TABLE_NAME": "password_reset_tokens",
+      "ORDINAL_POSITION": 1,
+      "COLUMN_NAME": "id",
+      "COLUMN_TYPE": "int",
+      "DATA_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "auto_increment"
+    },
+    {
+      "TABLE_NAME": "password_reset_tokens",
+      "ORDINAL_POSITION": 2,
+      "COLUMN_NAME": "user_id",
+      "COLUMN_TYPE": "int",
+      "DATA_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "password_reset_tokens",
+      "ORDINAL_POSITION": 3,
+      "COLUMN_NAME": "token_hash",
+      "COLUMN_TYPE": "varchar(255)",
+      "DATA_TYPE": "varchar",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "password_reset_tokens",
+      "ORDINAL_POSITION": 4,
+      "COLUMN_NAME": "expires_at",
+      "COLUMN_TYPE": "timestamp",
+      "DATA_TYPE": "timestamp",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": "CURRENT_TIMESTAMP",
+      "EXTRA": "DEFAULT_GENERATED on update CURRENT_TIMESTAMP"
+    },
+    {
+      "TABLE_NAME": "password_reset_tokens",
+      "ORDINAL_POSITION": 5,
+      "COLUMN_NAME": "used_at",
+      "COLUMN_TYPE": "timestamp",
+      "DATA_TYPE": "timestamp",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "password_reset_tokens",
+      "ORDINAL_POSITION": 6,
+      "COLUMN_NAME": "created_at",
+      "COLUMN_TYPE": "timestamp",
+      "DATA_TYPE": "timestamp",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": "CURRENT_TIMESTAMP",
+      "EXTRA": "DEFAULT_GENERATED"
+    },
+    {
+      "TABLE_NAME": "portfolio_items",
+      "ORDINAL_POSITION": 1,
+      "COLUMN_NAME": "id",
+      "COLUMN_TYPE": "int",
+      "DATA_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "auto_increment"
+    },
+    {
+      "TABLE_NAME": "portfolio_items",
+      "ORDINAL_POSITION": 2,
+      "COLUMN_NAME": "service_profile_id",
+      "COLUMN_TYPE": "int",
+      "DATA_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "portfolio_items",
+      "ORDINAL_POSITION": 3,
+      "COLUMN_NAME": "image_url",
+      "COLUMN_TYPE": "varchar(500)",
+      "DATA_TYPE": "varchar",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "portfolio_items",
+      "ORDINAL_POSITION": 4,
+      "COLUMN_NAME": "caption",
+      "COLUMN_TYPE": "varchar(255)",
+      "DATA_TYPE": "varchar",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "portfolio_items",
+      "ORDINAL_POSITION": 5,
+      "COLUMN_NAME": "display_order",
+      "COLUMN_TYPE": "int",
+      "DATA_TYPE": "int",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "0",
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "portfolio_items",
+      "ORDINAL_POSITION": 6,
+      "COLUMN_NAME": "created_at",
+      "COLUMN_TYPE": "timestamp",
+      "DATA_TYPE": "timestamp",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": "CURRENT_TIMESTAMP",
+      "EXTRA": "DEFAULT_GENERATED"
+    },
+    {
+      "TABLE_NAME": "portfolio_items",
+      "ORDINAL_POSITION": 7,
+      "COLUMN_NAME": "image_public_id",
+      "COLUMN_TYPE": "varchar(255)",
+      "DATA_TYPE": "varchar",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "refresh_tokens",
+      "ORDINAL_POSITION": 1,
+      "COLUMN_NAME": "id",
+      "COLUMN_TYPE": "int",
+      "DATA_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "auto_increment"
+    },
+    {
+      "TABLE_NAME": "refresh_tokens",
+      "ORDINAL_POSITION": 2,
+      "COLUMN_NAME": "user_id",
+      "COLUMN_TYPE": "int",
+      "DATA_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "refresh_tokens",
+      "ORDINAL_POSITION": 3,
+      "COLUMN_NAME": "token",
+      "COLUMN_TYPE": "varchar(500)",
+      "DATA_TYPE": "varchar",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "refresh_tokens",
+      "ORDINAL_POSITION": 4,
+      "COLUMN_NAME": "expires_at",
+      "COLUMN_TYPE": "timestamp",
+      "DATA_TYPE": "timestamp",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": "CURRENT_TIMESTAMP",
+      "EXTRA": "DEFAULT_GENERATED on update CURRENT_TIMESTAMP"
+    },
+    {
+      "TABLE_NAME": "refresh_tokens",
+      "ORDINAL_POSITION": 5,
+      "COLUMN_NAME": "created_at",
+      "COLUMN_TYPE": "timestamp",
+      "DATA_TYPE": "timestamp",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": "CURRENT_TIMESTAMP",
+      "EXTRA": "DEFAULT_GENERATED"
+    },
+    {
+      "TABLE_NAME": "reviews",
+      "ORDINAL_POSITION": 1,
+      "COLUMN_NAME": "id",
+      "COLUMN_TYPE": "int",
+      "DATA_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "auto_increment"
+    },
+    {
+      "TABLE_NAME": "reviews",
+      "ORDINAL_POSITION": 2,
+      "COLUMN_NAME": "service_profile_id",
+      "COLUMN_TYPE": "int",
+      "DATA_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "reviews",
+      "ORDINAL_POSITION": 3,
+      "COLUMN_NAME": "client_id",
+      "COLUMN_TYPE": "int",
+      "DATA_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "reviews",
+      "ORDINAL_POSITION": 4,
+      "COLUMN_NAME": "service_request_id",
+      "COLUMN_TYPE": "int",
+      "DATA_TYPE": "int",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "reviews",
+      "ORDINAL_POSITION": 5,
+      "COLUMN_NAME": "rating",
+      "COLUMN_TYPE": "decimal(2,1)",
+      "DATA_TYPE": "decimal",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "reviews",
+      "ORDINAL_POSITION": 6,
+      "COLUMN_NAME": "comment",
+      "COLUMN_TYPE": "text",
+      "DATA_TYPE": "text",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "reviews",
+      "ORDINAL_POSITION": 7,
+      "COLUMN_NAME": "created_at",
+      "COLUMN_TYPE": "timestamp",
+      "DATA_TYPE": "timestamp",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": "CURRENT_TIMESTAMP",
+      "EXTRA": "DEFAULT_GENERATED"
+    },
+    {
+      "TABLE_NAME": "service_profiles",
+      "ORDINAL_POSITION": 1,
+      "COLUMN_NAME": "id",
+      "COLUMN_TYPE": "int",
+      "DATA_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "auto_increment"
+    },
+    {
+      "TABLE_NAME": "service_profiles",
+      "ORDINAL_POSITION": 2,
+      "COLUMN_NAME": "user_id",
+      "COLUMN_TYPE": "int",
+      "DATA_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "service_profiles",
+      "ORDINAL_POSITION": 3,
+      "COLUMN_NAME": "full_name",
+      "COLUMN_TYPE": "varchar(255)",
+      "DATA_TYPE": "varchar",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "service_profiles",
+      "ORDINAL_POSITION": 4,
+      "COLUMN_NAME": "barangay_address",
+      "COLUMN_TYPE": "varchar(255)",
+      "DATA_TYPE": "varchar",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "service_profiles",
+      "ORDINAL_POSITION": 5,
+      "COLUMN_NAME": "starting_price",
+      "COLUMN_TYPE": "decimal(10,2)",
+      "DATA_TYPE": "decimal",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "service_profiles",
+      "ORDINAL_POSITION": 6,
+      "COLUMN_NAME": "pricing_unit",
+      "COLUMN_TYPE": "enum('per_job','per_hour','per_day')",
+      "DATA_TYPE": "enum",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": "per_day",
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "service_profiles",
+      "ORDINAL_POSITION": 7,
+      "COLUMN_NAME": "service_categories",
+      "COLUMN_TYPE": "longtext",
+      "DATA_TYPE": "longtext",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "service_profiles",
+      "ORDINAL_POSITION": 8,
+      "COLUMN_NAME": "description",
+      "COLUMN_TYPE": "text",
+      "DATA_TYPE": "text",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "service_profiles",
+      "ORDINAL_POSITION": 9,
+      "COLUMN_NAME": "rating",
+      "COLUMN_TYPE": "decimal(3,1)",
+      "DATA_TYPE": "decimal",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "5.0",
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "service_profiles",
+      "ORDINAL_POSITION": 10,
+      "COLUMN_NAME": "reviews_count",
+      "COLUMN_TYPE": "int",
+      "DATA_TYPE": "int",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "0",
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "service_profiles",
+      "ORDINAL_POSITION": 11,
+      "COLUMN_NAME": "is_published",
+      "COLUMN_TYPE": "tinyint(1)",
+      "DATA_TYPE": "tinyint",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "1",
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "service_profiles",
+      "ORDINAL_POSITION": 12,
+      "COLUMN_NAME": "created_at",
+      "COLUMN_TYPE": "timestamp",
+      "DATA_TYPE": "timestamp",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": "CURRENT_TIMESTAMP",
+      "EXTRA": "DEFAULT_GENERATED"
+    },
+    {
+      "TABLE_NAME": "service_profiles",
+      "ORDINAL_POSITION": 13,
+      "COLUMN_NAME": "updated_at",
+      "COLUMN_TYPE": "timestamp",
+      "DATA_TYPE": "timestamp",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": "CURRENT_TIMESTAMP",
+      "EXTRA": "DEFAULT_GENERATED on update CURRENT_TIMESTAMP"
+    },
+    {
+      "TABLE_NAME": "service_profiles",
+      "ORDINAL_POSITION": 14,
+      "COLUMN_NAME": "about_me",
+      "COLUMN_TYPE": "text",
+      "DATA_TYPE": "text",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "service_profiles",
+      "ORDINAL_POSITION": 15,
+      "COLUMN_NAME": "response_time",
+      "COLUMN_TYPE": "varchar(100)",
+      "DATA_TYPE": "varchar",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "Within 24 hours",
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "service_profiles",
+      "ORDINAL_POSITION": 16,
+      "COLUMN_NAME": "jobs_completed",
+      "COLUMN_TYPE": "int",
+      "DATA_TYPE": "int",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "0",
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "service_profiles",
+      "ORDINAL_POSITION": 17,
+      "COLUMN_NAME": "banner_image_url",
+      "COLUMN_TYPE": "varchar(500)",
+      "DATA_TYPE": "varchar",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "service_profiles",
+      "ORDINAL_POSITION": 18,
+      "COLUMN_NAME": "banner_image_public_id",
+      "COLUMN_TYPE": "varchar(255)",
+      "DATA_TYPE": "varchar",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "service_requests",
+      "ORDINAL_POSITION": 1,
+      "COLUMN_NAME": "id",
+      "COLUMN_TYPE": "int",
+      "DATA_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "auto_increment"
+    },
+    {
+      "TABLE_NAME": "service_requests",
+      "ORDINAL_POSITION": 2,
+      "COLUMN_NAME": "client_id",
+      "COLUMN_TYPE": "int",
+      "DATA_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "service_requests",
+      "ORDINAL_POSITION": 3,
+      "COLUMN_NAME": "provider_id",
+      "COLUMN_TYPE": "int",
+      "DATA_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "service_requests",
+      "ORDINAL_POSITION": 4,
+      "COLUMN_NAME": "service_profile_id",
+      "COLUMN_TYPE": "int",
+      "DATA_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "service_requests",
+      "ORDINAL_POSITION": 5,
+      "COLUMN_NAME": "job_title",
+      "COLUMN_TYPE": "varchar(255)",
+      "DATA_TYPE": "varchar",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "service_requests",
+      "ORDINAL_POSITION": 6,
+      "COLUMN_NAME": "job_details",
+      "COLUMN_TYPE": "text",
+      "DATA_TYPE": "text",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "service_requests",
+      "ORDINAL_POSITION": 7,
+      "COLUMN_NAME": "scheduled_date",
+      "COLUMN_TYPE": "date",
+      "DATA_TYPE": "date",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "service_requests",
+      "ORDINAL_POSITION": 8,
+      "COLUMN_NAME": "scheduled_time",
+      "COLUMN_TYPE": "varchar(50)",
+      "DATA_TYPE": "varchar",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "service_requests",
+      "ORDINAL_POSITION": 9,
+      "COLUMN_NAME": "status",
+      "COLUMN_TYPE": "enum('pending','accepted','declined','on_the_way','in_progress','completed','cancelled')",
+      "DATA_TYPE": "enum",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "pending",
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "service_requests",
+      "ORDINAL_POSITION": 10,
+      "COLUMN_NAME": "discussion_requested",
+      "COLUMN_TYPE": "tinyint(1)",
+      "DATA_TYPE": "tinyint",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "0",
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "service_requests",
+      "ORDINAL_POSITION": 11,
+      "COLUMN_NAME": "discussion_accepted",
+      "COLUMN_TYPE": "tinyint(1)",
+      "DATA_TYPE": "tinyint",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "0",
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "service_requests",
+      "ORDINAL_POSITION": 12,
+      "COLUMN_NAME": "provider_phone_revealed",
+      "COLUMN_TYPE": "tinyint(1)",
+      "DATA_TYPE": "tinyint",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "0",
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "service_requests",
+      "ORDINAL_POSITION": 13,
+      "COLUMN_NAME": "created_at",
+      "COLUMN_TYPE": "timestamp",
+      "DATA_TYPE": "timestamp",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": "CURRENT_TIMESTAMP",
+      "EXTRA": "DEFAULT_GENERATED"
+    },
+    {
+      "TABLE_NAME": "service_requests",
+      "ORDINAL_POSITION": 14,
+      "COLUMN_NAME": "updated_at",
+      "COLUMN_TYPE": "timestamp",
+      "DATA_TYPE": "timestamp",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": "CURRENT_TIMESTAMP",
+      "EXTRA": "DEFAULT_GENERATED on update CURRENT_TIMESTAMP"
+    },
+    {
+      "TABLE_NAME": "service_requests",
+      "ORDINAL_POSITION": 15,
+      "COLUMN_NAME": "provider_completed",
+      "COLUMN_TYPE": "tinyint(1)",
+      "DATA_TYPE": "tinyint",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "0",
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "service_requests",
+      "ORDINAL_POSITION": 16,
+      "COLUMN_NAME": "client_completed",
+      "COLUMN_TYPE": "tinyint(1)",
+      "DATA_TYPE": "tinyint",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "0",
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "service_requests",
+      "ORDINAL_POSITION": 17,
+      "COLUMN_NAME": "decline_reason",
+      "COLUMN_TYPE": "text",
+      "DATA_TYPE": "text",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "service_requests",
+      "ORDINAL_POSITION": 18,
+      "COLUMN_NAME": "scheduled_start_at",
+      "COLUMN_TYPE": "datetime",
+      "DATA_TYPE": "datetime",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "service_requests",
+      "ORDINAL_POSITION": 19,
+      "COLUMN_NAME": "scheduled_end_at",
+      "COLUMN_TYPE": "datetime",
+      "DATA_TYPE": "datetime",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "user_reports",
+      "ORDINAL_POSITION": 1,
+      "COLUMN_NAME": "id",
+      "COLUMN_TYPE": "int",
+      "DATA_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "auto_increment"
+    },
+    {
+      "TABLE_NAME": "user_reports",
+      "ORDINAL_POSITION": 2,
+      "COLUMN_NAME": "request_id",
+      "COLUMN_TYPE": "int",
+      "DATA_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "user_reports",
+      "ORDINAL_POSITION": 3,
+      "COLUMN_NAME": "reporter_id",
+      "COLUMN_TYPE": "int",
+      "DATA_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "user_reports",
+      "ORDINAL_POSITION": 4,
+      "COLUMN_NAME": "reported_user_id",
+      "COLUMN_TYPE": "int",
+      "DATA_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "user_reports",
+      "ORDINAL_POSITION": 5,
+      "COLUMN_NAME": "reason",
+      "COLUMN_TYPE": "varchar(255)",
+      "DATA_TYPE": "varchar",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "user_reports",
+      "ORDINAL_POSITION": 6,
+      "COLUMN_NAME": "description",
+      "COLUMN_TYPE": "text",
+      "DATA_TYPE": "text",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "user_reports",
+      "ORDINAL_POSITION": 7,
+      "COLUMN_NAME": "screenshot_data",
+      "COLUMN_TYPE": "longblob",
+      "DATA_TYPE": "longblob",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "user_reports",
+      "ORDINAL_POSITION": 8,
+      "COLUMN_NAME": "screenshot_mime",
+      "COLUMN_TYPE": "varchar(100)",
+      "DATA_TYPE": "varchar",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "user_reports",
+      "ORDINAL_POSITION": 9,
+      "COLUMN_NAME": "report_status",
+      "COLUMN_TYPE": "enum('pending','under_review','resolved','dismissed')",
+      "DATA_TYPE": "enum",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": "pending",
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "user_reports",
+      "ORDINAL_POSITION": 10,
+      "COLUMN_NAME": "action_taken",
+      "COLUMN_TYPE": "enum('none','warning','suspension','ban')",
+      "DATA_TYPE": "enum",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": "none",
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "user_reports",
+      "ORDINAL_POSITION": 11,
+      "COLUMN_NAME": "status",
+      "COLUMN_TYPE": "enum('pending','under_review','dismissed','resolved','banned')",
+      "DATA_TYPE": "enum",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "pending",
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "user_reports",
+      "ORDINAL_POSITION": 12,
+      "COLUMN_NAME": "priority",
+      "COLUMN_TYPE": "enum('low','medium','high')",
+      "DATA_TYPE": "enum",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "medium",
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "user_reports",
+      "ORDINAL_POSITION": 13,
+      "COLUMN_NAME": "resolution_notes",
+      "COLUMN_TYPE": "text",
+      "DATA_TYPE": "text",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "user_reports",
+      "ORDINAL_POSITION": 14,
+      "COLUMN_NAME": "moderation_notes",
+      "COLUMN_TYPE": "text",
+      "DATA_TYPE": "text",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "user_reports",
+      "ORDINAL_POSITION": 15,
+      "COLUMN_NAME": "handled_by",
+      "COLUMN_TYPE": "int",
+      "DATA_TYPE": "int",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "user_reports",
+      "ORDINAL_POSITION": 16,
+      "COLUMN_NAME": "handled_at",
+      "COLUMN_TYPE": "timestamp",
+      "DATA_TYPE": "timestamp",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "user_reports",
+      "ORDINAL_POSITION": 17,
+      "COLUMN_NAME": "created_at",
+      "COLUMN_TYPE": "timestamp",
+      "DATA_TYPE": "timestamp",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": "CURRENT_TIMESTAMP",
+      "EXTRA": "DEFAULT_GENERATED"
+    },
+    {
+      "TABLE_NAME": "user_reports",
+      "ORDINAL_POSITION": 18,
+      "COLUMN_NAME": "updated_at",
+      "COLUMN_TYPE": "timestamp",
+      "DATA_TYPE": "timestamp",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": "CURRENT_TIMESTAMP",
+      "EXTRA": "DEFAULT_GENERATED on update CURRENT_TIMESTAMP"
+    },
+    {
+      "TABLE_NAME": "users",
+      "ORDINAL_POSITION": 1,
+      "COLUMN_NAME": "id",
+      "COLUMN_TYPE": "int",
+      "DATA_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "auto_increment"
+    },
+    {
+      "TABLE_NAME": "users",
+      "ORDINAL_POSITION": 2,
+      "COLUMN_NAME": "full_name",
+      "COLUMN_TYPE": "varchar(255)",
+      "DATA_TYPE": "varchar",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "users",
+      "ORDINAL_POSITION": 3,
+      "COLUMN_NAME": "email",
+      "COLUMN_TYPE": "varchar(255)",
+      "DATA_TYPE": "varchar",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "users",
+      "ORDINAL_POSITION": 4,
+      "COLUMN_NAME": "password",
+      "COLUMN_TYPE": "varchar(255)",
+      "DATA_TYPE": "varchar",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "users",
+      "ORDINAL_POSITION": 5,
+      "COLUMN_NAME": "user_type",
+      "COLUMN_TYPE": "enum('client','tradesperson','admin')",
+      "DATA_TYPE": "enum",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": "client",
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "users",
+      "ORDINAL_POSITION": 6,
+      "COLUMN_NAME": "preferred_services",
+      "COLUMN_TYPE": "varchar(255)",
+      "DATA_TYPE": "varchar",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "users",
+      "ORDINAL_POSITION": 7,
+      "COLUMN_NAME": "profession",
+      "COLUMN_TYPE": "varchar(255)",
+      "DATA_TYPE": "varchar",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "users",
+      "ORDINAL_POSITION": 8,
+      "COLUMN_NAME": "skills",
+      "COLUMN_TYPE": "longtext",
+      "DATA_TYPE": "longtext",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "users",
+      "ORDINAL_POSITION": 9,
+      "COLUMN_NAME": "profile_image",
+      "COLUMN_TYPE": "varchar(500)",
+      "DATA_TYPE": "varchar",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "users",
+      "ORDINAL_POSITION": 10,
+      "COLUMN_NAME": "phone",
+      "COLUMN_TYPE": "varchar(20)",
+      "DATA_TYPE": "varchar",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "users",
+      "ORDINAL_POSITION": 11,
+      "COLUMN_NAME": "address",
+      "COLUMN_TYPE": "text",
+      "DATA_TYPE": "text",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "users",
+      "ORDINAL_POSITION": 12,
+      "COLUMN_NAME": "bio",
+      "COLUMN_TYPE": "text",
+      "DATA_TYPE": "text",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "users",
+      "ORDINAL_POSITION": 13,
+      "COLUMN_NAME": "is_verified",
+      "COLUMN_TYPE": "tinyint(1)",
+      "DATA_TYPE": "tinyint",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "0",
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "users",
+      "ORDINAL_POSITION": 14,
+      "COLUMN_NAME": "is_active",
+      "COLUMN_TYPE": "tinyint(1)",
+      "DATA_TYPE": "tinyint",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "1",
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "users",
+      "ORDINAL_POSITION": 15,
+      "COLUMN_NAME": "created_at",
+      "COLUMN_TYPE": "timestamp",
+      "DATA_TYPE": "timestamp",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": "CURRENT_TIMESTAMP",
+      "EXTRA": "DEFAULT_GENERATED"
+    },
+    {
+      "TABLE_NAME": "users",
+      "ORDINAL_POSITION": 16,
+      "COLUMN_NAME": "updated_at",
+      "COLUMN_TYPE": "timestamp",
+      "DATA_TYPE": "timestamp",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": "CURRENT_TIMESTAMP",
+      "EXTRA": "DEFAULT_GENERATED on update CURRENT_TIMESTAMP"
+    },
+    {
+      "TABLE_NAME": "users",
+      "ORDINAL_POSITION": 17,
+      "COLUMN_NAME": "is_online",
+      "COLUMN_TYPE": "tinyint(1)",
+      "DATA_TYPE": "tinyint",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "0",
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "users",
+      "ORDINAL_POSITION": 18,
+      "COLUMN_NAME": "last_seen_at",
+      "COLUMN_TYPE": "datetime",
+      "DATA_TYPE": "datetime",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "users",
+      "ORDINAL_POSITION": 19,
+      "COLUMN_NAME": "email_verified",
+      "COLUMN_TYPE": "tinyint(1)",
+      "DATA_TYPE": "tinyint",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "0",
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "users",
+      "ORDINAL_POSITION": 20,
+      "COLUMN_NAME": "verification_token",
+      "COLUMN_TYPE": "varchar(255)",
+      "DATA_TYPE": "varchar",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "users",
+      "ORDINAL_POSITION": 21,
+      "COLUMN_NAME": "verification_token_expires",
+      "COLUMN_TYPE": "timestamp",
+      "DATA_TYPE": "timestamp",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "users",
+      "ORDINAL_POSITION": 22,
+      "COLUMN_NAME": "profile_photo",
+      "COLUMN_TYPE": "longblob",
+      "DATA_TYPE": "longblob",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "users",
+      "ORDINAL_POSITION": 23,
+      "COLUMN_NAME": "profile_photo_url",
+      "COLUMN_TYPE": "varchar(500)",
+      "DATA_TYPE": "varchar",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "users",
+      "ORDINAL_POSITION": 24,
+      "COLUMN_NAME": "profile_photo_public_id",
+      "COLUMN_TYPE": "varchar(255)",
+      "DATA_TYPE": "varchar",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "verification_requests",
+      "ORDINAL_POSITION": 1,
+      "COLUMN_NAME": "id",
+      "COLUMN_TYPE": "int",
+      "DATA_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": "auto_increment"
+    },
+    {
+      "TABLE_NAME": "verification_requests",
+      "ORDINAL_POSITION": 2,
+      "COLUMN_NAME": "user_id",
+      "COLUMN_TYPE": "int",
+      "DATA_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "verification_requests",
+      "ORDINAL_POSITION": 3,
+      "COLUMN_NAME": "full_name",
+      "COLUMN_TYPE": "varchar(255)",
+      "DATA_TYPE": "varchar",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "verification_requests",
+      "ORDINAL_POSITION": 4,
+      "COLUMN_NAME": "phone_number",
+      "COLUMN_TYPE": "varchar(50)",
+      "DATA_TYPE": "varchar",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "verification_requests",
+      "ORDINAL_POSITION": 5,
+      "COLUMN_NAME": "address",
+      "COLUMN_TYPE": "text",
+      "DATA_TYPE": "text",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "verification_requests",
+      "ORDINAL_POSITION": 6,
+      "COLUMN_NAME": "service_description",
+      "COLUMN_TYPE": "text",
+      "DATA_TYPE": "text",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "verification_requests",
+      "ORDINAL_POSITION": 7,
+      "COLUMN_NAME": "government_id_data",
+      "COLUMN_TYPE": "longblob",
+      "DATA_TYPE": "longblob",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "verification_requests",
+      "ORDINAL_POSITION": 8,
+      "COLUMN_NAME": "government_id_mime",
+      "COLUMN_TYPE": "varchar(100)",
+      "DATA_TYPE": "varchar",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "application/octet-stream",
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "verification_requests",
+      "ORDINAL_POSITION": 9,
+      "COLUMN_NAME": "certifications_data",
+      "COLUMN_TYPE": "longblob",
+      "DATA_TYPE": "longblob",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "verification_requests",
+      "ORDINAL_POSITION": 10,
+      "COLUMN_NAME": "certifications_mime",
+      "COLUMN_TYPE": "varchar(100)",
+      "DATA_TYPE": "varchar",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "application/octet-stream",
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "verification_requests",
+      "ORDINAL_POSITION": 11,
+      "COLUMN_NAME": "status",
+      "COLUMN_TYPE": "enum('pending','approved','rejected')",
+      "DATA_TYPE": "enum",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "pending",
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "verification_requests",
+      "ORDINAL_POSITION": 12,
+      "COLUMN_NAME": "rejection_reason",
+      "COLUMN_TYPE": "text",
+      "DATA_TYPE": "text",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "verification_requests",
+      "ORDINAL_POSITION": 13,
+      "COLUMN_NAME": "admin_notes",
+      "COLUMN_TYPE": "text",
+      "DATA_TYPE": "text",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "verification_requests",
+      "ORDINAL_POSITION": 14,
+      "COLUMN_NAME": "reviewed_by",
+      "COLUMN_TYPE": "int",
+      "DATA_TYPE": "int",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "verification_requests",
+      "ORDINAL_POSITION": 15,
+      "COLUMN_NAME": "reviewed_at",
+      "COLUMN_TYPE": "timestamp",
+      "DATA_TYPE": "timestamp",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": null,
+      "EXTRA": ""
+    },
+    {
+      "TABLE_NAME": "verification_requests",
+      "ORDINAL_POSITION": 16,
+      "COLUMN_NAME": "created_at",
+      "COLUMN_TYPE": "timestamp",
+      "DATA_TYPE": "timestamp",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": "CURRENT_TIMESTAMP",
+      "EXTRA": "DEFAULT_GENERATED"
+    },
+    {
+      "TABLE_NAME": "verification_requests",
+      "ORDINAL_POSITION": 17,
+      "COLUMN_NAME": "updated_at",
+      "COLUMN_TYPE": "timestamp",
+      "DATA_TYPE": "timestamp",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": "CURRENT_TIMESTAMP",
+      "EXTRA": "DEFAULT_GENERATED on update CURRENT_TIMESTAMP"
+    }
+  ],
+  "primaryKeys": [
+    {
+      "TABLE_NAME": "notifications",
+      "COLUMN_NAME": "id",
+      "ORDINAL_POSITION": 1
+    },
+    {
+      "TABLE_NAME": "password_reset_tokens",
+      "COLUMN_NAME": "id",
+      "ORDINAL_POSITION": 1
+    },
+    {
+      "TABLE_NAME": "portfolio_items",
+      "COLUMN_NAME": "id",
+      "ORDINAL_POSITION": 1
+    },
+    {
+      "TABLE_NAME": "refresh_tokens",
+      "COLUMN_NAME": "id",
+      "ORDINAL_POSITION": 1
+    },
+    {
+      "TABLE_NAME": "reviews",
+      "COLUMN_NAME": "id",
+      "ORDINAL_POSITION": 1
+    },
+    {
+      "TABLE_NAME": "service_profiles",
+      "COLUMN_NAME": "id",
+      "ORDINAL_POSITION": 1
+    },
+    {
+      "TABLE_NAME": "service_requests",
+      "COLUMN_NAME": "id",
+      "ORDINAL_POSITION": 1
+    },
+    {
+      "TABLE_NAME": "user_reports",
+      "COLUMN_NAME": "id",
+      "ORDINAL_POSITION": 1
+    },
+    {
+      "TABLE_NAME": "users",
+      "COLUMN_NAME": "id",
+      "ORDINAL_POSITION": 1
+    },
+    {
+      "TABLE_NAME": "verification_requests",
+      "COLUMN_NAME": "id",
+      "ORDINAL_POSITION": 1
+    }
+  ],
+  "foreignKeys": [
+    {
+      "TABLE_NAME": "notifications",
+      "COLUMN_NAME": "user_id",
+      "CONSTRAINT_NAME": "notifications_ibfk_1",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id"
+    },
+    {
+      "TABLE_NAME": "notifications",
+      "COLUMN_NAME": "related_request_id",
+      "CONSTRAINT_NAME": "notifications_ibfk_2",
+      "REFERENCED_TABLE_NAME": "service_requests",
+      "REFERENCED_COLUMN_NAME": "id"
+    },
+    {
+      "TABLE_NAME": "password_reset_tokens",
+      "COLUMN_NAME": "user_id",
+      "CONSTRAINT_NAME": "password_reset_tokens_ibfk_1",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id"
+    },
+    {
+      "TABLE_NAME": "portfolio_items",
+      "COLUMN_NAME": "service_profile_id",
+      "CONSTRAINT_NAME": "portfolio_items_ibfk_1",
+      "REFERENCED_TABLE_NAME": "service_profiles",
+      "REFERENCED_COLUMN_NAME": "id"
+    },
+    {
+      "TABLE_NAME": "refresh_tokens",
+      "COLUMN_NAME": "user_id",
+      "CONSTRAINT_NAME": "refresh_tokens_ibfk_1",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id"
+    },
+    {
+      "TABLE_NAME": "reviews",
+      "COLUMN_NAME": "service_profile_id",
+      "CONSTRAINT_NAME": "reviews_ibfk_1",
+      "REFERENCED_TABLE_NAME": "service_profiles",
+      "REFERENCED_COLUMN_NAME": "id"
+    },
+    {
+      "TABLE_NAME": "reviews",
+      "COLUMN_NAME": "client_id",
+      "CONSTRAINT_NAME": "reviews_ibfk_2",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id"
+    },
+    {
+      "TABLE_NAME": "service_profiles",
+      "COLUMN_NAME": "user_id",
+      "CONSTRAINT_NAME": "service_profiles_ibfk_1",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id"
+    },
+    {
+      "TABLE_NAME": "service_requests",
+      "COLUMN_NAME": "client_id",
+      "CONSTRAINT_NAME": "service_requests_ibfk_1",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id"
+    },
+    {
+      "TABLE_NAME": "service_requests",
+      "COLUMN_NAME": "provider_id",
+      "CONSTRAINT_NAME": "service_requests_ibfk_2",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id"
+    },
+    {
+      "TABLE_NAME": "service_requests",
+      "COLUMN_NAME": "service_profile_id",
+      "CONSTRAINT_NAME": "service_requests_ibfk_3",
+      "REFERENCED_TABLE_NAME": "service_profiles",
+      "REFERENCED_COLUMN_NAME": "id"
+    },
+    {
+      "TABLE_NAME": "user_reports",
+      "COLUMN_NAME": "request_id",
+      "CONSTRAINT_NAME": "user_reports_ibfk_1",
+      "REFERENCED_TABLE_NAME": "service_requests",
+      "REFERENCED_COLUMN_NAME": "id"
+    },
+    {
+      "TABLE_NAME": "user_reports",
+      "COLUMN_NAME": "reporter_id",
+      "CONSTRAINT_NAME": "user_reports_ibfk_2",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id"
+    },
+    {
+      "TABLE_NAME": "user_reports",
+      "COLUMN_NAME": "reported_user_id",
+      "CONSTRAINT_NAME": "user_reports_ibfk_3",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id"
+    },
+    {
+      "TABLE_NAME": "user_reports",
+      "COLUMN_NAME": "handled_by",
+      "CONSTRAINT_NAME": "user_reports_ibfk_4",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id"
+    },
+    {
+      "TABLE_NAME": "verification_requests",
+      "COLUMN_NAME": "user_id",
+      "CONSTRAINT_NAME": "verification_requests_ibfk_1",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id"
+    },
+    {
+      "TABLE_NAME": "verification_requests",
+      "COLUMN_NAME": "reviewed_by",
+      "CONSTRAINT_NAME": "verification_requests_ibfk_2",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id"
+    }
+  ],
+  "uniqueConstraints": [
+    {
+      "TABLE_NAME": "password_reset_tokens",
+      "CONSTRAINT_NAME": "token_hash",
+      "COLUMN_NAME": "token_hash",
+      "ORDINAL_POSITION": 1
+    },
+    {
+      "TABLE_NAME": "reviews",
+      "CONSTRAINT_NAME": "idx_unique_request_review",
+      "COLUMN_NAME": "service_request_id",
+      "ORDINAL_POSITION": 1
+    },
+    {
+      "TABLE_NAME": "service_profiles",
+      "CONSTRAINT_NAME": "user_id",
+      "COLUMN_NAME": "user_id",
+      "ORDINAL_POSITION": 1
+    },
+    {
+      "TABLE_NAME": "user_reports",
+      "CONSTRAINT_NAME": "uniq_request_reporter_reported",
+      "COLUMN_NAME": "request_id",
+      "ORDINAL_POSITION": 1
+    },
+    {
+      "TABLE_NAME": "user_reports",
+      "CONSTRAINT_NAME": "uniq_request_reporter_reported",
+      "COLUMN_NAME": "reporter_id",
+      "ORDINAL_POSITION": 2
+    },
+    {
+      "TABLE_NAME": "user_reports",
+      "CONSTRAINT_NAME": "uniq_request_reporter_reported",
+      "COLUMN_NAME": "reported_user_id",
+      "ORDINAL_POSITION": 3
+    },
+    {
+      "TABLE_NAME": "users",
+      "CONSTRAINT_NAME": "email",
+      "COLUMN_NAME": "email",
+      "ORDINAL_POSITION": 1
+    },
+    {
+      "TABLE_NAME": "verification_requests",
+      "CONSTRAINT_NAME": "uniq_user_pending_request",
+      "COLUMN_NAME": "user_id",
+      "ORDINAL_POSITION": 1
+    },
+    {
+      "TABLE_NAME": "verification_requests",
+      "CONSTRAINT_NAME": "uniq_user_pending_request",
+      "COLUMN_NAME": "status",
+      "ORDINAL_POSITION": 2
+    }
+  ],
+  "checkConstraints": [
+    {
+      "TABLE_NAME": "service_profiles",
+      "CONSTRAINT_NAME": "service_profiles_chk_1",
+      "CHECK_CLAUSE": "json_valid(`service_categories`)"
+    },
+    {
+      "TABLE_NAME": "users",
+      "CONSTRAINT_NAME": "users_chk_1",
+      "CHECK_CLAUSE": "json_valid(`skills`)"
+    }
+  ],
+  "tableStats": {
+    "notifications": {
+      "totalRows": 41,
+      "columns": {
+        "id": {
+          "nullCount": 0,
+          "emptyCount": null,
+          "distinctCount": 41,
+          "topValues": [
+            {
+              "value": 43,
+              "count": 1
+            },
+            {
+              "value": 45,
+              "count": 1
+            },
+            {
+              "value": 47,
+              "count": 1
+            },
+            {
+              "value": 48,
+              "count": 1
+            },
+            {
+              "value": 49,
+              "count": 1
+            },
+            {
+              "value": 51,
+              "count": 1
+            },
+            {
+              "value": 53,
+              "count": 1
+            },
+            {
+              "value": 54,
+              "count": 1
+            },
+            {
+              "value": 56,
+              "count": 1
+            },
+            {
+              "value": 58,
+              "count": 1
+            }
+          ]
+        },
+        "user_id": {
+          "nullCount": 0,
+          "emptyCount": null,
+          "distinctCount": 12,
+          "topValues": [
+            {
+              "value": 44,
+              "count": 8
+            },
+            {
+              "value": 19,
+              "count": 7
+            },
+            {
+              "value": 43,
+              "count": 6
+            },
+            {
+              "value": 18,
+              "count": 3
+            },
+            {
+              "value": 40,
+              "count": 3
+            },
+            {
+              "value": 41,
+              "count": 3
+            },
+            {
+              "value": 45,
+              "count": 3
+            },
+            {
+              "value": 35,
+              "count": 2
+            },
+            {
+              "value": 47,
+              "count": 2
+            },
+            {
+              "value": 48,
+              "count": 2
+            }
+          ]
+        },
+        "type": {
+          "nullCount": 0,
+          "emptyCount": 0,
+          "distinctCount": 10,
+          "topValues": [
+            {
+              "value": "request_accepted",
+              "count": 10
+            },
+            {
+              "value": "provider_on_way",
+              "count": 6
+            },
+            {
+              "value": "request_received",
+              "count": 6
+            },
+            {
+              "value": "request_declined",
+              "count": 5
+            },
+            {
+              "value": "discussion_accepted",
+              "count": 4
+            },
+            {
+              "value": "service_completed",
+              "count": 3
+            },
+            {
+              "value": "completion_confirmed",
+              "count": 3
+            },
+            {
+              "value": "discussion_requested",
+              "count": 2
+            },
+            {
+              "value": "review_received",
+              "count": 1
+            },
+            {
+              "value": "verification_approved",
+              "count": 1
+            }
+          ]
+        },
+        "title": {
+          "nullCount": 0,
+          "emptyCount": 0,
+          "distinctCount": 10,
+          "topValues": [
+            {
+              "value": "Request Accepted!",
+              "count": 10
+            },
+            {
+              "value": "Provider On The Way!",
+              "count": 6
+            },
+            {
+              "value": "New Service Request",
+              "count": 6
+            },
+            {
+              "value": "Request Declined",
+              "count": 5
+            },
+            {
+              "value": "Discussion Accepted",
+              "count": 4
+            },
+            {
+              "value": "Service Completed",
+              "count": 3
+            },
+            {
+              "value": "Completion Pending",
+              "count": 3
+            },
+            {
+              "value": "Discussion Request",
+              "count": 2
+            },
+            {
+              "value": "New Review",
+              "count": 1
+            },
+            {
+              "value": "Verification Approved",
+              "count": 1
+            }
+          ]
+        },
+        "message": {
+          "nullCount": 0,
+          "emptyCount": 0,
+          "distinctCount": 38,
+          "topValues": [
+            {
+              "value": "Joel Palacio accepted your discussion request. You can now contact them at: +63907803211",
+              "count": 3
+            },
+            {
+              "value": "Joel Palacio has accepted your service request: Need space",
+              "count": 2
+            },
+            {
+              "value": "Well Done has accepted your service request: Broken pipie",
+              "count": 1
+            },
+            {
+              "value": "Joel Palacio has accepted your service request: Plumbing",
+              "count": 1
+            },
+            {
+              "value": "War Del has requested your service: Clean my front yard",
+              "count": 1
+            },
+            {
+              "value": "Joel Palacio has accepted your service request: Wedding",
+              "count": 1
+            },
+            {
+              "value": "Joel Palacio declined your service request \"fixing the faucet\".\n\nReason: gg",
+              "count": 1
+            },
+            {
+              "value": "Joel Palacio is now on the way for: Plumbing",
+              "count": 1
+            },
+            {
+              "value": "Joel Palacio declined your service request \"Plumbing\".\n\nReason: soryy sir",
+              "count": 1
+            },
+            {
+              "value": "Joel Palacio is now on the way for: s",
+              "count": 1
+            }
+          ]
+        },
+        "related_request_id": {
+          "nullCount": 1,
+          "emptyCount": null,
+          "distinctCount": 17,
+          "topValues": [
+            {
+              "value": 16,
+              "count": 9
+            },
+            {
+              "value": 19,
+              "count": 4
+            },
+            {
+              "value": 17,
+              "count": 4
+            },
+            {
+              "value": 22,
+              "count": 3
+            },
+            {
+              "value": 12,
+              "count": 3
+            },
+            {
+              "value": 15,
+              "count": 2
+            },
+            {
+              "value": 24,
+              "count": 2
+            },
+            {
+              "value": 23,
+              "count": 2
+            },
+            {
+              "value": 14,
+              "count": 2
+            },
+            {
+              "value": 11,
+              "count": 2
+            }
+          ]
+        },
+        "is_read": {
+          "nullCount": 0,
+          "emptyCount": null,
+          "distinctCount": 2,
+          "topValues": [
+            {
+              "value": 1,
+              "count": 22
+            },
+            {
+              "value": 0,
+              "count": 19
+            }
+          ]
+        },
+        "created_at": {
+          "nullCount": 0,
+          "emptyCount": null,
+          "distinctCount": 40,
+          "topValues": [
+            {
+              "value": "2026-07-26T04:08:31.000Z",
+              "count": 2
+            },
+            {
+              "value": "2026-07-17T20:29:00.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-07-17T21:03:28.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-07-25T04:17:02.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-07-25T04:17:05.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-07-25T04:17:28.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-07-25T04:36:53.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-07-25T07:15:54.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-07-25T21:43:48.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-07-25T22:10:21.000Z",
+              "count": 1
+            }
+          ]
+        }
+      }
+    },
+    "password_reset_tokens": {
+      "totalRows": 4,
+      "columns": {
+        "id": {
+          "nullCount": 0,
+          "emptyCount": null,
+          "distinctCount": 4,
+          "topValues": [
+            {
+              "value": 7,
+              "count": 1
+            },
+            {
+              "value": 8,
+              "count": 1
+            },
+            {
+              "value": 9,
+              "count": 1
+            },
+            {
+              "value": 10,
+              "count": 1
+            }
+          ]
+        },
+        "user_id": {
+          "nullCount": 0,
+          "emptyCount": null,
+          "distinctCount": 4,
+          "topValues": [
+            {
+              "value": 18,
+              "count": 1
+            },
+            {
+              "value": 19,
+              "count": 1
+            },
+            {
+              "value": 25,
+              "count": 1
+            },
+            {
+              "value": 30,
+              "count": 1
+            }
+          ]
+        },
+        "token_hash": {
+          "nullCount": 0,
+          "emptyCount": 0,
+          "distinctCount": 4,
+          "topValues": [
+            {
+              "value": "23963cd93e64217cc0cba87bc26ffa41ed8cc0d7e4251d691ee05f24fba024e1",
+              "count": 1
+            },
+            {
+              "value": "285b723653b91d05eaacd81ab4caf9a2f549d695a662d5126675076b20d73d82",
+              "count": 1
+            },
+            {
+              "value": "9d66649017a9dc3248841cdcb322d8ac799d442a14fe04798caeb0c4a62d0419",
+              "count": 1
+            },
+            {
+              "value": "f58b3797ccfec21b42668fef3a3d77ad687cc576deaaa9197faac956fe1af288",
+              "count": 1
+            }
+          ]
+        },
+        "expires_at": {
+          "nullCount": 0,
+          "emptyCount": null,
+          "distinctCount": 4,
+          "topValues": [
+            {
+              "value": "2026-07-25T19:15:03.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-07-25T19:29:52.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-07-30T09:16:52.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-07-31T15:04:21.000Z",
+              "count": 1
+            }
+          ]
+        },
+        "used_at": {
+          "nullCount": 2,
+          "emptyCount": null,
+          "distinctCount": 2,
+          "topValues": [
+            {
+              "value": null,
+              "count": 2
+            },
+            {
+              "value": "2026-07-30T09:16:52.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-07-31T15:04:21.000Z",
+              "count": 1
+            }
+          ]
+        },
+        "created_at": {
+          "nullCount": 0,
+          "emptyCount": null,
+          "distinctCount": 4,
+          "topValues": [
+            {
+              "value": "2026-07-25T18:55:02.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-07-25T19:09:51.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-07-30T09:15:56.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-07-31T15:03:44.000Z",
+              "count": 1
+            }
+          ]
+        }
+      }
+    },
+    "portfolio_items": {
+      "totalRows": 3,
+      "columns": {
+        "id": {
+          "nullCount": 0,
+          "emptyCount": null,
+          "distinctCount": 3,
+          "topValues": [
+            {
+              "value": 2,
+              "count": 1
+            },
+            {
+              "value": 3,
+              "count": 1
+            },
+            {
+              "value": 4,
+              "count": 1
+            }
+          ]
+        },
+        "service_profile_id": {
+          "nullCount": 0,
+          "emptyCount": null,
+          "distinctCount": 3,
+          "topValues": [
+            {
+              "value": 2,
+              "count": 1
+            },
+            {
+              "value": 3,
+              "count": 1
+            },
+            {
+              "value": 4,
+              "count": 1
+            }
+          ]
+        },
+        "image_url": {
+          "nullCount": 0,
+          "emptyCount": 0,
+          "distinctCount": 3,
+          "topValues": [
+            {
+              "value": "https://res.cloudinary.com/m2b6ashk/image/upload/v1784300283/serbisyo-toledo/portfolio/nhyvf3anuwbet6r6khww.png",
+              "count": 1
+            },
+            {
+              "value": "https://res.cloudinary.com/m2b6ashk/image/upload/v1784986718/serbisyo-toledo/portfolio/gtq1j06uqpcxwvpwedbb.png",
+              "count": 1
+            },
+            {
+              "value": "https://res.cloudinary.com/m2b6ashk/image/upload/v1785066794/serbisyo-toledo/portfolio/t4937v4rmbrqbo7mhwgo.jpg",
+              "count": 1
+            }
+          ]
+        },
+        "caption": {
+          "nullCount": 0,
+          "emptyCount": 0,
+          "distinctCount": 2,
+          "topValues": [
+            {
+              "value": "Portfolio image",
+              "count": 2
+            },
+            {
+              "value": "hello",
+              "count": 1
+            }
+          ]
+        },
+        "display_order": {
+          "nullCount": 0,
+          "emptyCount": null,
+          "distinctCount": 1,
+          "topValues": [
+            {
+              "value": 1,
+              "count": 3
+            }
+          ]
+        },
+        "created_at": {
+          "nullCount": 0,
+          "emptyCount": null,
+          "distinctCount": 3,
+          "topValues": [
+            {
+              "value": "2026-02-25T04:33:30.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-07-25T05:38:38.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-07-26T03:53:14.000Z",
+              "count": 1
+            }
+          ]
+        },
+        "image_public_id": {
+          "nullCount": 0,
+          "emptyCount": 0,
+          "distinctCount": 3,
+          "topValues": [
+            {
+              "value": "serbisyo-toledo/portfolio/nhyvf3anuwbet6r6khww",
+              "count": 1
+            },
+            {
+              "value": "serbisyo-toledo/portfolio/gtq1j06uqpcxwvpwedbb",
+              "count": 1
+            },
+            {
+              "value": "serbisyo-toledo/portfolio/t4937v4rmbrqbo7mhwgo",
+              "count": 1
+            }
+          ]
+        }
+      }
+    },
+    "refresh_tokens": {
+      "totalRows": 0,
+      "columns": {
+        "id": {
+          "nullCount": 0,
+          "emptyCount": null,
+          "distinctCount": 0,
+          "topValues": []
+        },
+        "user_id": {
+          "nullCount": 0,
+          "emptyCount": null,
+          "distinctCount": 0,
+          "topValues": []
+        },
+        "token": {
+          "nullCount": 0,
+          "emptyCount": 0,
+          "distinctCount": 0,
+          "topValues": []
+        },
+        "expires_at": {
+          "nullCount": 0,
+          "emptyCount": null,
+          "distinctCount": 0,
+          "topValues": []
+        },
+        "created_at": {
+          "nullCount": 0,
+          "emptyCount": null,
+          "distinctCount": 0,
+          "topValues": []
+        }
+      }
+    },
+    "reviews": {
+      "totalRows": 2,
+      "columns": {
+        "id": {
+          "nullCount": 0,
+          "emptyCount": null,
+          "distinctCount": 2,
+          "topValues": [
+            {
+              "value": 1,
+              "count": 1
+            },
+            {
+              "value": 2,
+              "count": 1
+            }
+          ]
+        },
+        "service_profile_id": {
+          "nullCount": 0,
+          "emptyCount": null,
+          "distinctCount": 2,
+          "topValues": [
+            {
+              "value": 2,
+              "count": 1
+            },
+            {
+              "value": 4,
+              "count": 1
+            }
+          ]
+        },
+        "client_id": {
+          "nullCount": 0,
+          "emptyCount": null,
+          "distinctCount": 2,
+          "topValues": [
+            {
+              "value": 19,
+              "count": 1
+            },
+            {
+              "value": 43,
+              "count": 1
+            }
+          ]
+        },
+        "service_request_id": {
+          "nullCount": 0,
+          "emptyCount": null,
+          "distinctCount": 2,
+          "topValues": [
+            {
+              "value": 1,
+              "count": 1
+            },
+            {
+              "value": 16,
+              "count": 1
+            }
+          ]
+        },
+        "rating": {
+          "nullCount": 0,
+          "emptyCount": null,
+          "distinctCount": 2,
+          "topValues": [
+            {
+              "value": "4.5",
+              "count": 1
+            },
+            {
+              "value": "5.0",
+              "count": 1
+            }
+          ]
+        },
+        "comment": {
+          "nullCount": 0,
+          "emptyCount": 0,
+          "distinctCount": 2,
+          "topValues": [
+            {
+              "value": "Great!",
+              "count": 1
+            },
+            {
+              "value": "went well",
+              "count": 1
+            }
+          ]
+        },
+        "created_at": {
+          "nullCount": 0,
+          "emptyCount": null,
+          "distinctCount": 2,
+          "topValues": [
+            {
+              "value": "2026-02-25T06:40:21.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-07-26T04:08:50.000Z",
+              "count": 1
+            }
+          ]
+        }
+      }
+    },
+    "service_profiles": {
+      "totalRows": 4,
+      "columns": {
+        "id": {
+          "nullCount": 0,
+          "emptyCount": null,
+          "distinctCount": 4,
+          "topValues": [
+            {
+              "value": 2,
+              "count": 1
+            },
+            {
+              "value": 3,
+              "count": 1
+            },
+            {
+              "value": 4,
+              "count": 1
+            },
+            {
+              "value": 5,
+              "count": 1
+            }
+          ]
+        },
+        "user_id": {
+          "nullCount": 0,
+          "emptyCount": null,
+          "distinctCount": 4,
+          "topValues": [
+            {
+              "value": 18,
+              "count": 1
+            },
+            {
+              "value": 42,
+              "count": 1
+            },
+            {
+              "value": 44,
+              "count": 1
+            },
+            {
+              "value": 50,
+              "count": 1
+            }
+          ]
+        },
+        "full_name": {
+          "nullCount": 0,
+          "emptyCount": 0,
+          "distinctCount": 4,
+          "topValues": [
+            {
+              "value": "Joel Palacio",
+              "count": 1
+            },
+            {
+              "value": "JB Suarez",
+              "count": 1
+            },
+            {
+              "value": "Well Done",
+              "count": 1
+            },
+            {
+              "value": "Mauril Alferez",
+              "count": 1
+            }
+          ]
+        },
+        "barangay_address": {
+          "nullCount": 0,
+          "emptyCount": 0,
+          "distinctCount": 4,
+          "topValues": [
+            {
+              "value": "Brgy. Luray II",
+              "count": 1
+            },
+            {
+              "value": "Brgy. Poblacion",
+              "count": 1
+            },
+            {
+              "value": "Cabitoonan",
+              "count": 1
+            },
+            {
+              "value": "Luray II",
+              "count": 1
+            }
+          ]
+        },
+        "starting_price": {
+          "nullCount": 0,
+          "emptyCount": null,
+          "distinctCount": 4,
+          "topValues": [
+            {
+              "value": "800.00",
+              "count": 1
+            },
+            {
+              "value": "600.00",
+              "count": 1
+            },
+            {
+              "value": "750.00",
+              "count": 1
+            },
+            {
+              "value": "500.00",
+              "count": 1
+            }
+          ]
+        },
+        "pricing_unit": {
+          "nullCount": 0,
+          "emptyCount": 0,
+          "distinctCount": 1,
+          "topValues": [
+            {
+              "value": "per_day",
+              "count": 4
+            }
+          ]
+        },
+        "service_categories": {
+          "nullCount": 0,
+          "emptyCount": 0,
+          "distinctCount": 4,
+          "topValues": [
+            {
+              "value": "[\"Plumbing\"]",
+              "count": 1
+            },
+            {
+              "value": "[\"Carpentry\"]",
+              "count": 1
+            },
+            {
+              "value": "[\"Carpentry\",\"House Cleaning\",\"Plumbing\",\"Masonry\",\"Wiring\",\"Repair\",\"Painting\",\"Electrical\",\"Beauty\",\"Installation\"]",
+              "count": 1
+            },
+            {
+              "value": "[\"Installation\",\"Electrical\",\"Painting\",\"Gardening\",\"Repair\"]",
+              "count": 1
+            }
+          ]
+        },
+        "description": {
+          "nullCount": 4,
+          "emptyCount": 0,
+          "distinctCount": 0,
+          "topValues": [
+            {
+              "value": null,
+              "count": 4
+            }
+          ]
+        },
+        "rating": {
+          "nullCount": 0,
+          "emptyCount": null,
+          "distinctCount": 2,
+          "topValues": [
+            {
+              "value": "5.0",
+              "count": 3
+            },
+            {
+              "value": "4.5",
+              "count": 1
+            }
+          ]
+        },
+        "reviews_count": {
+          "nullCount": 0,
+          "emptyCount": null,
+          "distinctCount": 2,
+          "topValues": [
+            {
+              "value": 1,
+              "count": 2
+            },
+            {
+              "value": 0,
+              "count": 2
+            }
+          ]
+        },
+        "is_published": {
+          "nullCount": 0,
+          "emptyCount": null,
+          "distinctCount": 1,
+          "topValues": [
+            {
+              "value": 1,
+              "count": 4
+            }
+          ]
+        },
+        "created_at": {
+          "nullCount": 0,
+          "emptyCount": null,
+          "distinctCount": 4,
+          "topValues": [
+            {
+              "value": "2026-02-25T04:14:49.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-07-25T05:38:00.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-07-26T03:50:30.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-07-31T18:27:33.000Z",
+              "count": 1
+            }
+          ]
+        },
+        "updated_at": {
+          "nullCount": 0,
+          "emptyCount": null,
+          "distinctCount": 4,
+          "topValues": [
+            {
+              "value": "2026-07-25T22:10:21.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-07-25T05:38:00.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-07-31T04:02:56.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-07-31T18:27:33.000Z",
+              "count": 1
+            }
+          ]
+        },
+        "about_me": {
+          "nullCount": 2,
+          "emptyCount": 0,
+          "distinctCount": 2,
+          "topValues": [
+            {
+              "value": null,
+              "count": 2
+            },
+            {
+              "value": "ready to serve",
+              "count": 1
+            },
+            {
+              "value": "Can make things possible",
+              "count": 1
+            }
+          ]
+        },
+        "response_time": {
+          "nullCount": 0,
+          "emptyCount": 0,
+          "distinctCount": 2,
+          "topValues": [
+            {
+              "value": "Within 24 hours",
+              "count": 3
+            },
+            {
+              "value": "Within 1 hour",
+              "count": 1
+            }
+          ]
+        },
+        "jobs_completed": {
+          "nullCount": 0,
+          "emptyCount": null,
+          "distinctCount": 3,
+          "topValues": [
+            {
+              "value": 0,
+              "count": 2
+            },
+            {
+              "value": 4,
+              "count": 1
+            },
+            {
+              "value": 1,
+              "count": 1
+            }
+          ]
+        },
+        "banner_image_url": {
+          "nullCount": 1,
+          "emptyCount": 0,
+          "distinctCount": 3,
+          "topValues": [
+            {
+              "value": "https://res.cloudinary.com/m2b6ashk/image/upload/v1784300281/serbisyo-toledo/service-banners/ytesuqgazuqd1grjng7m.png",
+              "count": 1
+            },
+            {
+              "value": "https://res.cloudinary.com/m2b6ashk/image/upload/v1784986679/serbisyo-toledo/service-banners/vigcnxmwslmuobrg6ett.png",
+              "count": 1
+            },
+            {
+              "value": "https://res.cloudinary.com/m2b6ashk/image/upload/v1785066630/serbisyo-toledo/service-banners/gvze4jlzqijut46x0q6l.jpg",
+              "count": 1
+            },
+            {
+              "value": null,
+              "count": 1
+            }
+          ]
+        },
+        "banner_image_public_id": {
+          "nullCount": 1,
+          "emptyCount": 0,
+          "distinctCount": 3,
+          "topValues": [
+            {
+              "value": "serbisyo-toledo/service-banners/ytesuqgazuqd1grjng7m",
+              "count": 1
+            },
+            {
+              "value": "serbisyo-toledo/service-banners/vigcnxmwslmuobrg6ett",
+              "count": 1
+            },
+            {
+              "value": "serbisyo-toledo/service-banners/gvze4jlzqijut46x0q6l",
+              "count": 1
+            },
+            {
+              "value": null,
+              "count": 1
+            }
+          ]
+        }
+      }
+    },
+    "service_requests": {
+      "totalRows": 24,
+      "columns": {
+        "id": {
+          "nullCount": 0,
+          "emptyCount": null,
+          "distinctCount": 24,
+          "topValues": [
+            {
+              "value": 19,
+              "count": 1
+            },
+            {
+              "value": 14,
+              "count": 1
+            },
+            {
+              "value": 15,
+              "count": 1
+            },
+            {
+              "value": 16,
+              "count": 1
+            },
+            {
+              "value": 17,
+              "count": 1
+            },
+            {
+              "value": 18,
+              "count": 1
+            },
+            {
+              "value": 22,
+              "count": 1
+            },
+            {
+              "value": 24,
+              "count": 1
+            },
+            {
+              "value": 23,
+              "count": 1
+            },
+            {
+              "value": 13,
+              "count": 1
+            }
+          ]
+        },
+        "client_id": {
+          "nullCount": 0,
+          "emptyCount": null,
+          "distinctCount": 10,
+          "topValues": [
+            {
+              "value": 19,
+              "count": 10
+            },
+            {
+              "value": 43,
+              "count": 3
+            },
+            {
+              "value": 47,
+              "count": 3
+            },
+            {
+              "value": 41,
+              "count": 2
+            },
+            {
+              "value": 20,
+              "count": 1
+            },
+            {
+              "value": 35,
+              "count": 1
+            },
+            {
+              "value": 40,
+              "count": 1
+            },
+            {
+              "value": 45,
+              "count": 1
+            },
+            {
+              "value": 46,
+              "count": 1
+            },
+            {
+              "value": 48,
+              "count": 1
+            }
+          ]
+        },
+        "provider_id": {
+          "nullCount": 0,
+          "emptyCount": null,
+          "distinctCount": 2,
+          "topValues": [
+            {
+              "value": 18,
+              "count": 20
+            },
+            {
+              "value": 44,
+              "count": 4
+            }
+          ]
+        },
+        "service_profile_id": {
+          "nullCount": 0,
+          "emptyCount": null,
+          "distinctCount": 2,
+          "topValues": [
+            {
+              "value": 2,
+              "count": 20
+            },
+            {
+              "value": 4,
+              "count": 4
+            }
+          ]
+        },
+        "job_title": {
+          "nullCount": 0,
+          "emptyCount": 0,
+          "distinctCount": 22,
+          "topValues": [
+            {
+              "value": "Door",
+              "count": 2
+            },
+            {
+              "value": "Plumbing",
+              "count": 2
+            },
+            {
+              "value": "House issue",
+              "count": 1
+            },
+            {
+              "value": "Door repair",
+              "count": 1
+            },
+            {
+              "value": "Roof has a hole",
+              "count": 1
+            },
+            {
+              "value": "Roof",
+              "count": 1
+            },
+            {
+              "value": "Hole in the wall",
+              "count": 1
+            },
+            {
+              "value": "Table repair",
+              "count": 1
+            },
+            {
+              "value": "Cabinet FIxing",
+              "count": 1
+            },
+            {
+              "value": "fixing the faucet",
+              "count": 1
+            }
+          ]
+        },
+        "job_details": {
+          "nullCount": 0,
+          "emptyCount": 0,
+          "distinctCount": 23,
+          "topValues": [
+            {
+              "value": "Bato Toledo City",
+              "count": 2
+            },
+            {
+              "value": "Secret",
+              "count": 1
+            },
+            {
+              "value": "Unahan ila Palacio",
+              "count": 1
+            },
+            {
+              "value": "Awihao Toledo City",
+              "count": 1
+            },
+            {
+              "value": "Organize and Clean it.",
+              "count": 1
+            },
+            {
+              "value": ".....",
+              "count": 1
+            },
+            {
+              "value": "Its very broken",
+              "count": 1
+            },
+            {
+              "value": "Clean and organize everything",
+              "count": 1
+            },
+            {
+              "value": "haha",
+              "count": 1
+            },
+            {
+              "value": "ada awihao toledo city",
+              "count": 1
+            }
+          ]
+        },
+        "scheduled_date": {
+          "nullCount": 0,
+          "emptyCount": null,
+          "distinctCount": 20,
+          "topValues": [
+            {
+              "value": "2026-07-29T16:00:00.000Z",
+              "count": 3
+            },
+            {
+              "value": "2026-08-03T16:00:00.000Z",
+              "count": 2
+            },
+            {
+              "value": "2026-07-30T16:00:00.000Z",
+              "count": 2
+            },
+            {
+              "value": "2026-02-26T16:00:00.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-03-04T16:00:00.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-03-06T16:00:00.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-03-18T16:00:00.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-03-20T16:00:00.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-06-27T16:00:00.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-07-10T16:00:00.000Z",
+              "count": 1
+            }
+          ]
+        },
+        "scheduled_time": {
+          "nullCount": 0,
+          "emptyCount": 0,
+          "distinctCount": 6,
+          "topValues": [
+            {
+              "value": "1:00 PM",
+              "count": 5
+            },
+            {
+              "value": "11:00 AM",
+              "count": 5
+            },
+            {
+              "value": "10:00 AM",
+              "count": 5
+            },
+            {
+              "value": "9:00 AM",
+              "count": 4
+            },
+            {
+              "value": "4:00 PM",
+              "count": 3
+            },
+            {
+              "value": "2:00 PM",
+              "count": 2
+            }
+          ]
+        },
+        "status": {
+          "nullCount": 0,
+          "emptyCount": 0,
+          "distinctCount": 5,
+          "topValues": [
+            {
+              "value": "on_the_way",
+              "count": 6
+            },
+            {
+              "value": "completed",
+              "count": 6
+            },
+            {
+              "value": "accepted",
+              "count": 5
+            },
+            {
+              "value": "declined",
+              "count": 5
+            },
+            {
+              "value": "pending",
+              "count": 2
+            }
+          ]
+        },
+        "discussion_requested": {
+          "nullCount": 0,
+          "emptyCount": null,
+          "distinctCount": 2,
+          "topValues": [
+            {
+              "value": 0,
+              "count": 17
+            },
+            {
+              "value": 1,
+              "count": 7
+            }
+          ]
+        },
+        "discussion_accepted": {
+          "nullCount": 0,
+          "emptyCount": null,
+          "distinctCount": 2,
+          "topValues": [
+            {
+              "value": 0,
+              "count": 18
+            },
+            {
+              "value": 1,
+              "count": 6
+            }
+          ]
+        },
+        "provider_phone_revealed": {
+          "nullCount": 0,
+          "emptyCount": null,
+          "distinctCount": 2,
+          "topValues": [
+            {
+              "value": 0,
+              "count": 18
+            },
+            {
+              "value": 1,
+              "count": 6
+            }
+          ]
+        },
+        "created_at": {
+          "nullCount": 0,
+          "emptyCount": null,
+          "distinctCount": 24,
+          "topValues": [
+            {
+              "value": "2026-02-25T05:08:32.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-03-03T20:13:21.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-03-06T05:10:07.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-03-17T22:04:08.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-03-18T23:25:35.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-06-26T20:51:19.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-07-09T06:24:31.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-07-10T06:38:35.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-07-16T18:32:19.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-07-17T17:39:10.000Z",
+              "count": 1
+            }
+          ]
+        },
+        "updated_at": {
+          "nullCount": 0,
+          "emptyCount": null,
+          "distinctCount": 1,
+          "topValues": [
+            {
+              "value": "2026-08-06T20:29:50.000Z",
+              "count": 24
+            }
+          ]
+        },
+        "provider_completed": {
+          "nullCount": 0,
+          "emptyCount": null,
+          "distinctCount": 2,
+          "topValues": [
+            {
+              "value": 0,
+              "count": 17
+            },
+            {
+              "value": 1,
+              "count": 7
+            }
+          ]
+        },
+        "client_completed": {
+          "nullCount": 0,
+          "emptyCount": null,
+          "distinctCount": 2,
+          "topValues": [
+            {
+              "value": 0,
+              "count": 19
+            },
+            {
+              "value": 1,
+              "count": 5
+            }
+          ]
+        },
+        "decline_reason": {
+          "nullCount": 20,
+          "emptyCount": 0,
+          "distinctCount": 4,
+          "topValues": [
+            {
+              "value": null,
+              "count": 20
+            },
+            {
+              "value": "Schedule conflict",
+              "count": 1
+            },
+            {
+              "value": "gg",
+              "count": 1
+            },
+            {
+              "value": "Busy schedule",
+              "count": 1
+            },
+            {
+              "value": "soryy sir",
+              "count": 1
+            }
+          ]
+        },
+        "scheduled_start_at": {
+          "nullCount": 0,
+          "emptyCount": null,
+          "distinctCount": 24,
+          "topValues": [
+            {
+              "value": "2026-02-27T05:00:00.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-03-05T03:00:00.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-03-07T06:00:00.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-03-19T03:00:00.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-03-21T05:00:00.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-06-28T03:00:00.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-07-10T03:00:00.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-07-11T01:00:00.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-07-19T08:00:00.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-07-20T01:00:00.000Z",
+              "count": 1
+            }
+          ]
+        },
+        "scheduled_end_at": {
+          "nullCount": 0,
+          "emptyCount": null,
+          "distinctCount": 24,
+          "topValues": [
+            {
+              "value": "2026-02-27T07:00:00.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-03-05T05:00:00.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-03-07T08:00:00.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-03-19T05:00:00.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-03-21T07:00:00.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-06-28T05:00:00.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-07-10T05:00:00.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-07-11T03:00:00.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-07-19T10:00:00.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-07-20T03:00:00.000Z",
+              "count": 1
+            }
+          ]
+        }
+      }
+    },
+    "user_reports": {
+      "totalRows": 3,
+      "columns": {
+        "id": {
+          "nullCount": 0,
+          "emptyCount": null,
+          "distinctCount": 3,
+          "topValues": [
+            {
+              "value": 1,
+              "count": 1
+            },
+            {
+              "value": 3,
+              "count": 1
+            },
+            {
+              "value": 4,
+              "count": 1
+            }
+          ]
+        },
+        "request_id": {
+          "nullCount": 0,
+          "emptyCount": null,
+          "distinctCount": 3,
+          "topValues": [
+            {
+              "value": 10,
+              "count": 1
+            },
+            {
+              "value": 11,
+              "count": 1
+            },
+            {
+              "value": 21,
+              "count": 1
+            }
+          ]
+        },
+        "reporter_id": {
+          "nullCount": 0,
+          "emptyCount": null,
+          "distinctCount": 1,
+          "topValues": [
+            {
+              "value": 18,
+              "count": 3
+            }
+          ]
+        },
+        "reported_user_id": {
+          "nullCount": 0,
+          "emptyCount": null,
+          "distinctCount": 3,
+          "topValues": [
+            {
+              "value": 20,
+              "count": 1
+            },
+            {
+              "value": 35,
+              "count": 1
+            },
+            {
+              "value": 47,
+              "count": 1
+            }
+          ]
+        },
+        "reason": {
+          "nullCount": 0,
+          "emptyCount": 0,
+          "distinctCount": 3,
+          "topValues": [
+            {
+              "value": "Unprofessional behavior.",
+              "count": 1
+            },
+            {
+              "value": "Unprofessional...",
+              "count": 1
+            },
+            {
+              "value": "yfft",
+              "count": 1
+            }
+          ]
+        },
+        "description": {
+          "nullCount": 0,
+          "emptyCount": 0,
+          "distinctCount": 3,
+          "topValues": [
+            {
+              "value": "Claims she didn't book a service",
+              "count": 1
+            },
+            {
+              "value": "No...",
+              "count": 1
+            },
+            {
+              "value": "wala",
+              "count": 1
+            }
+          ]
+        },
+        "screenshot_data": {
+          "nullCount": 1,
+          "emptyCount": null,
+          "distinctCount": 2,
+          "topValues": []
+        },
+        "screenshot_mime": {
+          "nullCount": 1,
+          "emptyCount": 0,
+          "distinctCount": 1,
+          "topValues": [
+            {
+              "value": "image/png",
+              "count": 2
+            },
+            {
+              "value": null,
+              "count": 1
+            }
+          ]
+        },
+        "report_status": {
+          "nullCount": 0,
+          "emptyCount": 0,
+          "distinctCount": 3,
+          "topValues": [
+            {
+              "value": "under_review",
+              "count": 1
+            },
+            {
+              "value": "resolved",
+              "count": 1
+            },
+            {
+              "value": "dismissed",
+              "count": 1
+            }
+          ]
+        },
+        "action_taken": {
+          "nullCount": 0,
+          "emptyCount": 0,
+          "distinctCount": 2,
+          "topValues": [
+            {
+              "value": "none",
+              "count": 2
+            },
+            {
+              "value": "ban",
+              "count": 1
+            }
+          ]
+        },
+        "status": {
+          "nullCount": 0,
+          "emptyCount": 0,
+          "distinctCount": 3,
+          "topValues": [
+            {
+              "value": "under_review",
+              "count": 1
+            },
+            {
+              "value": "dismissed",
+              "count": 1
+            },
+            {
+              "value": "banned",
+              "count": 1
+            }
+          ]
+        },
+        "priority": {
+          "nullCount": 0,
+          "emptyCount": 0,
+          "distinctCount": 1,
+          "topValues": [
+            {
+              "value": "medium",
+              "count": 3
+            }
+          ]
+        },
+        "resolution_notes": {
+          "nullCount": 2,
+          "emptyCount": 0,
+          "distinctCount": 1,
+          "topValues": [
+            {
+              "value": null,
+              "count": 2
+            },
+            {
+              "value": "No valid reason ",
+              "count": 1
+            }
+          ]
+        },
+        "moderation_notes": {
+          "nullCount": 2,
+          "emptyCount": 0,
+          "distinctCount": 1,
+          "topValues": [
+            {
+              "value": null,
+              "count": 2
+            },
+            {
+              "value": "No valid reason ",
+              "count": 1
+            }
+          ]
+        },
+        "handled_by": {
+          "nullCount": 0,
+          "emptyCount": null,
+          "distinctCount": 1,
+          "topValues": [
+            {
+              "value": 2,
+              "count": 3
+            }
+          ]
+        },
+        "handled_at": {
+          "nullCount": 0,
+          "emptyCount": null,
+          "distinctCount": 3,
+          "topValues": [
+            {
+              "value": "2026-07-26T04:14:44.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-07-25T04:48:25.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-07-31T18:30:31.000Z",
+              "count": 1
+            }
+          ]
+        },
+        "created_at": {
+          "nullCount": 0,
+          "emptyCount": null,
+          "distinctCount": 3,
+          "topValues": [
+            {
+              "value": "2026-07-23T21:14:06.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-07-31T18:26:18.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-07-23T00:29:21.000Z",
+              "count": 1
+            }
+          ]
+        },
+        "updated_at": {
+          "nullCount": 0,
+          "emptyCount": null,
+          "distinctCount": 1,
+          "topValues": [
+            {
+              "value": "2026-08-06T20:29:51.000Z",
+              "count": 3
+            }
+          ]
+        }
+      }
+    },
+    "users": {
+      "totalRows": 51,
+      "columns": {
+        "id": {
+          "nullCount": 0,
+          "emptyCount": null,
+          "distinctCount": 51,
+          "topValues": []
+        },
+        "full_name": {
+          "nullCount": 0,
+          "emptyCount": 0,
+          "distinctCount": 42,
+          "topValues": [
+            {
+              "value": "Joel Palacio",
+              "count": 4
+            },
+            {
+              "value": "Lord France",
+              "count": 3
+            },
+            {
+              "value": "John",
+              "count": 3
+            },
+            {
+              "value": "Nilo butay",
+              "count": 2
+            },
+            {
+              "value": "Warren Del",
+              "count": 2
+            },
+            {
+              "value": "Admin User",
+              "count": 1
+            },
+            {
+              "value": "service providerrr",
+              "count": 1
+            },
+            {
+              "value": "Warren Delfin",
+              "count": 1
+            },
+            {
+              "value": "Morticia Gomez",
+              "count": 1
+            },
+            {
+              "value": "Lik Lik Manalac",
+              "count": 1
+            }
+          ]
+        },
+        "email": {
+          "nullCount": 0,
+          "emptyCount": 0,
+          "distinctCount": 51,
+          "topValues": []
+        },
+        "password": {
+          "nullCount": 0,
+          "emptyCount": 0,
+          "distinctCount": 37,
+          "topValues": [
+            {
+              "value": "$2a$10$SDYGvasYn.kYdFhSmEzehuXOjRL.OqKPa6W24DInuKYummpSB.DMa",
+              "count": 15
+            },
+            {
+              "value": "$2a$10$09XpyKp2ofWULuV8oJupIek0vF6OnFf51rYzwN0oTEVTm2zwKIPWO",
+              "count": 1
+            },
+            {
+              "value": "$2a$10$tC25VbFA.glhNKDANE8TU.LGk3pBf72IpJa6IPtpWbpqTY8BS4sTC",
+              "count": 1
+            },
+            {
+              "value": "$2a$10$Rg7SvLngsdf7NJuVuzcr5u0b9dlQviPZKQaQaHX/.RHBVyxXELX0.",
+              "count": 1
+            },
+            {
+              "value": "$2a$10$5UhFlMvyxtjRzqBdisljc.28YHZtJQNSgzOEYpLgVnDw6iyJNtmUy",
+              "count": 1
+            },
+            {
+              "value": "$2a$10$ssjLMzP/02p1JRrbn7WB5OJYgLIOfETIhyQsWOL.h7KonP89wtXyS",
+              "count": 1
+            },
+            {
+              "value": "$2a$10$.jHa/tJcehPeCkHRwy2BVO/oqNM3YlHk0QqMnEqWuMmIlJg0.eJTy",
+              "count": 1
+            },
+            {
+              "value": "$2a$10$qiUK.qYYn/3Y5fk3JNGPMedSGCG5H7dypAGQ.DHWqrhxz51ZOd38m",
+              "count": 1
+            },
+            {
+              "value": "$2a$10$rLDaL.D7FiTrRL8UAN3Ry.mNYA4CwXJNLs8AjIEzLb46gwX/iDfdS",
+              "count": 1
+            },
+            {
+              "value": "$2a$10$4oks98nktzBok9yy3aNFdOVKOBcMDXkJxE2v.hdeGWy0d.HvyBrZC",
+              "count": 1
+            }
+          ]
+        },
+        "user_type": {
+          "nullCount": 0,
+          "emptyCount": 0,
+          "distinctCount": 3,
+          "topValues": [
+            {
+              "value": "client",
+              "count": 28
+            },
+            {
+              "value": "tradesperson",
+              "count": 22
+            },
+            {
+              "value": "admin",
+              "count": 1
+            }
+          ]
+        },
+        "preferred_services": {
+          "nullCount": 51,
+          "emptyCount": 0,
+          "distinctCount": 0,
+          "topValues": [
+            {
+              "value": null,
+              "count": 51
+            }
+          ]
+        },
+        "profession": {
+          "nullCount": 44,
+          "emptyCount": 0,
+          "distinctCount": 6,
+          "topValues": [
+            {
+              "value": null,
+              "count": 44
+            },
+            {
+              "value": "Plumber",
+              "count": 2
+            },
+            {
+              "value": "Carpenter",
+              "count": 1
+            },
+            {
+              "value": "Carpenter, House Cleaner & Plumer",
+              "count": 1
+            },
+            {
+              "value": "plummer",
+              "count": 1
+            },
+            {
+              "value": "IT",
+              "count": 1
+            },
+            {
+              "value": "IT Technician",
+              "count": 1
+            }
+          ]
+        },
+        "skills": {
+          "nullCount": 46,
+          "emptyCount": 0,
+          "distinctCount": 5,
+          "topValues": [
+            {
+              "value": null,
+              "count": 46
+            },
+            {
+              "value": "[\"faucet repair\",\"faucet installation\",\"door repair\"]",
+              "count": 1
+            },
+            {
+              "value": "[\"cabinet repair\",\"door repair\",\"installation\"]",
+              "count": 1
+            },
+            {
+              "value": "[]",
+              "count": 1
+            },
+            {
+              "value": "[\"Graphic Design\"]",
+              "count": 1
+            },
+            {
+              "value": "[\"computer repair\"]",
+              "count": 1
+            }
+          ]
+        },
+        "profile_image": {
+          "nullCount": 35,
+          "emptyCount": 0,
+          "distinctCount": 16,
+          "topValues": [
+            {
+              "value": null,
+              "count": 35
+            },
+            {
+              "value": "mariadacuyan.png",
+              "count": 1
+            },
+            {
+              "value": "lordfrance.png",
+              "count": 1
+            },
+            {
+              "value": "warrendelfin.png",
+              "count": 1
+            },
+            {
+              "value": "joelpalacio.png",
+              "count": 1
+            },
+            {
+              "value": "morticiagomez.png",
+              "count": 1
+            },
+            {
+              "value": "jadeagbay.png",
+              "count": 1
+            },
+            {
+              "value": "liklikmanalac.png",
+              "count": 1
+            },
+            {
+              "value": "lisabuladaco.png",
+              "count": 1
+            },
+            {
+              "value": "kurtacain.png",
+              "count": 1
+            }
+          ]
+        },
+        "phone": {
+          "nullCount": 40,
+          "emptyCount": 0,
+          "distinctCount": 11,
+          "topValues": [
+            {
+              "value": null,
+              "count": 40
+            },
+            {
+              "value": "+63907803211",
+              "count": 1
+            },
+            {
+              "value": "12345678901",
+              "count": 1
+            },
+            {
+              "value": "09056325501",
+              "count": 1
+            },
+            {
+              "value": "09101010109",
+              "count": 1
+            },
+            {
+              "value": "09456123485",
+              "count": 1
+            },
+            {
+              "value": "09505050501",
+              "count": 1
+            },
+            {
+              "value": "09676767678",
+              "count": 1
+            },
+            {
+              "value": "09321654987",
+              "count": 1
+            },
+            {
+              "value": "09123456789",
+              "count": 1
+            }
+          ]
+        },
+        "address": {
+          "nullCount": 43,
+          "emptyCount": 0,
+          "distinctCount": 8,
+          "topValues": [
+            {
+              "value": null,
+              "count": 43
+            },
+            {
+              "value": "tva",
+              "count": 1
+            },
+            {
+              "value": "Poblacion",
+              "count": 1
+            },
+            {
+              "value": "Liko²",
+              "count": 1
+            },
+            {
+              "value": "67 main street ",
+              "count": 1
+            },
+            {
+              "value": "CCCTC Kilid Skina",
+              "count": 1
+            },
+            {
+              "value": "On the way ",
+              "count": 1
+            },
+            {
+              "value": "hagunoy street ",
+              "count": 1
+            },
+            {
+              "value": "awihao toledo city",
+              "count": 1
+            }
+          ]
+        },
+        "bio": {
+          "nullCount": 48,
+          "emptyCount": 0,
+          "distinctCount": 3,
+          "topValues": [
+            {
+              "value": null,
+              "count": 48
+            },
+            {
+              "value": "nothing",
+              "count": 1
+            },
+            {
+              "value": "Hard Working",
+              "count": 1
+            },
+            {
+              "value": "Hard working man ",
+              "count": 1
+            }
+          ]
+        },
+        "is_verified": {
+          "nullCount": 0,
+          "emptyCount": null,
+          "distinctCount": 2,
+          "topValues": [
+            {
+              "value": 0,
+              "count": 45
+            },
+            {
+              "value": 1,
+              "count": 6
+            }
+          ]
+        },
+        "is_active": {
+          "nullCount": 0,
+          "emptyCount": null,
+          "distinctCount": 2,
+          "topValues": [
+            {
+              "value": 1,
+              "count": 47
+            },
+            {
+              "value": 0,
+              "count": 4
+            }
+          ]
+        },
+        "created_at": {
+          "nullCount": 0,
+          "emptyCount": null,
+          "distinctCount": 37,
+          "topValues": [
+            {
+              "value": "2026-02-23T03:21:05.000Z",
+              "count": 15
+            },
+            {
+              "value": "2026-02-01T08:12:47.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-02-05T17:56:07.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-02-23T05:03:54.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-02-25T04:43:52.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-07-17T06:11:57.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-07-17T06:13:03.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-07-17T06:14:54.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-07-17T06:26:50.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-07-17T06:32:06.000Z",
+              "count": 1
+            }
+          ]
+        },
+        "updated_at": {
+          "nullCount": 0,
+          "emptyCount": null,
+          "distinctCount": 2,
+          "topValues": [
+            {
+              "value": "2026-08-06T20:29:51.000Z",
+              "count": 36
+            },
+            {
+              "value": "2026-08-06T21:14:30.000Z",
+              "count": 15
+            }
+          ]
+        },
+        "is_online": {
+          "nullCount": 0,
+          "emptyCount": null,
+          "distinctCount": 1,
+          "topValues": [
+            {
+              "value": 0,
+              "count": 51
+            }
+          ]
+        },
+        "last_seen_at": {
+          "nullCount": 0,
+          "emptyCount": null,
+          "distinctCount": 38,
+          "topValues": [
+            {
+              "value": "2026-02-23T03:21:05.000Z",
+              "count": 14
+            },
+            {
+              "value": "2026-02-24T03:16:50.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-02-23T03:46:50.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-07-25T04:17:50.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-07-31T02:54:16.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-08-02T23:47:01.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-07-17T17:38:01.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-07-17T06:13:03.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-07-17T06:18:15.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-07-17T06:26:50.000Z",
+              "count": 1
+            }
+          ]
+        },
+        "email_verified": {
+          "nullCount": 0,
+          "emptyCount": null,
+          "distinctCount": 2,
+          "topValues": [
+            {
+              "value": 0,
+              "count": 32
+            },
+            {
+              "value": 1,
+              "count": 19
+            }
+          ]
+        },
+        "verification_token": {
+          "nullCount": 36,
+          "emptyCount": 0,
+          "distinctCount": 15,
+          "topValues": [
+            {
+              "value": null,
+              "count": 36
+            },
+            {
+              "value": "4548c5c698c7722ded1fc50f1a4045ed48f4bf7e45833c4d742f6947383e2f5e",
+              "count": 1
+            },
+            {
+              "value": "f2b13dcfaff55a782e3a2b2cfe0d04237276e4220f3e0a23084112d0c5161383",
+              "count": 1
+            },
+            {
+              "value": "d89c573b848e3781fcb56ce4f2eb8abc59863b3da6adcb64295548f2932535b9",
+              "count": 1
+            },
+            {
+              "value": "449f3fbe4a86f4cc54fb4e0461d4a381c5d9b4b1c8cbe7dcf36e2127e8c7a813",
+              "count": 1
+            },
+            {
+              "value": "36beb7b3ac3f67ab3bd89cb06148a016622db3a3ed59ba171c7ce5b2f819fad4",
+              "count": 1
+            },
+            {
+              "value": "4e56be97ce662863039349990102bf068e9ad275f9f0c63c8983bb9cd287411d",
+              "count": 1
+            },
+            {
+              "value": "f2452efd37af7e5d10f6c107b72ef4b470f9dd6f03955602625ec93289210a37",
+              "count": 1
+            },
+            {
+              "value": "c41f79cceae472bbc74a030bb82b7848cf50dae42ae38891372e380a7883f826",
+              "count": 1
+            },
+            {
+              "value": "88ca2ec77597cdcd170d5e53bfb499a6f79f77cd2d87775ea9ede2c731813994",
+              "count": 1
+            }
+          ]
+        },
+        "verification_token_expires": {
+          "nullCount": 36,
+          "emptyCount": null,
+          "distinctCount": 15,
+          "topValues": [
+            {
+              "value": null,
+              "count": 36
+            },
+            {
+              "value": "2026-07-18T19:14:45.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-07-18T19:48:30.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-07-18T19:57:48.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-07-18T19:58:10.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-07-27T03:42:44.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-07-27T03:47:32.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-07-28T20:52:32.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-08-01T05:57:10.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-08-01T06:27:25.000Z",
+              "count": 1
+            }
+          ]
+        },
+        "profile_photo": {
+          "nullCount": 51,
+          "emptyCount": null,
+          "distinctCount": 0,
+          "topValues": []
+        },
+        "profile_photo_url": {
+          "nullCount": 35,
+          "emptyCount": 0,
+          "distinctCount": 16,
+          "topValues": [
+            {
+              "value": null,
+              "count": 35
+            },
+            {
+              "value": "mariadacuyan.png",
+              "count": 1
+            },
+            {
+              "value": "lordfrance.png",
+              "count": 1
+            },
+            {
+              "value": "warrendelfin.png",
+              "count": 1
+            },
+            {
+              "value": "joelpalacio.png",
+              "count": 1
+            },
+            {
+              "value": "morticiagomez.png",
+              "count": 1
+            },
+            {
+              "value": "jadeagbay.png",
+              "count": 1
+            },
+            {
+              "value": "liklikmanalac.png",
+              "count": 1
+            },
+            {
+              "value": "lisabuladaco.png",
+              "count": 1
+            },
+            {
+              "value": "kurtacain.png",
+              "count": 1
+            }
+          ]
+        },
+        "profile_photo_public_id": {
+          "nullCount": 50,
+          "emptyCount": 0,
+          "distinctCount": 1,
+          "topValues": [
+            {
+              "value": null,
+              "count": 50
+            },
+            {
+              "value": "serbisyo-toledo/profile-photos/ayrdkgv232flsjoikw0o",
+              "count": 1
+            }
+          ]
+        }
+      }
+    },
+    "verification_requests": {
+      "totalRows": 3,
+      "columns": {
+        "id": {
+          "nullCount": 0,
+          "emptyCount": null,
+          "distinctCount": 3,
+          "topValues": [
+            {
+              "value": 1,
+              "count": 1
+            },
+            {
+              "value": 2,
+              "count": 1
+            },
+            {
+              "value": 3,
+              "count": 1
+            }
+          ]
+        },
+        "user_id": {
+          "nullCount": 0,
+          "emptyCount": null,
+          "distinctCount": 2,
+          "topValues": [
+            {
+              "value": 18,
+              "count": 2
+            },
+            {
+              "value": 44,
+              "count": 1
+            }
+          ]
+        },
+        "full_name": {
+          "nullCount": 0,
+          "emptyCount": 0,
+          "distinctCount": 2,
+          "topValues": [
+            {
+              "value": "Joel Palacio",
+              "count": 2
+            },
+            {
+              "value": "Well Done",
+              "count": 1
+            }
+          ]
+        },
+        "phone_number": {
+          "nullCount": 0,
+          "emptyCount": 0,
+          "distinctCount": 1,
+          "topValues": [
+            {
+              "value": "09123456789",
+              "count": 3
+            }
+          ]
+        },
+        "address": {
+          "nullCount": 0,
+          "emptyCount": 0,
+          "distinctCount": 3,
+          "topValues": [
+            {
+              "value": "Eskina liko, Bisag Asa City",
+              "count": 1
+            },
+            {
+              "value": "Cabitoonan",
+              "count": 1
+            },
+            {
+              "value": "Awihao",
+              "count": 1
+            }
+          ]
+        },
+        "service_description": {
+          "nullCount": 0,
+          "emptyCount": 0,
+          "distinctCount": 3,
+          "topValues": [
+            {
+              "value": "Unsa man.",
+              "count": 1
+            },
+            {
+              "value": "Anything",
+              "count": 1
+            },
+            {
+              "value": "Plumbing",
+              "count": 1
+            }
+          ]
+        },
+        "government_id_data": {
+          "nullCount": 0,
+          "emptyCount": null,
+          "distinctCount": 3,
+          "topValues": []
+        },
+        "government_id_mime": {
+          "nullCount": 0,
+          "emptyCount": 0,
+          "distinctCount": 2,
+          "topValues": [
+            {
+              "value": "image/png",
+              "count": 2
+            },
+            {
+              "value": "image/jpeg",
+              "count": 1
+            }
+          ]
+        },
+        "certifications_data": {
+          "nullCount": 0,
+          "emptyCount": null,
+          "distinctCount": 3,
+          "topValues": []
+        },
+        "certifications_mime": {
+          "nullCount": 0,
+          "emptyCount": 0,
+          "distinctCount": 2,
+          "topValues": [
+            {
+              "value": "image/jpeg",
+              "count": 2
+            },
+            {
+              "value": "image/webp",
+              "count": 1
+            }
+          ]
+        },
+        "status": {
+          "nullCount": 0,
+          "emptyCount": 0,
+          "distinctCount": 2,
+          "topValues": [
+            {
+              "value": "approved",
+              "count": 2
+            },
+            {
+              "value": "rejected",
+              "count": 1
+            }
+          ]
+        },
+        "rejection_reason": {
+          "nullCount": 2,
+          "emptyCount": 0,
+          "distinctCount": 1,
+          "topValues": [
+            {
+              "value": null,
+              "count": 2
+            },
+            {
+              "value": "di mao",
+              "count": 1
+            }
+          ]
+        },
+        "admin_notes": {
+          "nullCount": 3,
+          "emptyCount": 0,
+          "distinctCount": 0,
+          "topValues": [
+            {
+              "value": null,
+              "count": 3
+            }
+          ]
+        },
+        "reviewed_by": {
+          "nullCount": 0,
+          "emptyCount": null,
+          "distinctCount": 1,
+          "topValues": [
+            {
+              "value": 2,
+              "count": 3
+            }
+          ]
+        },
+        "reviewed_at": {
+          "nullCount": 0,
+          "emptyCount": null,
+          "distinctCount": 3,
+          "topValues": [
+            {
+              "value": "2026-07-25T04:30:33.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-07-26T04:32:42.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-07-31T02:54:16.000Z",
+              "count": 1
+            }
+          ]
+        },
+        "created_at": {
+          "nullCount": 0,
+          "emptyCount": null,
+          "distinctCount": 3,
+          "topValues": [
+            {
+              "value": "2026-07-25T04:23:07.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-07-26T03:57:44.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-07-31T02:48:56.000Z",
+              "count": 1
+            }
+          ]
+        },
+        "updated_at": {
+          "nullCount": 0,
+          "emptyCount": null,
+          "distinctCount": 3,
+          "topValues": [
+            {
+              "value": "2026-07-25T04:30:33.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-07-26T04:32:42.000Z",
+              "count": 1
+            },
+            {
+              "value": "2026-07-31T02:54:16.000Z",
+              "count": 1
+            }
+          ]
+        }
+      }
+    }
+  }
+}

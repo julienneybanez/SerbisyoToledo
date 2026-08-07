@@ -118,7 +118,55 @@ const dayOfWeekFromDate = (dateString) => {
   return date.getUTCDay();
 };
 
+const ensureAvailabilitySchema = async (connection) => {
+  await connection.query(
+    `CREATE TABLE IF NOT EXISTS provider_availability_settings (
+      id INT PRIMARY KEY AUTO_INCREMENT,
+      service_profile_id INT NOT NULL UNIQUE,
+      allow_same_day_booking BOOLEAN NOT NULL DEFAULT FALSE,
+      min_advance_notice_minutes INT NOT NULL DEFAULT 720,
+      max_advance_booking_days INT NOT NULL DEFAULT 60,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      FOREIGN KEY (service_profile_id) REFERENCES service_profiles(id) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`
+  );
+
+  await connection.query(
+    `CREATE TABLE IF NOT EXISTS provider_weekly_availability (
+      id INT PRIMARY KEY AUTO_INCREMENT,
+      service_profile_id INT NOT NULL,
+      day_of_week TINYINT NOT NULL,
+      start_time TIME NOT NULL,
+      end_time TIME NOT NULL,
+      is_available BOOLEAN NOT NULL DEFAULT TRUE,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      FOREIGN KEY (service_profile_id) REFERENCES service_profiles(id) ON DELETE CASCADE,
+      UNIQUE KEY uniq_provider_weekly_block (service_profile_id, day_of_week, start_time, end_time)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`
+  );
+
+  await connection.query(
+    `CREATE TABLE IF NOT EXISTS provider_availability_exceptions (
+      id INT PRIMARY KEY AUTO_INCREMENT,
+      service_profile_id INT NOT NULL,
+      exception_date DATE NOT NULL,
+      start_time TIME NULL,
+      end_time TIME NULL,
+      exception_type ENUM('available', 'unavailable', 'booked', 'vacation') NOT NULL,
+      reason VARCHAR(255) NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      FOREIGN KEY (service_profile_id) REFERENCES service_profiles(id) ON DELETE CASCADE,
+      INDEX idx_provider_exception_lookup (service_profile_id, exception_date)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`
+  );
+};
+
 const ensureAvailabilitySettings = async (connection, serviceProfileId) => {
+  await ensureAvailabilitySchema(connection);
+
   const [existing] = await connection.query(
     `SELECT id, allow_same_day_booking, min_advance_notice_minutes, max_advance_booking_days
      FROM provider_availability_settings
@@ -148,11 +196,11 @@ const ensureAvailabilitySettings = async (connection, serviceProfileId) => {
 const getConfirmedBookingsForDate = async (connection, providerId, dateString, excludeRequestId = null) => {
   const params = [providerId, dateString, dateString, ...BLOCKING_STATUSES];
   let sql = `
-    SELECT id, start_date, end_date, start_time, estimated_duration_minutes, scheduled_date, scheduled_time
+    SELECT id, start_date, end_date, start_time, estimated_duration_minutes, scheduled_start_at, scheduled_end_at
     FROM service_requests
     WHERE provider_id = ?
-      AND COALESCE(start_date, scheduled_date) <= ?
-      AND COALESCE(end_date, scheduled_date) >= ?
+      AND DATE(scheduled_start_at) <= ?
+      AND DATE(scheduled_end_at) >= ?
       AND status IN (?, ?, ?)`;
 
   if (excludeRequestId != null) {
@@ -287,15 +335,14 @@ const checkScheduleConflict = async (
 
   const [rows] = await connection.query(
     `SELECT id, booking_type, status,
-            COALESCE(start_date, scheduled_date) AS effective_start_date,
-            COALESCE(end_date, scheduled_date) AS effective_end_date,
-            COALESCE(start_time, NULL) AS effective_start_time,
-            estimated_duration_minutes,
-            scheduled_time
+            DATE(scheduled_start_at) AS effective_start_date,
+            DATE(scheduled_end_at) AS effective_end_date,
+            TIME(scheduled_start_at) AS effective_start_time,
+            estimated_duration_minutes
      FROM service_requests
      WHERE provider_id = ?
-       AND COALESCE(start_date, scheduled_date) <= ?
-       AND COALESCE(end_date, scheduled_date) >= ?
+       AND DATE(scheduled_start_at) <= ?
+       AND DATE(scheduled_end_at) >= ?
        AND status IN (?, ?, ?)
        ${excludeRequestId != null ? 'AND id <> ?' : ''}`,
     excludeRequestId != null
@@ -326,7 +373,7 @@ const checkScheduleConflict = async (
       continue;
     }
 
-    const existingStartTime = parseTimeInputToSql(row.effective_start_time || row.scheduled_time);
+    const existingStartTime = parseTimeInputToSql(row.effective_start_time);
     const existingStartMinutes = timeToMinutes(existingStartTime);
     const existingDuration = Number(row.estimated_duration_minutes || 0);
     const existingEndMinutes = existingStartMinutes != null && existingDuration > 0
@@ -395,7 +442,17 @@ const getAvailableSlotsForDate = async (
   const bookings = await getConfirmedBookingsForDate(connection, providerId, normalizedDate, excludeRequestId);
 
   const bookingRanges = bookings.map((row) => {
-    const parsed = parseTimeInputToSql(row.start_time || row.scheduled_time);
+    let startFallback = null;
+    if (row.scheduled_start_at instanceof Date) {
+      const hh = String(row.scheduled_start_at.getUTCHours()).padStart(2, '0');
+      const mm = String(row.scheduled_start_at.getUTCMinutes()).padStart(2, '0');
+      const ss = String(row.scheduled_start_at.getUTCSeconds()).padStart(2, '0');
+      startFallback = `${hh}:${mm}:${ss}`;
+    } else if (typeof row.scheduled_start_at === 'string') {
+      startFallback = row.scheduled_start_at.slice(11, 19);
+    }
+
+    const parsed = parseTimeInputToSql(row.start_time || startFallback);
     const startMinutes = timeToMinutes(parsed);
     const bookingDuration = Number(row.estimated_duration_minutes || 0);
 

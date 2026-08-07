@@ -122,9 +122,15 @@ function ServiceProviderSettings() {
         setCredentialLoading(true);
 
         const [availabilityResponse, languagesResponse, credentialsResponse] = await Promise.all([
-          serviceProfileAPI.getMyAvailability(),
-          serviceProfileAPI.getMyLanguages(),
-          serviceProfileAPI.getMyCredentials(),
+          serviceProfileAPI.getMyAvailability
+            ? serviceProfileAPI.getMyAvailability()
+            : Promise.resolve({ success: true, data: { settings: {}, weeklyBlocks: [], exceptions: [] } }),
+          serviceProfileAPI.getMyLanguages
+            ? serviceProfileAPI.getMyLanguages()
+            : Promise.resolve({ success: true, data: { languages: [] } }),
+          serviceProfileAPI.getMyCredentials
+            ? serviceProfileAPI.getMyCredentials()
+            : Promise.resolve({ success: true, data: { credentials: [] } }),
         ]);
 
         if (availabilityResponse.success && availabilityResponse.data) {
@@ -368,7 +374,7 @@ function ServiceProviderSettings() {
   return (
     <div className="user-settings-container">
       <div className="page-header">
-        <h1 className="page-title">Settings</h1>
+        <h1 className="page-title">Service Provider Settings</h1>
         <p className="page-subtitle">Manage your business and account preferences</p>
         <div className="settings-theme-row">
           <span className="settings-theme-label">Appearance</span>

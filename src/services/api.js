@@ -101,6 +101,18 @@ export const authAPI = {
     if (data.success && data.data) {
       setToken(data.data.token);
       setUser(data.data.user);
+      try {
+        await fetch(`${API_BASE_URL}/user/presence`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${data.data.token}`,
+          },
+          body: JSON.stringify({ online: true }),
+        });
+      } catch {
+        // Presence heartbeat should not block login.
+      }
       // Notify components of auth change
       window.dispatchEvent(new Event('authChange'));
     }
@@ -166,6 +178,15 @@ export const authAPI = {
     
     try {
       if (token) {
+        await fetch(`${API_BASE_URL}/user/presence`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify({ online: false }),
+        });
+
         await fetch(`${API_BASE_URL}/auth/logout`, {
           method: 'POST',
           headers: {
@@ -1052,6 +1073,20 @@ export const userProfileAPI = {
         'Authorization': `Bearer ${token}`,
       },
     });
+    return handleResponse(response);
+  },
+
+  updatePresence: async (online = true) => {
+    const token = getToken();
+    const response = await fetch(`${API_BASE_URL}/user/presence`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({ online: Boolean(online) }),
+    });
+
     return handleResponse(response);
   },
 

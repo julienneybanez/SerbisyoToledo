@@ -26,6 +26,11 @@ const DICTIONARY = {
     admin: 'Admin',
     client: 'Client',
     footerCopyright: 'All rights reserved.',
+    footerTagline: 'Trusted local services for homes and communities in Toledo City.',
+    footerQuickLinks: 'Quick Links',
+    footerBecomeProvider: 'Become a Provider',
+    footerContact: 'Contact',
+    footerOfflinePayments: 'Payments are handled offline between client and provider.',
   },
   ceb: {
     language: 'Pinulongan',
@@ -48,6 +53,11 @@ const DICTIONARY = {
     admin: 'Admin',
     client: 'Kliyente',
     footerCopyright: 'Tanang katungod gitagana.',
+    footerTagline: 'Kasaligang lokal nga serbisyo para sa panimalay ug komunidad sa Toledo City.',
+    footerQuickLinks: 'Mga Dali nga Link',
+    footerBecomeProvider: 'Mahimong Service Provider',
+    footerContact: 'Kontak',
+    footerOfflinePayments: 'Ang bayad himuon offline tali sa kliyente ug provider.',
   },
 };
 
