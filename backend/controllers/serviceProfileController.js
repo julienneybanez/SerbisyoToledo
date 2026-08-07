@@ -16,6 +16,16 @@ const {
 const SUPPORTED_LANGUAGE_CODES = new Set(['ceb', 'en', 'fil']);
 const SUPPORTED_PRICING_UNITS = new Set(['per_job', 'per_hour', 'per_day']);
 const PRESENCE_WINDOW_MINUTES = 5;
+const REVIEW_STATS_JOIN = `
+  LEFT JOIN (
+    SELECT
+      service_profile_id,
+      ROUND(AVG(rating), 1) AS rating,
+      COUNT(*) AS reviews_count
+    FROM reviews
+    GROUP BY service_profile_id
+  ) review_stats ON review_stats.service_profile_id = sp.id
+`;
 
 const deriveOnlineFromLastSeen = (lastSeenAt) => {
   if (!lastSeenAt) return false;
@@ -246,14 +256,15 @@ exports.getAllProfiles = async (req, res) => {
         sp.service_categories,
         sp.description,
         sp.banner_image_url,
-        sp.rating,
-        sp.reviews_count,
+        COALESCE(review_stats.rating, 0) AS rating,
+        COALESCE(review_stats.reviews_count, 0) AS reviews_count,
         sp.created_at,
         u.profession,
         u.skills,
         u.is_verified
       FROM service_profiles sp
       JOIN users u ON sp.user_id = u.id
+      ${REVIEW_STATS_JOIN}
       WHERE sp.is_published = TRUE
     `;
 
@@ -276,7 +287,7 @@ exports.getAllProfiles = async (req, res) => {
     }
 
     if (minRating) {
-      query += ' AND sp.rating >= ?';
+      query += ' AND COALESCE(review_stats.rating, 0) >= ?';
       params.push(parseFloat(minRating));
     }
 
@@ -290,7 +301,7 @@ exports.getAllProfiles = async (req, res) => {
       params.push(JSON.stringify(category));
     }
 
-    query += ' ORDER BY sp.rating DESC, sp.reviews_count DESC';
+    query += ' ORDER BY COALESCE(review_stats.rating, 0) DESC, COALESCE(review_stats.reviews_count, 0) DESC';
 
     const [profiles] = await db.query(query, params);
 
@@ -385,13 +396,14 @@ exports.getRecommendedProviders = async (req, res) => {
         sp.service_categories,
         sp.description,
         sp.banner_image_url,
-        sp.rating,
-        sp.reviews_count,
+        COALESCE(review_stats.rating, 0) AS rating,
+        COALESCE(review_stats.reviews_count, 0) AS reviews_count,
         u.profession,
         u.skills,
         u.is_verified
       FROM service_profiles sp
       JOIN users u ON sp.user_id = u.id
+      ${REVIEW_STATS_JOIN}
       WHERE sp.is_published = TRUE
     `;
 
@@ -408,7 +420,7 @@ exports.getRecommendedProviders = async (req, res) => {
     }
 
     if (minRating) {
-      query += ' AND sp.rating >= ?';
+      query += ' AND COALESCE(review_stats.rating, 0) >= ?';
       params.push(parseFloat(minRating));
     }
 
@@ -427,7 +439,7 @@ exports.getRecommendedProviders = async (req, res) => {
       params.push(normalizedLanguage);
     }
 
-    query += ' ORDER BY sp.rating DESC, sp.reviews_count DESC LIMIT 30';
+    query += ' ORDER BY COALESCE(review_stats.rating, 0) DESC, COALESCE(review_stats.reviews_count, 0) DESC LIMIT 30';
 
     const [profiles] = await connection.query(query, params);
 
@@ -508,6 +520,8 @@ exports.getProfileById = async (req, res) => {
     const [profiles] = await db.query(
       `SELECT 
         sp.*,
+        COALESCE(review_stats.rating, 0) AS rating,
+        COALESCE(review_stats.reviews_count, 0) AS reviews_count,
         u.full_name,
         u.last_seen_at,
         u.profession,
@@ -517,6 +531,7 @@ exports.getProfileById = async (req, res) => {
         u.is_verified
       FROM service_profiles sp
       JOIN users u ON sp.user_id = u.id
+      ${REVIEW_STATS_JOIN}
       WHERE sp.id = ? AND sp.is_published = TRUE`,
       [id]
     );
@@ -709,6 +724,8 @@ exports.getMyProfile = async (req, res) => {
     const [profiles] = await db.query(
       `SELECT 
         sp.*,
+        COALESCE(review_stats.rating, 0) AS rating,
+        COALESCE(review_stats.reviews_count, 0) AS reviews_count,
         u.full_name,
         u.last_seen_at,
         u.profession,
@@ -718,6 +735,7 @@ exports.getMyProfile = async (req, res) => {
         u.is_verified
       FROM service_profiles sp
       JOIN users u ON sp.user_id = u.id
+      ${REVIEW_STATS_JOIN}
       WHERE sp.user_id = ?`,
       [userId]
     );
