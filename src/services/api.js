@@ -545,7 +545,6 @@ export const serviceProfileAPI = {
     const params = new URLSearchParams();
     
     if (filters.category) params.append('category', filters.category);
-    if (filters.serviceType) params.append('serviceType', filters.serviceType);
     if (filters.location) params.append('location', filters.location);
     if (filters.minPrice) params.append('minPrice', filters.minPrice);
     if (filters.maxPrice) params.append('maxPrice', filters.maxPrice);
@@ -559,18 +558,6 @@ export const serviceProfileAPI = {
       },
     });
     
-    return handleResponse(response);
-  },
-
-  // Get canonical service taxonomy (categories + service types)
-  getTaxonomy: async () => {
-    const response = await fetch(`${API_BASE_URL}/service-profiles/taxonomy`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
     return handleResponse(response);
   },
 

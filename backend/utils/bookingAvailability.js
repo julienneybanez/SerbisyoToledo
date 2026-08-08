@@ -421,7 +421,12 @@ const getAvailableSlotsForDate = async (
     excludeRequestId = null,
   }
 ) => {
-  const normalizedDate = formatDateOnly(parseDateOnly(date));
+  const parsedDate = parseDateOnly(date);
+  if (!parsedDate) {
+    return [];
+  }
+
+  const normalizedDate = formatDateOnly(parsedDate);
   const windows = await getAvailabilityWindowsForDate(connection, serviceProfileId, normalizedDate);
   if (windows.length === 0) {
     return [];
@@ -520,6 +525,86 @@ const getAvailableSlotsForDate = async (
   return slots;
 };
 
+const isScheduleAvailableForRange = async (
+  connection,
+  {
+    serviceProfileId,
+    providerId,
+    startDate,
+    endDate,
+    startTime,
+    durationMinutes,
+    excludeRequestId = null,
+  }
+) => {
+  const parsedStart = parseDateOnly(startDate);
+  const parsedEnd = parseDateOnly(endDate);
+  const normalizedStartTime = parseTimeInputToSql(startTime);
+  const normalizedDuration = Number(durationMinutes || 0);
+
+  if (!parsedStart || !parsedEnd || parsedEnd < parsedStart || !normalizedStartTime) {
+    return {
+      available: false,
+      reason: 'invalid_range',
+      message: 'Invalid booking schedule range.',
+    };
+  }
+
+  if (!Number.isInteger(normalizedDuration) || normalizedDuration <= 0 || normalizedDuration > 24 * 60) {
+    return {
+      available: false,
+      reason: 'invalid_duration',
+      message: 'Invalid booking duration.',
+    };
+  }
+
+  // Backward compatibility: if a provider has not configured any weekly windows
+  // or date exceptions yet, keep legacy behavior and allow schedule creation.
+  await ensureAvailabilitySchema(connection);
+  const [availabilityConfigRows] = await connection.query(
+    `SELECT
+       (SELECT COUNT(*) FROM provider_weekly_availability WHERE service_profile_id = ?) AS weekly_count,
+       (SELECT COUNT(*) FROM provider_availability_exceptions WHERE service_profile_id = ?) AS exception_count`,
+    [serviceProfileId, serviceProfileId]
+  );
+
+  const availabilityConfig = availabilityConfigRows[0] || {};
+  const weeklyCount = Number(availabilityConfig.weekly_count || 0);
+  const exceptionCount = Number(availabilityConfig.exception_count || 0);
+
+  if (weeklyCount === 0 && exceptionCount === 0) {
+    return {
+      available: true,
+      reason: 'availability_not_configured',
+    };
+  }
+
+  for (let cursor = new Date(parsedStart); cursor <= parsedEnd; cursor.setUTCDate(cursor.getUTCDate() + 1)) {
+    const date = formatDateOnly(cursor);
+    const slots = await getAvailableSlotsForDate(connection, {
+      serviceProfileId,
+      providerId,
+      date,
+      durationMinutes: normalizedDuration,
+      slotStepMinutes: 60,
+      excludeRequestId,
+    });
+
+    if (!slots.some((slot) => slot.time === normalizedStartTime)) {
+      return {
+        available: false,
+        reason: 'slot_unavailable',
+        date,
+        message: `The selected time is not available on ${date}.`,
+      };
+    }
+  }
+
+  return {
+    available: true,
+  };
+};
+
 module.exports = {
   BLOCKING_STATUSES,
   parseDateOnly,
@@ -532,4 +617,5 @@ module.exports = {
   ensureAvailabilitySettings,
   getAvailabilityWindowsForDate,
   getAvailableSlotsForDate,
+  isScheduleAvailableForRange,
 };

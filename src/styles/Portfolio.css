@@ -20,12 +20,12 @@
   width: 54px;
   height: 54px;
   border-radius: 14px;
-  background: var(--brand-primary);
+  background: linear-gradient(135deg, #3689ff, #24d37b);
   display: flex;
   align-items: center;
   justify-content: center;
   color: #fff;
-  box-shadow: 0 12px 24px rgba(47, 125, 225, 0.3);
+  box-shadow: 0 12px 24px rgba(54, 137, 255, 0.3);
 }
 
 .nav-links {
@@ -41,7 +41,7 @@
 }
 
 .nav-link-custom:hover {
-  color: var(--brand-primary);
+  color: #1a74ff;
 }
 
 .user-avatar {
@@ -53,7 +53,7 @@
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  color: var(--brand-primary);
+  color: #1a74ff;
 }
 
 /* ===================================
@@ -142,7 +142,7 @@
   width: 80px;
   height: 80px;
   border-radius: 20px;
-  background: var(--brand-primary);
+  background: #1a74ff;
   color: #fff;
   font-size: 1.75rem;
   font-weight: 700;
@@ -674,7 +674,7 @@
   width: 48px;
   height: 48px;
   border: 4px solid #e0e0e0;
-  border-top-color: var(--brand-primary);
+  border-top-color: #4A9FF5;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
   margin-bottom: 1rem;
@@ -767,7 +767,7 @@
   width: 80px;
   height: 80px;
   border-radius: 50%;
-  background: color-mix(in srgb, var(--brand-primary) 10%, var(--surface));
+  background: linear-gradient(135deg, rgba(26, 116, 255, 0.1), rgba(32, 184, 122, 0.1));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -776,7 +776,10 @@
 
 .login-prompt-icon i {
   font-size: 2.5rem;
-  color: var(--brand-accent);
+  background: linear-gradient(135deg, #1a74ff, #20b87a);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 .login-prompt-modal h3 {
@@ -800,7 +803,7 @@
 }
 
 .btn-login-prompt {
-  background: var(--brand-primary);
+  background: linear-gradient(135deg, #1a74ff, #20b87a);
   color: #fff;
   border: none;
   border-radius: var(--radius-control);
@@ -814,12 +817,12 @@
 }
 
 .btn-login-prompt:hover {
-  background: var(--brand-primary-dark);
+  filter: brightness(0.96);
 }
 
 .btn-register-prompt {
   background: transparent;
-  color: var(--brand-primary);
+  color: #1a74ff;
   border: 2px solid #e2e8f0;
   border-radius: var(--radius-control);
   min-height: var(--control-height);
@@ -832,7 +835,7 @@
 
 .btn-register-prompt:hover {
   background: #f8fafc;
-  border-color: var(--brand-primary);
+  border-color: #1a74ff;
 }
 
 /* ===================================

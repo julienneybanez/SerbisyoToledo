@@ -67,7 +67,10 @@
 .edit-portfolio-header h2 {
   font-size: 24px;
   font-weight: 700;
-  color: var(--brand-primary);
+  background: linear-gradient(120deg, #1a74ff 0%, #20b87a 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
   margin: 0 0 8px;
 }
 
@@ -87,7 +90,7 @@
   width: 48px;
   height: 48px;
   border: 3px solid #f0f0f0;
-  border-top-color: var(--brand-primary);
+  border-top-color: #0078D4;
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin: 0 auto 20px;
@@ -128,8 +131,8 @@
 
 .edit-portfolio-form .alert-success {
   background: #f0fdf4;
-  color: var(--brand-accent-dark);
-  border: 1px solid color-mix(in srgb, var(--brand-accent) 38%, #bbf7d0);
+  color: #16a34a;
+  border: 1px solid #bbf7d0;
 }
 
 /* Form Sections */
@@ -148,7 +151,7 @@
 }
 
 .edit-portfolio-form .form-section h3 i {
-  color: var(--brand-primary);
+  color: #0078D4;
   font-size: 18px;
 }
 
@@ -168,8 +171,8 @@
 .edit-portfolio-form select:focus,
 .edit-portfolio-form input[type="text"]:focus {
   outline: none;
-  border-color: var(--brand-primary);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-primary) 14%, transparent);
+  border-color: #0078D4;
+  box-shadow: 0 0 0 3px rgba(0, 120, 212, 0.1);
 }
 
 .edit-portfolio-form textarea {
@@ -191,7 +194,7 @@
   align-items: center;
   gap: 6px;
   padding: 8px 14px;
-  background: var(--brand-accent);
+  background: linear-gradient(135deg, #0078D4, #00BCD4);
   color: white;
   border-radius: 20px;
   font-size: 13px;
@@ -229,7 +232,7 @@
 
 .btn-add-skill {
   padding: 10px 20px;
-  background: var(--brand-primary);
+  background: linear-gradient(120deg, #1a74ff 0%, #20b87a 100%);
   color: white;
   border: none;
   border-radius: 999px !important;
@@ -241,8 +244,7 @@
 
 .btn-add-skill:hover {
   transform: translateY(-1px);
-  background: var(--brand-primary-dark);
-  box-shadow: 0 8px 20px rgba(47, 125, 225, 0.25);
+  box-shadow: 0 8px 20px rgba(32, 184, 122, 0.25);
 }
 
 /* Portfolio Grid */
@@ -333,7 +335,7 @@
 }
 
 .caption-label i {
-  color: var(--brand-primary);
+  color: #0078D4;
   font-size: 14px;
 }
 
@@ -349,8 +351,8 @@
 
 .caption-input:focus {
   outline: none;
-  border-color: var(--brand-primary);
-  box-shadow: 0 0 0 4px color-mix(in srgb, var(--brand-primary) 14%, transparent);
+  border-color: #0078D4;
+  box-shadow: 0 0 0 4px rgba(0, 120, 212, 0.1);
 }
 
 .caption-input::placeholder {
@@ -363,7 +365,7 @@
   justify-content: center;
   gap: 10px;
   padding: 10px 20px;
-  background: var(--brand-primary);
+  background: linear-gradient(120deg, #1a74ff 0%, #20b87a 100%);
   color: white;
   border: none;
   border-radius: 999px !important;
@@ -375,8 +377,7 @@
 
 .btn-upload-image:hover:not(:disabled) {
   transform: translateY(-1px);
-  background: var(--brand-primary-dark);
-  box-shadow: 0 8px 20px rgba(47, 125, 225, 0.25);
+  box-shadow: 0 8px 20px rgba(32, 184, 122, 0.25);
 }
 
 .btn-upload-image:disabled {
@@ -419,14 +420,13 @@
 
 .edit-portfolio-form .btn-save {
   border: none;
-  background: var(--brand-primary);
+  background: linear-gradient(120deg, #1a74ff 0%, #20b87a 100%);
   color: white;
 }
 
 .edit-portfolio-form .btn-save:hover:not(:disabled) {
   transform: translateY(-1px);
-  background: var(--brand-primary-dark);
-  box-shadow: 0 4px 12px rgba(47, 125, 225, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 120, 212, 0.3);
 }
 
 .edit-portfolio-form .btn-cancel:disabled,

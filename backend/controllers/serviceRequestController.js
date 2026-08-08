@@ -11,6 +11,7 @@ const {
   parseTimeInputToSql,
   calculateDurationDays,
   checkScheduleConflict,
+  isScheduleAvailableForRange,
 } = require('../utils/bookingAvailability');
 
 const MAX_JOB_TITLE_LENGTH = 255;
@@ -303,6 +304,23 @@ exports.createRequest = async (req, res) => {
       });
     }
 
+    const availabilityCheck = await isScheduleAvailableForRange(connection, {
+      serviceProfileId: profile.service_profile_id,
+      providerId: profile.provider_id,
+      startDate: normalized.normalizedStartDate,
+      endDate: normalized.normalizedEndDate,
+      startTime: normalized.normalizedStartTime,
+      durationMinutes: normalized.normalizedDurationMinutes,
+    });
+
+    if (!availabilityCheck.available) {
+      await connection.rollback();
+      return res.status(409).json({
+        success: false,
+        message: availabilityCheck.message || 'This schedule is no longer available for booking.',
+      });
+    }
+
     const conflict = await checkScheduleConflict(connection, {
       providerId: profile.provider_id,
       requestedStartDate: normalized.normalizedStartDate,
@@ -544,6 +562,24 @@ exports.updateRequestStatus = async (req, res) => {
       );
 
       const schedule = normalizeRequestSchedule(request);
+      const availabilityCheck = await isScheduleAvailableForRange(connection, {
+        serviceProfileId: request.service_profile_id,
+        providerId: request.provider_id,
+        startDate: schedule.startDate,
+        endDate: schedule.endDate,
+        startTime: schedule.startTime,
+        durationMinutes: schedule.durationMinutes,
+        excludeRequestId: request.id,
+      });
+
+      if (!availabilityCheck.available) {
+        await connection.rollback();
+        return res.status(409).json({
+          success: false,
+          message: availabilityCheck.message || 'This schedule is no longer available for booking.',
+        });
+      }
+
       const conflict = await checkScheduleConflict(connection, {
         providerId: request.provider_id,
         requestedStartDate: schedule.startDate,
@@ -892,6 +928,24 @@ exports.proposeReschedule = async (req, res) => {
     const proposedStartDateIso = formatDateOnly(parsedProposedStart);
     const proposedEndDateIso = formatDateOnly(parsedProposedEnd);
 
+    const availabilityCheck = await isScheduleAvailableForRange(connection, {
+      serviceProfileId: request.service_profile_id,
+      providerId: request.provider_id,
+      startDate: proposedStartDateIso,
+      endDate: proposedEndDateIso,
+      startTime: normalizedProposedTime,
+      durationMinutes: normalizedDurationMinutes,
+      excludeRequestId: request.id,
+    });
+
+    if (!availabilityCheck.available) {
+      await connection.rollback();
+      return res.status(409).json({
+        success: false,
+        message: availabilityCheck.message || 'The proposed schedule is no longer available.'
+      });
+    }
+
     const conflict = await checkScheduleConflict(connection, {
       providerId: request.provider_id,
       requestedStartDate: proposedStartDateIso,
@@ -1033,6 +1087,24 @@ exports.respondToReschedule = async (req, res) => {
     }
 
     if (action === 'accepted') {
+      const availabilityCheck = await isScheduleAvailableForRange(connection, {
+        serviceProfileId: request.service_profile_id,
+        providerId: request.provider_id,
+        startDate: proposal.proposed_start_date,
+        endDate: proposal.proposed_end_date,
+        startTime: proposal.proposed_start_time,
+        durationMinutes: Number(request.estimated_duration_minutes || 0),
+        excludeRequestId: request.id,
+      });
+
+      if (!availabilityCheck.available) {
+        await connection.rollback();
+        return res.status(409).json({
+          success: false,
+          message: availabilityCheck.message || 'The proposed schedule is no longer available.'
+        });
+      }
+
       const conflict = await checkScheduleConflict(connection, {
         providerId: request.provider_id,
         requestedStartDate: proposal.proposed_start_date,

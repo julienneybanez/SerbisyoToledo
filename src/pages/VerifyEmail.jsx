@@ -59,7 +59,7 @@ export default function VerifyEmail() {
                     width: '80px',
                     height: '80px',
                     borderRadius: '50%',
-                    background: 'var(--brand-accent)',
+                    background: 'linear-gradient(135deg, #20b87a 0%, #17a06c 100%)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -70,7 +70,7 @@ export default function VerifyEmail() {
                     </svg>
                   </div>
                 </div>
-                <h2 className="mb-3" style={{ fontWeight: 700, color: 'var(--brand-accent-dark)' }}>{t('emailVerified')}</h2>
+                <h2 className="mb-3" style={{ fontWeight: 700, color: '#20b87a' }}>{t('emailVerified')}</h2>
                 <p className="text-muted mb-4">{message}</p>
                 <Link to="/login" className="btn btn-primary px-5 py-2" style={{ borderRadius: '10px', fontWeight: 600 }}>
                   {t('goToLogin')}
@@ -85,7 +85,7 @@ export default function VerifyEmail() {
                     width: '80px',
                     height: '80px',
                     borderRadius: '50%',
-                    background: '#dc3545',
+                    background: 'linear-gradient(135deg, #dc3545 0%, #c82333 100%)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -112,7 +112,7 @@ export default function VerifyEmail() {
                     width: '80px',
                     height: '80px',
                     borderRadius: '50%',
-                    background: '#e0a800',
+                    background: 'linear-gradient(135deg, #ffc107 0%, #e0a800 100%)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',

@@ -68,7 +68,10 @@
 .edit-profile-header h2 {
   font-size: 24px;
   font-weight: 700;
-  color: var(--brand-primary);
+  background: linear-gradient(120deg, #1a74ff 0%, #20b87a 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
   margin: 0 0 8px;
 }
 
@@ -88,7 +91,7 @@
   width: 40px;
   height: 40px;
   border: 3px solid #f0f0f0;
-  border-top-color: var(--brand-primary);
+  border-top-color: #0078D4;
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin: 0 auto 15px;
@@ -129,8 +132,8 @@
 
 .edit-profile-form .alert-success {
   background: #f0fdf4;
-  color: var(--brand-accent-dark);
-  border: 1px solid color-mix(in srgb, var(--brand-accent) 38%, #bbf7d0);
+  color: #16a34a;
+  border: 1px solid #bbf7d0;
 }
 
 /* Photo Section */
@@ -152,14 +155,14 @@
   height: 80px;
   border-radius: 50%;
   object-fit: cover;
-  border: 3px solid var(--brand-primary);
+  border: 3px solid #1a74ff;
 }
 
 .photo-placeholder {
   width: 80px;
   height: 80px;
   border-radius: 50%;
-  background: var(--brand-primary);
+  background: linear-gradient(120deg, #1a74ff 0%, #20b87a 100%);
   color: white;
   display: flex;
   align-items: center;
@@ -189,14 +192,13 @@
 }
 
 .btn-photo-upload {
-  background: var(--brand-primary);
+  background: linear-gradient(120deg, #1a74ff 0%, #20b87a 100%);
   color: white;
 }
 
 .btn-photo-upload:hover:not(:disabled) {
   transform: translateY(-1px);
-  background: var(--brand-primary-dark);
-  box-shadow: 0 8px 20px rgba(47, 125, 225, 0.25);
+  box-shadow: 0 8px 20px rgba(32, 184, 122, 0.25);
 }
 
 .btn-photo-remove {
@@ -244,8 +246,8 @@
 .edit-profile-form .form-group input:focus,
 .edit-profile-form .form-group textarea:focus {
   outline: none;
-  border-color: var(--brand-primary);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-primary) 14%, transparent);
+  border-color: #0078D4;
+  box-shadow: 0 0 0 3px rgba(0, 120, 212, 0.1);
 }
 
 .edit-profile-form .form-group textarea {
@@ -293,14 +295,13 @@
 
 .edit-profile-form .btn-save {
   border: none;
-  background: var(--brand-primary);
+  background: linear-gradient(120deg, #1a74ff 0%, #20b87a 100%);
   color: white;
 }
 
 .edit-profile-form .btn-save:hover:not(:disabled) {
   transform: translateY(-2px);
-  background: var(--brand-primary-dark);
-  box-shadow: 0 8px 20px rgba(47, 125, 225, 0.3);
+  box-shadow: 0 8px 20px rgba(32, 184, 122, 0.3);
 }
 
 .edit-profile-form .btn-cancel:disabled,

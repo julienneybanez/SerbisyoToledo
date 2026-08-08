@@ -59,7 +59,7 @@
 }
 
 .role-selection-card.selected .role-selection-icon {
-  background: var(--brand-primary);
+  background: linear-gradient(120deg, var(--brand-primary) 0%, var(--brand-accent) 100%);
   color: #fff;
 }
 

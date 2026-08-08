@@ -162,20 +162,7 @@ const ProviderCard = ({ provider, profile, onBack, hideBackLink = false }) => {
       </div>
 
       <div className="skills-section">
-        <h3 className="skills-title">Services Offered</h3>
-        {profile.serviceTypes && profile.serviceTypes.length > 0 ? (
-          <div className="skills-grid">
-            {profile.serviceTypes.map((serviceType) => (
-              <span key={serviceType.key} className="skill-tag">{serviceType.label}</span>
-            ))}
-          </div>
-        ) : (
-          <p className="compact-empty-text">Service details not specified yet.</p>
-        )}
-      </div>
-
-      <div className="skills-section">
-        <h3 className="skills-title">Skills & Specialties</h3>
+        <h3 className="skills-title">Services & Skills</h3>
         {profile.skills && profile.skills.length > 0 ? (
           <div className="skills-grid">
             {profile.skills.map((skill) => (
@@ -183,7 +170,7 @@ const ProviderCard = ({ provider, profile, onBack, hideBackLink = false }) => {
             ))}
           </div>
         ) : (
-          <p className="compact-empty-text">No additional skills listed yet.</p>
+          <p className="compact-empty-text">No services or skills listed yet.</p>
         )}
       </div>
 
@@ -394,10 +381,7 @@ const ServiceProviderPortfolio = () => {
             location: apiProfile.location,
             online: apiProfile.online,
             description: apiProfile.description,
-            tags: apiProfile.tags || [],
-            categories: apiProfile.categories || [],
-            serviceTypes: apiProfile.serviceTypes || [],
-            skills: apiProfile.skills || [],
+            tags: apiProfile.categories || apiProfile.tags || [],
             startingPrice: apiProfile.startingPrice,
             dailyRate: apiProfile.dailyRate ?? apiProfile.startingPrice,
             verified: apiProfile.verified || false,
@@ -409,9 +393,7 @@ const ServiceProviderPortfolio = () => {
             profession: apiProfile.profession || apiProfile.categories?.[0] || 'Service Provider',
             jobs: apiProfile.jobsCompleted || apiProfile.reviewsCount || 0,
             about: apiProfile.aboutMe || apiProfile.description || '',
-            categories: apiProfile.categories || [],
-            serviceTypes: apiProfile.serviceTypes || [],
-            skills: apiProfile.skills || [],
+            skills: apiProfile.categories || apiProfile.tags || [],
             portfolio: apiProfile.portfolio || [],
             reviews: apiProfile.reviews || [],
             languages: (apiProfile.languages || []).map((code) => ({ ceb: 'Cebuano', en: 'English', fil: 'Filipino' }[code] || code)),

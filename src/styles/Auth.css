@@ -3,7 +3,7 @@
    =================================== */
 .gradient-container {
   min-height: 100vh;
-  background: linear-gradient(160deg, #edf5ff 0%, #e4f0ff 58%, #eef8fb 100%);
+  background: linear-gradient(160deg, #e8f3ff 0%, #d9ecff 52%, #dbf4ea 100%);
   position: relative;
 }
 
@@ -30,7 +30,7 @@
 .logo-circle {
   width: 48px;
   height: 48px;
-  background: var(--brand-primary);
+  background: linear-gradient(135deg, #5da9dd 0%, #4a9fd5 100%);
   border-radius: 50%;
   display: flex;
   justify-content: center;
@@ -50,16 +50,16 @@
 .app-title {
   font-size: 29px;
   font-weight: 600;
-  color: var(--brand-primary);
+  color: #5da9dd;
 }
 
 .title-green {
-  color: var(--brand-accent);
+  color: #44c9a0;
 }
 
 .subtitle {
   font-size: 14px;
-  color: var(--color-text-secondary);
+  color: #666;
   font-weight: 400;
   margin-bottom: 0;
 }
@@ -70,7 +70,7 @@
 .form-label {
   font-size: 14px;
   font-weight: 600;
-  color: var(--color-text-primary);
+  color: #333;
   margin-bottom: 8px;
 }
 
@@ -87,12 +87,12 @@
 
 .form-control:focus,
 .form-select:focus {
-  border-color: var(--brand-primary);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-primary) 14%, transparent);
+  border-color: #5da9dd;
+  box-shadow: 0 0 0 3px rgba(93, 169, 221, 0.1);
 }
 
 .form-control::placeholder {
-  color: var(--color-placeholder);
+  color: #aaa;
 }
 
 .password-input-wrapper {
@@ -113,7 +113,7 @@
 }
 
 .password-toggle:hover {
-  color: var(--brand-primary);
+  color: #5da9dd;
 }
 
 .gradient-container .btn-primary {
@@ -168,23 +168,23 @@
 }
 
 .radio-pill input[type="radio"]:checked + .radio-pill-label {
-  border-color: var(--brand-primary);
-  background: color-mix(in srgb, var(--brand-primary) 8%, var(--color-surface));
+  border-color: #5da9dd;
+  background: rgba(93, 169, 221, 0.05);
 }
 
 .radio-pill-label:hover {
-  border-color: var(--brand-primary);
+  border-color: #5da9dd;
 }
 
 .radio-pill-title {
   font-weight: 600;
-  color: var(--color-text-primary);
+  color: #333;
   margin-bottom: 2px;
 }
 
 .radio-pill-desc {
   font-size: 13px;
-  color: var(--color-text-secondary);
+  color: #666;
 }
 
 .radio-pill-indicator {
@@ -197,8 +197,8 @@
 }
 
 .radio-pill input[type="radio"]:checked + .radio-pill-label .radio-pill-indicator {
-  border-color: var(--brand-primary);
-  background: var(--brand-primary);
+  border-color: #5da9dd;
+  background: #5da9dd;
 }
 
 .radio-pill input[type="radio"]:checked + .radio-pill-label .radio-pill-indicator::after {
@@ -217,23 +217,23 @@
    AUTH PAGES - LINKS
    =================================== */
 .link {
-  color: var(--brand-primary);
+  color: #5da9dd;
   transition: color 0.3s ease;
 }
 
 .link:hover {
-  color: var(--brand-primary-dark);
+  color: #4a9fd5;
   text-decoration: underline;
 }
 
 .back-link {
   font-size: 14px;
-  color: var(--color-text-secondary);
+  color: #666;
   transition: color 0.3s ease;
 }
 
 .back-link:hover {
-  color: var(--brand-primary);
+  color: #5da9dd;
 }
 
 /* ===================================
@@ -249,7 +249,7 @@
 
 .section-text {
   line-height: 1.6;
-  color: var(--color-text-secondary);
+  color: #666;
 }
 
 .feature-item {
@@ -280,7 +280,7 @@
 .professional-details h3 {
   font-size: 16px;
   font-weight: 600;
-  color: var(--color-text-primary);
+  color: #333;
   margin-bottom: 16px;
 }
 
@@ -294,7 +294,7 @@
 }
 
 .add-skill-btn {
-  background: var(--primary);
+  background: #44c9a0;
   color: white;
   border: none;
   border-radius: var(--radius-control);
@@ -309,7 +309,7 @@
 }
 
 .add-skill-btn:hover {
-  background: var(--primary-hover);
+  background: #3bb890;
   transform: scale(1.05);
 }
 
@@ -321,8 +321,8 @@
 }
 
 .skill-tag {
-  background: color-mix(in srgb, var(--brand-primary) 14%, var(--color-surface));
-  color: var(--brand-primary);
+  background: #44c9a0;
+  color: white;
   padding: 6px 12px;
   border-radius: 20px;
   font-size: 13px;
@@ -349,7 +349,7 @@
 .footer-text {
   text-align: center;
   font-size: 14px;
-  color: var(--color-text-secondary);
+  color: #666;
 }
 
 /* ===================================
@@ -385,7 +385,7 @@
 }
 
 [data-theme='dark'] .gradient-container {
-  background: linear-gradient(to bottom, #0f1f36 0%, #112742 40%, #143041 100%);
+  background: linear-gradient(to bottom, #10223a 0%, #0f2b47 34%, #123743 72%, #0f2f2b 100%);
 }
 
 [data-theme='dark'] .content-card {
