@@ -9,10 +9,11 @@ import EditProfileModal from './components/common/EditProfileModal';
 import EditPortfolioModal from './components/common/EditPortfolioModal';
 import ServiceProfileModal from './components/common/ServiceProfileModal';
 import VerificationRequestModal from './components/common/VerificationRequestModal';
+import ProtectedRoute from './components/common/ProtectedRoute';
 
 // Admin imports
 import AdminLayout from './components/layout/AdminLayout';
-import { getUser, isAuthenticated, removeToken, serviceProfileAPI } from './services/api';
+import { clearAuthSession, getUser, isAuthenticated, serviceProfileAPI } from './services/api';
 import GuidedTour from './components/common/GuidedTour';
 import TourWelcomeModal from './components/common/TourWelcomeModal';
 
@@ -298,9 +299,8 @@ function App() {
   }, []);
 
   const handleMobileLogout = () => {
-    removeToken();
+    clearAuthSession({ preserveRedirect: false });
     setMobileProfileMenuOpen(false);
-    window.dispatchEvent(new Event('authChange'));
   };
 
   const appLoadingFallback = (
@@ -312,7 +312,14 @@ function App() {
       <Suspense fallback={appLoadingFallback}>
         <Routes>
           {/* Admin Routes - No regular Navbar/Footer */}
-          <Route path="/admin" element={<AdminLayout />}>
+          <Route
+            path="/admin"
+            element={(
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminLayout />
+              </ProtectedRoute>
+            )}
+          >
             <Route index element={<AdminDashboard />} />
             <Route path="dashboard" element={<AdminDashboard />} />
             <Route path="users" element={<AdminUsers />} />
@@ -373,12 +380,47 @@ function App() {
                   <Route path="/reset-password/:token" element={<ResetPassword />} />
                   <Route path="/verify-email" element={<VerifyEmail />} />
                   <Route path="/feed" element={<Feed />} />
-                  <Route path="/notifications" element={<Notifications />} />
-                  <Route path="/dashboard" element={<ServiceProviderDashboard />} />
+                  <Route
+                    path="/notifications"
+                    element={(
+                      <ProtectedRoute allowedRoles={['client', 'tradesperson', 'admin']}>
+                        <Notifications />
+                      </ProtectedRoute>
+                    )}
+                  />
+                  <Route
+                    path="/dashboard"
+                    element={(
+                      <ProtectedRoute allowedRoles={['tradesperson']}>
+                        <ServiceProviderDashboard />
+                      </ProtectedRoute>
+                    )}
+                  />
                   <Route path="/provider/:id" element={<ServiceProviderPortfolio />} />
-                  <Route path="/requests" element={<Requests />} />
-                  <Route path="/client-settings" element={<ClientSettings />} />
-                  <Route path="/provider-settings" element={<ServiceProviderSettings />} />
+                  <Route
+                    path="/requests"
+                    element={(
+                      <ProtectedRoute allowedRoles={['client', 'tradesperson']}>
+                        <Requests />
+                      </ProtectedRoute>
+                    )}
+                  />
+                  <Route
+                    path="/client-settings"
+                    element={(
+                      <ProtectedRoute allowedRoles={['client']}>
+                        <ClientSettings />
+                      </ProtectedRoute>
+                    )}
+                  />
+                  <Route
+                    path="/provider-settings"
+                    element={(
+                      <ProtectedRoute allowedRoles={['tradesperson']}>
+                        <ServiceProviderSettings />
+                      </ProtectedRoute>
+                    )}
+                  />
                 </Routes>
               </main>
 

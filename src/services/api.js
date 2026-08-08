@@ -2,6 +2,37 @@
 const isLocalHost = typeof window !== 'undefined' && ['localhost', '127.0.0.1'].includes(window.location.hostname);
 export const API_BASE_URL = import.meta.env.VITE_API_URL || (isLocalHost ? 'http://localhost:5000/api' : '/api');
 
+const isProtectedPath = (pathname) => {
+  if (!pathname) return false;
+  return pathname.startsWith('/dashboard')
+    || pathname.startsWith('/requests')
+    || pathname.startsWith('/notifications')
+    || pathname.startsWith('/client-settings')
+    || pathname.startsWith('/provider-settings')
+    || pathname.startsWith('/admin');
+};
+
+export const clearAuthSession = ({ preserveRedirect = true } = {}) => {
+  const currentPath = typeof window !== 'undefined'
+    ? `${window.location.pathname}${window.location.search || ''}`
+    : '';
+
+  removeToken();
+
+  if (
+    preserveRedirect
+    && typeof window !== 'undefined'
+    && currentPath
+    && isProtectedPath(window.location.pathname)
+  ) {
+    sessionStorage.setItem('redirectAfterLogin', currentPath);
+  }
+
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new Event('authChange'));
+  }
+};
+
 // Helper function to handle API responses
 const handleResponse = async (response) => {
   const contentType = response.headers.get('content-type') || '';
@@ -39,6 +70,11 @@ const handleResponse = async (response) => {
   }
 
   if (!response.ok) {
+    const isAuthFailure = response.status === 401 || response.status === 403;
+    if (isAuthFailure && getToken()) {
+      clearAuthSession();
+    }
+
     throw {
       status: response.status,
       message: data.message || 'An error occurred',
@@ -231,7 +267,7 @@ export const authAPI = {
       console.error('Logout API error:', error);
     } finally {
       // Always clear local storage
-      removeToken();
+      clearAuthSession({ preserveRedirect: false });
     }
   },
 

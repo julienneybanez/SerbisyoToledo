@@ -105,6 +105,12 @@ describe('Backend Security Hardening', () => {
 
     expect(res.status).toBe(201);
     expect(res.body.success).toBe(true);
+
+    const insertCall = conn.query.mock.calls.find(([sql]) => sql.includes('INSERT INTO service_requests'));
+    expect(insertCall).toBeTruthy();
+    const params = insertCall[1];
+    expect(params[11]).toBe('2099-12-31 09:00:00');
+    expect(params[12]).toBe('2099-12-31 11:00:00');
   });
 
   it('5) prevents provider from creating client booking', async () => {
@@ -425,7 +431,7 @@ describe('Backend Security Hardening', () => {
 
   it('18) keeps public profile response free of verification docs/admin fields', async () => {
     vi.spyOn(db, 'query').mockImplementation(async (sql) => {
-      if (sql.includes('FROM service_profiles sp') && sql.includes('WHERE sp.id = ? AND sp.is_published = TRUE')) {
+      if (sql.includes('FROM service_profiles sp') && sql.includes('WHERE sp.id = ?') && sql.includes('sp.is_published = TRUE')) {
         return [[{
           id: 77,
           user_id: 21,

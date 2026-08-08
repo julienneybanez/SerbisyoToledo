@@ -27,6 +27,7 @@ vi.mock('../../services/api', () => ({
     getAllProfiles: vi.fn(),
     getMyProfile: vi.fn(),
     getMyPortfolio: vi.fn(),
+    getMyAvailability: vi.fn(),
   },
   serviceRequestAPI: {
     getClientRequests: vi.fn(),
@@ -54,6 +55,7 @@ describe('Targeted correctness checks', () => {
 
     serviceProfileAPI.getMyProfile.mockResolvedValue({ success: true, data: {} });
     serviceProfileAPI.getMyPortfolio.mockResolvedValue({ success: true, data: {} });
+    serviceProfileAPI.getMyAvailability.mockResolvedValue({ success: true, data: { weeklyBlocks: [] } });
   });
 
   it('clears search, category, and advanced filters together on Feed', async () => {

@@ -80,11 +80,38 @@ const getDurationDays = (startDate, endDate) => {
 
 const formatMoney = (amount) => `P${Number(amount || 0).toLocaleString('en-PH', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
 
+const getPricingUnitLabel = (pricingUnit) => {
+  const normalized = String(pricingUnit || 'per_day').toLowerCase();
+  if (normalized === 'per_job') return 'per job';
+  if (normalized === 'per_hour') return 'per hour';
+  return 'per day';
+};
+
+const calculateEstimatedTotal = ({ pricingUnit, baseRate, durationDays, durationMinutes }) => {
+  const rate = Number(baseRate || 0);
+  const days = Number(durationDays || 0);
+  const minutes = Number(durationMinutes || 0);
+  const normalizedUnit = String(pricingUnit || 'per_day').toLowerCase();
+
+  if (!Number.isFinite(rate) || rate <= 0) return 0;
+  if (normalizedUnit === 'per_job') return rate;
+  if (normalizedUnit === 'per_hour') {
+    const totalHours = (minutes / 60) * Math.max(1, days);
+    return Number((rate * totalHours).toFixed(2));
+  }
+  return Number((rate * Math.max(1, days)).toFixed(2));
+};
+
 export default function BookingModal({ provider, onClose }) {
   const bookingWindow = useMemo(() => {
+    const providerMaxAdvance = Number(provider?.maxAdvanceBookingDays);
+    const normalizedMaxAdvance = Number.isFinite(providerMaxAdvance)
+      ? Math.min(Math.max(Math.round(providerMaxAdvance), 1), 180)
+      : 60;
+
     const start = new Date();
     start.setHours(0, 0, 0, 0);
-    const end = addDays(start, 60);
+    const end = addDays(start, normalizedMaxAdvance);
 
     return {
       startDate: start,
@@ -92,7 +119,7 @@ export default function BookingModal({ provider, onClose }) {
       fromDate: formatDateInput(start),
       toDate: formatDateInput(end),
     };
-  }, []);
+  }, [provider?.maxAdvanceBookingDays]);
 
   const [currentMonth, setCurrentMonth] = useState(bookingWindow.startDate.getMonth());
   const [currentYear, setCurrentYear] = useState(bookingWindow.startDate.getFullYear());
@@ -104,7 +131,7 @@ export default function BookingModal({ provider, onClose }) {
   const [estimatedDurationMinutes, setEstimatedDurationMinutes] = useState(120);
   const [debouncedDurationMinutes, setDebouncedDurationMinutes] = useState(120);
 
-  const [availableDates, setAvailableDates] = useState([]);
+  const [availableDatesByMonth, setAvailableDatesByMonth] = useState({});
   const [dateLoading, setDateLoading] = useState(false);
   const [dateError, setDateError] = useState('');
   const [dateReloadToken, setDateReloadToken] = useState(0);
@@ -131,7 +158,9 @@ export default function BookingModal({ provider, onClose }) {
   const endDateRef = useRef(endDate);
   const bookingTypeRef = useRef(bookingType);
 
-  const dailyRate = Number(provider?.dailyRate ?? provider?.startingPrice ?? 0);
+  const rateValue = Number(provider?.dailyRate ?? provider?.startingPrice ?? 0);
+  const pricingUnit = String(provider?.pricingUnit || 'per_day').toLowerCase();
+  const pricingUnitLabel = getPricingUnitLabel(pricingUnit);
   const normalizedDurationMinutes = useMemo(() => {
     const duration = Number(estimatedDurationMinutes || 0);
     if (!Number.isFinite(duration)) return 0;
@@ -142,9 +171,27 @@ export default function BookingModal({ provider, onClose }) {
     if (!startDate) return 0;
     return getDurationDays(startDate, bookingType === 'multi_day' ? endDate : startDate);
   }, [bookingType, endDate, startDate]);
-  const estimatedTotal = useMemo(() => dailyRate * durationDays, [dailyRate, durationDays]);
+  const estimatedTotal = useMemo(() => (
+    calculateEstimatedTotal({
+      pricingUnit,
+      baseRate: rateValue,
+      durationDays,
+      durationMinutes: normalizedDurationMinutes,
+    })
+  ), [durationDays, normalizedDurationMinutes, pricingUnit, rateValue]);
 
-  const availableDateSet = useMemo(() => new Set(availableDates), [availableDates]);
+  const currentMonthKey = useMemo(
+    () => `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`,
+    [currentMonth, currentYear],
+  );
+
+  const availableDateSet = useMemo(() => {
+    const dateSet = new Set();
+    Object.values(availableDatesByMonth).forEach((dates) => {
+      (Array.isArray(dates) ? dates : []).forEach((date) => dateSet.add(date));
+    });
+    return dateSet;
+  }, [availableDatesByMonth]);
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -293,8 +340,21 @@ export default function BookingModal({ provider, onClose }) {
   useEffect(() => {
     const loadAvailableDates = async () => {
       if (!provider?.id) {
-        setAvailableDates([]);
+        setAvailableDatesByMonth({});
         setDateError('');
+        return;
+      }
+
+      const monthStart = new Date(currentYear, currentMonth, 1);
+      const monthEnd = new Date(currentYear, currentMonth + 1, 0);
+      const boundedStart = monthStart < bookingWindow.startDate ? bookingWindow.startDate : monthStart;
+      const boundedEnd = monthEnd > bookingWindow.endDate ? bookingWindow.endDate : monthEnd;
+
+      if (boundedEnd < boundedStart) {
+        setAvailableDatesByMonth((prev) => ({
+          ...prev,
+          [currentMonthKey]: [],
+        }));
         return;
       }
 
@@ -304,8 +364,8 @@ export default function BookingModal({ provider, onClose }) {
 
       try {
         const response = await serviceProfileAPI.getAvailableDates(provider.id, {
-          fromDate: bookingWindow.fromDate,
-          toDate: bookingWindow.toDate,
+          fromDate: formatDateInput(boundedStart),
+          toDate: formatDateInput(boundedEnd),
           duration: debouncedDurationMinutes,
         });
 
@@ -315,7 +375,10 @@ export default function BookingModal({ provider, onClose }) {
 
         if (response.success) {
           const dates = Array.isArray(response.data?.dates) ? response.data.dates : [];
-          setAvailableDates(dates);
+          setAvailableDatesByMonth((prev) => ({
+            ...prev,
+            [currentMonthKey]: dates,
+          }));
 
           if (dates.length > 0) {
             const firstDate = dates[0];
@@ -333,9 +396,6 @@ export default function BookingModal({ provider, onClose }) {
               setCurrentMonth(parsedFirstDate.getMonth());
               setCurrentYear(parsedFirstDate.getFullYear());
             }
-          } else {
-            setStartDate('');
-            setEndDate('');
           }
         }
       } catch (error) {
@@ -343,9 +403,10 @@ export default function BookingModal({ provider, onClose }) {
           return;
         }
 
-        setAvailableDates([]);
-        setStartDate('');
-        setEndDate('');
+        setAvailableDatesByMonth((prev) => ({
+          ...prev,
+          [currentMonthKey]: [],
+        }));
         setDateError(error.message || 'Unable to load available dates.');
       } finally {
         if (requestSequence === dateRequestSequenceRef.current) {
@@ -356,8 +417,11 @@ export default function BookingModal({ provider, onClose }) {
 
     loadAvailableDates();
   }, [
-    bookingWindow.fromDate,
-    bookingWindow.toDate,
+    bookingWindow.endDate,
+    bookingWindow.startDate,
+    currentMonth,
+    currentMonthKey,
+    currentYear,
     debouncedDurationMinutes,
     provider?.id,
     dateReloadToken,
@@ -836,7 +900,7 @@ export default function BookingModal({ provider, onClose }) {
             <div className="booking-hint-card" style={{ marginTop: 0 }}>
               <p><strong>Selected:</strong> {formattedSelectedRange}</p>
               <p><strong>Duration:</strong> {durationDays} day(s)</p>
-              <p><strong>Daily rate:</strong> {formatMoney(dailyRate)} per day</p>
+              <p><strong>Rate:</strong> {formatMoney(rateValue)} {pricingUnitLabel}</p>
               <p><strong>Estimated service cost:</strong> {formatMoney(estimatedTotal)}</p>
               <p className="hint-subtext">
                 Select available dates only. For multi-day bookings, click two dates or drag to preview and set a continuous range.
@@ -933,7 +997,7 @@ export default function BookingModal({ provider, onClose }) {
             <p><strong>Time:</strong> {selectedTime || 'Not selected'}</p>
             <p><strong>Estimated:</strong> {formatMoney(estimatedTotal)}</p>
             <p className="hint-subtext">
-              The displayed amount is an estimate based on the provider daily rate. Final price may vary depending on scope.
+              The displayed amount is an estimate based on the provider pricing unit. Final price may vary depending on scope.
             </p>
             <p className="hint-subtext">
               The provider must accept your request before the booking is confirmed.

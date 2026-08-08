@@ -9,6 +9,8 @@ const {
   parseDateOnly,
   formatDateOnly,
   parseTimeInputToSql,
+  timeToMinutes,
+  minutesToSqlTime,
   calculateDurationDays,
   checkScheduleConflict,
   isScheduleAvailableForRange,
@@ -19,6 +21,8 @@ const MAX_JOB_DETAILS_LENGTH = 2000;
 const MAX_DECLINE_REASON_LENGTH = 500;
 const MAX_RESCHEDULE_REASON_LENGTH = 1000;
 const MAX_DURATION_MINUTES = 24 * 60;
+
+const MINUTES_PER_DAY = 24 * 60;
 
 const CANCELLATION_REASONS = new Set([
   'Schedule conflict',
@@ -47,6 +51,7 @@ const getProviderProfile = async (connection, serviceProfileId) => {
       sp.id AS service_profile_id,
       sp.user_id AS provider_id,
       sp.starting_price,
+      sp.pricing_unit,
       sp.service_categories,
       sp.service_types,
       sp.is_published,
@@ -60,6 +65,68 @@ const getProviderProfile = async (connection, serviceProfileId) => {
   );
 
   return profileRows[0] || null;
+};
+
+const deriveScheduledEnd = ({ startDate, startTime, durationMinutes }) => {
+  const parsedStart = parseDateOnly(startDate);
+  const startMinutes = timeToMinutes(startTime);
+  const duration = Number(durationMinutes || 0);
+
+  if (!parsedStart || startMinutes == null || duration <= 0) {
+    return {
+      scheduledStartAt: `${startDate} ${startTime}`,
+      scheduledEndAt: `${startDate} ${startTime}`,
+      endDate: startDate,
+      endTime: startTime,
+    };
+  }
+
+  const startAt = new Date(Date.UTC(
+    parsedStart.getUTCFullYear(),
+    parsedStart.getUTCMonth(),
+    parsedStart.getUTCDate(),
+    Math.floor(startMinutes / 60),
+    startMinutes % 60,
+    0,
+    0
+  ));
+
+  const endAt = new Date(startAt.getTime() + duration * 60 * 1000);
+  const endDate = formatDateOnly(new Date(Date.UTC(
+    endAt.getUTCFullYear(),
+    endAt.getUTCMonth(),
+    endAt.getUTCDate()
+  )));
+  const endTime = minutesToSqlTime(endAt.getUTCHours() * 60 + endAt.getUTCMinutes());
+
+  return {
+    scheduledStartAt: `${startDate} ${startTime}`,
+    scheduledEndAt: `${endDate} ${endTime}`,
+    endDate,
+    endTime,
+  };
+};
+
+const calculateEstimatedTotal = ({ pricingUnit, baseRate, durationDays, durationMinutes }) => {
+  const rate = Number(baseRate || 0);
+  const days = Number(durationDays || 0);
+  const minutes = Number(durationMinutes || 0);
+  const unit = String(pricingUnit || 'per_day').trim().toLowerCase();
+
+  if (!Number.isFinite(rate) || rate <= 0) {
+    return 0;
+  }
+
+  if (unit === 'per_job') {
+    return rate;
+  }
+
+  if (unit === 'per_hour') {
+    const totalHours = Math.max(0, minutes / 60) * Math.max(1, days);
+    return Number((rate * totalHours).toFixed(2));
+  }
+
+  return Number((rate * Math.max(1, days)).toFixed(2));
 };
 
 const validateBookingPayload = ({
@@ -85,6 +152,11 @@ const validateBookingPayload = ({
 
   if (!Number.isInteger(normalizedDurationMinutes) || normalizedDurationMinutes <= 0 || normalizedDurationMinutes > MAX_DURATION_MINUTES) {
     return { error: 'Estimated duration must be between 1 and 1440 minutes' };
+  }
+
+  const startMinutes = timeToMinutes(normalizedStartTime);
+  if (normalizedBookingType === 'one_day' && startMinutes != null && (startMinutes + normalizedDurationMinutes) > MINUTES_PER_DAY) {
+    return { error: 'One-day bookings must end within the same day' };
   }
 
   const parsedStartDate = parseDateOnly(normalizedStartDate);
@@ -337,8 +409,24 @@ exports.createRequest = async (req, res) => {
       });
     }
 
-    const dailyRate = Number(profile.starting_price || 0);
-    const estimatedTotal = dailyRate * normalized.durationDays;
+    const rateSnapshot = Number(profile.starting_price || 0);
+    const estimatedTotal = calculateEstimatedTotal({
+      pricingUnit: profile.pricing_unit,
+      baseRate: rateSnapshot,
+      durationDays: normalized.durationDays,
+      durationMinutes: normalized.normalizedDurationMinutes,
+    });
+
+    const scheduleEnd = normalized.normalizedBookingType === 'one_day'
+      ? deriveScheduledEnd({
+        startDate: normalized.normalizedStartDate,
+        startTime: normalized.normalizedStartTime,
+        durationMinutes: normalized.normalizedDurationMinutes,
+      })
+      : {
+        scheduledStartAt: `${normalized.normalizedStartDate} ${normalized.normalizedStartTime}`,
+        scheduledEndAt: `${normalized.normalizedEndDate} ${normalized.normalizedStartTime}`,
+      };
 
     const [result] = await connection.query(
       `INSERT INTO service_requests (
@@ -373,11 +461,11 @@ exports.createRequest = async (req, res) => {
         normalized.normalizedStartDate,
         normalized.normalizedEndDate,
         normalized.normalizedStartTime,
-        `${normalized.normalizedStartDate} ${normalized.normalizedStartTime}`,
-        `${normalized.normalizedEndDate} ${normalized.normalizedStartTime}`,
+        scheduleEnd.scheduledStartAt,
+        scheduleEnd.scheduledEndAt,
         normalized.normalizedDurationMinutes,
         normalized.durationDays,
-        dailyRate,
+        rateSnapshot,
         estimatedTotal,
       ]
     );
@@ -407,7 +495,8 @@ exports.createRequest = async (req, res) => {
         endDate: normalized.normalizedEndDate,
         startTime: normalized.normalizedStartTime,
         durationDays: normalized.durationDays,
-        dailyRateSnapshot: dailyRate,
+        pricingUnit: profile.pricing_unit || 'per_day',
+        dailyRateSnapshot: rateSnapshot,
         estimatedTotal,
       }
     });
@@ -473,8 +562,7 @@ exports.getProviderRequests = async (req, res) => {
 
     const [requests] = await db.query(
       `SELECT sr.*, 
-              u.full_name as client_name,
-              u.email as client_email
+              u.full_name as client_name
        FROM service_requests sr
        JOIN users u ON sr.client_id = u.id
        WHERE sr.provider_id = ?
@@ -1123,10 +1211,24 @@ exports.respondToReschedule = async (req, res) => {
       }
 
       const durationDays = calculateDurationDays(proposal.proposed_start_date, proposal.proposed_end_date) || 1;
-      const dailyRateSnapshot = Number(request.daily_rate_snapshot || 0);
-      const estimatedTotal = dailyRateSnapshot * durationDays;
-      const proposedStartAt = `${proposal.proposed_start_date} ${proposal.proposed_start_time}`;
-      const proposedEndAt = `${proposal.proposed_end_date} ${proposal.proposed_start_time}`;
+      const rateSnapshot = Number(request.daily_rate_snapshot || 0);
+      const estimatedTotal = calculateEstimatedTotal({
+        pricingUnit: request.pricing_unit_snapshot || 'per_day',
+        baseRate: rateSnapshot,
+        durationDays,
+        durationMinutes: Number(request.estimated_duration_minutes || 0),
+      });
+
+      const scheduleEnd = String(request.booking_type || 'one_day') === 'one_day'
+        ? deriveScheduledEnd({
+          startDate: proposal.proposed_start_date,
+          startTime: proposal.proposed_start_time,
+          durationMinutes: Number(request.estimated_duration_minutes || 0),
+        })
+        : {
+          scheduledStartAt: `${proposal.proposed_start_date} ${proposal.proposed_start_time}`,
+          scheduledEndAt: `${proposal.proposed_end_date} ${proposal.proposed_start_time}`,
+        };
 
       await connection.query(
         `UPDATE service_requests
@@ -1142,8 +1244,8 @@ exports.respondToReschedule = async (req, res) => {
           proposal.proposed_start_date,
           proposal.proposed_end_date,
           proposal.proposed_start_time,
-          proposedStartAt,
-          proposedEndAt,
+          scheduleEnd.scheduledStartAt,
+          scheduleEnd.scheduledEndAt,
           durationDays,
           estimatedTotal,
           request.id,
@@ -1334,8 +1436,7 @@ exports.getRequestById = async (req, res) => {
               sp.full_name as provider_name,
               sp.barangay_address as provider_location,
               u.phone as provider_phone,
-              c.full_name as client_name,
-              c.email as client_email
+              c.full_name as client_name
        FROM service_requests sr
        JOIN service_profiles sp ON sr.service_profile_id = sp.id
        JOIN users u ON sr.provider_id = u.id

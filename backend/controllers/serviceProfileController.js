@@ -335,6 +335,7 @@ exports.getAllProfiles = async (req, res) => {
       JOIN users u ON sp.user_id = u.id
       ${REVIEW_STATS_JOIN}
       WHERE sp.is_published = TRUE
+        AND u.is_active = TRUE
     `;
 
     const params = [];
@@ -474,6 +475,7 @@ exports.getRecommendedProviders = async (req, res) => {
       JOIN users u ON sp.user_id = u.id
       ${REVIEW_STATS_JOIN}
       WHERE sp.is_published = TRUE
+        AND u.is_active = TRUE
     `;
 
     const params = [];
@@ -601,7 +603,9 @@ exports.getProfileById = async (req, res) => {
       FROM service_profiles sp
       JOIN users u ON sp.user_id = u.id
       ${REVIEW_STATS_JOIN}
-      WHERE sp.id = ? AND sp.is_published = TRUE`,
+      WHERE sp.id = ?
+        AND sp.is_published = TRUE
+        AND u.is_active = TRUE`,
       [id]
     );
 
@@ -693,6 +697,22 @@ exports.getProfileById = async (req, res) => {
       }
     }
 
+    let availabilitySettings = null;
+    try {
+      const [settingsRows] = await db.query(
+        `SELECT allow_same_day_booking, min_advance_notice_minutes, max_advance_booking_days
+         FROM provider_availability_settings
+         WHERE service_profile_id = ?
+         LIMIT 1`,
+        [id]
+      );
+      availabilitySettings = settingsRows[0] || null;
+    } catch (availabilityError) {
+      if (!['ER_NO_SUCH_TABLE', 'ER_BAD_FIELD_ERROR'].includes(availabilityError.code)) {
+        throw availabilityError;
+      }
+    }
+
     // Format portfolio items
     const formattedPortfolio = portfolioItems.map(item => ({
       id: item.id,
@@ -725,6 +745,9 @@ exports.getProfileById = async (req, res) => {
       location: profile.barangay_address,
       startingPrice: parseFloat(profile.starting_price),
       pricingUnit: profile.pricing_unit || 'per_day',
+      allowSameDayBooking: Boolean(availabilitySettings?.allow_same_day_booking),
+      minAdvanceNoticeMinutes: Number(availabilitySettings?.min_advance_notice_minutes || 720),
+      maxAdvanceBookingDays: Number(availabilitySettings?.max_advance_booking_days || 60),
       description: profile.description,
       aboutMe: profile.about_me,
       responseTime: profile.response_time || 'Within 24 hours',
@@ -1197,14 +1220,15 @@ exports.getAvailableSlots = async (req, res) => {
     connection = await db.getConnection();
 
     const [profiles] = await connection.query(
-      `SELECT sp.id, sp.user_id AS provider_id, sp.is_published
+      `SELECT sp.id, sp.user_id AS provider_id, sp.is_published, u.is_active
        FROM service_profiles sp
+       JOIN users u ON u.id = sp.user_id
        WHERE sp.id = ?
        LIMIT 1`,
       [serviceProfileId]
     );
 
-    if (profiles.length === 0 || !profiles[0].is_published) {
+    if (profiles.length === 0 || !profiles[0].is_published || !profiles[0].is_active) {
       return res.status(404).json({
         success: false,
         message: 'Service profile not found'
@@ -1234,30 +1258,22 @@ exports.getAvailableSlots = async (req, res) => {
       dates.push(formatDateOnly(cursor));
     }
 
-    const multiDaySlots = [];
-
-    for (const slot of baseSlots) {
-      let validAcrossRange = true;
-
-      for (const day of dates) {
-        const daySlots = await getAvailableSlotsForDate(connection, {
-          serviceProfileId,
-          providerId: profiles[0].provider_id,
-          date: day,
-          durationMinutes: duration,
-          slotStepMinutes: 60,
-        });
-
-        if (!daySlots.some((candidate) => candidate.time === slot.time)) {
-          validAcrossRange = false;
-          break;
-        }
-      }
-
-      if (validAcrossRange) {
-        multiDaySlots.push(slot);
-      }
+    // Load each day once, then intersect by slot time.
+    const slotsByDay = new Map();
+    for (const day of dates) {
+      const daySlots = await getAvailableSlotsForDate(connection, {
+        serviceProfileId,
+        providerId: profiles[0].provider_id,
+        date: day,
+        durationMinutes: duration,
+        slotStepMinutes: 60,
+      });
+      slotsByDay.set(day, new Set(daySlots.map((candidate) => candidate.time)));
     }
+
+    const multiDaySlots = baseSlots.filter((slot) => (
+      dates.every((day) => slotsByDay.get(day)?.has(slot.time))
+    ));
 
     return res.json({
       success: true,
@@ -1317,14 +1333,15 @@ exports.getAvailableDates = async (req, res) => {
     connection = await db.getConnection();
 
     const [profiles] = await connection.query(
-      `SELECT sp.id, sp.user_id AS provider_id, sp.is_published
+      `SELECT sp.id, sp.user_id AS provider_id, sp.is_published, u.is_active
        FROM service_profiles sp
+       JOIN users u ON u.id = sp.user_id
        WHERE sp.id = ?
        LIMIT 1`,
       [serviceProfileId]
     );
 
-    if (profiles.length === 0 || !profiles[0].is_published) {
+    if (profiles.length === 0 || !profiles[0].is_published || !profiles[0].is_active) {
       return res.status(404).json({
         success: false,
         message: 'Service profile not found',

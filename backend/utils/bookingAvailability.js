@@ -130,6 +130,20 @@ const getDurationMinutesFromScheduledTimestamps = (startValue, endValue) => {
   return diffMinutes > 0 ? diffMinutes : 0;
 };
 
+const getEffectiveBookingDurationMinutes = (row = {}) => {
+  const fromTimestamps = getDurationMinutesFromScheduledTimestamps(row.scheduled_start_at, row.scheduled_end_at);
+  if (fromTimestamps > 0) {
+    return fromTimestamps;
+  }
+
+  const fromEstimate = Number(row.estimated_duration_minutes || 0);
+  if (Number.isFinite(fromEstimate) && fromEstimate > 0) {
+    return fromEstimate;
+  }
+
+  return 0;
+};
+
 const ensureAvailabilitySchema = async (connection) => {
   await connection.query(
     `CREATE TABLE IF NOT EXISTS provider_availability_settings (
@@ -350,6 +364,7 @@ const checkScheduleConflict = async (
             DATE(scheduled_start_at) AS effective_start_date,
             DATE(scheduled_end_at) AS effective_end_date,
             TIME(scheduled_start_at) AS effective_start_time,
+            estimated_duration_minutes,
             scheduled_start_at,
             scheduled_end_at
      FROM service_requests
@@ -388,7 +403,7 @@ const checkScheduleConflict = async (
 
     const existingStartTime = parseTimeInputToSql(row.effective_start_time);
     const existingStartMinutes = timeToMinutes(existingStartTime);
-    const existingDuration = getDurationMinutesFromScheduledTimestamps(row.scheduled_start_at, row.scheduled_end_at);
+    const existingDuration = getEffectiveBookingDurationMinutes(row);
     const existingEndMinutes = existingStartMinutes != null && existingDuration > 0
       ? existingStartMinutes + existingDuration
       : null;
@@ -472,7 +487,7 @@ const getAvailableSlotsForDate = async (
 
     const parsed = parseTimeInputToSql(startFallback);
     const startMinutes = timeToMinutes(parsed);
-    const bookingDuration = getDurationMinutesFromScheduledTimestamps(row.scheduled_start_at, row.scheduled_end_at);
+    const bookingDuration = getEffectiveBookingDurationMinutes(row);
 
     if (startMinutes == null || bookingDuration <= 0) {
       return { fullDay: true };
