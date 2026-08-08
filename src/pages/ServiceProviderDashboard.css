@@ -84,7 +84,7 @@
   display: block;
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(120deg, var(--brand-primary), var(--brand-accent));
+  background: var(--brand-primary);
 }
 
 .profile-setup-next-tasks {
@@ -255,7 +255,7 @@
 }
 
 .view-all-link {
-  color: #667eea;
+  color: var(--primary);
   text-decoration: none;
   font-size: 14px;
   font-weight: 500;
@@ -263,7 +263,7 @@
 }
 
 .view-all-link:hover {
-  color: #764ba2;
+  color: var(--primary-hover);
   text-decoration: underline;
 }
 
@@ -420,12 +420,12 @@
 }
 
 .job-btn-accept {
-  background-color: #20b87a;
+  background-color: var(--primary);
   color: white;
 }
 
 .job-btn-accept:hover {
-  background-color: #1a9e68;
+  background-color: var(--primary-hover);
 }
 
 .job-btn-decline {
@@ -438,12 +438,12 @@
 }
 
 .job-btn-on-way {
-  background-color: var(--primary-hover);
+  background-color: var(--primary);
   color: white;
 }
 
 .job-btn-on-way:hover {
-  background-color: #115e59;
+  background-color: var(--primary-hover);
 }
 
 .job-btn-complete {
@@ -475,7 +475,7 @@
   width: 40px;
   height: 40px;
   border: 3px solid #f0f0f0;
-  border-top-color: #0078D4;
+  border-top-color: var(--brand-primary);
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin-bottom: 15px;
@@ -509,13 +509,13 @@
 
 /* Additional Status Badges */
 .status-accepted {
-  background-color: rgba(32, 184, 122, 0.1);
-  color: #20b87a;
+  background-color: var(--status-accepted-bg);
+  color: var(--status-accepted-text);
 }
 
 .status-on-the-way {
-  background-color: rgba(243, 156, 18, 0.1);
-  color: #f39c12;
+  background-color: var(--status-progress-bg);
+  color: var(--status-progress-text);
 }
 
 .status-declined {

@@ -2,11 +2,21 @@
 
 :root,
 [data-theme='light'] {
-  --brand-primary: #5da9dd;
-  --brand-primary-dark: #4a9fd5;
-  --brand-accent: #44c9a0;
-  --brand-accent-dark: #3bb890;
-  --brand-text: #1e293b;
+  --brand-blue: #3f8ee8;
+  --brand-blue-hover: #2f7de1;
+  --brand-blue-soft: #e9f3ff;
+  --brand-teal: #22b8a5;
+  --brand-teal-hover: #159985;
+  --brand-teal-soft: #e8f8f5;
+  --gradient-brand: linear-gradient(120deg, #3f8ee8 0%, #22b8a5 100%);
+  --gradient-brand-soft: linear-gradient(135deg, #eef5ff 0%, #edf9f7 100%);
+  --gradient-brand-deep: linear-gradient(125deg, #153a72 0%, #0f5f73 100%);
+
+  --brand-primary: var(--brand-blue);
+  --brand-primary-dark: var(--brand-blue-hover);
+  --brand-accent: var(--brand-teal);
+  --brand-accent-dark: var(--brand-teal-hover);
+  --brand-text: #13233b;
   --brand-muted: #64748b;
 
   --color-page-bg: #f3f7fc;
@@ -32,13 +42,13 @@
   --color-primary: var(--brand-primary);
   --color-primary-hover: var(--brand-primary-dark);
   --color-danger: #dc2626;
-  --color-success: #16a34a;
+  --color-success: var(--brand-teal);
   --color-warning: #d97706;
 
   --primary: var(--brand-primary);
   --primary-hover: var(--brand-primary-dark);
   --primary-soft: #e8f4fd;
-  --success: #16a34a;
+  --success: var(--brand-teal);
   --warning: #d97706;
   --danger: #dc2626;
   --info: #0ea5e9;
@@ -48,10 +58,10 @@
   --status-accepted-text: #1e4db7;
   --status-attention-bg: #fff3e8;
   --status-attention-text: #b45309;
-  --status-progress-bg: #e8f7f6;
-  --status-progress-text: #0f766e;
-  --status-completed-bg: #e8f8ef;
-  --status-completed-text: #166534;
+  --status-progress-bg: #e7f0ff;
+  --status-progress-text: #1f56ba;
+  --status-completed-bg: #e8f8f5;
+  --status-completed-text: #0f7c6a;
   --status-danger-bg: #feecef;
   --status-danger-text: #b42318;
   --background: var(--color-page-bg);
@@ -115,7 +125,7 @@
   --color-primary: #74baf5;
   --color-primary-hover: #95cfff;
   --color-danger: #f87171;
-  --color-success: #4ade80;
+  --color-success: #4cd5c4;
   --color-warning: #fbbf24;
 
   --primary-soft: #1b2a41;
@@ -125,10 +135,10 @@
   --status-accepted-text: #93c5fd;
   --status-attention-bg: #3e2d20;
   --status-attention-text: #fdba74;
-  --status-progress-bg: #153a39;
-  --status-progress-text: #5eead4;
-  --status-completed-bg: #193727;
-  --status-completed-text: #86efac;
+  --status-progress-bg: #1a2f52;
+  --status-progress-text: #9cc7ff;
+  --status-completed-bg: #153a39;
+  --status-completed-text: #72e6d7;
   --status-danger-bg: #3b1f28;
   --status-danger-text: #fda4af;
   --shadow-sm: 0 6px 16px rgba(0, 0, 0, 0.26);
