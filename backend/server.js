@@ -3,12 +3,20 @@ const cors = require('cors');
 const helmet = require('helmet');
 const dotenv = require('dotenv');
 const { validateEmailConfiguration } = require('./utils/emailService');
+const { assertJwtConfiguration } = require('./utils/jwt');
 
 // Load environment variables
 dotenv.config();
 
 const isProduction = process.env.NODE_ENV === 'production';
 const emailConfig = validateEmailConfiguration();
+
+try {
+  assertJwtConfiguration();
+} catch (error) {
+  console.error(`❌ ${error.message}`);
+  process.exit(1);
+}
 
 if (!emailConfig.valid) {
   if (isProduction) {
@@ -166,7 +174,12 @@ if (require.main === module) {
     })
     .catch((err) => {
       console.error('❌ Database connection failed:', err.message);
-      console.log('⚠️  Starting server without database connection...');
+      if (isProduction) {
+        console.error('❌ Refusing to start without database connection in production.');
+        process.exit(1);
+      }
+
+      console.log('⚠️  Starting server without database connection (development only)...');
       
       app.listen(PORT, () => {
         console.log(`🚀 Server running on port ${PORT}`);

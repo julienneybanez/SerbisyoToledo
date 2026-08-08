@@ -70,8 +70,10 @@ const handleResponse = async (response) => {
   }
 
   if (!response.ok) {
-    const isAuthFailure = response.status === 401 || response.status === 403;
-    if (isAuthFailure && getToken()) {
+    const shouldClearSession = response.status === 401
+      || (response.status === 403 && ['ACCOUNT_DISABLED', 'INVALID_TOKEN', 'TOKEN_EXPIRED'].includes(data.code));
+
+    if (shouldClearSession && getToken()) {
       clearAuthSession();
     }
 
@@ -144,10 +146,11 @@ export const authAPI = {
     if (data.success && data.data) {
       if (data.data.token) {
         setToken(data.data.token);
+        setUser(data.data.user);
+        window.dispatchEvent(new Event('authChange'));
+      } else {
+        removeToken();
       }
-      setUser(data.data.user);
-      // Notify components of auth change
-      window.dispatchEvent(new Event('authChange'));
     }
     
     return data;
@@ -610,12 +613,23 @@ export const serviceProfileAPI = {
   },
 
   // Get available booking slots for a provider/date
-  getAvailableSlots: async (id, { date, duration, bookingType = 'one_day', endDate = null }) => {
+  getAvailableSlots: async (id, {
+    date,
+    duration,
+    bookingType = 'one_day',
+    endDate = null,
+    multiDayMode = 'continuous',
+    selectedDates = [],
+  }) => {
     const params = new URLSearchParams();
     if (date) params.set('date', date);
     if (duration) params.set('duration', String(duration));
     if (bookingType) params.set('bookingType', bookingType);
+    if (multiDayMode) params.set('multiDayMode', multiDayMode);
     if (endDate) params.set('endDate', endDate);
+    if (Array.isArray(selectedDates) && selectedDates.length > 0) {
+      params.set('selectedDates', selectedDates.join(','));
+    }
 
     const response = await fetch(`${API_BASE_URL}/service-profiles/${id}/available-slots?${params.toString()}`, {
       method: 'GET',

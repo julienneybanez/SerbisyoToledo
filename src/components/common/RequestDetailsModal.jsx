@@ -39,6 +39,8 @@ export default function RequestDetailsModal({
   const requestStartDate = request.start_date || request.scheduled_date;
   const requestEndDate = request.end_date || request.scheduled_date;
   const requestStartTime = request.start_time || request.scheduled_time;
+  const selectedDates = Array.isArray(request.selected_dates) ? request.selected_dates : [];
+  const isSpecificDateMode = request.booking_type === 'multi_day' && request.multi_day_mode === 'specific_dates';
   const isMultiDay = Boolean(requestEndDate && requestStartDate && requestEndDate !== requestStartDate);
 
   const reschedules = Array.isArray(request.reschedules) ? request.reschedules : [];
@@ -128,6 +130,12 @@ export default function RequestDetailsModal({
                 <span className="info-label">Date</span>
                 <span className="info-value">{formatDateSafe(requestStartDate)}</span>
               </div>
+              {isSpecificDateMode && selectedDates.length > 0 && (
+                <div className="info-row">
+                  <span className="info-label">Specific Dates</span>
+                  <span className="info-value">{selectedDates.map((value) => formatDateSafe(value)).join(' | ')}</span>
+                </div>
+              )}
               {isMultiDay && (
                 <div className="info-row">
                   <span className="info-label">End Date</span>
@@ -209,10 +217,16 @@ export default function RequestDetailsModal({
                         <div className="info-row">
                           <span className="info-label">Proposed Date</span>
                           <span className="info-value">
-                            {formatDateSafe(item.proposed_start_date)}
-                            {item.proposed_end_date && item.proposed_end_date !== item.proposed_start_date
-                              ? ` to ${formatDateSafe(item.proposed_end_date)}`
-                              : ''}
+                            {item.proposed_multi_day_mode === 'specific_dates' && Array.isArray(item.proposed_specific_dates) && item.proposed_specific_dates.length > 0
+                              ? item.proposed_specific_dates.map((value) => formatDateSafe(value)).join(' | ')
+                              : (
+                                <>
+                                  {formatDateSafe(item.proposed_start_date)}
+                                  {item.proposed_end_date && item.proposed_end_date !== item.proposed_start_date
+                                    ? ` to ${formatDateSafe(item.proposed_end_date)}`
+                                    : ''}
+                                </>
+                              )}
                           </span>
                         </div>
                         <div className="info-row">

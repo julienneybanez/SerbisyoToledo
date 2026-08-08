@@ -10,6 +10,7 @@ const {
   sendWelcomeEmail,
   sendPasswordResetEmail,
 } = require('../utils/emailService');
+const { getJwtSecret, getJwtSignOptions } = require('../utils/jwt');
 
 const RESET_TOKEN_EXPIRY_MINUTES = Number(process.env.PASSWORD_RESET_TOKEN_EXP_MINUTES || 20);
 const EMAIL_VERIFICATION_ENABLED = boolFromEnv(process.env.EMAIL_VERIFICATION_ENABLED, false);
@@ -61,16 +62,16 @@ const resolveUserProfileImage = (user) => {
 
 // Generate JWT token
 const generateToken = (userId) => {
-  const secret = process.env.JWT_SECRET || 'dev-secret-change-me';
+  const secret = getJwtSecret();
 
-  if (!process.env.JWT_SECRET) {
+  if (!process.env.JWT_SECRET && process.env.NODE_ENV !== 'production') {
     console.warn('⚠️  JWT_SECRET is not set. Falling back to a development secret.');
   }
 
   return jwt.sign(
     { userId },
     secret,
-    { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+    getJwtSignOptions()
   );
 };
 
@@ -196,8 +197,7 @@ exports.register = async (req, res) => {
       }
     }
 
-    // Generate token
-    const token = generateToken(result.insertId);
+    const token = EMAIL_VERIFICATION_ENABLED ? null : generateToken(result.insertId);
 
     // Return success response
     res.status(201).json({
@@ -220,7 +220,7 @@ exports.register = async (req, res) => {
           skills: skills || [],
           emailVerified: isEmailVerified
         },
-        token
+        ...(token ? { token } : {})
       }
     });
 
@@ -441,9 +441,18 @@ exports.login = async (req, res) => {
 
     // Check if account is active
     if (!user.is_active) {
-      return res.status(401).json({
+      return res.status(403).json({
         success: false,
+        code: 'ACCOUNT_DISABLED',
         message: 'Your account has been deactivated. Please contact support.'
+      });
+    }
+
+    if (EMAIL_VERIFICATION_ENABLED && !user.email_verified) {
+      return res.status(403).json({
+        success: false,
+        code: 'EMAIL_NOT_VERIFIED',
+        message: 'Please verify your email address before logging in.',
       });
     }
 
@@ -499,7 +508,8 @@ exports.login = async (req, res) => {
           phone: user.phone,
           address: user.address,
           bio: user.bio,
-          isVerified: user.is_verified
+          isVerified: user.is_verified,
+          emailVerified: Boolean(user.email_verified),
         },
         token
       }
@@ -558,6 +568,7 @@ exports.getMe = async (req, res) => {
           address: user.address,
           bio: user.bio,
           isVerified: user.is_verified,
+          emailVerified: Boolean(user.email_verified),
           createdAt: user.created_at
         }
       }

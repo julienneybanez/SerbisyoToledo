@@ -109,8 +109,9 @@ describe('Backend Security Hardening', () => {
     const insertCall = conn.query.mock.calls.find(([sql]) => sql.includes('INSERT INTO service_requests'));
     expect(insertCall).toBeTruthy();
     const params = insertCall[1];
-    expect(params[11]).toBe('2099-12-31 09:00:00');
-    expect(params[12]).toBe('2099-12-31 11:00:00');
+    expect(params[8]).toBe('continuous');
+    expect(params[12]).toBe('2099-12-31 09:00:00');
+    expect(params[13]).toBe('2099-12-31 11:00:00');
   });
 
   it('5) prevents provider from creating client booking', async () => {

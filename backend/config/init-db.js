@@ -209,7 +209,7 @@ async function initializeDatabase() {
       CREATE TABLE IF NOT EXISTS notifications (
         id INT PRIMARY KEY AUTO_INCREMENT,
         user_id INT NOT NULL,
-        type ENUM('request_received', 'request_accepted', 'request_declined', 'provider_on_way', 'service_completed', 'discussion_requested', 'discussion_accepted', 'phone_revealed', 'completion_confirmed', 'review_received', 'verification_approved', 'verification_rejected') NOT NULL,
+        type ENUM('request_received', 'request_accepted', 'request_declined', 'request_cancelled', 'provider_on_way', 'service_completed', 'discussion_requested', 'discussion_accepted', 'reschedule_proposed', 'reschedule_accepted', 'reschedule_declined', 'phone_revealed', 'completion_confirmed', 'review_received', 'verification_approved', 'verification_rejected') NOT NULL,
         title VARCHAR(255) NOT NULL,
         message TEXT NOT NULL,
         related_request_id INT DEFAULT NULL,
@@ -431,9 +431,10 @@ async function initializeDatabase() {
     try {
       await connection.query(`
         ALTER TABLE notifications MODIFY COLUMN type ENUM(
-          'request_received', 'request_accepted', 'request_declined', 
-          'provider_on_way', 'service_completed', 'discussion_requested', 
-          'discussion_accepted', 'phone_revealed', 'completion_confirmed',
+          'request_received', 'request_accepted', 'request_declined', 'request_cancelled',
+          'provider_on_way', 'service_completed', 'discussion_requested',
+          'discussion_accepted', 'reschedule_proposed', 'reschedule_accepted', 'reschedule_declined',
+          'phone_revealed', 'completion_confirmed',
           'review_received', 'verification_approved', 'verification_rejected'
         ) NOT NULL
       `);
@@ -445,13 +446,16 @@ async function initializeDatabase() {
     // Stage 1 booking fields for one-day and multi-day support
     const serviceRequestColumns = [
       'booking_type ENUM(\'one_day\', \'multi_day\') NOT NULL DEFAULT \'one_day\'',
+      'multi_day_mode ENUM(\'continuous\', \'specific_dates\') NOT NULL DEFAULT \'continuous\'',
       'start_date DATE NULL',
       'end_date DATE NULL',
       'start_time TIME NULL',
       'estimated_duration_minutes INT NULL',
       'duration_days INT NULL',
       'daily_rate_snapshot DECIMAL(10,2) NULL',
+      'pricing_unit_snapshot ENUM(\'per_job\', \'per_hour\', \'per_day\') NULL',
       'estimated_total DECIMAL(10,2) NULL',
+      'requested_dates_count INT NULL',
       'cancelled_by INT NULL',
       'cancellation_reason VARCHAR(120) NULL',
       'cancellation_reason_other TEXT NULL',
@@ -548,6 +552,9 @@ async function initializeDatabase() {
         proposed_start_date DATE NOT NULL,
         proposed_end_date DATE NOT NULL,
         proposed_start_time TIME NULL,
+        proposed_estimated_duration_minutes INT NULL,
+        proposed_multi_day_mode ENUM('continuous', 'specific_dates') NOT NULL DEFAULT 'continuous',
+        proposed_specific_dates_json JSON NULL,
         proposed_by INT NOT NULL,
         reschedule_reason TEXT NULL,
         reschedule_status ENUM('pending', 'accepted', 'declined', 'cancelled') NOT NULL DEFAULT 'pending',
@@ -558,6 +565,19 @@ async function initializeDatabase() {
         FOREIGN KEY (service_request_id) REFERENCES service_requests(id) ON DELETE CASCADE,
         FOREIGN KEY (proposed_by) REFERENCES users(id) ON DELETE CASCADE,
         FOREIGN KEY (responded_by) REFERENCES users(id) ON DELETE SET NULL
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS service_request_dates (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        service_request_id INT NOT NULL,
+        service_date DATE NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (service_request_id) REFERENCES service_requests(id) ON DELETE CASCADE,
+        UNIQUE KEY uniq_request_date (service_request_id, service_date),
+        INDEX idx_request_dates_date (service_date),
+        INDEX idx_request_dates_request (service_request_id)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
 

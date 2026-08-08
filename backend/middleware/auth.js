@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const db = require('../config/database');
+const { getJwtSecret } = require('../utils/jwt');
 
 // Middleware to authenticate JWT token
 exports.authenticateToken = async (req, res, next) => {
@@ -16,7 +17,7 @@ exports.authenticateToken = async (req, res, next) => {
 
   try {
     // Verify token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, getJwtSecret());
 
     const [users] = await db.query(
       'SELECT id, user_type, is_active FROM users WHERE id = ? LIMIT 1',
@@ -26,6 +27,7 @@ exports.authenticateToken = async (req, res, next) => {
     if (users.length === 0) {
       return res.status(401).json({
         success: false,
+        code: 'AUTH_USER_NOT_FOUND',
         message: 'Invalid authentication token.'
       });
     }
@@ -35,6 +37,7 @@ exports.authenticateToken = async (req, res, next) => {
     if (!user.is_active) {
       return res.status(403).json({
         success: false,
+        code: 'ACCOUNT_DISABLED',
         message: 'This account is currently disabled.'
       });
     }
@@ -50,12 +53,14 @@ exports.authenticateToken = async (req, res, next) => {
     if (error.name === 'TokenExpiredError') {
       return res.status(401).json({
         success: false,
+        code: 'TOKEN_EXPIRED',
         message: 'Token has expired. Please login again.'
       });
     }
     
     return res.status(403).json({
       success: false,
+      code: 'INVALID_TOKEN',
       message: 'Invalid token.'
     });
   }
@@ -74,6 +79,7 @@ exports.requireUserType = (...allowedTypes) => {
     if (!req.user.isActive) {
       return res.status(403).json({
         success: false,
+        code: 'ACCOUNT_DISABLED',
         message: 'This account is currently disabled.'
       });
     }
@@ -81,6 +87,7 @@ exports.requireUserType = (...allowedTypes) => {
     if (!allowedTypes.includes(req.user.userType)) {
       return res.status(403).json({
         success: false,
+        code: 'INSUFFICIENT_PERMISSIONS',
         message: 'Access denied. Insufficient permissions.'
       });
     }

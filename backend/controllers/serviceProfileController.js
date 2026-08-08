@@ -21,6 +21,16 @@ const {
 
 const SUPPORTED_LANGUAGE_CODES = new Set(['ceb', 'en', 'fil']);
 const SUPPORTED_PRICING_UNITS = new Set(['per_job', 'per_hour', 'per_day']);
+const SUPPORTED_CREDENTIAL_TYPES = new Set([
+  'professional_license',
+  'tesda_certification',
+  'safety_training',
+  'technical_certification',
+  'government_accreditation',
+  'manufacturer_certification',
+  'training_certificate',
+  'other',
+]);
 const PRESENCE_WINDOW_MINUTES = 5;
 const REVIEW_STATS_JOIN = `
   LEFT JOIN (
@@ -170,6 +180,14 @@ exports.createOrUpdateProfile = async (req, res) => {
       });
     }
 
+    const normalizedStartingPrice = Number(startingPrice);
+    if (!Number.isFinite(normalizedStartingPrice) || normalizedStartingPrice <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Starting price must be greater than 0',
+      });
+    }
+
     // Validate required fields
     if (!fullName || !barangayAddress || !startingPrice || normalizedCategories.length === 0) {
       return res.status(400).json({
@@ -213,7 +231,7 @@ exports.createOrUpdateProfile = async (req, res) => {
 
       const params = [
         barangayAddress,
-        parseFloat(startingPrice),
+        normalizedStartingPrice,
         pricingUnit,
         JSON.stringify(normalizedCategories),
         JSON.stringify(normalizedServiceTypeKeys),
@@ -256,7 +274,7 @@ exports.createOrUpdateProfile = async (req, res) => {
         [
           userId,
           barangayAddress,
-          parseFloat(startingPrice),
+          normalizedStartingPrice,
           pricingUnit,
           JSON.stringify(normalizedCategories),
           JSON.stringify(normalizedServiceTypeKeys),
@@ -1199,7 +1217,14 @@ exports.getAvailableSlots = async (req, res) => {
     const date = String(req.query.date || '').trim();
     const duration = Number(req.query.duration || 120);
     const bookingType = String(req.query.bookingType || 'one_day');
+    const multiDayMode = String(req.query.multiDayMode || 'continuous');
     const endDate = String(req.query.endDate || date).trim();
+    const selectedDates = Array.from(new Set(
+      String(req.query.selectedDates || '')
+        .split(',')
+        .map((value) => value.trim())
+        .filter(Boolean)
+    )).sort();
 
     if (!serviceProfileId || !date) {
       return res.status(400).json({
@@ -1235,28 +1260,49 @@ exports.getAvailableSlots = async (req, res) => {
       });
     }
 
-    const baseSlots = await getAvailableSlotsForDate(connection, {
-      serviceProfileId,
-      providerId: profiles[0].provider_id,
-      date: formatDateOnly(parsedStart),
-      durationMinutes: duration,
-      slotStepMinutes: 60,
-    });
-
     if (bookingType !== 'multi_day') {
+      const baseSlots = await getAvailableSlotsForDate(connection, {
+        serviceProfileId,
+        providerId: profiles[0].provider_id,
+        date: formatDateOnly(parsedStart),
+        durationMinutes: duration,
+        slotStepMinutes: 60,
+      });
+
       return res.json({
         success: true,
         data: {
           date: formatDateOnly(parsedStart),
+          multiDayMode: 'continuous',
           slots: baseSlots,
         }
       });
     }
 
-    const dates = [];
-    for (let cursor = new Date(parsedStart); cursor <= parsedEnd; cursor.setUTCDate(cursor.getUTCDate() + 1)) {
-      dates.push(formatDateOnly(cursor));
+    let dates = [];
+    if (multiDayMode === 'specific_dates') {
+      const validated = selectedDates.filter((value) => Boolean(parseDateOnly(value)));
+      if (validated.length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'selectedDates is required when multiDayMode is specific_dates',
+        });
+      }
+      dates = validated;
+    } else {
+      for (let cursor = new Date(parsedStart); cursor <= parsedEnd; cursor.setUTCDate(cursor.getUTCDate() + 1)) {
+        dates.push(formatDateOnly(cursor));
+      }
     }
+
+    const anchorDate = dates[0];
+    const baseSlots = await getAvailableSlotsForDate(connection, {
+      serviceProfileId,
+      providerId: profiles[0].provider_id,
+      date: anchorDate,
+      durationMinutes: duration,
+      slotStepMinutes: 60,
+    });
 
     // Load each day once, then intersect by slot time.
     const slotsByDay = new Map();
@@ -1278,8 +1324,10 @@ exports.getAvailableSlots = async (req, res) => {
     return res.json({
       success: true,
       data: {
-        date: formatDateOnly(parsedStart),
-        endDate: formatDateOnly(parsedEnd),
+        date: anchorDate,
+        endDate: dates[dates.length - 1],
+        multiDayMode: multiDayMode === 'specific_dates' ? 'specific_dates' : 'continuous',
+        selectedDates: dates,
         slots: multiDaySlots,
       }
     });
@@ -1474,7 +1522,7 @@ exports.saveMyAvailability = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Invalid minimum advance notice' });
     }
 
-    if (maxAdvanceDays < 1 || maxAdvanceDays > 365) {
+    if (maxAdvanceDays < 1 || maxAdvanceDays > 180) {
       await connection.rollback();
       return res.status(400).json({ success: false, message: 'Invalid maximum advance booking days' });
     }
@@ -1910,7 +1958,47 @@ exports.createCredential = async (req, res) => {
 
     const serviceProfileId = profiles[0].id;
     const payload = req.body;
+    const credentialName = String(payload.credentialName || '').trim();
+    const credentialType = String(payload.credentialType || '').trim();
+    const issuingOrganization = String(payload.issuingOrganization || '').trim();
+    const credentialUrl = String(payload.credentialUrl || '').trim();
+    const doesNotExpire = Boolean(payload.doesNotExpire);
     const relatedSkills = Array.isArray(payload.relatedSkills) ? payload.relatedSkills : [];
+
+    if (!credentialName || !credentialType || !issuingOrganization) {
+      return res.status(400).json({ success: false, message: 'Credential name, type, and issuing organization are required' });
+    }
+
+    if (!SUPPORTED_CREDENTIAL_TYPES.has(credentialType)) {
+      return res.status(400).json({ success: false, message: 'Unsupported credential type' });
+    }
+
+    if (credentialUrl) {
+      try {
+        const parsedUrl = new URL(credentialUrl);
+        if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
+          throw new Error('invalid protocol');
+        }
+      } catch {
+        return res.status(400).json({ success: false, message: 'Credential URL must be a valid http(s) URL' });
+      }
+    }
+
+    if (payload.issueDate && Number.isNaN(Date.parse(payload.issueDate))) {
+      return res.status(400).json({ success: false, message: 'Invalid issue date' });
+    }
+
+    if (!doesNotExpire && payload.expirationDate && Number.isNaN(Date.parse(payload.expirationDate))) {
+      return res.status(400).json({ success: false, message: 'Invalid expiration date' });
+    }
+
+    if (!doesNotExpire && payload.issueDate && payload.expirationDate) {
+      const issueDate = new Date(payload.issueDate);
+      const expirationDate = new Date(payload.expirationDate);
+      if (expirationDate < issueDate) {
+        return res.status(400).json({ success: false, message: 'Expiration date cannot be earlier than issue date' });
+      }
+    }
 
     let documentUrl = null;
     let documentPublicId = null;
@@ -1956,14 +2044,14 @@ exports.createCredential = async (req, res) => {
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'unverified', NULL)`,
       [
         serviceProfileId,
-        String(payload.credentialName || '').trim(),
-        String(payload.credentialType || '').trim(),
-        String(payload.issuingOrganization || '').trim(),
+        credentialName,
+        credentialType,
+        issuingOrganization,
         String(payload.credentialId || '').trim() || null,
         payload.issueDate || null,
-        payload.doesNotExpire ? null : (payload.expirationDate || null),
-        Boolean(payload.doesNotExpire),
-        String(payload.credentialUrl || '').trim() || null,
+        doesNotExpire ? null : (payload.expirationDate || null),
+        doesNotExpire,
+        credentialUrl || null,
         JSON.stringify(relatedSkills),
         documentUrl,
         documentPublicId,

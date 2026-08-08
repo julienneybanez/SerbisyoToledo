@@ -4,6 +4,35 @@ import { getUser, isAuthenticated, notificationAPI } from '../services/api';
 import { useLanguage } from '../context/LanguageContext';
 import './Notifications.css';
 
+function resolveNotificationDestination(notification) {
+  const requestId = notification?.related_request_id;
+  const type = String(notification?.type || '').toLowerCase();
+
+  if (requestId && [
+    'request_received',
+    'request_accepted',
+    'request_declined',
+    'request_cancelled',
+    'provider_on_way',
+    'service_completed',
+    'discussion_requested',
+    'discussion_accepted',
+    'reschedule_proposed',
+    'reschedule_accepted',
+    'reschedule_declined',
+    'completion_confirmed',
+    'review_received',
+  ].includes(type)) {
+    return `/requests?request=${encodeURIComponent(requestId)}`;
+  }
+
+  if (['verification_approved', 'verification_rejected'].includes(type)) {
+    return '/provider-settings?section=business';
+  }
+
+  return '/notifications';
+}
+
 function formatTimeAgo(dateString, nowLabel) {
   const date = new Date(dateString);
   const now = new Date();
@@ -27,6 +56,8 @@ function getNotificationIcon(type) {
       return <i className="bi bi-check-circle-fill notification-icon icon-accepted"></i>;
     case 'request_declined':
       return <i className="bi bi-x-circle-fill notification-icon icon-declined"></i>;
+    case 'request_cancelled':
+      return <i className="bi bi-slash-circle-fill notification-icon icon-declined"></i>;
     case 'provider_on_way':
       return <i className="bi bi-truck notification-icon icon-on-way"></i>;
     case 'service_completed':
@@ -35,6 +66,12 @@ function getNotificationIcon(type) {
       return <i className="bi bi-chat-dots-fill notification-icon icon-discussion"></i>;
     case 'discussion_accepted':
       return <i className="bi bi-telephone-fill notification-icon icon-phone"></i>;
+    case 'reschedule_proposed':
+      return <i className="bi bi-calendar2-plus-fill notification-icon icon-discussion"></i>;
+    case 'reschedule_accepted':
+      return <i className="bi bi-calendar2-check-fill notification-icon icon-accepted"></i>;
+    case 'reschedule_declined':
+      return <i className="bi bi-calendar2-x-fill notification-icon icon-declined"></i>;
     case 'verification_approved':
       return <i className="bi bi-patch-check-fill notification-icon icon-accepted"></i>;
     case 'verification_rejected':
@@ -139,7 +176,7 @@ export default function Notifications() {
       }
     }
 
-    navigate('/requests');
+    navigate(resolveNotificationDestination(notification));
   };
 
   const hasItems = items.length > 0;

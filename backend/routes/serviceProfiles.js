@@ -1,6 +1,7 @@
 const express = require('express');
 const multer = require('multer');
 const { authenticateToken, requireUserType } = require('../middleware/auth');
+const { publicSearchLimiter, uploadLimiter } = require('../middleware/rateLimiters');
 const { validateSingleUpload } = require('../middleware/uploadValidation');
 const serviceProfileController = require('../controllers/serviceProfileController');
 
@@ -31,13 +32,13 @@ const credentialUpload = multer({
 
 // Public routes
 router.get('/taxonomy', serviceProfileController.getTaxonomy);
-router.get('/all', serviceProfileController.getAllProfiles);
-router.get('/recommendations', serviceProfileController.getRecommendedProviders);
-router.get('/:id/available-dates', serviceProfileController.getAvailableDates);
-router.get('/:id/available-slots', serviceProfileController.getAvailableSlots);
+router.get('/all', publicSearchLimiter, serviceProfileController.getAllProfiles);
+router.get('/recommendations', publicSearchLimiter, serviceProfileController.getRecommendedProviders);
+router.get('/:id/available-dates', publicSearchLimiter, serviceProfileController.getAvailableDates);
+router.get('/:id/available-slots', publicSearchLimiter, serviceProfileController.getAvailableSlots);
 
 // Protected routes (requires authentication)
-router.post('/create', authenticateToken, requireUserType('tradesperson'), upload.single('bannerImage'), validateSingleUpload({ allowedKinds: ['image'], required: false, fieldName: 'bannerImage' }), serviceProfileController.createOrUpdateProfile);
+router.post('/create', authenticateToken, requireUserType('tradesperson'), uploadLimiter, upload.single('bannerImage'), validateSingleUpload({ allowedKinds: ['image'], required: false, fieldName: 'bannerImage' }), serviceProfileController.createOrUpdateProfile);
 router.get('/user/me', authenticateToken, requireUserType('tradesperson'), serviceProfileController.getMyProfile);
 router.patch('/toggle-publish', authenticateToken, requireUserType('tradesperson'), serviceProfileController.togglePublish);
 
@@ -53,13 +54,13 @@ router.put('/languages/me', authenticateToken, requireUserType('tradesperson'), 
 
 // Provider credentials
 router.get('/credentials/me', authenticateToken, requireUserType('tradesperson'), serviceProfileController.getMyCredentials);
-router.post('/credentials/me', authenticateToken, requireUserType('tradesperson'), credentialUpload.single('document'), validateSingleUpload({ allowedKinds: ['image', 'pdf'], required: false, fieldName: 'document' }), serviceProfileController.createCredential);
+router.post('/credentials/me', authenticateToken, requireUserType('tradesperson'), uploadLimiter, credentialUpload.single('document'), validateSingleUpload({ allowedKinds: ['image', 'pdf'], required: false, fieldName: 'document' }), serviceProfileController.createCredential);
 router.post('/credentials/me/:credentialId/submit', authenticateToken, requireUserType('tradesperson'), serviceProfileController.submitCredentialForReview);
 
 // Portfolio management routes
 router.get('/portfolio/me', authenticateToken, requireUserType('tradesperson'), serviceProfileController.getMyPortfolio);
 router.patch('/portfolio/details', authenticateToken, requireUserType('tradesperson'), serviceProfileController.updatePortfolioDetails);
-router.post('/portfolio/image', authenticateToken, requireUserType('tradesperson'), upload.single('portfolioImage'), validateSingleUpload({ allowedKinds: ['image'], required: true, fieldName: 'portfolioImage' }), serviceProfileController.addPortfolioImage);
+router.post('/portfolio/image', authenticateToken, requireUserType('tradesperson'), uploadLimiter, upload.single('portfolioImage'), validateSingleUpload({ allowedKinds: ['image'], required: true, fieldName: 'portfolioImage' }), serviceProfileController.addPortfolioImage);
 router.delete('/portfolio/image/:imageId', authenticateToken, requireUserType('tradesperson'), serviceProfileController.deletePortfolioImage);
 router.get('/portfolio/completed-requests', authenticateToken, requireUserType('tradesperson'), serviceProfileController.listEligibleCompletedRequests);
 router.post('/portfolio/from-request', authenticateToken, requireUserType('tradesperson'), serviceProfileController.createPortfolioFromCompletedRequest);

@@ -2,6 +2,7 @@ const express = require('express');
 const multer = require('multer');
 const router = express.Router();
 const { authenticateToken, requireUserType } = require('../middleware/auth');
+const { uploadLimiter } = require('../middleware/rateLimiters');
 const { validateSingleUpload } = require('../middleware/uploadValidation');
 const {
   createRequest,
@@ -63,6 +64,7 @@ router.post('/:requestId/review', requireUserType('client'), createReview);
 // Report the other party in a request (requires existing request interaction)
 router.post(
   '/:requestId/report',
+  uploadLimiter,
   upload.single('screenshot'),
   validateSingleUpload({ allowedKinds: ['image'], required: false, fieldName: 'screenshot' }),
   createReport

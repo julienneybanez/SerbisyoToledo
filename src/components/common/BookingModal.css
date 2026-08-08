@@ -270,9 +270,10 @@
 }
 
 .calendar-weekdays {
+  --calendar-gap: 0.35rem;
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 0.4rem;
+  gap: var(--calendar-gap);
   font-size: 0.75rem;
   color: #94a3b8;
   margin-bottom: 0.5rem;
@@ -281,7 +282,21 @@
 .calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 0.3rem;
+  gap: var(--calendar-gap);
+}
+
+.calendar-cell {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  min-width: 0;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.calendar-cell.empty {
+  pointer-events: none;
 }
 
 [data-theme='dark'] .booking-overlay {
@@ -338,8 +353,10 @@
 }
 
 .calendar-day {
-  width: 48px;
-  height: 48px;
+  width: min(100%, 48px);
+  height: min(100%, 48px);
+  min-width: 32px;
+  min-height: 32px;
   border-radius: 50%;
   border: none;
   display: grid;
@@ -381,23 +398,26 @@
   color: #fff;
 }
 
-.calendar-day.in-range {
+.calendar-cell.in-range {
   border-radius: 0;
   background:
     linear-gradient(0deg, rgba(31, 142, 241, 0.16), rgba(31, 142, 241, 0.16)),
     repeating-linear-gradient(135deg, rgba(31, 142, 241, 0.08) 0 6px, rgba(31, 142, 241, 0.14) 6px 12px);
-  color: #24508f;
+}
+
+.calendar-cell.range-start,
+.calendar-cell.range-end {
   position: relative;
 }
 
-.calendar-day.range-start,
-.calendar-day.range-end {
+.calendar-cell.range-start .calendar-day,
+.calendar-cell.range-end .calendar-day {
   background: #1f8ef1;
   color: #fff;
 }
 
-.calendar-day.range-start::after,
-.calendar-day.range-end::after {
+.calendar-cell.range-start::after,
+.calendar-cell.range-end::after {
   content: '';
   position: absolute;
   width: 7px;
@@ -409,21 +429,21 @@
   transform: translateX(-50%);
 }
 
-.calendar-day.range-start {
+.calendar-cell.range-start {
   border-top-right-radius: 14px;
   border-bottom-right-radius: 14px;
 }
 
-.calendar-day.range-end {
+.calendar-cell.range-end {
   border-top-left-radius: 14px;
   border-bottom-left-radius: 14px;
 }
 
-.calendar-day.range-preview {
+.calendar-cell.range-preview {
   background: rgba(31, 142, 241, 0.12);
 }
 
-.calendar-day.range-preview-edge {
+.calendar-cell.range-preview-edge {
   box-shadow: 0 0 0 2px rgba(31, 142, 241, 0.3) inset;
 }
 
@@ -749,16 +769,15 @@
   color: var(--color-text-secondary);
 }
 
-[data-theme='dark'] .calendar-day.in-range {
+[data-theme='dark'] .calendar-cell.in-range {
   background: color-mix(in srgb, var(--color-primary) 26%, var(--color-surface));
-  color: var(--color-text-primary);
 }
 
-[data-theme='dark'] .calendar-day.range-preview {
+[data-theme='dark'] .calendar-cell.range-preview {
   background: color-mix(in srgb, var(--color-primary) 18%, var(--color-surface));
 }
 
-[data-theme='dark'] .calendar-day.range-preview-edge {
+[data-theme='dark'] .calendar-cell.range-preview-edge {
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 50%, transparent) inset;
 }
 

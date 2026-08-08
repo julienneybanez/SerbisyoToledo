@@ -105,16 +105,20 @@ const Register = () => {
         }
       }
 
-      await authAPI.register(registrationData);
+      const response = await authAPI.register(registrationData);
       
       setSuccess(t('registrationSuccessRedirecting'));
       
-      // Auto-redirect to dashboard for service providers, feed for clients
+      // Redirect to login when registration requires email verification (no token issued).
       setTimeout(() => {
-        if (userType === 'tradesperson') {
-          navigate('/dashboard');
+        if (response?.data?.token) {
+          if (userType === 'tradesperson') {
+            navigate('/dashboard');
+          } else {
+            navigate('/feed');
+          }
         } else {
-          navigate('/feed');
+          navigate('/login');
         }
       }, 1500);
       

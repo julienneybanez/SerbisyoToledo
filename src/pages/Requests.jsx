@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { getUser, serviceRequestAPI } from '../services/api';
 import RequestDetailsModal from '../components/common/RequestDetailsModal';
 import ReviewModal from '../components/common/ReviewModal';
@@ -54,6 +55,7 @@ const CANCELLATION_REASONS = {
 
 export default function Requests() {
   const { t } = useLanguage();
+  const [searchParams] = useSearchParams();
   const user = getUser();
   const isProvider = user?.userType === 'tradesperson';
   
@@ -287,7 +289,7 @@ export default function Requests() {
     });
   };
 
-  const refreshSelectedRequest = async (requestId) => {
+  const refreshSelectedRequest = useCallback(async (requestId) => {
     try {
       setDetailsLoading(true);
       const response = await serviceRequestAPI.getRequestById(requestId);
@@ -302,12 +304,28 @@ export default function Requests() {
     } finally {
       setDetailsLoading(false);
     }
-  };
+  }, []);
 
-  const handleViewDetails = async (request) => {
+  const handleViewDetails = useCallback(async (request) => {
     setSelectedRequest({ ...request, reschedules: [] });
     await refreshSelectedRequest(request.id);
-  };
+  }, [refreshSelectedRequest]);
+
+  useEffect(() => {
+    const focusRequestId = Number(searchParams.get('request'));
+    if (!Number.isFinite(focusRequestId) || requests.length === 0) {
+      return;
+    }
+
+    const targetRequest = requests.find((entry) => Number(entry.id) === focusRequestId);
+    if (!targetRequest) {
+      return;
+    }
+
+    if (!selectedRequest || Number(selectedRequest.id) !== focusRequestId) {
+      void handleViewDetails(targetRequest);
+    }
+  }, [handleViewDetails, requests, searchParams, selectedRequest]);
 
   const handleSubmitReschedule = async () => {
     const trimmedReason = rescheduleDialog.reason.trim();
