@@ -2,7 +2,7 @@
    FOOTER STYLES
    =================================== */
 .footer {
-  background: linear-gradient(120deg, var(--brand-primary, #5da9dd) 0%, var(--brand-primary-dark, #4a9fd5) 45%, var(--brand-accent, #44c9a0) 100%) !important;
+  background: var(--gradient-brand-deep, linear-gradient(125deg, #153a72 0%, #0f5f73 100%)) !important;
   position: relative;
   overflow: hidden;
 }
@@ -115,10 +115,10 @@
   right: 2rem;
   width: 56px;
   height: 56px;
-  background: linear-gradient(135deg, var(--brand-primary, #5da9dd) 0%, var(--brand-accent, #44c9a0) 100%);
+  background: var(--brand-accent, #22b8a5);
   border: none;
   border-radius: 50%;
-  box-shadow: 0 6px 16px rgba(74, 159, 245, 0.27);
+  box-shadow: 0 8px 18px rgba(34, 184, 165, 0.28);
   cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   z-index: 1000;
@@ -130,11 +130,12 @@
 
 .floating-btn:hover {
   transform: translateY(-1px) scale(1.04);
-  box-shadow: 0 10px 22px rgba(74, 159, 245, 0.35);
+  background: var(--brand-accent-dark, #159985);
+  box-shadow: 0 10px 22px rgba(21, 153, 133, 0.36);
 }
 
 .floating-btn:focus-visible {
-  outline: 3px solid color-mix(in srgb, var(--brand-primary, #5da9dd) 34%, transparent);
+  outline: 3px solid color-mix(in srgb, var(--brand-accent, #22b8a5) 34%, transparent);
   outline-offset: 2px;
 }
 
