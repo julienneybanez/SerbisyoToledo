@@ -30,13 +30,15 @@
   margin: 0 auto;
   color: var(--admin-text);
   min-width: 0;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 18px;
+  padding: 1.25rem;
 }
 
 [data-theme='dark'] .admin-page {
   background: var(--color-surface-elevated);
-  border: 1px solid var(--admin-border);
-  border-radius: 18px;
-  padding: 1.25rem;
+  border-color: var(--admin-border);
 }
 
 .admin-page-header {

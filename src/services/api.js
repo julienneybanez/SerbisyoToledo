@@ -74,6 +74,16 @@ export const removeToken = () => {
   localStorage.removeItem('user');
 };
 
+export const clearAuthSession = ({ preserveRedirect = true } = {}) => {
+  removeToken();
+
+  if (!preserveRedirect) {
+    sessionStorage.removeItem('redirectAfterLogin');
+  }
+
+  window.dispatchEvent(new Event('authChange'));
+};
+
 // Get stored user
 export const getUser = () => {
   const user = localStorage.getItem('user');

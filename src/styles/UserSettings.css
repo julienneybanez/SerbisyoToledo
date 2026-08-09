@@ -10,6 +10,10 @@
 
 .page-header {
   margin-bottom: 2rem;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 16px;
+  padding: 1.25rem 1.5rem;
 }
 
 .page-title {
@@ -46,6 +50,7 @@
   grid-template-columns: 240px 1fr;
   gap: 1.5rem;
   background: var(--color-surface);
+  border: 1px solid transparent;
   border-radius: 16px;
   overflow: hidden;
   box-shadow: 0 1px 3px var(--color-shadow);
@@ -674,20 +679,17 @@ input:checked + .slider:before {
   background: transparent;
   border: none;
   border-radius: 0;
-  padding: 2rem 0;
   color: var(--color-text-primary);
 }
 
 [data-theme='dark'] .user-settings-container .page-header {
   background: var(--color-surface-elevated);
-  border: 1px solid var(--color-border);
-  border-radius: 16px;
-  padding: 1.25rem 1.5rem;
+  border-color: var(--color-border);
 }
 
 [data-theme='dark'] .user-settings-container .settings-layout {
   background: var(--color-surface-elevated);
-  border: 1px solid var(--color-border);
+  border-color: var(--color-border);
 }
 
 [data-theme='dark'] .app,
