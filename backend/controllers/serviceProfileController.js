@@ -23,7 +23,7 @@ const {
 
 const SUPPORTED_LANGUAGE_CODES = new Set(['ceb', 'en', 'fil']);
 const SUPPORTED_PRICING_UNITS = new Set(['per_job', 'per_hour', 'per_day']);
-const SUPPORTED_AVAILABILITY_STATUSES = new Set(['available', 'busy', 'unavailable']);
+const SUPPORTED_AVAILABILITY_STATUSES = new Set(['available', 'unavailable']);
 const PRESENCE_WINDOW_MINUTES = 5;
 const REVIEW_STATS_JOIN = `
   LEFT JOIN (
@@ -35,6 +35,52 @@ const REVIEW_STATS_JOIN = `
     GROUP BY service_profile_id
   ) review_stats ON review_stats.service_profile_id = sp.id
 `;
+
+// Booking times are stored as Toledo/Philippine local wall-clock values.
+// Railway commonly runs in UTC, so derive the current Toledo time explicitly.
+const TOLEDO_NOW_SQL = `DATE_ADD(UTC_TIMESTAMP(), INTERVAL 8 HOUR)`;
+
+// A provider is automatically considered busy when they are actively travelling to/doing a job,
+// or when the current Toledo time falls inside an accepted booking's daily booked window.
+const ACTIVE_BOOKING_EXISTS_SQL = `
+  EXISTS (
+    SELECT 1
+    FROM service_requests sr_busy
+    WHERE sr_busy.service_profile_id = sp.id
+      AND (
+        sr_busy.status IN ('on_the_way', 'in_progress')
+        OR (
+          sr_busy.status = 'accepted'
+          AND sr_busy.start_date IS NOT NULL
+          AND sr_busy.end_date IS NOT NULL
+          AND sr_busy.start_time IS NOT NULL
+          AND sr_busy.estimated_duration_minutes IS NOT NULL
+          AND DATE(${TOLEDO_NOW_SQL}) BETWEEN sr_busy.start_date AND sr_busy.end_date
+          AND TIME(${TOLEDO_NOW_SQL}) >= sr_busy.start_time
+          AND TIME(${TOLEDO_NOW_SQL}) < ADDTIME(
+            sr_busy.start_time,
+            SEC_TO_TIME(sr_busy.estimated_duration_minutes * 60)
+          )
+        )
+      )
+  )
+`;
+
+const derivePublicAvailabilityStatus = (profile) => {
+  if (!Boolean(profile.show_availability_status)) {
+    return null;
+  }
+
+  if (String(profile.availability_status || 'available').toLowerCase() === 'unavailable') {
+    return 'unavailable';
+  }
+
+  if (Boolean(profile.has_active_booking)) {
+    return 'busy';
+  }
+
+  return 'available';
+};
 
 const deriveOnlineFromLastSeen = (lastSeenAt) => {
   if (!lastSeenAt) return false;
@@ -348,7 +394,8 @@ exports.getAllProfiles = async (req, res) => {
         u.skills,
         u.is_verified,
         COALESCE(pas.availability_status, 'available') AS availability_status,
-        COALESCE(pas.show_availability_status, TRUE) AS show_availability_status
+        COALESCE(pas.show_availability_status, TRUE) AS show_availability_status,
+        ${ACTIVE_BOOKING_EXISTS_SQL} AS has_active_booking
       FROM service_profiles sp
       JOIN users u ON sp.user_id = u.id
       LEFT JOIN provider_availability_settings pas ON pas.service_profile_id = sp.id
@@ -432,9 +479,7 @@ exports.getAllProfiles = async (req, res) => {
         categories,
         serviceTypes,
         taxonomyNeedsReview: Boolean(profile.taxonomy_needs_review),
-        availabilityStatus: Boolean(profile.show_availability_status)
-          ? (profile.availability_status || 'available')
-          : null,
+        availabilityStatus: derivePublicAvailabilityStatus(profile),
         showAvailabilityStatus: Boolean(profile.show_availability_status),
       };
     });
@@ -514,7 +559,8 @@ exports.getRecommendedProviders = async (req, res) => {
         u.skills,
         u.is_verified,
         COALESCE(pas.availability_status, 'available') AS availability_status,
-        COALESCE(pas.show_availability_status, TRUE) AS show_availability_status
+        COALESCE(pas.show_availability_status, TRUE) AS show_availability_status,
+        ${ACTIVE_BOOKING_EXISTS_SQL} AS has_active_booking
       FROM service_profiles sp
       JOIN users u ON sp.user_id = u.id
       LEFT JOIN provider_availability_settings pas ON pas.service_profile_id = sp.id
@@ -618,9 +664,7 @@ exports.getRecommendedProviders = async (req, res) => {
         serviceTypes,
         taxonomyNeedsReview: Boolean(profile.taxonomy_needs_review),
         languages: languageRows.map((row) => row.language_code),
-        availabilityStatus: Boolean(profile.show_availability_status)
-          ? (profile.availability_status || 'available')
-          : null,
+        availabilityStatus: derivePublicAvailabilityStatus(profile),
         showAvailabilityStatus: Boolean(profile.show_availability_status),
       });
     }
@@ -663,7 +707,8 @@ exports.getProfileById = async (req, res) => {
         u.phone,
         u.is_verified,
         COALESCE(pas.availability_status, 'available') AS availability_status,
-        COALESCE(pas.show_availability_status, TRUE) AS show_availability_status
+        COALESCE(pas.show_availability_status, TRUE) AS show_availability_status,
+        ${ACTIVE_BOOKING_EXISTS_SQL} AS has_active_booking
       FROM service_profiles sp
       JOIN users u ON sp.user_id = u.id
       LEFT JOIN provider_availability_settings pas ON pas.service_profile_id = sp.id
@@ -813,9 +858,7 @@ exports.getProfileById = async (req, res) => {
       serviceTypes,
       taxonomyNeedsReview: Boolean(profile.taxonomy_needs_review),
       isPublished: Boolean(profile.is_published),
-      availabilityStatus: Boolean(profile.show_availability_status)
-        ? (profile.availability_status || 'available')
-        : null,
+      availabilityStatus: derivePublicAvailabilityStatus(profile),
       showAvailabilityStatus: Boolean(profile.show_availability_status),
       languages: languages.map((row) => row.language_code),
       credentials: credentialRows.map((credential) => {
