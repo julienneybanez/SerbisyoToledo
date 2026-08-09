@@ -55,7 +55,7 @@ const CANCELLATION_REASONS = {
 
 export default function Requests() {
   const { t } = useLanguage();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const user = getUser();
   const isProvider = user?.userType === 'tradesperson';
   
@@ -310,6 +310,16 @@ export default function Requests() {
     setSelectedRequest({ ...request, reschedules: [] });
     await refreshSelectedRequest(request.id);
   }, [refreshSelectedRequest]);
+
+  const handleCloseDetails = useCallback(() => {
+    if (searchParams.has('request')) {
+      const nextParams = new URLSearchParams(searchParams);
+      nextParams.delete('request');
+      setSearchParams(nextParams, { replace: true });
+    }
+
+    setSelectedRequest(null);
+  }, [searchParams, setSearchParams]);
 
   useEffect(() => {
     const focusRequestId = Number(searchParams.get('request'));
@@ -896,7 +906,7 @@ export default function Requests() {
           request={selectedRequest}
           currentUserId={user?.id || user?.userId || null}
           isProvider={isProvider}
-          onClose={() => setSelectedRequest(null)}
+          onClose={handleCloseDetails}
           onStatusUpdate={handleStatusUpdate}
           onOpenCancel={(request) => openCancelDialog(request.id)}
           onOpenReschedule={(request) => openRescheduleDialog(request)}
