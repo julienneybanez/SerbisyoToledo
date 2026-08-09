@@ -667,19 +667,18 @@ function ServiceProviderSettings() {
                     <span>{t('providerAvailabilityStatusLabel')}</span>
                     <small>{t('providerAvailabilityStatusHelp')}</small>
                   </label>
-                  <select 
-                    className="settings-select"
-                    value={availabilitySettings.availabilityStatus}
-                    onChange={(e) => setAvailabilitySettings((prev) => ({
-                      ...prev,
-                      availabilityStatus: e.target.value,
-                    }))}
-                    disabled={availabilityLoading || isSaving}
-                  >
-                    <option value="available">{t('providerAvailabilityStatusAvailable')}</option>
-                    <option value="busy">{t('providerAvailabilityStatusBusy')}</option>
-                    <option value="unavailable">{t('providerAvailabilityStatusUnavailable')}</option>
-                  </select>
+                  <label className="switch">
+                    <input
+                      type="checkbox"
+                      checked={availabilitySettings.availabilityStatus !== 'unavailable'}
+                      onChange={(e) => setAvailabilitySettings((prev) => ({
+                        ...prev,
+                        availabilityStatus: e.target.checked ? 'available' : 'unavailable',
+                      }))}
+                      disabled={availabilityLoading || isSaving}
+                    />
+                    <span className="slider"></span>
+                  </label>
                 </div>
 
                 <div className="settings-toggle">
