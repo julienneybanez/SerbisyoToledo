@@ -11,6 +11,7 @@ const {
   parseTimeInputToSql,
   calculateDurationDays,
   checkScheduleConflict,
+  isScheduleAvailableForRange,
 } = require('../utils/bookingAvailability');
 
 const MAX_JOB_TITLE_LENGTH = 255;
@@ -271,6 +272,24 @@ exports.createRequest = async (req, res) => {
     const effectiveServiceType = requestedServiceTypeKey
       ? offeredServiceTypeByKey.get(requestedServiceTypeKey)
       : (offeredServiceTypes[0] || null);
+
+    const scheduleAvailability = await isScheduleAvailableForRange(connection, {
+      serviceProfileId: profile.service_profile_id,
+      providerId: profile.provider_id,
+      startDate: normalized.normalizedStartDate,
+      endDate: normalized.normalizedEndDate,
+      startTime: normalized.normalizedStartTime,
+      durationMinutes: normalized.normalizedDurationMinutes,
+    });
+
+    if (!scheduleAvailability.available) {
+      await connection.rollback();
+      return res.status(409).json({
+        success: false,
+        message: scheduleAvailability.message || 'The selected schedule is not available for this provider.',
+        code: 'SCHEDULE_UNAVAILABLE',
+      });
+    }
 
     const [duplicateRows] = await connection.query(
       `SELECT id
