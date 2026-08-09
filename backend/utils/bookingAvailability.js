@@ -152,6 +152,8 @@ const ensureAvailabilitySchema = async (connection) => {
       allow_same_day_booking BOOLEAN NOT NULL DEFAULT FALSE,
       min_advance_notice_minutes INT NOT NULL DEFAULT 720,
       max_advance_booking_days INT NOT NULL DEFAULT 60,
+      availability_status VARCHAR(255) NOT NULL DEFAULT 'available',
+      show_availability_status BOOLEAN NOT NULL DEFAULT TRUE,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
       FOREIGN KEY (service_profile_id) REFERENCES service_profiles(id) ON DELETE CASCADE
@@ -194,7 +196,12 @@ const ensureAvailabilitySettings = async (connection, serviceProfileId) => {
   await ensureAvailabilitySchema(connection);
 
   const [existing] = await connection.query(
-    `SELECT id, allow_same_day_booking, min_advance_notice_minutes, max_advance_booking_days
+    `SELECT id,
+            allow_same_day_booking,
+            min_advance_notice_minutes,
+            max_advance_booking_days,
+            availability_status,
+            show_availability_status
      FROM provider_availability_settings
      WHERE service_profile_id = ?
      LIMIT 1`,
@@ -207,8 +214,15 @@ const ensureAvailabilitySettings = async (connection, serviceProfileId) => {
 
   await connection.query(
     `INSERT INTO provider_availability_settings
-     (service_profile_id, allow_same_day_booking, min_advance_notice_minutes, max_advance_booking_days)
-     VALUES (?, FALSE, 720, 60)`,
+     (
+       service_profile_id,
+       allow_same_day_booking,
+       min_advance_notice_minutes,
+       max_advance_booking_days,
+       availability_status,
+       show_availability_status
+     )
+     VALUES (?, FALSE, 720, 60, 'available', TRUE)`,
     [serviceProfileId]
   );
 
@@ -216,6 +230,8 @@ const ensureAvailabilitySettings = async (connection, serviceProfileId) => {
     allow_same_day_booking: 0,
     min_advance_notice_minutes: 720,
     max_advance_booking_days: 60,
+    availability_status: 'available',
+    show_availability_status: 1,
   };
 };
 
@@ -442,12 +458,16 @@ const getAvailableSlotsForDate = async (
   }
 
   const normalizedDate = formatDateOnly(parsedDate);
+  const settings = await ensureAvailabilitySettings(connection, serviceProfileId);
+
+  if (String(settings.availability_status || 'available').toLowerCase() === 'unavailable') {
+    return [];
+  }
+
   const windows = await getAvailabilityWindowsForDate(connection, serviceProfileId, normalizedDate);
   if (windows.length === 0) {
     return [];
   }
-
-  const settings = await ensureAvailabilitySettings(connection, serviceProfileId);
 
   const now = new Date();
   const dayStartUtc = parseDateOnly(normalizedDate);
@@ -570,6 +590,16 @@ const isScheduleAvailableForRange = async (
       available: false,
       reason: 'invalid_duration',
       message: 'Invalid booking duration.',
+    };
+  }
+
+  const settings = await ensureAvailabilitySettings(connection, serviceProfileId);
+
+  if (String(settings.availability_status || 'available').toLowerCase() === 'unavailable') {
+    return {
+      available: false,
+      reason: 'provider_unavailable',
+      message: 'This service provider is currently unavailable for new bookings.',
     };
   }
 
