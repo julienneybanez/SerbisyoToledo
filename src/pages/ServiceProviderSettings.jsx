@@ -37,6 +37,8 @@ function ServiceProviderSettings() {
   const [credentials, setCredentials] = useState([]);
   const [selectedLanguages, setSelectedLanguages] = useState([]);
   const [availabilitySettings, setAvailabilitySettings] = useState({
+    availabilityStatus: 'available',
+    showAvailabilityStatus: true,
     allowSameDayBooking: false,
     minAdvanceNoticeMinutes: 720,
     maxAdvanceBookingDays: 60,
@@ -73,14 +75,11 @@ function ServiceProviderSettings() {
     businessCity: '',
     businessPhone: '',
     serviceArea: 'Toledo City',
-    availability: 'available',
     enableNotifications: true,
     enableEmailAlerts: true,
     enableSMS: false,
     profileVisibility: 'public',
     allowDirectMessages: true,
-    autoAcceptRequests: false,
-    showAvailability: true,
     minimumJobAmount: ''
   });
 
@@ -150,7 +149,7 @@ function ServiceProviderSettings() {
         setAvailabilityLoading(true);
         setCredentialLoading(true);
 
-        const [availabilityResponse, languagesResponse, credentialsResponse] = await Promise.all([
+        const [availabilityResult, languagesResult, credentialsResult] = await Promise.allSettled([
           serviceProfileAPI.getMyAvailability
             ? serviceProfileAPI.getMyAvailability()
             : Promise.resolve({ success: true, data: { settings: {}, weeklyBlocks: [], exceptions: [] } }),
@@ -162,9 +161,29 @@ function ServiceProviderSettings() {
             : Promise.resolve({ success: true, data: { credentials: [] } }),
         ]);
 
-        if (availabilityResponse.success && availabilityResponse.data) {
+        const availabilityResponse = availabilityResult.status === 'fulfilled' ? availabilityResult.value : null;
+        const languagesResponse = languagesResult.status === 'fulfilled' ? languagesResult.value : null;
+        const credentialsResponse = credentialsResult.status === 'fulfilled' ? credentialsResult.value : null;
+
+        if (availabilityResult.status === 'rejected') {
+          console.error('Failed to load provider availability:', availabilityResult.reason);
+        }
+        if (languagesResult.status === 'rejected') {
+          console.error('Failed to load provider languages:', languagesResult.reason);
+        }
+        if (credentialsResult.status === 'rejected') {
+          console.error('Failed to load provider credentials:', credentialsResult.reason);
+        }
+
+        if (availabilityResponse?.success && availabilityResponse.data) {
           const s = availabilityResponse.data.settings || {};
           setAvailabilitySettings({
+            availabilityStatus: String(
+              s.availability_status ?? s.availabilityStatus ?? 'available'
+            ).toLowerCase(),
+            showAvailabilityStatus: Boolean(
+              s.show_availability_status ?? s.showAvailabilityStatus ?? true
+            ),
             allowSameDayBooking: Boolean(s.allow_same_day_booking ?? s.allowSameDayBooking),
             minAdvanceNoticeMinutes: Number(s.min_advance_notice_minutes ?? s.minAdvanceNoticeMinutes ?? 720),
             maxAdvanceBookingDays: Number(s.max_advance_booking_days ?? s.maxAdvanceBookingDays ?? 60),
@@ -189,11 +208,11 @@ function ServiceProviderSettings() {
           })));
         }
 
-        if (languagesResponse.success) {
+        if (languagesResponse?.success) {
           setSelectedLanguages(languagesResponse.data?.languages || []);
         }
 
-        if (credentialsResponse.success) {
+        if (credentialsResponse?.success) {
           setCredentials(credentialsResponse.data?.credentials || []);
         }
       } catch (err) {
@@ -650,8 +669,12 @@ function ServiceProviderSettings() {
                   </label>
                   <select 
                     className="settings-select"
-                    value={settings.availability}
-                    onChange={(e) => handleChange('availability', e.target.value)}
+                    value={availabilitySettings.availabilityStatus}
+                    onChange={(e) => setAvailabilitySettings((prev) => ({
+                      ...prev,
+                      availabilityStatus: e.target.value,
+                    }))}
+                    disabled={availabilityLoading || isSaving}
                   >
                     <option value="available">{t('providerAvailabilityStatusAvailable')}</option>
                     <option value="busy">{t('providerAvailabilityStatusBusy')}</option>
@@ -667,27 +690,17 @@ function ServiceProviderSettings() {
                   <label className="switch">
                     <input
                       type="checkbox"
-                      checked={settings.showAvailability}
-                      onChange={(e) => handleChange('showAvailability', e.target.checked)}
+                      checked={availabilitySettings.showAvailabilityStatus}
+                      onChange={(e) => setAvailabilitySettings((prev) => ({
+                        ...prev,
+                        showAvailabilityStatus: e.target.checked,
+                      }))}
+                      disabled={availabilityLoading || isSaving}
                     />
                     <span className="slider"></span>
                   </label>
                 </div>
 
-                <div className="settings-toggle">
-                  <label className="toggle-label">
-                    <span>{t('providerAutoAcceptRequestsLabel')}</span>
-                    <small>{t('providerAutoAcceptRequestsHelp')}</small>
-                  </label>
-                  <label className="switch">
-                    <input
-                      type="checkbox"
-                      checked={settings.autoAcceptRequests}
-                      onChange={(e) => handleChange('autoAcceptRequests', e.target.checked)}
-                    />
-                    <span className="slider"></span>
-                  </label>
-                </div>
               </div>
 
               <div className="settings-section-divider"></div>
