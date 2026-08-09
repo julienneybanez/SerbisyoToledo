@@ -23,6 +23,7 @@ const {
 
 const SUPPORTED_LANGUAGE_CODES = new Set(['ceb', 'en', 'fil']);
 const SUPPORTED_PRICING_UNITS = new Set(['per_job', 'per_hour', 'per_day']);
+const SUPPORTED_AVAILABILITY_STATUSES = new Set(['available', 'busy', 'unavailable']);
 const PRESENCE_WINDOW_MINUTES = 5;
 const REVIEW_STATS_JOIN = `
   LEFT JOIN (
@@ -345,9 +346,12 @@ exports.getAllProfiles = async (req, res) => {
         sp.created_at,
         u.profession,
         u.skills,
-        u.is_verified
+        u.is_verified,
+        COALESCE(pas.availability_status, 'available') AS availability_status,
+        COALESCE(pas.show_availability_status, TRUE) AS show_availability_status
       FROM service_profiles sp
       JOIN users u ON sp.user_id = u.id
+      LEFT JOIN provider_availability_settings pas ON pas.service_profile_id = sp.id
       ${REVIEW_STATS_JOIN}
       WHERE sp.is_published = TRUE
     `;
@@ -428,6 +432,10 @@ exports.getAllProfiles = async (req, res) => {
         categories,
         serviceTypes,
         taxonomyNeedsReview: Boolean(profile.taxonomy_needs_review),
+        availabilityStatus: Boolean(profile.show_availability_status)
+          ? (profile.availability_status || 'available')
+          : null,
+        showAvailabilityStatus: Boolean(profile.show_availability_status),
       };
     });
 
@@ -504,11 +512,15 @@ exports.getRecommendedProviders = async (req, res) => {
         COALESCE(review_stats.reviews_count, 0) AS reviews_count,
         u.profession,
         u.skills,
-        u.is_verified
+        u.is_verified,
+        COALESCE(pas.availability_status, 'available') AS availability_status,
+        COALESCE(pas.show_availability_status, TRUE) AS show_availability_status
       FROM service_profiles sp
       JOIN users u ON sp.user_id = u.id
+      LEFT JOIN provider_availability_settings pas ON pas.service_profile_id = sp.id
       ${REVIEW_STATS_JOIN}
       WHERE sp.is_published = TRUE
+        AND COALESCE(pas.availability_status, 'available') <> 'unavailable'
     `;
 
     const params = [];
@@ -606,6 +618,10 @@ exports.getRecommendedProviders = async (req, res) => {
         serviceTypes,
         taxonomyNeedsReview: Boolean(profile.taxonomy_needs_review),
         languages: languageRows.map((row) => row.language_code),
+        availabilityStatus: Boolean(profile.show_availability_status)
+          ? (profile.availability_status || 'available')
+          : null,
+        showAvailabilityStatus: Boolean(profile.show_availability_status),
       });
     }
 
@@ -645,9 +661,12 @@ exports.getProfileById = async (req, res) => {
         u.skills,
         u.email,
         u.phone,
-        u.is_verified
+        u.is_verified,
+        COALESCE(pas.availability_status, 'available') AS availability_status,
+        COALESCE(pas.show_availability_status, TRUE) AS show_availability_status
       FROM service_profiles sp
       JOIN users u ON sp.user_id = u.id
+      LEFT JOIN provider_availability_settings pas ON pas.service_profile_id = sp.id
       ${REVIEW_STATS_JOIN}
       WHERE sp.id = ? AND sp.is_published = TRUE`,
       [id]
@@ -794,6 +813,10 @@ exports.getProfileById = async (req, res) => {
       serviceTypes,
       taxonomyNeedsReview: Boolean(profile.taxonomy_needs_review),
       isPublished: Boolean(profile.is_published),
+      availabilityStatus: Boolean(profile.show_availability_status)
+        ? (profile.availability_status || 'available')
+        : null,
+      showAvailabilityStatus: Boolean(profile.show_availability_status),
       languages: languages.map((row) => row.language_code),
       credentials: credentialRows.map((credential) => {
         const issueYear = credential.issue_date ? new Date(credential.issue_date).getUTCFullYear() : null;
@@ -1515,6 +1538,24 @@ exports.saveMyAvailability = async (req, res) => {
     const allowSameDay = Boolean(settings?.allowSameDayBooking);
     const minAdvanceNotice = Number(settings?.minAdvanceNoticeMinutes ?? 720);
     const maxAdvanceDays = Number(settings?.maxAdvanceBookingDays ?? 60);
+    const availabilityStatus = String(
+      settings?.availabilityStatus ?? settings?.availability_status ?? 'available'
+    ).trim().toLowerCase();
+
+    const showAvailabilityRaw = settings?.showAvailabilityStatus ?? settings?.show_availability_status;
+    const showAvailabilityStatus = showAvailabilityRaw == null
+      ? true
+      : (
+          showAvailabilityRaw === true
+          || showAvailabilityRaw === 1
+          || showAvailabilityRaw === '1'
+          || String(showAvailabilityRaw).trim().toLowerCase() === 'true'
+        );
+
+    if (!SUPPORTED_AVAILABILITY_STATUSES.has(availabilityStatus)) {
+      await connection.rollback();
+      return res.status(400).json({ success: false, message: 'Invalid availability status' });
+    }
 
     if (minAdvanceNotice < 0 || minAdvanceNotice > 14 * 24 * 60) {
       await connection.rollback();
@@ -1528,9 +1569,20 @@ exports.saveMyAvailability = async (req, res) => {
 
     await connection.query(
       `UPDATE provider_availability_settings
-       SET allow_same_day_booking = ?, min_advance_notice_minutes = ?, max_advance_booking_days = ?
+       SET allow_same_day_booking = ?,
+           min_advance_notice_minutes = ?,
+           max_advance_booking_days = ?,
+           availability_status = ?,
+           show_availability_status = ?
        WHERE service_profile_id = ?`,
-      [allowSameDay, minAdvanceNotice, maxAdvanceDays, serviceProfileId]
+      [
+        allowSameDay,
+        minAdvanceNotice,
+        maxAdvanceDays,
+        availabilityStatus,
+        showAvailabilityStatus,
+        serviceProfileId
+      ]
     );
 
     await connection.query('DELETE FROM provider_weekly_availability WHERE service_profile_id = ?', [serviceProfileId]);
