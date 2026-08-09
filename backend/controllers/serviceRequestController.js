@@ -9,11 +9,8 @@ const {
   parseDateOnly,
   formatDateOnly,
   parseTimeInputToSql,
-  timeToMinutes,
-  minutesToSqlTime,
   calculateDurationDays,
   checkScheduleConflict,
-  isScheduleAvailableForRange,
 } = require('../utils/bookingAvailability');
 
 const MAX_JOB_TITLE_LENGTH = 255;
@@ -21,9 +18,6 @@ const MAX_JOB_DETAILS_LENGTH = 2000;
 const MAX_DECLINE_REASON_LENGTH = 500;
 const MAX_RESCHEDULE_REASON_LENGTH = 1000;
 const MAX_DURATION_MINUTES = 24 * 60;
-const MAX_SPECIFIC_DATES = 60;
-
-const MINUTES_PER_DAY = 24 * 60;
 
 const CANCELLATION_REASONS = new Set([
   'Schedule conflict',
@@ -52,7 +46,6 @@ const getProviderProfile = async (connection, serviceProfileId) => {
       sp.id AS service_profile_id,
       sp.user_id AS provider_id,
       sp.starting_price,
-      sp.pricing_unit,
       sp.service_categories,
       sp.service_types,
       sp.is_published,
@@ -68,181 +61,8 @@ const getProviderProfile = async (connection, serviceProfileId) => {
   return profileRows[0] || null;
 };
 
-const deriveScheduledEnd = ({ startDate, startTime, durationMinutes }) => {
-  const parsedStart = parseDateOnly(startDate);
-  const startMinutes = timeToMinutes(startTime);
-  const duration = Number(durationMinutes || 0);
-
-  if (!parsedStart || startMinutes == null || duration <= 0) {
-    return {
-      scheduledStartAt: `${startDate} ${startTime}`,
-      scheduledEndAt: `${startDate} ${startTime}`,
-      endDate: startDate,
-      endTime: startTime,
-    };
-  }
-
-  const startAt = new Date(Date.UTC(
-    parsedStart.getUTCFullYear(),
-    parsedStart.getUTCMonth(),
-    parsedStart.getUTCDate(),
-    Math.floor(startMinutes / 60),
-    startMinutes % 60,
-    0,
-    0
-  ));
-
-  const endAt = new Date(startAt.getTime() + duration * 60 * 1000);
-  const endDate = formatDateOnly(new Date(Date.UTC(
-    endAt.getUTCFullYear(),
-    endAt.getUTCMonth(),
-    endAt.getUTCDate()
-  )));
-  const endTime = minutesToSqlTime(endAt.getUTCHours() * 60 + endAt.getUTCMinutes());
-
-  return {
-    scheduledStartAt: `${startDate} ${startTime}`,
-    scheduledEndAt: `${endDate} ${endTime}`,
-    endDate,
-    endTime,
-  };
-};
-
-const calculateEstimatedTotal = ({ pricingUnit, baseRate, durationDays, durationMinutes }) => {
-  const rate = Number(baseRate || 0);
-  const days = Number(durationDays || 0);
-  const minutes = Number(durationMinutes || 0);
-  const unit = String(pricingUnit || 'per_day').trim().toLowerCase();
-
-  if (!Number.isFinite(rate) || rate <= 0) {
-    return 0;
-  }
-
-  if (unit === 'per_job') {
-    return rate;
-  }
-
-  if (unit === 'per_hour') {
-    const totalHours = Math.max(0, minutes / 60) * Math.max(1, days);
-    return Number((rate * totalHours).toFixed(2));
-  }
-
-  return Number((rate * Math.max(1, days)).toFixed(2));
-};
-
-const buildContinuousDateList = (startDate, endDate) => {
-  const parsedStart = parseDateOnly(startDate);
-  const parsedEnd = parseDateOnly(endDate);
-
-  if (!parsedStart || !parsedEnd || parsedEnd < parsedStart) {
-    return [];
-  }
-
-  const days = [];
-  for (const cursor = new Date(parsedStart); cursor <= parsedEnd; cursor.setUTCDate(cursor.getUTCDate() + 1)) {
-    days.push(formatDateOnly(cursor));
-  }
-
-  return days;
-};
-
-const normalizeSpecificDates = (selectedDates) => {
-  const normalized = Array.from(new Set(
-    (Array.isArray(selectedDates) ? selectedDates : [])
-      .map((value) => String(value || '').trim())
-      .filter(Boolean)
-  )).sort();
-
-  const parsed = normalized.map((date) => parseDateOnly(date));
-  if (parsed.some((value) => !value)) {
-    return { error: 'Selected dates contain invalid values' };
-  }
-
-  return { dates: normalized };
-};
-
-const persistRequestDates = async (connection, requestId, serviceDates) => {
-  await connection.query('DELETE FROM service_request_dates WHERE service_request_id = ?', [requestId]);
-
-  for (const serviceDate of serviceDates) {
-    await connection.query(
-      'INSERT INTO service_request_dates (service_request_id, service_date) VALUES (?, ?)',
-      [requestId, serviceDate]
-    );
-  }
-};
-
-const getRequestServiceDates = async (connection, request) => {
-  const [rows] = await connection.query(
-    `SELECT service_date
-     FROM service_request_dates
-     WHERE service_request_id = ?
-     ORDER BY service_date ASC`,
-    [request.id]
-  );
-
-  if (rows.length > 0) {
-    return rows.map((row) => row.service_date);
-  }
-
-  return buildContinuousDateList(request.start_date, request.end_date);
-};
-
-const validateScheduleForDates = async (
-  connection,
-  {
-    serviceProfileId,
-    providerId,
-    serviceDates,
-    startTime,
-    durationMinutes,
-    excludeRequestId = null,
-  }
-) => {
-  for (const date of serviceDates) {
-    const availabilityCheck = await isScheduleAvailableForRange(connection, {
-      serviceProfileId,
-      providerId,
-      startDate: date,
-      endDate: date,
-      startTime,
-      durationMinutes,
-      excludeRequestId,
-    });
-
-    if (!availabilityCheck.available) {
-      return {
-        ok: false,
-        status: 409,
-        message: availabilityCheck.message || 'The selected schedule is no longer available.',
-      };
-    }
-
-    const conflict = await checkScheduleConflict(connection, {
-      providerId,
-      requestedStartDate: date,
-      requestedEndDate: date,
-      requestedStartTime: startTime,
-      requestedDurationMinutes: durationMinutes,
-      excludeRequestId,
-    });
-
-    if (conflict.conflict) {
-      return {
-        ok: false,
-        status: 409,
-        message: 'This schedule is no longer available because the provider already has another confirmed booking.',
-      };
-    }
-  }
-
-  return { ok: true };
-};
-
 const validateBookingPayload = ({
   bookingType,
-  multiDayMode,
-  selectedDates,
   startDate,
   endDate,
   scheduledDate,
@@ -251,9 +71,6 @@ const validateBookingPayload = ({
   estimatedDurationMinutes,
 }) => {
   const normalizedBookingType = bookingType === 'multi_day' ? 'multi_day' : 'one_day';
-  const normalizedMultiDayMode = normalizedBookingType === 'multi_day' && multiDayMode === 'specific_dates'
-    ? 'specific_dates'
-    : 'continuous';
   const normalizedStartDate = startDate || scheduledDate;
   const normalizedEndDate = normalizedBookingType === 'multi_day'
     ? (endDate || startDate || scheduledDate)
@@ -267,11 +84,6 @@ const validateBookingPayload = ({
 
   if (!Number.isInteger(normalizedDurationMinutes) || normalizedDurationMinutes <= 0 || normalizedDurationMinutes > MAX_DURATION_MINUTES) {
     return { error: 'Estimated duration must be between 1 and 1440 minutes' };
-  }
-
-  const startMinutes = timeToMinutes(normalizedStartTime);
-  if (normalizedBookingType === 'one_day' && startMinutes != null && (startMinutes + normalizedDurationMinutes) > MINUTES_PER_DAY) {
-    return { error: 'One-day bookings must end within the same day' };
   }
 
   const parsedStartDate = parseDateOnly(normalizedStartDate);
@@ -292,57 +104,19 @@ const validateBookingPayload = ({
     return { error: 'Schedule date cannot be in the past' };
   }
 
-  let serviceDates = [];
-  let durationDays = 0;
+  const durationDays = calculateDurationDays(normalizedStartDate, normalizedEndDate);
 
-  if (normalizedBookingType === 'multi_day' && normalizedMultiDayMode === 'specific_dates') {
-    const specificDates = normalizeSpecificDates(selectedDates);
-    if (specificDates.error) {
-      return { error: specificDates.error };
-    }
-
-    if (specificDates.dates.length === 0) {
-      return { error: 'Please select at least one booking date.' };
-    }
-
-    if (specificDates.dates.length > MAX_SPECIFIC_DATES) {
-      return { error: 'Too many selected dates. Please select up to 60 dates.' };
-    }
-
-    for (const date of specificDates.dates) {
-      const parsed = parseDateOnly(date);
-      if (!parsed || parsed < todayUtc) {
-        return { error: 'Selected dates cannot be in the past.' };
-      }
-    }
-
-    serviceDates = specificDates.dates;
-    durationDays = specificDates.dates.length;
-  } else {
-    durationDays = calculateDurationDays(normalizedStartDate, normalizedEndDate);
-    serviceDates = buildContinuousDateList(normalizedStartDate, normalizedEndDate);
-  }
-
-  if (!durationDays || serviceDates.length === 0) {
+  if (!durationDays) {
     return { error: 'Invalid booking duration' };
   }
 
-  const canonicalStartDate = normalizedBookingType === 'multi_day' && normalizedMultiDayMode === 'specific_dates'
-    ? serviceDates[0]
-    : normalizedStartDate;
-  const canonicalEndDate = normalizedBookingType === 'multi_day' && normalizedMultiDayMode === 'specific_dates'
-    ? serviceDates[serviceDates.length - 1]
-    : normalizedEndDate;
-
   return {
     normalizedBookingType,
-    normalizedMultiDayMode,
-    normalizedStartDate: canonicalStartDate,
-    normalizedEndDate: canonicalEndDate,
+    normalizedStartDate,
+    normalizedEndDate,
     normalizedStartTime,
     normalizedDurationMinutes,
     durationDays,
-    serviceDates,
   };
 };
 
@@ -371,8 +145,6 @@ exports.createRequest = async (req, res) => {
       serviceProfileId,
       serviceTypeKey,
       bookingType,
-      multiDayMode,
-      selectedDates,
       startDate,
       endDate,
       startTime,
@@ -407,8 +179,6 @@ exports.createRequest = async (req, res) => {
 
     const normalized = validateBookingPayload({
       bookingType,
-      multiDayMode,
-      selectedDates,
       startDate,
       endDate,
       scheduledDate,
@@ -533,40 +303,24 @@ exports.createRequest = async (req, res) => {
       });
     }
 
-    const scheduleValidation = await validateScheduleForDates(connection, {
-      serviceProfileId: profile.service_profile_id,
+    const conflict = await checkScheduleConflict(connection, {
       providerId: profile.provider_id,
-      serviceDates: normalized.serviceDates,
-      startTime: normalized.normalizedStartTime,
-      durationMinutes: normalized.normalizedDurationMinutes,
+      requestedStartDate: normalized.normalizedStartDate,
+      requestedEndDate: normalized.normalizedEndDate,
+      requestedStartTime: normalized.normalizedStartTime,
+      requestedDurationMinutes: normalized.normalizedDurationMinutes,
     });
 
-    if (!scheduleValidation.ok) {
+    if (conflict.conflict) {
       await connection.rollback();
-      return res.status(scheduleValidation.status).json({
+      return res.status(409).json({
         success: false,
-        message: scheduleValidation.message,
+        message: 'This schedule is no longer available because the provider already has another confirmed booking.'
       });
     }
 
-    const rateSnapshot = Number(profile.starting_price || 0);
-    const estimatedTotal = calculateEstimatedTotal({
-      pricingUnit: profile.pricing_unit,
-      baseRate: rateSnapshot,
-      durationDays: normalized.durationDays,
-      durationMinutes: normalized.normalizedDurationMinutes,
-    });
-
-    const scheduleEnd = normalized.normalizedBookingType === 'one_day'
-      ? deriveScheduledEnd({
-        startDate: normalized.normalizedStartDate,
-        startTime: normalized.normalizedStartTime,
-        durationMinutes: normalized.normalizedDurationMinutes,
-      })
-      : {
-        scheduledStartAt: `${normalized.normalizedStartDate} ${normalized.normalizedStartTime}`,
-        scheduledEndAt: `${normalized.normalizedEndDate} ${normalized.normalizedStartTime}`,
-      };
+    const dailyRate = Number(profile.starting_price || 0);
+    const estimatedTotal = dailyRate * normalized.durationDays;
 
     const [result] = await connection.query(
       `INSERT INTO service_requests (
@@ -578,7 +332,6 @@ exports.createRequest = async (req, res) => {
          job_title,
          job_details,
          booking_type,
-         multi_day_mode,
          start_date,
          end_date,
          start_time,
@@ -587,10 +340,9 @@ exports.createRequest = async (req, res) => {
          estimated_duration_minutes,
          duration_days,
          daily_rate_snapshot,
-         pricing_unit_snapshot,
          estimated_total
        )
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         clientId,
         profile.provider_id,
@@ -600,22 +352,19 @@ exports.createRequest = async (req, res) => {
         jobTitle,
         jobDetails,
         normalized.normalizedBookingType,
-        normalized.normalizedMultiDayMode,
         normalized.normalizedStartDate,
         normalized.normalizedEndDate,
         normalized.normalizedStartTime,
-        scheduleEnd.scheduledStartAt,
-        scheduleEnd.scheduledEndAt,
+        `${normalized.normalizedStartDate} ${normalized.normalizedStartTime}`,
+        `${normalized.normalizedEndDate} ${normalized.normalizedStartTime}`,
         normalized.normalizedDurationMinutes,
         normalized.durationDays,
-        rateSnapshot,
-        profile.pricing_unit || 'per_day',
+        dailyRate,
         estimatedTotal,
       ]
     );
 
     const requestId = result.insertId;
-    await persistRequestDates(connection, requestId, normalized.serviceDates);
 
     const [clientRows] = await connection.query('SELECT full_name FROM users WHERE id = ? LIMIT 1', [clientId]);
     const clientName = clientRows[0]?.full_name || 'A client';
@@ -636,14 +385,11 @@ exports.createRequest = async (req, res) => {
         serviceTypeKey: effectiveServiceType?.key || null,
         serviceTypeLabel: effectiveServiceType?.label || null,
         bookingType: normalized.normalizedBookingType,
-        multiDayMode: normalized.normalizedMultiDayMode,
         startDate: normalized.normalizedStartDate,
         endDate: normalized.normalizedEndDate,
-        selectedDates: normalized.serviceDates,
         startTime: normalized.normalizedStartTime,
         durationDays: normalized.durationDays,
-        pricingUnit: profile.pricing_unit || 'per_day',
-        dailyRateSnapshot: rateSnapshot,
+        dailyRateSnapshot: dailyRate,
         estimatedTotal,
       }
     });
@@ -709,7 +455,8 @@ exports.getProviderRequests = async (req, res) => {
 
     const [requests] = await db.query(
       `SELECT sr.*, 
-              u.full_name as client_name
+              u.full_name as client_name,
+              u.email as client_email
        FROM service_requests sr
        JOIN users u ON sr.client_id = u.id
        WHERE sr.provider_id = ?
@@ -797,21 +544,20 @@ exports.updateRequestStatus = async (req, res) => {
       );
 
       const schedule = normalizeRequestSchedule(request);
-      const requestDates = await getRequestServiceDates(connection, request);
-      const scheduleValidation = await validateScheduleForDates(connection, {
-        serviceProfileId: request.service_profile_id,
+      const conflict = await checkScheduleConflict(connection, {
         providerId: request.provider_id,
-        serviceDates: requestDates,
-        startTime: schedule.startTime,
-        durationMinutes: schedule.durationMinutes,
+        requestedStartDate: schedule.startDate,
+        requestedEndDate: schedule.endDate,
+        requestedStartTime: schedule.startTime,
+        requestedDurationMinutes: schedule.durationMinutes,
         excludeRequestId: request.id,
       });
 
-      if (!scheduleValidation.ok) {
+      if (conflict.conflict) {
         await connection.rollback();
-        return res.status(scheduleValidation.status).json({
+        return res.status(409).json({
           success: false,
-          message: scheduleValidation.message,
+          message: 'This schedule is no longer available because the provider already has another confirmed booking.'
         });
       }
     }
@@ -872,7 +618,7 @@ exports.updateRequestStatus = async (req, res) => {
       const actorName = request.client_id === userId ? request.client_name : request.provider_name;
       await connection.query(
         `INSERT INTO notifications (user_id, type, title, message, related_request_id)
-         VALUES (?, 'request_cancelled', ?, ?, ?)`,
+         VALUES (?, 'request_declined', ?, ?, ?)`,
         [
           otherUserId,
           'Booking Cancelled',
@@ -1087,15 +833,24 @@ exports.proposeReschedule = async (req, res) => {
   try {
     const { requestId } = req.params;
     const actorId = req.user.userId;
-    const {
-      proposedStartDate,
-      proposedEndDate,
-      proposedStartTime,
-      reason,
-      estimatedDurationMinutes,
-      proposedMultiDayMode,
-      proposedDates,
-    } = req.body;
+    const { proposedStartDate, proposedEndDate, proposedStartTime, reason, estimatedDurationMinutes } = req.body;
+
+    const parsedProposedStart = parseDateOnly(proposedStartDate);
+    const parsedProposedEnd = parseDateOnly(proposedEndDate || proposedStartDate);
+    const normalizedProposedTime = parseTimeInputToSql(proposedStartTime);
+    const normalizedDurationMinutes = Number(estimatedDurationMinutes || 0);
+
+    if (!parsedProposedStart || !parsedProposedEnd || !normalizedProposedTime) {
+      return res.status(400).json({ success: false, message: 'Proposed schedule is invalid.' });
+    }
+
+    if (parsedProposedEnd < parsedProposedStart) {
+      return res.status(400).json({ success: false, message: 'Proposed end date cannot be before start date.' });
+    }
+
+    if (!Number.isInteger(normalizedDurationMinutes) || normalizedDurationMinutes <= 0 || normalizedDurationMinutes > MAX_DURATION_MINUTES) {
+      return res.status(400).json({ success: false, message: 'Estimated duration must be between 1 and 1440 minutes.' });
+    }
 
     const trimmedReason = String(reason || '').trim();
     if (!trimmedReason) {
@@ -1134,35 +889,23 @@ exports.proposeReschedule = async (req, res) => {
       });
     }
 
-    const normalizedProposal = validateBookingPayload({
-      bookingType: request.booking_type,
-      multiDayMode: proposedMultiDayMode,
-      selectedDates: proposedDates,
-      startDate: proposedStartDate,
-      endDate: proposedEndDate,
-      startTime: proposedStartTime,
-      estimatedDurationMinutes,
-    });
+    const proposedStartDateIso = formatDateOnly(parsedProposedStart);
+    const proposedEndDateIso = formatDateOnly(parsedProposedEnd);
 
-    if (normalizedProposal.error) {
-      await connection.rollback();
-      return res.status(400).json({ success: false, message: normalizedProposal.error });
-    }
-
-    const scheduleValidation = await validateScheduleForDates(connection, {
-      serviceProfileId: request.service_profile_id,
+    const conflict = await checkScheduleConflict(connection, {
       providerId: request.provider_id,
-      serviceDates: normalizedProposal.serviceDates,
-      startTime: normalizedProposal.normalizedStartTime,
-      durationMinutes: normalizedProposal.normalizedDurationMinutes,
+      requestedStartDate: proposedStartDateIso,
+      requestedEndDate: proposedEndDateIso,
+      requestedStartTime: normalizedProposedTime,
+      requestedDurationMinutes: normalizedDurationMinutes,
       excludeRequestId: request.id,
     });
 
-    if (!scheduleValidation.ok) {
+    if (conflict.conflict) {
       await connection.rollback();
-      return res.status(scheduleValidation.status).json({
+      return res.status(409).json({
         success: false,
-        message: scheduleValidation.message,
+        message: 'The proposed schedule conflicts with another confirmed booking.'
       });
     }
 
@@ -1177,25 +920,19 @@ exports.proposeReschedule = async (req, res) => {
          proposed_start_date,
          proposed_end_date,
          proposed_start_time,
-         proposed_estimated_duration_minutes,
-         proposed_multi_day_mode,
-         proposed_specific_dates_json,
          proposed_by,
          reschedule_reason,
          reschedule_status
        )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
       [
         request.id,
         existingSchedule.startDate,
         existingSchedule.endDate,
         existingSchedule.startTime,
-        normalizedProposal.normalizedStartDate,
-        normalizedProposal.normalizedEndDate,
-        normalizedProposal.normalizedStartTime,
-        normalizedProposal.normalizedDurationMinutes,
-        normalizedProposal.normalizedMultiDayMode,
-        normalizedProposal.normalizedMultiDayMode === 'specific_dates' ? JSON.stringify(normalizedProposal.serviceDates) : null,
+        proposedStartDateIso,
+        proposedEndDateIso,
+        normalizedProposedTime,
         actorId,
         trimmedReason,
       ]
@@ -1206,7 +943,7 @@ exports.proposeReschedule = async (req, res) => {
 
     await connection.query(
       `INSERT INTO notifications (user_id, type, title, message, related_request_id)
-       VALUES (?, 'reschedule_proposed', ?, ?, ?)`,
+       VALUES (?, 'discussion_requested', ?, ?, ?)`,
       [
         recipientId,
         'Reschedule Proposed',
@@ -1296,55 +1033,28 @@ exports.respondToReschedule = async (req, res) => {
     }
 
     if (action === 'accepted') {
-      const proposedDurationMinutes = Number(
-        proposal.proposed_estimated_duration_minutes || request.estimated_duration_minutes || 0
-      );
-      const proposedMode = String(proposal.proposed_multi_day_mode || 'continuous');
-      const proposedSpecificDates = proposedMode === 'specific_dates' && proposal.proposed_specific_dates_json
-        ? parseJsonArray(proposal.proposed_specific_dates_json, [])
-        : [];
-      const proposalServiceDates = proposedMode === 'specific_dates'
-        ? proposedSpecificDates
-        : buildContinuousDateList(proposal.proposed_start_date, proposal.proposed_end_date);
-
-      const scheduleValidation = await validateScheduleForDates(connection, {
-        serviceProfileId: request.service_profile_id,
+      const conflict = await checkScheduleConflict(connection, {
         providerId: request.provider_id,
-        serviceDates: proposalServiceDates,
-        startTime: proposal.proposed_start_time,
-        durationMinutes: proposedDurationMinutes,
+        requestedStartDate: proposal.proposed_start_date,
+        requestedEndDate: proposal.proposed_end_date,
+        requestedStartTime: proposal.proposed_start_time,
+        requestedDurationMinutes: Number(request.estimated_duration_minutes || 0),
         excludeRequestId: request.id,
       });
 
-      if (!scheduleValidation.ok) {
+      if (conflict.conflict) {
         await connection.rollback();
-        return res.status(scheduleValidation.status).json({
+        return res.status(409).json({
           success: false,
-          message: scheduleValidation.message,
+          message: 'The proposed schedule is no longer available.'
         });
       }
 
-      const durationDays = proposedMode === 'specific_dates'
-        ? Math.max(1, proposalServiceDates.length)
-        : (calculateDurationDays(proposal.proposed_start_date, proposal.proposed_end_date) || 1);
-      const rateSnapshot = Number(request.daily_rate_snapshot || 0);
-      const estimatedTotal = calculateEstimatedTotal({
-        pricingUnit: request.pricing_unit_snapshot || request.pricing_unit || 'per_day',
-        baseRate: rateSnapshot,
-        durationDays,
-        durationMinutes: proposedDurationMinutes,
-      });
-
-      const scheduleEnd = String(request.booking_type || 'one_day') === 'one_day'
-        ? deriveScheduledEnd({
-          startDate: proposal.proposed_start_date,
-          startTime: proposal.proposed_start_time,
-          durationMinutes: proposedDurationMinutes,
-        })
-        : {
-          scheduledStartAt: `${proposal.proposed_start_date} ${proposal.proposed_start_time}`,
-          scheduledEndAt: `${proposal.proposed_end_date} ${proposal.proposed_start_time}`,
-        };
+      const durationDays = calculateDurationDays(proposal.proposed_start_date, proposal.proposed_end_date) || 1;
+      const dailyRateSnapshot = Number(request.daily_rate_snapshot || 0);
+      const estimatedTotal = dailyRateSnapshot * durationDays;
+      const proposedStartAt = `${proposal.proposed_start_date} ${proposal.proposed_start_time}`;
+      const proposedEndAt = `${proposal.proposed_end_date} ${proposal.proposed_start_time}`;
 
       await connection.query(
         `UPDATE service_requests
@@ -1354,27 +1064,19 @@ exports.respondToReschedule = async (req, res) => {
              scheduled_start_at = ?,
              scheduled_end_at = ?,
              duration_days = ?,
-             estimated_duration_minutes = ?,
-             multi_day_mode = ?,
-             requested_dates_count = ?,
              estimated_total = ?
          WHERE id = ?`,
         [
           proposal.proposed_start_date,
           proposal.proposed_end_date,
           proposal.proposed_start_time,
-          scheduleEnd.scheduledStartAt,
-          scheduleEnd.scheduledEndAt,
+          proposedStartAt,
+          proposedEndAt,
           durationDays,
-          proposedDurationMinutes,
-          proposedMode,
-          proposalServiceDates.length,
           estimatedTotal,
           request.id,
         ]
       );
-
-      await persistRequestDates(connection, request.id, proposalServiceDates);
     }
 
     await connection.query(
@@ -1387,16 +1089,11 @@ exports.respondToReschedule = async (req, res) => {
     const proposerId = proposal.proposed_by;
     const responderName = actorId === request.client_id ? request.client_name : request.provider_name;
 
-    const responseNotificationType = action === 'accepted'
-      ? 'reschedule_accepted'
-      : 'reschedule_declined';
-
     await connection.query(
       `INSERT INTO notifications (user_id, type, title, message, related_request_id)
-       VALUES (?, ?, ?, ?, ?)`,
+       VALUES (?, 'discussion_accepted', ?, ?, ?)`,
       [
         proposerId,
-        responseNotificationType,
         `Reschedule ${action}`,
         `${responderName} ${action} the reschedule proposal for "${request.job_title}".`,
         request.id,
@@ -1565,7 +1262,8 @@ exports.getRequestById = async (req, res) => {
               sp.full_name as provider_name,
               sp.barangay_address as provider_location,
               u.phone as provider_phone,
-              c.full_name as client_name
+              c.full_name as client_name,
+              c.email as client_email
        FROM service_requests sr
        JOIN service_profiles sp ON sr.service_profile_id = sp.id
        JOIN users u ON sr.provider_id = u.id
@@ -1588,34 +1286,16 @@ exports.getRequestById = async (req, res) => {
     }
 
     const [reschedules] = await db.query(
-      `SELECT id, proposed_start_date, proposed_end_date, proposed_start_time, proposed_estimated_duration_minutes,
-              proposed_multi_day_mode, proposed_specific_dates_json,
-              proposed_by, reschedule_reason, reschedule_status, created_at, responded_at
+      `SELECT id, proposed_start_date, proposed_end_date, proposed_start_time, proposed_by, reschedule_reason, reschedule_status, created_at, responded_at
        FROM service_request_reschedules
        WHERE service_request_id = ?
        ORDER BY created_at DESC`,
       [requestId]
     );
 
-    const [requestDateRows] = await db.query(
-      `SELECT service_date
-       FROM service_request_dates
-       WHERE service_request_id = ?
-       ORDER BY service_date ASC`,
-      [requestId]
-    );
-
-    request.selected_dates = requestDateRows.map((row) => row.service_date);
-
     res.json({
       success: true,
-      data: {
-        request,
-        reschedules: reschedules.map((entry) => ({
-          ...entry,
-          proposed_specific_dates: parseJsonArray(entry.proposed_specific_dates_json, []),
-        })),
-      }
+      data: { request, reschedules }
     });
   } catch (error) {
     console.error('Get request by ID error:', error);

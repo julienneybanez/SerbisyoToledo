@@ -439,7 +439,16 @@ exports.login = async (req, res) => {
 
     const user = users[0];
 
-    // Check if account is active
+    // Verify password
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid email or password'
+      });
+    }
+
+    // Check if account is active only after password validation succeeds
     if (!user.is_active) {
       return res.status(403).json({
         success: false,
@@ -453,15 +462,6 @@ exports.login = async (req, res) => {
         success: false,
         code: 'EMAIL_NOT_VERIFIED',
         message: 'Please verify your email address before logging in.',
-      });
-    }
-
-    // Verify password
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid email or password'
       });
     }
 

@@ -47,13 +47,6 @@ const SendIcon = () => (
 
 const formatMoney = (amount) => `P${Number(amount || 0).toLocaleString('en-PH', { maximumFractionDigits: 0 })}`;
 
-const pricingUnitLabel = (pricingUnit) => {
-  const normalized = String(pricingUnit || 'per_day').toLowerCase();
-  if (normalized === 'per_job') return 'per job';
-  if (normalized === 'per_hour') return 'per hour';
-  return 'per day';
-};
-
 const SERVICE_KEYWORDS = [
   { keyword: 'plumb', category: 'Plumbing' },
   { keyword: 'electric', category: 'Electrical' },
@@ -129,8 +122,6 @@ const Chatbot = ({ isOpen, onClose }) => {
   ]);
   const [inputValue, setInputValue] = useState('');
   const [isResponding, setIsResponding] = useState(false);
-  const [copiedMessageId, setCopiedMessageId] = useState(null);
-  const [feedbackByMessageId, setFeedbackByMessageId] = useState({});
 
   const suggestions = [
     { emoji: '👋', text: 'What is SerbisyoToledo?' },
@@ -181,6 +172,11 @@ const Chatbot = ({ isOpen, onClose }) => {
         text: "Welcome! I can help you find local service providers, book appointments, or answer questions about our platform. What would you like to do?",
       };
     }
+    if (input.includes('register') || input.includes('provider')) {
+      return {
+        text: "To register as a service provider, click the 'Sign Up' button and select 'Service Provider' option. You'll need to provide your skills, experience, and contact information.",
+      };
+    }
     if (input.includes('faq') || input.includes('help')) {
       return {
         text: 'Here are common topics: 1) How to book a service, 2) Payment methods, 3) Cancellation policy, 4) Provider verification. Which would you like to know more about?',
@@ -212,12 +208,6 @@ const Chatbot = ({ isOpen, onClose }) => {
       }
     }
 
-    if (input.includes('register') || input.includes('provider')) {
-      return {
-        text: "To register as a service provider, click the 'Sign Up' button and select 'Service Provider' option. You'll need to provide your skills, experience, and contact information.",
-      };
-    }
-
     if (input.includes('price') || input.includes('cost')) {
       return {
         text: 'Pricing varies by service and provider. You can see rates on each provider profile. If you share your budget, I can recommend options.',
@@ -231,26 +221,6 @@ const Chatbot = ({ isOpen, onClose }) => {
     return {
       text: "Thanks for your message! I'd be happy to help. Could you tell me more about what you're looking for?",
     };
-  };
-
-  const handleCopyMessage = async (message) => {
-    if (!message?.text) return;
-    try {
-      await navigator.clipboard.writeText(message.text);
-      setCopiedMessageId(message.id);
-      window.setTimeout(() => {
-        setCopiedMessageId((prev) => (prev === message.id ? null : prev));
-      }, 1500);
-    } catch {
-      // Clipboard access may fail in unsupported contexts.
-    }
-  };
-
-  const setFeedback = (messageId, value) => {
-    setFeedbackByMessageId((prev) => ({
-      ...prev,
-      [messageId]: value,
-    }));
   };
 
   const handleKeyPress = (e) => {
@@ -317,7 +287,7 @@ const Chatbot = ({ isOpen, onClose }) => {
                                 <span>{Number(provider.rating || 0).toFixed(1)}★</span>
                               </div>
                               <p>{provider.profession || 'Service Provider'} • {provider.location}</p>
-                              <p>{formatMoney(provider.startingPrice)} {pricingUnitLabel(provider.pricingUnit)}</p>
+                              <p>{formatMoney(provider.dailyRate)} / day</p>
                               <small>
                                 {Array.isArray(provider.languages) && provider.languages.length > 0
                                   ? `Languages: ${provider.languages.join(', ')}`
@@ -337,24 +307,15 @@ const Chatbot = ({ isOpen, onClose }) => {
                     )}
                     {message.sender === 'bot' && (
                       <div className="message-actions">
-                        <button className="message-action-btn" title="Copy" onClick={() => handleCopyMessage(message)}>
+                        <button className="message-action-btn" title="Copy">
                           <CopyIcon />
                         </button>
-                        <button
-                          className={`message-action-btn ${feedbackByMessageId[message.id] === 'up' ? 'active' : ''}`}
-                          title="Helpful"
-                          onClick={() => setFeedback(message.id, 'up')}
-                        >
+                        <button className="message-action-btn" title="Helpful">
                           <ThumbUpIcon />
                         </button>
-                        <button
-                          className={`message-action-btn ${feedbackByMessageId[message.id] === 'down' ? 'active' : ''}`}
-                          title="Not helpful"
-                          onClick={() => setFeedback(message.id, 'down')}
-                        >
+                        <button className="message-action-btn" title="Not helpful">
                           <ThumbDownIcon />
                         </button>
-                        {copiedMessageId === message.id && <span className="message-time">Copied</span>}
                       </div>
                     )}
                   </div>

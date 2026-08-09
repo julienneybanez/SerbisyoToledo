@@ -58,9 +58,9 @@ async function seedAdmin() {
 
     // Admin credentials
     const adminData = {
-      fullName: 'Admin User',
-      email: 'toledoserbisyo@gmail.com',
-      password: 'admin123', // Change this in production!
+      fullName: process.env.ADMIN_FULL_NAME || 'Admin User',
+      email: process.env.ADMIN_EMAIL || 'toledoserbisyo@gmail.com',
+      password: process.env.ADMIN_PASSWORD || 'admin123', // Change this in production!
       userType: 'admin'
     };
 
@@ -74,7 +74,13 @@ async function seedAdmin() {
       // Admin exists, check if user_type needs updating
       if (!existing[0].user_type || existing[0].user_type !== 'admin') {
         await connection.query(
-          'UPDATE users SET user_type = ? WHERE email = ?',
+          `UPDATE users
+           SET user_type = ?,
+               email_verified = TRUE,
+               verification_token = NULL,
+               verification_token_expires = NULL,
+               is_active = TRUE
+           WHERE email = ?`,
           [adminData.userType, adminData.email]
         );
         console.log('\n✅ Admin account user_type updated successfully!');
@@ -83,6 +89,15 @@ async function seedAdmin() {
         console.log(`   Password: (unchanged)`);
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
       } else {
+        await connection.query(
+          `UPDATE users
+           SET email_verified = TRUE,
+               verification_token = NULL,
+               verification_token_expires = NULL,
+               is_active = TRUE
+           WHERE email = ?`,
+          [adminData.email]
+        );
         console.log('⚠️  Admin account already exists and is configured correctly');
         console.log(`   Email: ${adminData.email}`);
       }
@@ -95,8 +110,18 @@ async function seedAdmin() {
 
     // Insert admin user
     await connection.query(
-      `INSERT INTO users (full_name, email, password, user_type, is_verified, is_active) 
-       VALUES (?, ?, ?, ?, true, true)`,
+      `INSERT INTO users (
+         full_name,
+         email,
+         password,
+         user_type,
+         is_verified,
+         email_verified,
+         verification_token,
+         verification_token_expires,
+         is_active
+       )
+       VALUES (?, ?, ?, ?, TRUE, TRUE, NULL, NULL, TRUE)`,
       [adminData.fullName, adminData.email, hashedPassword, adminData.userType]
     );
 

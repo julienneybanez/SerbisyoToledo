@@ -2,37 +2,6 @@
 const isLocalHost = typeof window !== 'undefined' && ['localhost', '127.0.0.1'].includes(window.location.hostname);
 export const API_BASE_URL = import.meta.env.VITE_API_URL || (isLocalHost ? 'http://localhost:5000/api' : '/api');
 
-const isProtectedPath = (pathname) => {
-  if (!pathname) return false;
-  return pathname.startsWith('/dashboard')
-    || pathname.startsWith('/requests')
-    || pathname.startsWith('/notifications')
-    || pathname.startsWith('/client-settings')
-    || pathname.startsWith('/provider-settings')
-    || pathname.startsWith('/admin');
-};
-
-export const clearAuthSession = ({ preserveRedirect = true } = {}) => {
-  const currentPath = typeof window !== 'undefined'
-    ? `${window.location.pathname}${window.location.search || ''}`
-    : '';
-
-  removeToken();
-
-  if (
-    preserveRedirect
-    && typeof window !== 'undefined'
-    && currentPath
-    && isProtectedPath(window.location.pathname)
-  ) {
-    sessionStorage.setItem('redirectAfterLogin', currentPath);
-  }
-
-  if (typeof window !== 'undefined') {
-    window.dispatchEvent(new Event('authChange'));
-  }
-};
-
 // Helper function to handle API responses
 const handleResponse = async (response) => {
   const contentType = response.headers.get('content-type') || '';
@@ -70,13 +39,6 @@ const handleResponse = async (response) => {
   }
 
   if (!response.ok) {
-    const shouldClearSession = response.status === 401
-      || (response.status === 403 && ['ACCOUNT_DISABLED', 'INVALID_TOKEN', 'TOKEN_EXPIRED'].includes(data.code));
-
-    if (shouldClearSession && getToken()) {
-      clearAuthSession();
-    }
-
     throw {
       status: response.status,
       message: data.message || 'An error occurred',
@@ -146,11 +108,10 @@ export const authAPI = {
     if (data.success && data.data) {
       if (data.data.token) {
         setToken(data.data.token);
-        setUser(data.data.user);
-        window.dispatchEvent(new Event('authChange'));
-      } else {
-        removeToken();
       }
+      setUser(data.data.user);
+      // Notify components of auth change
+      window.dispatchEvent(new Event('authChange'));
     }
     
     return data;
@@ -270,7 +231,7 @@ export const authAPI = {
       console.error('Logout API error:', error);
     } finally {
       // Always clear local storage
-      clearAuthSession({ preserveRedirect: false });
+      removeToken();
     }
   },
 
@@ -584,6 +545,7 @@ export const serviceProfileAPI = {
     const params = new URLSearchParams();
     
     if (filters.category) params.append('category', filters.category);
+    if (filters.serviceType) params.append('serviceType', filters.serviceType);
     if (filters.location) params.append('location', filters.location);
     if (filters.minPrice) params.append('minPrice', filters.minPrice);
     if (filters.maxPrice) params.append('maxPrice', filters.maxPrice);
@@ -600,6 +562,18 @@ export const serviceProfileAPI = {
     return handleResponse(response);
   },
 
+  // Get canonical service taxonomy (categories + service types)
+  getTaxonomy: async () => {
+    const response = await fetch(`${API_BASE_URL}/service-profiles/taxonomy`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    return handleResponse(response);
+  },
+
   // Get single profile by ID
   getProfileById: async (id) => {
     const response = await fetch(`${API_BASE_URL}/service-profiles/${id}`, {
@@ -613,23 +587,12 @@ export const serviceProfileAPI = {
   },
 
   // Get available booking slots for a provider/date
-  getAvailableSlots: async (id, {
-    date,
-    duration,
-    bookingType = 'one_day',
-    endDate = null,
-    multiDayMode = 'continuous',
-    selectedDates = [],
-  }) => {
+  getAvailableSlots: async (id, { date, duration, bookingType = 'one_day', endDate = null }) => {
     const params = new URLSearchParams();
     if (date) params.set('date', date);
     if (duration) params.set('duration', String(duration));
     if (bookingType) params.set('bookingType', bookingType);
-    if (multiDayMode) params.set('multiDayMode', multiDayMode);
     if (endDate) params.set('endDate', endDate);
-    if (Array.isArray(selectedDates) && selectedDates.length > 0) {
-      params.set('selectedDates', selectedDates.join(','));
-    }
 
     const response = await fetch(`${API_BASE_URL}/service-profiles/${id}/available-slots?${params.toString()}`, {
       method: 'GET',

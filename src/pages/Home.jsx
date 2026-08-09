@@ -15,25 +15,29 @@ import { useNavigate } from 'react-router-dom';
 import LandingSearch from '../components/common/LandingSearch';
 import HowItWorks from '../components/common/HowItWorks';
 import { useLanguage } from '../context/LanguageContext';
+import useServiceTaxonomy from '../hooks/useServiceTaxonomy';
 
 function Home() {
   const navigate = useNavigate();
   const { t } = useLanguage();
+  const { getCategory } = useServiceTaxonomy();
   const servicesScrollRef = useRef(null);
 
   const trendingServices = [
-    { name: 'Manghihilot', image: masseuse, category: 'Beauty' },
-    { name: 'Electrician', image: electrician, category: 'Electrical' },
-    { name: 'Panday', image: panday, category: 'Carpentry' },
-    { name: 'Tubo', image: tubo, category: 'Plumbing' },
-    { name: 'Cleaning', image: cleaning, category: 'Cleaning' },
-    { name: 'Gardening', image: gardening, category: 'Gardening' },
-    { name: 'Locksmith', image: locksmith, category: 'Repair' },
-    { name: 'Laundry', image: laundry, category: 'Others' },
+    { name: 'Manghihilot', image: masseuse, categoryKey: 'beauty_wellness' },
+    { name: 'Electrician', image: electrician, categoryKey: 'electrical' },
+    { name: 'Panday', image: panday, categoryKey: 'carpentry' },
+    { name: 'Tubo', image: tubo, categoryKey: 'plumbing' },
+    { name: 'Cleaning', image: cleaning, categoryKey: 'cleaning' },
+    { name: 'Gardening', image: gardening, categoryKey: 'gardening_landscaping' },
+    { name: 'Locksmith', image: locksmith, categoryKey: 'locksmith' },
+    { name: 'Laundry', image: laundry, categoryKey: 'laundry' },
   ];
 
-  const openCategory = (category) => {
-    navigate(`/feed?category=${encodeURIComponent(category)}`);
+  const openCategory = (categoryKey) => {
+    const resolved = getCategory(categoryKey);
+    const categoryLabel = resolved?.label || String(categoryKey || '').trim();
+    navigate(`/feed?category=${encodeURIComponent(categoryLabel)}`);
   };
 
   const scrollServicesBy = (direction) => {
@@ -110,7 +114,7 @@ function Home() {
               <div className="feature-card">
                 <div className="feature-icon">
                   <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
-                    <rect width="40" height="40" rx="8" fill="#4A9FF5"/>
+                    <rect width="40" height="40" rx="8" fill="#22B8A5"/>
                     <path d="M20 10L22.5 17.5H30L24 22L26.5 30L20 25L13.5 30L16 22L10 17.5H17.5L20 10Z" fill="white"/>
                   </svg>
                 </div>
@@ -169,7 +173,7 @@ function Home() {
                 key={service.name}
                 type="button"
                 className="service-card"
-                onClick={() => openCategory(service.category)}
+                onClick={() => openCategory(service.categoryKey)}
                 aria-label={t('browseProvidersForService', { service: service.name })}
               >
                 <img src={service.image} alt={`${service.name} service category`} className="service-image non-draggable-image" draggable="false" loading="lazy" />

@@ -1,6 +1,14 @@
 const db = require('../config/database');
 const { parseJsonArray } = require('../utils/jsonHelpers');
 const {
+  toPublicTaxonomy,
+  normalizeCategoryLabels,
+  getCategoryFilterLabels,
+  getServiceTypesForProfile,
+  isLegacyCategoryValue,
+  validateServiceTypeKeysForCategories,
+} = require('../config/serviceTaxonomy');
+const {
   hasCloudinaryConfig,
   uploadImageBuffer,
   deleteImageByPublicId,
@@ -12,25 +20,9 @@ const {
   getAvailableSlotsForDate,
   ensureAvailabilitySettings,
 } = require('../utils/bookingAvailability');
-const {
-  toPublicTaxonomy,
-  normalizeCategoryLabels,
-  isLegacyCategoryValue,
-  validateServiceTypeKeysForCategories,
-} = require('../config/serviceTaxonomy');
 
 const SUPPORTED_LANGUAGE_CODES = new Set(['ceb', 'en', 'fil']);
 const SUPPORTED_PRICING_UNITS = new Set(['per_job', 'per_hour', 'per_day']);
-const SUPPORTED_CREDENTIAL_TYPES = new Set([
-  'professional_license',
-  'tesda_certification',
-  'safety_training',
-  'technical_certification',
-  'government_accreditation',
-  'manufacturer_certification',
-  'training_certificate',
-  'other',
-]);
 const PRESENCE_WINDOW_MINUTES = 5;
 const REVIEW_STATS_JOIN = `
   LEFT JOIN (
@@ -58,6 +50,27 @@ const normalizeLanguageCodes = (payload) => Array.from(
   )
 );
 
+const parseMaybeJsonArray = (value) => {
+  if (Array.isArray(value)) {
+    return value;
+  }
+
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value);
+      return Array.isArray(parsed) ? parsed : [parsed];
+    } catch {
+      return [value];
+    }
+  }
+
+  if (value == null) {
+    return [];
+  }
+
+  return [value];
+};
+
 const applyProviderLanguages = async (serviceProfileId, languageCodes = []) => {
   await db.query('DELETE FROM provider_languages WHERE service_profile_id = ?', [serviceProfileId]);
 
@@ -67,13 +80,6 @@ const applyProviderLanguages = async (serviceProfileId, languageCodes = []) => {
       [serviceProfileId, languageCode]
     );
   }
-};
-
-exports.getTaxonomy = async (_req, res) => {
-  return res.json({
-    success: true,
-    data: toPublicTaxonomy(),
-  });
 };
 
 // Create or update service profile
@@ -96,14 +102,9 @@ exports.createOrUpdateProfile = async (req, res) => {
     let bannerImageUrl = null;
     let bannerImagePublicId = null;
 
-    // Parse serviceCategories if it's a JSON string (from FormData)
-    if (typeof serviceCategories === 'string') {
-      try {
-        serviceCategories = JSON.parse(serviceCategories);
-      } catch {
-        serviceCategories = [serviceCategories];
-      }
-    }
+    serviceCategories = parseMaybeJsonArray(serviceCategories);
+    const serviceTypesProvided = typeof req.body.serviceTypes !== 'undefined';
+    serviceTypes = parseMaybeJsonArray(serviceTypes);
 
     if (typeof languages === 'string') {
       try {
@@ -111,58 +112,6 @@ exports.createOrUpdateProfile = async (req, res) => {
       } catch {
         languages = [languages];
       }
-    }
-
-    if (typeof serviceTypes === 'string') {
-      try {
-        serviceTypes = JSON.parse(serviceTypes);
-      } catch {
-        serviceTypes = [serviceTypes];
-      }
-    }
-
-    const requestedCategories = Array.isArray(serviceCategories) ? serviceCategories : [];
-    if (requestedCategories.some((value) => isLegacyCategoryValue(value))) {
-      return res.status(400).json({
-        success: false,
-        message: 'Legacy category values are no longer supported. Please select a current category.',
-      });
-    }
-
-    const normalizedCategories = normalizeCategoryLabels(requestedCategories, { preserveUnknown: false });
-
-    if (normalizedCategories.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'Please select at least one valid service category.',
-      });
-    }
-
-    const normalizedServiceTypeKeys = Array.from(
-      new Set(
-        (Array.isArray(serviceTypes) ? serviceTypes : [])
-          .map((value) => String(value || '').trim())
-          .filter(Boolean)
-      )
-    );
-
-    const serviceTypeValidation = validateServiceTypeKeysForCategories({
-      serviceTypeKeys: normalizedServiceTypeKeys,
-      categoryLabels: normalizedCategories,
-    });
-
-    if (serviceTypeValidation.invalidKeys.length > 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'One or more selected service types are invalid.',
-      });
-    }
-
-    if (serviceTypeValidation.categoryMismatchKeys.length > 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'Selected service type does not belong to the selected category.',
-      });
     }
 
     const normalizedLanguages = normalizeLanguageCodes(languages);
@@ -180,16 +129,50 @@ exports.createOrUpdateProfile = async (req, res) => {
       });
     }
 
-    const normalizedStartingPrice = Number(startingPrice);
-    if (!Number.isFinite(normalizedStartingPrice) || normalizedStartingPrice <= 0) {
+    const normalizedServiceCategories = normalizeCategoryLabels(serviceCategories, { preserveUnknown: false });
+
+    const hasLegacyRepair = serviceCategories.some((category) => isLegacyCategoryValue(category));
+    if (hasLegacyRepair) {
       return res.status(400).json({
         success: false,
-        message: 'Starting price must be greater than 0',
+        message: 'Repair is a legacy category. Please choose a specific service category.',
+      });
+    }
+
+    if (normalizedServiceCategories.length !== serviceCategories.filter((value) => String(value || '').trim()).length) {
+      return res.status(400).json({
+        success: false,
+        message: 'One or more selected categories are invalid',
+      });
+    }
+    if (normalizedServiceCategories.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'At least one valid service category is required',
+      });
+    }
+
+    const serviceTypeValidation = validateServiceTypeKeysForCategories({
+      categoryLabels: normalizedServiceCategories,
+      serviceTypeKeys: serviceTypes,
+    });
+
+    if (serviceTypeValidation.invalidKeys.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'One or more selected service types are invalid',
+      });
+    }
+
+    if (serviceTypeValidation.categoryMismatchKeys.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Selected service type does not belong to the chosen category',
       });
     }
 
     // Validate required fields
-    if (!fullName || !barangayAddress || !startingPrice || normalizedCategories.length === 0) {
+    if (!fullName || !barangayAddress || !startingPrice || normalizedServiceCategories.length === 0) {
       return res.status(400).json({
         success: false,
         message: 'Missing required fields'
@@ -225,18 +208,22 @@ exports.createOrUpdateProfile = async (req, res) => {
         'starting_price = ?',
         'pricing_unit = ?',
         'service_categories = ?',
-        'service_types = ?',
+        'taxonomy_needs_review = FALSE',
         'description = ?',
       ];
 
       const params = [
         barangayAddress,
-        normalizedStartingPrice,
+        parseFloat(startingPrice),
         pricingUnit,
-        JSON.stringify(normalizedCategories),
-        JSON.stringify(normalizedServiceTypeKeys),
+        JSON.stringify(normalizedServiceCategories),
         description || null
       ];
+
+      if (serviceTypesProvided) {
+        updates.push('service_types = ?');
+        params.push(JSON.stringify(serviceTypeValidation.validKeys));
+      }
 
       if (bannerImageUrl) {
         updates.push('banner_image_url = ?');
@@ -269,15 +256,15 @@ exports.createOrUpdateProfile = async (req, res) => {
       // Create new profile
       const [result] = await db.query(
         `INSERT INTO service_profiles 
-         (user_id, barangay_address, starting_price, pricing_unit, service_categories, service_types, description, banner_image_url, banner_image_public_id) 
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         (user_id, barangay_address, starting_price, pricing_unit, service_categories, service_types, taxonomy_needs_review, description, banner_image_url, banner_image_public_id) 
+         VALUES (?, ?, ?, ?, ?, ?, FALSE, ?, ?, ?)`,
         [
           userId,
           barangayAddress,
-          normalizedStartingPrice,
+          parseFloat(startingPrice),
           pricingUnit,
-          JSON.stringify(normalizedCategories),
-          JSON.stringify(normalizedServiceTypeKeys),
+          JSON.stringify(normalizedServiceCategories),
+          serviceTypesProvided ? JSON.stringify(serviceTypeValidation.validKeys) : null,
           description || null,
           bannerImageUrl,
           bannerImagePublicId,
@@ -329,7 +316,15 @@ exports.createOrUpdateProfile = async (req, res) => {
 // Get all published service profiles
 exports.getAllProfiles = async (req, res) => {
   try {
-    const { category, location, minPrice, maxPrice, minRating, search } = req.query;
+    const {
+      category,
+      serviceType,
+      location,
+      minPrice,
+      maxPrice,
+      minRating,
+      search,
+    } = req.query;
 
     let query = `
       SELECT 
@@ -341,6 +336,8 @@ exports.getAllProfiles = async (req, res) => {
         sp.starting_price,
         sp.pricing_unit,
         sp.service_categories,
+        sp.service_types,
+        sp.taxonomy_needs_review,
         sp.description,
         sp.banner_image_url,
         COALESCE(review_stats.rating, 0) AS rating,
@@ -353,7 +350,6 @@ exports.getAllProfiles = async (req, res) => {
       JOIN users u ON sp.user_id = u.id
       ${REVIEW_STATS_JOIN}
       WHERE sp.is_published = TRUE
-        AND u.is_active = TRUE
     `;
 
     const params = [];
@@ -385,8 +381,18 @@ exports.getAllProfiles = async (req, res) => {
     }
 
     if (category && category !== 'All') {
-      query += ' AND JSON_CONTAINS(sp.service_categories, ?)';
-      params.push(JSON.stringify(category));
+      const categoryLabels = getCategoryFilterLabels(category);
+      if (categoryLabels.length > 0) {
+        query += ` AND (${categoryLabels.map(() => 'JSON_CONTAINS(sp.service_categories, ?)').join(' OR ')})`;
+        for (const label of categoryLabels) {
+          params.push(JSON.stringify(label));
+        }
+      }
+    }
+
+    if (serviceType) {
+      query += ' AND JSON_CONTAINS(sp.service_types, ?)';
+      params.push(JSON.stringify(String(serviceType).trim()));
     }
 
     query += ' ORDER BY COALESCE(review_stats.rating, 0) DESC, COALESCE(review_stats.reviews_count, 0) DESC';
@@ -395,7 +401,12 @@ exports.getAllProfiles = async (req, res) => {
 
     // Format response
     const formattedProfiles = profiles.map(profile => {
-      const categories = parseJsonArray(profile.service_categories, []);
+      const categories = normalizeCategoryLabels(parseJsonArray(profile.service_categories, []), { preserveUnknown: true });
+      const serviceTypeKeys = parseJsonArray(profile.service_types, []);
+      const serviceTypes = getServiceTypesForProfile({
+        categoryLabels: categories,
+        serviceTypeKeys,
+      });
       const skills = parseJsonArray(profile.skills, []);
 
       return {
@@ -407,13 +418,16 @@ exports.getAllProfiles = async (req, res) => {
         pricingUnit: profile.pricing_unit || 'per_day',
         description: profile.description,
         image: profile.banner_image_url || null,
-        tags: [...skills, ...categories],
+        tags: [...skills, ...serviceTypes.map((item) => item.label), ...categories],
+        skills,
         rating: parseFloat(profile.rating),
         reviews: profile.reviews_count,
         online: deriveOnlineFromLastSeen(profile.last_seen_at),
         verified: Boolean(profile.is_verified),
         profession: profile.profession,
         categories,
+        serviceTypes,
+        taxonomyNeedsReview: Boolean(profile.taxonomy_needs_review),
       };
     });
 
@@ -482,6 +496,8 @@ exports.getRecommendedProviders = async (req, res) => {
         sp.starting_price,
         sp.pricing_unit,
         sp.service_categories,
+        sp.service_types,
+        sp.taxonomy_needs_review,
         sp.description,
         sp.banner_image_url,
         COALESCE(review_stats.rating, 0) AS rating,
@@ -493,7 +509,6 @@ exports.getRecommendedProviders = async (req, res) => {
       JOIN users u ON sp.user_id = u.id
       ${REVIEW_STATS_JOIN}
       WHERE sp.is_published = TRUE
-        AND u.is_active = TRUE
     `;
 
     const params = [];
@@ -519,8 +534,13 @@ exports.getRecommendedProviders = async (req, res) => {
     }
 
     if (category && category !== 'All') {
-      query += ' AND JSON_CONTAINS(sp.service_categories, ?)';
-      params.push(JSON.stringify(category));
+      const categoryLabels = getCategoryFilterLabels(category);
+      if (categoryLabels.length > 0) {
+        query += ` AND (${categoryLabels.map(() => 'JSON_CONTAINS(sp.service_categories, ?)').join(' OR ')})`;
+        for (const label of categoryLabels) {
+          params.push(JSON.stringify(label));
+        }
+      }
     }
 
     if (normalizedLanguage) {
@@ -558,7 +578,12 @@ exports.getRecommendedProviders = async (req, res) => {
         [profile.id]
       );
 
-      const categories = parseJsonArray(profile.service_categories, []);
+      const categories = normalizeCategoryLabels(parseJsonArray(profile.service_categories, []), { preserveUnknown: true });
+      const serviceTypeKeys = parseJsonArray(profile.service_types, []);
+      const serviceTypes = getServiceTypesForProfile({
+        categoryLabels: categories,
+        serviceTypeKeys,
+      });
       const skills = parseJsonArray(profile.skills, []);
 
       recommended.push({
@@ -570,13 +595,16 @@ exports.getRecommendedProviders = async (req, res) => {
         pricingUnit: profile.pricing_unit || 'per_day',
         description: profile.description,
         image: profile.banner_image_url || null,
-        tags: [...skills, ...categories],
+        tags: [...skills, ...serviceTypes.map((item) => item.label), ...categories],
+        skills,
         rating: parseFloat(profile.rating),
         reviews: profile.reviews_count,
         online: deriveOnlineFromLastSeen(profile.last_seen_at),
         verified: Boolean(profile.is_verified),
         profession: profile.profession,
         categories,
+        serviceTypes,
+        taxonomyNeedsReview: Boolean(profile.taxonomy_needs_review),
         languages: languageRows.map((row) => row.language_code),
       });
     }
@@ -621,9 +649,7 @@ exports.getProfileById = async (req, res) => {
       FROM service_profiles sp
       JOIN users u ON sp.user_id = u.id
       ${REVIEW_STATS_JOIN}
-      WHERE sp.id = ?
-        AND sp.is_published = TRUE
-        AND u.is_active = TRUE`,
+      WHERE sp.id = ? AND sp.is_published = TRUE`,
       [id]
     );
 
@@ -715,22 +741,6 @@ exports.getProfileById = async (req, res) => {
       }
     }
 
-    let availabilitySettings = null;
-    try {
-      const [settingsRows] = await db.query(
-        `SELECT allow_same_day_booking, min_advance_notice_minutes, max_advance_booking_days
-         FROM provider_availability_settings
-         WHERE service_profile_id = ?
-         LIMIT 1`,
-        [id]
-      );
-      availabilitySettings = settingsRows[0] || null;
-    } catch (availabilityError) {
-      if (!['ER_NO_SUCH_TABLE', 'ER_BAD_FIELD_ERROR'].includes(availabilityError.code)) {
-        throw availabilityError;
-      }
-    }
-
     // Format portfolio items
     const formattedPortfolio = portfolioItems.map(item => ({
       id: item.id,
@@ -753,7 +763,12 @@ exports.getProfileById = async (req, res) => {
       comment: review.comment
     }));
 
-    const categories = parseJsonArray(profile.service_categories, []);
+    const categories = normalizeCategoryLabels(parseJsonArray(profile.service_categories, []), { preserveUnknown: true });
+    const serviceTypeKeys = parseJsonArray(profile.service_types, []);
+    const serviceTypes = getServiceTypesForProfile({
+      categoryLabels: categories,
+      serviceTypeKeys,
+    });
     const skills = parseJsonArray(profile.skills, []);
 
     const formattedProfile = {
@@ -763,21 +778,21 @@ exports.getProfileById = async (req, res) => {
       location: profile.barangay_address,
       startingPrice: parseFloat(profile.starting_price),
       pricingUnit: profile.pricing_unit || 'per_day',
-      allowSameDayBooking: Boolean(availabilitySettings?.allow_same_day_booking),
-      minAdvanceNoticeMinutes: Number(availabilitySettings?.min_advance_notice_minutes || 720),
-      maxAdvanceBookingDays: Number(availabilitySettings?.max_advance_booking_days || 60),
       description: profile.description,
       aboutMe: profile.about_me,
       responseTime: profile.response_time || 'Within 24 hours',
       jobsCompleted: profile.jobs_completed || 0,
       image: profile.banner_image_url || null,
-      tags: [...skills, ...categories],
+      tags: [...skills, ...serviceTypes.map((item) => item.label), ...categories],
+      skills,
       rating: parseFloat(profile.rating),
       reviewsCount: profile.reviews_count,
       online: deriveOnlineFromLastSeen(profile.last_seen_at),
       verified: Boolean(profile.is_verified),
       profession: profile.profession,
       categories,
+      serviceTypes,
+      taxonomyNeedsReview: Boolean(profile.taxonomy_needs_review),
       isPublished: Boolean(profile.is_published),
       languages: languages.map((row) => row.language_code),
       credentials: credentialRows.map((credential) => {
@@ -858,7 +873,12 @@ exports.getMyProfile = async (req, res) => {
     }
 
     const profile = profiles[0];
-    const categories = parseJsonArray(profile.service_categories, []);
+    const categories = normalizeCategoryLabels(parseJsonArray(profile.service_categories, []), { preserveUnknown: true });
+    const serviceTypeKeys = parseJsonArray(profile.service_types, []);
+    const serviceTypes = getServiceTypesForProfile({
+      categoryLabels: categories,
+      serviceTypeKeys,
+    });
     const skills = parseJsonArray(profile.skills, []);
     const [languages] = await db.query(
       'SELECT language_code FROM provider_languages WHERE service_profile_id = ? ORDER BY language_code',
@@ -874,13 +894,16 @@ exports.getMyProfile = async (req, res) => {
       pricingUnit: profile.pricing_unit || 'per_day',
       description: profile.description,
       image: profile.banner_image_url || null,
-      tags: [...skills, ...categories],
+      tags: [...skills, ...serviceTypes.map((item) => item.label), ...categories],
+      skills,
       rating: parseFloat(profile.rating),
       reviews: profile.reviews_count,
       online: deriveOnlineFromLastSeen(profile.last_seen_at),
       verified: Boolean(profile.is_verified),
       profession: profile.profession,
       categories,
+      serviceTypes,
+      taxonomyNeedsReview: Boolean(profile.taxonomy_needs_review),
       languages: languages.map((row) => row.language_code),
       isPublished: Boolean(profile.is_published),
       email: profile.email,
@@ -1217,14 +1240,7 @@ exports.getAvailableSlots = async (req, res) => {
     const date = String(req.query.date || '').trim();
     const duration = Number(req.query.duration || 120);
     const bookingType = String(req.query.bookingType || 'one_day');
-    const multiDayMode = String(req.query.multiDayMode || 'continuous');
     const endDate = String(req.query.endDate || date).trim();
-    const selectedDates = Array.from(new Set(
-      String(req.query.selectedDates || '')
-        .split(',')
-        .map((value) => value.trim())
-        .filter(Boolean)
-    )).sort();
 
     if (!serviceProfileId || !date) {
       return res.status(400).json({
@@ -1245,89 +1261,73 @@ exports.getAvailableSlots = async (req, res) => {
     connection = await db.getConnection();
 
     const [profiles] = await connection.query(
-      `SELECT sp.id, sp.user_id AS provider_id, sp.is_published, u.is_active
+      `SELECT sp.id, sp.user_id AS provider_id, sp.is_published
        FROM service_profiles sp
-       JOIN users u ON u.id = sp.user_id
        WHERE sp.id = ?
        LIMIT 1`,
       [serviceProfileId]
     );
 
-    if (profiles.length === 0 || !profiles[0].is_published || !profiles[0].is_active) {
+    if (profiles.length === 0 || !profiles[0].is_published) {
       return res.status(404).json({
         success: false,
         message: 'Service profile not found'
       });
     }
 
-    if (bookingType !== 'multi_day') {
-      const baseSlots = await getAvailableSlotsForDate(connection, {
-        serviceProfileId,
-        providerId: profiles[0].provider_id,
-        date: formatDateOnly(parsedStart),
-        durationMinutes: duration,
-        slotStepMinutes: 60,
-      });
+    const baseSlots = await getAvailableSlotsForDate(connection, {
+      serviceProfileId,
+      providerId: profiles[0].provider_id,
+      date: formatDateOnly(parsedStart),
+      durationMinutes: duration,
+      slotStepMinutes: 60,
+    });
 
+    if (bookingType !== 'multi_day') {
       return res.json({
         success: true,
         data: {
           date: formatDateOnly(parsedStart),
-          multiDayMode: 'continuous',
           slots: baseSlots,
         }
       });
     }
 
-    let dates = [];
-    if (multiDayMode === 'specific_dates') {
-      const validated = selectedDates.filter((value) => Boolean(parseDateOnly(value)));
-      if (validated.length === 0) {
-        return res.status(400).json({
-          success: false,
-          message: 'selectedDates is required when multiDayMode is specific_dates',
+    const dates = [];
+    for (let cursor = new Date(parsedStart); cursor <= parsedEnd; cursor.setUTCDate(cursor.getUTCDate() + 1)) {
+      dates.push(formatDateOnly(cursor));
+    }
+
+    const multiDaySlots = [];
+
+    for (const slot of baseSlots) {
+      let validAcrossRange = true;
+
+      for (const day of dates) {
+        const daySlots = await getAvailableSlotsForDate(connection, {
+          serviceProfileId,
+          providerId: profiles[0].provider_id,
+          date: day,
+          durationMinutes: duration,
+          slotStepMinutes: 60,
         });
+
+        if (!daySlots.some((candidate) => candidate.time === slot.time)) {
+          validAcrossRange = false;
+          break;
+        }
       }
-      dates = validated;
-    } else {
-      for (let cursor = new Date(parsedStart); cursor <= parsedEnd; cursor.setUTCDate(cursor.getUTCDate() + 1)) {
-        dates.push(formatDateOnly(cursor));
+
+      if (validAcrossRange) {
+        multiDaySlots.push(slot);
       }
     }
-
-    const anchorDate = dates[0];
-    const baseSlots = await getAvailableSlotsForDate(connection, {
-      serviceProfileId,
-      providerId: profiles[0].provider_id,
-      date: anchorDate,
-      durationMinutes: duration,
-      slotStepMinutes: 60,
-    });
-
-    // Load each day once, then intersect by slot time.
-    const slotsByDay = new Map();
-    for (const day of dates) {
-      const daySlots = await getAvailableSlotsForDate(connection, {
-        serviceProfileId,
-        providerId: profiles[0].provider_id,
-        date: day,
-        durationMinutes: duration,
-        slotStepMinutes: 60,
-      });
-      slotsByDay.set(day, new Set(daySlots.map((candidate) => candidate.time)));
-    }
-
-    const multiDaySlots = baseSlots.filter((slot) => (
-      dates.every((day) => slotsByDay.get(day)?.has(slot.time))
-    ));
 
     return res.json({
       success: true,
       data: {
-        date: anchorDate,
-        endDate: dates[dates.length - 1],
-        multiDayMode: multiDayMode === 'specific_dates' ? 'specific_dates' : 'continuous',
-        selectedDates: dates,
+        date: formatDateOnly(parsedStart),
+        endDate: formatDateOnly(parsedEnd),
         slots: multiDaySlots,
       }
     });
@@ -1381,15 +1381,14 @@ exports.getAvailableDates = async (req, res) => {
     connection = await db.getConnection();
 
     const [profiles] = await connection.query(
-      `SELECT sp.id, sp.user_id AS provider_id, sp.is_published, u.is_active
+      `SELECT sp.id, sp.user_id AS provider_id, sp.is_published
        FROM service_profiles sp
-       JOIN users u ON u.id = sp.user_id
        WHERE sp.id = ?
        LIMIT 1`,
       [serviceProfileId]
     );
 
-    if (profiles.length === 0 || !profiles[0].is_published || !profiles[0].is_active) {
+    if (profiles.length === 0 || !profiles[0].is_published) {
       return res.status(404).json({
         success: false,
         message: 'Service profile not found',
@@ -1522,7 +1521,7 @@ exports.saveMyAvailability = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Invalid minimum advance notice' });
     }
 
-    if (maxAdvanceDays < 1 || maxAdvanceDays > 180) {
+    if (maxAdvanceDays < 1 || maxAdvanceDays > 365) {
       await connection.rollback();
       return res.status(400).json({ success: false, message: 'Invalid maximum advance booking days' });
     }
@@ -1958,47 +1957,7 @@ exports.createCredential = async (req, res) => {
 
     const serviceProfileId = profiles[0].id;
     const payload = req.body;
-    const credentialName = String(payload.credentialName || '').trim();
-    const credentialType = String(payload.credentialType || '').trim();
-    const issuingOrganization = String(payload.issuingOrganization || '').trim();
-    const credentialUrl = String(payload.credentialUrl || '').trim();
-    const doesNotExpire = Boolean(payload.doesNotExpire);
     const relatedSkills = Array.isArray(payload.relatedSkills) ? payload.relatedSkills : [];
-
-    if (!credentialName || !credentialType || !issuingOrganization) {
-      return res.status(400).json({ success: false, message: 'Credential name, type, and issuing organization are required' });
-    }
-
-    if (!SUPPORTED_CREDENTIAL_TYPES.has(credentialType)) {
-      return res.status(400).json({ success: false, message: 'Unsupported credential type' });
-    }
-
-    if (credentialUrl) {
-      try {
-        const parsedUrl = new URL(credentialUrl);
-        if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
-          throw new Error('invalid protocol');
-        }
-      } catch {
-        return res.status(400).json({ success: false, message: 'Credential URL must be a valid http(s) URL' });
-      }
-    }
-
-    if (payload.issueDate && Number.isNaN(Date.parse(payload.issueDate))) {
-      return res.status(400).json({ success: false, message: 'Invalid issue date' });
-    }
-
-    if (!doesNotExpire && payload.expirationDate && Number.isNaN(Date.parse(payload.expirationDate))) {
-      return res.status(400).json({ success: false, message: 'Invalid expiration date' });
-    }
-
-    if (!doesNotExpire && payload.issueDate && payload.expirationDate) {
-      const issueDate = new Date(payload.issueDate);
-      const expirationDate = new Date(payload.expirationDate);
-      if (expirationDate < issueDate) {
-        return res.status(400).json({ success: false, message: 'Expiration date cannot be earlier than issue date' });
-      }
-    }
 
     let documentUrl = null;
     let documentPublicId = null;
@@ -2044,14 +2003,14 @@ exports.createCredential = async (req, res) => {
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'unverified', NULL)`,
       [
         serviceProfileId,
-        credentialName,
-        credentialType,
-        issuingOrganization,
+        String(payload.credentialName || '').trim(),
+        String(payload.credentialType || '').trim(),
+        String(payload.issuingOrganization || '').trim(),
         String(payload.credentialId || '').trim() || null,
         payload.issueDate || null,
-        doesNotExpire ? null : (payload.expirationDate || null),
-        doesNotExpire,
-        credentialUrl || null,
+        payload.doesNotExpire ? null : (payload.expirationDate || null),
+        Boolean(payload.doesNotExpire),
+        String(payload.credentialUrl || '').trim() || null,
         JSON.stringify(relatedSkills),
         documentUrl,
         documentPublicId,
@@ -2097,4 +2056,11 @@ exports.submitCredentialForReview = async (req, res) => {
     console.error('Error submitting credential:', error);
     return res.status(500).json({ success: false, message: 'Failed to submit credential' });
   }
+};
+
+exports.getTaxonomy = async (_req, res) => {
+  return res.json({
+    success: true,
+    data: toPublicTaxonomy(),
+  });
 };
