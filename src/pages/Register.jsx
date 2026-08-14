@@ -3,7 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { authAPI } from '../services/api';
 import RoleSelectionCards from '../components/common/RoleSelectionCards';
 import { useLanguage } from '../context/LanguageContext';
-import electrician from '../assets/electrician.png';
+import registerServiceImage from '../assets/electric.jpg';
 import logo from '../assets/logo.png';
 
 const LANGUAGE_OPTIONS = [
@@ -14,7 +14,8 @@ const LANGUAGE_OPTIONS = [
 
 const Register = () => {
   const navigate = useNavigate();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const registerHeading = language === 'en' ? 'Create your account' : t('createYourAccount');
   const [searchParams] = useSearchParams();
   const [userType, setUserType] = useState('client');
   const [showPassword, setShowPassword] = useState(false);
@@ -115,11 +116,11 @@ const Register = () => {
               alt="SerbisyoToledo logo"
               width="84"
               height="84"
-              className="auth-page-logo non-draggable-image d-block mx-auto mb-3"
+              className="auth-page-logo non-draggable-image"
               draggable="false"
             />
-            <p className="auth-eyebrow text-center">SerbisyoToledo</p>
-            <h1 id="register-title">{t('createYourAccount')}</h1>
+            <p className="auth-eyebrow auth-brand-wordmark">SerbisyoToledo</p>
+            <h1 id="register-title">{registerHeading}</h1>
             <p>{t('footerTagline')}</p>
           </div>
 
@@ -209,7 +210,12 @@ const Register = () => {
         </div>
 
         <aside className="auth-visual-pane auth-register-visual-pane" aria-label="SerbisyoToledo service providers">
-          <img src={electrician} alt="Local electrician providing a home service" className="auth-visual-image non-draggable-image" draggable="false" />
+          <img
+            src={registerServiceImage}
+            alt="Electrician working with electrical wiring"
+            className="auth-visual-image auth-register-visual-image non-draggable-image"
+            draggable="false"
+          />
           <div className="auth-visual-overlay">
             <p>{t('howProviderCta')}</p>
             <span>{t('howProviderStep2Description')}</span>

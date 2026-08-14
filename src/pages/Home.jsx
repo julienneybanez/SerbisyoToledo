@@ -1,4 +1,5 @@
 import carpenter from '../assets/carpenter.jpg';
+import heroCarpentry from '../assets/carpentry.jpg';
 import electrician from '../assets/electrician.png';
 import plumber from '../assets/plumber.jpg';
 import cleaning from '../assets/cleaning.jpg';
@@ -70,31 +71,24 @@ function Home() {
                 {t('feedSubtitle')}
               </p>
 
-              <div className="home-hero-actions">
-                <button
-                  type="button"
-                  className="btn btn-primary home-primary-cta"
-                  onClick={() => navigate('/feed')}
-                >
-                  <i className="bi bi-search" aria-hidden="true"></i>
-                  {t('findServices')}
-                </button>
+              <LandingSearch />
+
+              <div className="home-hero-secondary-action">
                 <button
                   type="button"
                   className="btn home-secondary-cta"
                   onClick={() => navigate('/register?role=provider')}
                 >
+                  <i className="bi bi-tools" aria-hidden="true"></i>
                   {t('howProviderCta')}
                 </button>
               </div>
-
-              <LandingSearch />
             </div>
 
             <figure className="home-hero-visual">
               <img
-                src={carpenter}
-                alt="Local carpenter working on a home service project"
+                src={heroCarpentry}
+                alt="Two local carpentry workers measuring and building a wooden frame"
                 className="home-hero-image non-draggable-image"
                 draggable="false"
               />

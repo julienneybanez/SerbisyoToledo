@@ -2,12 +2,14 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { authAPI } from '../services/api';
 import { useLanguage } from '../context/LanguageContext';
-import cleaning from '../assets/cleaning.jpg';
+import loginServiceImage from '../assets/man-installs-heating-system-house-checks-pipes-with-wrench.jpg';
 import logo from '../assets/logo.png';
 
 const Login = () => {
   const navigate = useNavigate();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const loginHeading = language === 'en' ? 'Welcome back' : t('logIn');
+  const loginSubtitle = language === 'en' ? 'Log in to your account' : t('loginSubtitle');
   const [showPassword, setShowPassword] = useState(false);
   const [loginAs, setLoginAs] = useState('client');
   const [isLoading, setIsLoading] = useState(false);
@@ -75,12 +77,12 @@ const Login = () => {
               alt="SerbisyoToledo logo"
               width="84"
               height="84"
-              className="auth-page-logo non-draggable-image d-block mx-auto mb-3"
+              className="auth-page-logo non-draggable-image"
               draggable="false"
             />
-            <p className="auth-eyebrow text-center">SerbisyoToledo</p>
-            <h1 id="login-title">{t('logIn')}</h1>
-            <p>{t('loginSubtitle')}</p>
+            <p className="auth-eyebrow auth-brand-wordmark">SerbisyoToledo</p>
+            <h1 id="login-title">{loginHeading}</h1>
+            <p>{loginSubtitle}</p>
           </div>
 
           {error && (
@@ -184,9 +186,9 @@ const Login = () => {
 
         <aside className="auth-visual-pane" aria-label="SerbisyoToledo local services">
           <img
-            src={cleaning}
-            alt="Local cleaning service in a home"
-            className="auth-visual-image non-draggable-image"
+            src={loginServiceImage}
+            alt="Service professional in a blue hard hat working on home piping equipment"
+            className="auth-visual-image auth-login-visual-image non-draggable-image"
             draggable="false"
           />
           <div className="auth-visual-overlay">

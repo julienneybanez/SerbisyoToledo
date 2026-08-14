@@ -1,8 +1,24 @@
 import { useLanguage } from '../../context/LanguageContext';
 import './HowItWorks.css';
 
+const COMPARE_PROVIDER_COPY = {
+  en: {
+    title: 'Compare Providers',
+    description: 'Compare services, profiles, availability, location, and reviews.',
+  },
+  ceb: {
+    title: 'Ikumpara ang mga Provider',
+    description: 'Ikumpara ang mga serbisyo, profile, availability, lokasyon, ug reviews.',
+  },
+  fil: {
+    title: 'Ihambing ang mga Provider',
+    description: 'Ihambing ang mga serbisyo, profile, availability, lokasyon, at reviews.',
+  },
+};
+
 export default function HowItWorks() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const compareCopy = COMPARE_PROVIDER_COPY[language] || COMPARE_PROVIDER_COPY.en;
 
   const steps = [
     {
@@ -11,9 +27,9 @@ export default function HowItWorks() {
       description: t('howClientStep2Description'),
     },
     {
-      icon: 'bi-person-check',
-      title: t('viewProfile'),
-      description: t('feedSubtitle'),
+      icon: 'bi-people',
+      title: compareCopy.title,
+      description: compareCopy.description,
     },
     {
       icon: 'bi-calendar2-check',
