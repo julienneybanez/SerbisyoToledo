@@ -78,7 +78,7 @@ const Login = () => {
               className="auth-page-logo non-draggable-image d-block mx-auto mb-3"
               draggable="false"
             />
-            <p className="auth-eyebrow">SerbisyoToledo</p>
+            <p className="auth-eyebrow text-center">SerbisyoToledo</p>
             <h1 id="login-title">{t('logIn')}</h1>
             <p>{t('loginSubtitle')}</p>
           </div>

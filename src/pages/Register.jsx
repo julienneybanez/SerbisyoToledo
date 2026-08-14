@@ -118,7 +118,7 @@ const Register = () => {
               className="auth-page-logo non-draggable-image d-block mx-auto mb-3"
               draggable="false"
             />
-            <p className="auth-eyebrow">SerbisyoToledo</p>
+            <p className="auth-eyebrow text-center">SerbisyoToledo</p>
             <h1 id="register-title">{t('createYourAccount')}</h1>
             <p>{t('footerTagline')}</p>
           </div>
