@@ -3,8 +3,6 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { authAPI } from '../services/api';
 import RoleSelectionCards from '../components/common/RoleSelectionCards';
 import { useLanguage } from '../context/LanguageContext';
-import logo from '../assets/logo.png';
-import '../styles/App.css';
 
 const LANGUAGE_OPTIONS = [
   { value: 'ceb', label: 'Cebuano' },
@@ -45,10 +43,10 @@ const Register = () => {
     }
   }, [searchParams]);
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
+  const handleInputChange = (event) => {
+    const { name, value } = event.target;
     setFormData({ ...formData, [name]: value });
-    setError(''); // Clear error when user types
+    setError('');
   };
 
   const handleAddSkill = () => {
@@ -59,21 +57,21 @@ const Register = () => {
   };
 
   const handleRemoveSkill = (skillToRemove) => {
-    setSkills(skills.filter(skill => skill !== skillToRemove));
+    setSkills(skills.filter((skill) => skill !== skillToRemove));
   };
 
   const handleToggleLanguage = (languageCode) => {
-    setLanguages((prev) => {
-      if (prev.includes(languageCode)) {
-        return prev.filter((code) => code !== languageCode);
+    setLanguages((previous) => {
+      if (previous.includes(languageCode)) {
+        return previous.filter((code) => code !== languageCode);
       }
 
-      return [...prev, languageCode];
+      return [...previous, languageCode];
     });
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (event) => {
+    event.preventDefault();
     setError('');
     setSuccess('');
     setIsLoading(true);
@@ -89,10 +87,9 @@ const Register = () => {
         fullName: formData.fullName,
         email: formData.email,
         password: formData.password,
-        userType: userType,
+        userType,
       };
 
-      // Add fields for service provider
       if (userType === 'tradesperson') {
         if (formData.profession) {
           registrationData.profession = formData.profession;
@@ -106,10 +103,9 @@ const Register = () => {
       }
 
       const response = await authAPI.register(registrationData);
-      
+
       setSuccess(t('registrationSuccessRedirecting'));
-      
-      // Redirect to login when registration requires email verification (no token issued).
+
       setTimeout(() => {
         if (response?.data?.token) {
           if (userType === 'tradesperson') {
@@ -121,7 +117,6 @@ const Register = () => {
           navigate('/login');
         }
       }, 1500);
-      
     } catch (err) {
       console.error('Registration error:', err);
       setError(err.message || t('registrationFailedTryAgain'));
@@ -131,215 +126,195 @@ const Register = () => {
   };
 
   return (
-    <div className="gradient-container auth-page-shell">
-      <div className="container d-flex justify-content-center align-items-center min-vh-100 py-4">
-        <div className="card content-card shadow-lg auth-page-card">
-          <div className="card-body p-4 auth-card-body">
-            {/* Logo and Header */}
-            <div className="text-center mb-4">
-              <img src={logo} alt="SerbisyoToledo" className="logo-img non-draggable-image" draggable="false" />
-              <h1 className="app-title mb-2">
-                Serbisyo<span className="title-green">Toledo</span>
-              </h1>
-              <p className="subtitle text-muted">{t('createYourAccount')}</p>
+    <section className="auth-page auth-page-register" aria-labelledby="register-title">
+      <div className="auth-card auth-register-card">
+        <div className="auth-heading auth-heading-centered">
+          <p className="auth-eyebrow">SerbisyoToledo</p>
+          <h1 id="register-title">{t('createYourAccount')}</h1>
+          <p>{t('footerTagline')}</p>
+        </div>
+
+        {error && (
+          <div className="alert alert-danger auth-alert" role="alert">
+            {error}
+          </div>
+        )}
+
+        {success && (
+          <div className="alert alert-success auth-alert" role="status">
+            {success}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="auth-form">
+          <RoleSelectionCards value={userType} onChange={setUserType} />
+
+          <div className="auth-two-column">
+            <div className="auth-field">
+              <label htmlFor="register-full-name" className="form-label">{t('fullName')}</label>
+              <input
+                id="register-full-name"
+                type="text"
+                name="fullName"
+                placeholder={t('fullNamePlaceholder')}
+                value={formData.fullName}
+                onChange={handleInputChange}
+                className="form-control"
+                autoComplete="name"
+                required
+              />
             </div>
+            <div className="auth-field">
+              <label htmlFor="register-email" className="form-label">{t('emailAddress')}</label>
+              <input
+                id="register-email"
+                type="email"
+                name="email"
+                placeholder={t('loginEmailPlaceholder')}
+                value={formData.email}
+                onChange={handleInputChange}
+                className="form-control"
+                autoComplete="email"
+                required
+              />
+            </div>
+          </div>
 
-            {/* Error Alert */}
-            {error && (
-              <div className="alert alert-danger py-2 mb-3" role="alert">
-                {error}
+          <div className="auth-field">
+            <label htmlFor="register-password" className="form-label">{t('password')}</label>
+            <div className="password-input-wrapper">
+              <input
+                id="register-password"
+                type={showPassword ? 'text' : 'password'}
+                name="password"
+                placeholder={t('createStrongPassword')}
+                value={formData.password}
+                onChange={handleInputChange}
+                className="form-control"
+                autoComplete="new-password"
+                required
+              />
+              <button
+                type="button"
+                className="password-toggle"
+                onClick={() => setShowPassword((visible) => !visible)}
+                aria-label={t('togglePasswordVisibility')}
+              >
+                <i className={`bi ${showPassword ? 'bi-eye-slash' : 'bi-eye'}`} aria-hidden="true"></i>
+              </button>
+            </div>
+          </div>
+
+          {userType === 'tradesperson' && (
+            <section className="professional-details" aria-labelledby="professional-details-title">
+              <div className="professional-details-heading">
+                <div>
+                  <p className="auth-section-kicker">{t('serviceProvider')}</p>
+                  <h2 id="professional-details-title">{t('professionalDetails')}</h2>
+                </div>
+                <i className="bi bi-tools" aria-hidden="true"></i>
               </div>
-            )}
 
-            {/* Success Alert */}
-            {success && (
-              <div className="alert alert-success py-2 mb-3" role="alert">
-                {success}
+              <div className="auth-field">
+                <label htmlFor="register-profession" className="form-label">{t('profession')}</label>
+                <input
+                  id="register-profession"
+                  type="text"
+                  name="profession"
+                  placeholder={t('professionPlaceholder')}
+                  value={formData.profession}
+                  onChange={handleInputChange}
+                  className="form-control"
+                />
               </div>
-            )}
 
-            <form onSubmit={handleSubmit}>
-              <RoleSelectionCards value={userType} onChange={setUserType} />
-
-              {/* Full Name and Email */}
-              <div className="row mb-3">
-                <div className="col-md-6 mb-3 mb-md-0">
-                  <label className="form-label">{t('fullName')}</label>
+              <div className="auth-field">
+                <label htmlFor="register-skill" className="form-label">{t('skillsAndSpecializations')}</label>
+                <div className="skill-input-group">
                   <input
+                    id="register-skill"
                     type="text"
-                    name="fullName"
-                    placeholder={t('fullNamePlaceholder')}
-                    value={formData.fullName}
-                    onChange={handleInputChange}
+                    placeholder={t('addSkillPlaceholder')}
+                    value={currentSkill}
+                    onChange={(event) => setCurrentSkill(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter') {
+                        event.preventDefault();
+                        handleAddSkill();
+                      }
+                    }}
                     className="form-control"
-                    required
-                  />
-                </div>
-                <div className="col-md-6">
-                  <label className="form-label">{t('emailAddress')}</label>
-                  <input
-                    type="email"
-                    name="email"
-                    placeholder={t('loginEmailPlaceholder')}
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    className="form-control"
-                    required
-                  />
-                </div>
-              </div>
-
-              {/* Password */}
-              <div className="mb-3">
-                <label className="form-label">{t('password')}</label>
-                <div className="password-input-wrapper">
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    name="password"
-                    placeholder={t('createStrongPassword')}
-                    value={formData.password}
-                    onChange={handleInputChange}
-                    className="form-control"
-                    required
                   />
                   <button
                     type="button"
-                    className="password-toggle"
-                    onClick={() => setShowPassword(!showPassword)}
-                    aria-label={t('togglePasswordVisibility')}
+                    className="add-skill-btn"
+                    onClick={handleAddSkill}
+                    aria-label="Add skill"
                   >
-                    {showPassword ? (
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
-                        <line x1="1" y1="1" x2="23" y2="23"></line>
-                      </svg>
-                    ) : (
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                        <circle cx="12" cy="12" r="3"></circle>
-                      </svg>
-                    )}
+                    <i className="bi bi-plus-lg" aria-hidden="true"></i>
                   </button>
                 </div>
-              </div>
 
-              {/* Conditional Fields based on User Type */}
-              {userType === 'tradesperson' && (
-                /* Professional Details for Service Provider */
-                <div className="professional-details mb-4">
-                  <h3>{t('professionalDetails')}</h3>
-                  
-                  <div className="mb-3">
-                    <label className="form-label">{t('profession')}</label>
-                    <input
-                      type="text"
-                      name="profession"
-                      placeholder={t('professionPlaceholder')}
-                      value={formData.profession}
-                      onChange={handleInputChange}
-                      className="form-control"
-                    />
+                {skills.length > 0 && (
+                  <div className="skill-tags" aria-label="Selected skills">
+                    {skills.map((skill) => (
+                      <span key={skill} className="skill-tag">
+                        {skill}
+                        <button
+                          type="button"
+                          className="skill-tag-remove"
+                          onClick={() => handleRemoveSkill(skill)}
+                          aria-label={`Remove ${skill}`}
+                        >
+                          <i className="bi bi-x" aria-hidden="true"></i>
+                        </button>
+                      </span>
+                    ))}
                   </div>
-
-                  <div className="mb-3">
-                    <label className="form-label">{t('skillsAndSpecializations')}</label>
-                    <div className="skill-input-group">
-                      <input
-                        type="text"
-                        placeholder={t('addSkillPlaceholder')}
-                        value={currentSkill}
-                        onChange={(e) => setCurrentSkill(e.target.value)}
-                        onKeyPress={(e) => {
-                          if (e.key === 'Enter') {
-                            e.preventDefault();
-                            handleAddSkill();
-                          }
-                        }}
-                        className="form-control"
-                      />
-                      <button
-                        type="button"
-                        className="add-skill-btn"
-                        onClick={handleAddSkill}
-                      >
-                        +
-                      </button>
-                    </div>
-                    
-                    {skills.length > 0 && (
-                      <div className="skill-tags">
-                        {skills.map((skill, index) => (
-                          <div key={index} className="skill-tag">
-                            {skill}
-                            <button
-                              type="button"
-                              className="skill-tag-remove"
-                              onClick={() => handleRemoveSkill(skill)}
-                            >
-                              ×
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="mb-3">
-                    <label className="form-label">{t('languagesSpoken')}</label>
-                    <div className="d-flex flex-wrap gap-2">
-                      {LANGUAGE_OPTIONS.map((option) => (
-                        <label key={option.value} className="d-inline-flex align-items-center gap-2 border rounded-pill px-3 py-2" style={{ cursor: 'pointer' }}>
-                          <input
-                            type="checkbox"
-                            checked={languages.includes(option.value)}
-                            onChange={() => handleToggleLanguage(option.value)}
-                          />
-                          <span>{option.label}</span>
-                        </label>
-                      ))}
-                    </div>
-                    <small className="text-muted d-block mt-2">
-                      {t('languagesSpokenHelp')}
-                    </small>
-                  </div>
-                </div>
-              )}
-
-              {/* Submit Button */}
-              <button 
-                type="submit" 
-                className="btn btn-primary w-100 mb-3"
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <>
-                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                    {t('creatingAccount')}
-                  </>
-                ) : (
-                  t('createAccount')
                 )}
-              </button>
-
-              {/* Login Link */}
-              <div className="text-center">
-                <p className="footer-text mb-0">
-                  {t('alreadyHaveAccount')}{' '}
-                  <Link to="/login" className="link">{t('loginHere')}</Link>
-                </p>
               </div>
-            </form>
 
-            {/* Back to Home */}
-            <div className="text-center mt-4">
-              <Link to="/" className="back-link text-decoration-none">
-                {t('backToHome')}
-              </Link>
-            </div>
-          </div>
-        </div>
+              <div className="auth-field">
+                <span className="form-label d-block">{t('languagesSpoken')}</span>
+                <div className="auth-language-options">
+                  {LANGUAGE_OPTIONS.map((option) => (
+                    <label key={option.value} className="auth-language-option">
+                      <input
+                        type="checkbox"
+                        checked={languages.includes(option.value)}
+                        onChange={() => handleToggleLanguage(option.value)}
+                      />
+                      <span>{option.label}</span>
+                    </label>
+                  ))}
+                </div>
+                <small className="auth-help-text">{t('languagesSpokenHelp')}</small>
+              </div>
+            </section>
+          )}
+
+          <button
+            type="submit"
+            className="btn btn-primary auth-submit"
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <>
+                <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                {t('creatingAccount')}
+              </>
+            ) : (
+              t('createAccount')
+            )}
+          </button>
+
+          <p className="auth-switch-copy">
+            {t('alreadyHaveAccount')}{' '}
+            <Link to="/login">{t('loginHere')}</Link>
+          </p>
+        </form>
       </div>
-    </div>
+    </section>
   );
 };
 

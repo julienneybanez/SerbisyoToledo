@@ -1,8 +1,9 @@
-import { Routes, Route, useLocation } from 'react-router-dom';
+import { Outlet, Route, Routes, useLocation } from 'react-router-dom';
 import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react';
 import './styles/App.css';
 import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
+import AuthLayout from './components/layout/AuthLayout';
 import MobileTopBar from './components/mobile/MobileTopBar';
 import MobileBottomNav from './components/mobile/MobileBottomNav';
 import EditProfileModal from './components/common/EditProfileModal';
@@ -274,14 +275,7 @@ function App() {
   );
   const shouldLiftChatbotButton = isMobileAuthenticated && location.pathname.startsWith('/provider/');
   const isMobileShellLayout = isMobileViewport;
-  const hideChatbotOnRoute = (
-    location.pathname === '/login'
-    || location.pathname === '/register'
-    || location.pathname === '/about'
-    || location.pathname === '/forgot-password'
-    || location.pathname.startsWith('/reset-password')
-    || location.pathname === '/verify-email'
-  );
+  const hideChatbotOnRoute = location.pathname === '/about';
 
   const mobileRole = currentUser?.userType || 'guest';
   const mobileSettingsRoute = mobileRole === 'tradesperson' ? '/provider-settings' : '/client-settings';
@@ -307,6 +301,106 @@ function App() {
     <div className="text-center py-4">Loading...</div>
   );
 
+  const publicShell = (
+    <div className={`app ${isMobileShellLayout ? 'mobile-shell-layout' : ''} ${isMobileAuthenticated ? 'mobile-auth-layout' : ''}`}>
+      {isMobileShellLayout && (
+        <MobileTopBar
+          user={currentUser}
+          role={mobileRole}
+          profileRoute={providerPublicProfileRoute}
+          settingsRoute={mobileSettingsRoute}
+          onLogout={handleMobileLogout}
+          profileMenuOpen={mobileProfileMenuOpen}
+          onToggleProfileMenu={handleToggleMobileProfileMenu}
+          onCloseProfileMenu={handleCloseMobileProfileMenu}
+          onEditClientProfile={() => {
+            setMobileProfileMenuOpen(false);
+            setShowMobileEditProfile(true);
+          }}
+          hasServiceProfile={hasServiceProfile}
+          onEditProviderProfile={() => {
+            setMobileProfileMenuOpen(false);
+            setShowMobileEditPortfolio(true);
+          }}
+          onManageServiceProfile={() => {
+            setMobileProfileMenuOpen(false);
+            setShowMobileServiceProfile(true);
+          }}
+          onRequestVerification={() => {
+            setMobileProfileMenuOpen(false);
+            setShowMobileVerificationRequest(true);
+          }}
+          onPreviewProfile={() => {
+            setMobileProfileMenuOpen(false);
+            const separator = providerPublicProfileRoute.includes('?') ? '&' : '?';
+            window.location.assign(`${providerPublicProfileRoute}${separator}previewMode=mobile`);
+          }}
+        />
+      )}
+
+      <div className={isMobileShellLayout ? 'desktop-navbar-hidden' : ''}>
+        <Navbar />
+      </div>
+
+      <main className={`main-content ${isMobileShellLayout ? 'mobile-page-content' : ''} ${isMobileAuthenticated ? 'authenticated-page-content' : ''}`}>
+        <Outlet />
+      </main>
+
+      {isMobileShellLayout && (
+        <MobileBottomNav
+          role={mobileRole}
+          profileMenuOpen={mobileProfileMenuOpen}
+          onProfileTap={mobileProfileMenuOpen ? handleCloseMobileProfileMenu : handleOpenMobileProfileMenu}
+        />
+      )}
+
+      <Footer className={isMobileAuthenticated ? 'mobile-footer-minimized' : ''} />
+
+      {!hideChatbotOnRoute && (
+        <>
+          <button
+            className={`floating-btn ${shouldLiftChatbotButton ? 'floating-btn-avoid-sticky' : ''}`.trim()}
+            onClick={() => setIsChatbotOpen(true)}
+            aria-label="Open chat support"
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+          </button>
+
+          <Chatbot isOpen={isChatbotOpen} onClose={() => setIsChatbotOpen(false)} />
+        </>
+      )}
+
+      {showMobileEditProfile && (
+        <EditProfileModal
+          onClose={() => setShowMobileEditProfile(false)}
+          onProfileUpdated={() => {
+            setShowMobileEditProfile(false);
+          }}
+        />
+      )}
+
+      {showMobileEditPortfolio && (
+        <EditPortfolioModal
+          onClose={() => setShowMobileEditPortfolio(false)}
+        />
+      )}
+
+      {showMobileServiceProfile && (
+        <ServiceProfileModal
+          onClose={() => setShowMobileServiceProfile(false)}
+        />
+      )}
+
+      {showMobileVerificationRequest && (
+        <VerificationRequestModal
+          onClose={() => setShowMobileVerificationRequest(false)}
+        />
+      )}
+    </div>
+  );
+
   return (
     <>
       <Suspense fallback={appLoadingFallback}>
@@ -328,156 +422,62 @@ function App() {
             <Route path="settings" element={<AdminSettings />} />
           </Route>
 
-          {/* Public Routes - With regular Navbar/Footer */}
-          <Route path="/*" element={
-            <div className={`app ${isMobileShellLayout ? 'mobile-shell-layout' : ''} ${isMobileAuthenticated ? 'mobile-auth-layout' : ''}`}>
-              {isMobileShellLayout && (
-                <MobileTopBar
-                  user={currentUser}
-                  role={mobileRole}
-                  profileRoute={providerPublicProfileRoute}
-                  settingsRoute={mobileSettingsRoute}
-                  onLogout={handleMobileLogout}
-                  profileMenuOpen={mobileProfileMenuOpen}
-                  onToggleProfileMenu={handleToggleMobileProfileMenu}
-                  onCloseProfileMenu={handleCloseMobileProfileMenu}
-                  onEditClientProfile={() => {
-                    setMobileProfileMenuOpen(false);
-                    setShowMobileEditProfile(true);
-                  }}
-                  hasServiceProfile={hasServiceProfile}
-                  onEditProviderProfile={() => {
-                    setMobileProfileMenuOpen(false);
-                    setShowMobileEditPortfolio(true);
-                  }}
-                  onManageServiceProfile={() => {
-                    setMobileProfileMenuOpen(false);
-                    setShowMobileServiceProfile(true);
-                  }}
-                  onRequestVerification={() => {
-                    setMobileProfileMenuOpen(false);
-                    setShowMobileVerificationRequest(true);
-                  }}
-                  onPreviewProfile={() => {
-                    setMobileProfileMenuOpen(false);
-                    const separator = providerPublicProfileRoute.includes('?') ? '&' : '?';
-                    window.location.assign(`${providerPublicProfileRoute}${separator}previewMode=mobile`);
-                  }}
-                />
+          {/* Authentication Routes - Focused layout without public navigation/footer */}
+          <Route element={<AuthLayout />}>
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password/:token" element={<ResetPassword />} />
+            <Route path="/verify-email" element={<VerifyEmail />} />
+          </Route>
+
+          {/* Public and authenticated user routes - Existing application shell preserved */}
+          <Route element={publicShell}>
+            <Route path="/" element={<Home />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/feed" element={<Feed />} />
+            <Route
+              path="/notifications"
+              element={(
+                <ProtectedRoute allowedRoles={['client', 'tradesperson', 'admin']}>
+                  <Notifications />
+                </ProtectedRoute>
               )}
-
-              <div className={isMobileShellLayout ? 'desktop-navbar-hidden' : ''}>
-                <Navbar />
-              </div>
-
-              <main className={`main-content ${isMobileShellLayout ? 'mobile-page-content' : ''} ${isMobileAuthenticated ? 'authenticated-page-content' : ''}`}>
-                <Routes>
-                  <Route path="/" element={<Home />} />
-                  <Route path="/about" element={<About />} />
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/register" element={<Register />} />
-                  <Route path="/forgot-password" element={<ForgotPassword />} />
-                  <Route path="/reset-password/:token" element={<ResetPassword />} />
-                  <Route path="/verify-email" element={<VerifyEmail />} />
-                  <Route path="/feed" element={<Feed />} />
-                  <Route
-                    path="/notifications"
-                    element={(
-                      <ProtectedRoute allowedRoles={['client', 'tradesperson', 'admin']}>
-                        <Notifications />
-                      </ProtectedRoute>
-                    )}
-                  />
-                  <Route
-                    path="/dashboard"
-                    element={(
-                      <ProtectedRoute allowedRoles={['tradesperson']}>
-                        <ServiceProviderDashboard />
-                      </ProtectedRoute>
-                    )}
-                  />
-                  <Route path="/provider/:id" element={<ServiceProviderPortfolio />} />
-                  <Route
-                    path="/requests"
-                    element={(
-                      <ProtectedRoute allowedRoles={['client', 'tradesperson']}>
-                        <Requests />
-                      </ProtectedRoute>
-                    )}
-                  />
-                  <Route
-                    path="/client-settings"
-                    element={(
-                      <ProtectedRoute allowedRoles={['client']}>
-                        <ClientSettings />
-                      </ProtectedRoute>
-                    )}
-                  />
-                  <Route
-                    path="/provider-settings"
-                    element={(
-                      <ProtectedRoute allowedRoles={['tradesperson']}>
-                        <ServiceProviderSettings />
-                      </ProtectedRoute>
-                    )}
-                  />
-                </Routes>
-              </main>
-
-              {isMobileShellLayout && (
-                <MobileBottomNav
-                  role={mobileRole}
-                  profileMenuOpen={mobileProfileMenuOpen}
-                  onProfileTap={mobileProfileMenuOpen ? handleCloseMobileProfileMenu : handleOpenMobileProfileMenu}
-                />
+            />
+            <Route
+              path="/dashboard"
+              element={(
+                <ProtectedRoute allowedRoles={['tradesperson']}>
+                  <ServiceProviderDashboard />
+                </ProtectedRoute>
               )}
-              
-              <Footer className={isMobileAuthenticated ? 'mobile-footer-minimized' : ''} />
-              
-              {!hideChatbotOnRoute && (
-                <>
-                  <button 
-                    className={`floating-btn ${shouldLiftChatbotButton ? 'floating-btn-avoid-sticky' : ''}`.trim()}
-                    onClick={() => setIsChatbotOpen(true)}
-                    aria-label="Open chat support"
-                  >
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                    </svg>
-                  </button>
-
-                  <Chatbot isOpen={isChatbotOpen} onClose={() => setIsChatbotOpen(false)} />
-                </>
+            />
+            <Route path="/provider/:id" element={<ServiceProviderPortfolio />} />
+            <Route
+              path="/requests"
+              element={(
+                <ProtectedRoute allowedRoles={['client', 'tradesperson']}>
+                  <Requests />
+                </ProtectedRoute>
               )}
-
-              {showMobileEditProfile && (
-                <EditProfileModal
-                  onClose={() => setShowMobileEditProfile(false)}
-                  onProfileUpdated={() => {
-                    setShowMobileEditProfile(false);
-                  }}
-                />
+            />
+            <Route
+              path="/client-settings"
+              element={(
+                <ProtectedRoute allowedRoles={['client']}>
+                  <ClientSettings />
+                </ProtectedRoute>
               )}
-
-              {showMobileEditPortfolio && (
-                <EditPortfolioModal
-                  onClose={() => setShowMobileEditPortfolio(false)}
-                />
+            />
+            <Route
+              path="/provider-settings"
+              element={(
+                <ProtectedRoute allowedRoles={['tradesperson']}>
+                  <ServiceProviderSettings />
+                </ProtectedRoute>
               )}
-
-              {showMobileServiceProfile && (
-                <ServiceProfileModal
-                  onClose={() => setShowMobileServiceProfile(false)}
-                />
-              )}
-
-              {showMobileVerificationRequest && (
-                <VerificationRequestModal
-                  onClose={() => setShowMobileVerificationRequest(false)}
-                />
-              )}
-            </div>
-          } />
+            />
+          </Route>
         </Routes>
       </Suspense>
 

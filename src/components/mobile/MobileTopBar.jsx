@@ -122,14 +122,25 @@ export default function MobileTopBar({
 
       <div className="mobile-topbar-actions">
         {!isLoggedIn && (
-          <button
-            type="button"
-            className="mobile-topbar-icon-btn mobile-theme-icon-btn"
-            onClick={toggleTheme}
-            aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-          >
-            <i className={`bi ${isDark ? 'bi-sun-fill' : 'bi-moon-stars-fill'}`}></i>
-          </button>
+          <>
+            <select
+              className="mobile-profile-language-select"
+              value={language}
+              onChange={(event) => setLanguage(event.target.value)}
+              aria-label={t('language')}
+            >
+              <option value="en">EN</option>
+              <option value="ceb">CEB</option>
+            </select>
+            <button
+              type="button"
+              className="mobile-topbar-icon-btn mobile-theme-icon-btn"
+              onClick={toggleTheme}
+              aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+            >
+              <i className={`bi ${isDark ? 'bi-sun-fill' : 'bi-moon-stars-fill'}`}></i>
+            </button>
+          </>
         )}
         {isLoggedIn && (
           <>

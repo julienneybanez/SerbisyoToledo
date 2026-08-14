@@ -2,22 +2,19 @@
    FOOTER STYLES
    =================================== */
 .footer {
-  background: var(--gradient-brand-deep, linear-gradient(125deg, #153a72 0%, #0f5f73 100%)) !important;
+  background: #133149 !important;
   position: relative;
   overflow: hidden;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.footer::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(circle at 15% 20%, rgba(255, 255, 255, 0.22), transparent 34%);
-  pointer-events: none;
+[data-theme='dark'] .footer {
+  background: #0b2133 !important;
 }
 
 .footer a {
   text-decoration: none;
-  transition: color 0.3s, opacity 0.3s;
+  transition: color 0.2s ease, opacity 0.2s ease;
 }
 
 .footer a:hover {
@@ -25,8 +22,7 @@
 }
 
 .footer-muted-text {
-  color: rgba(255, 255, 255, 0.9);
-  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.12);
+  color: rgba(255, 255, 255, 0.86);
 }
 
 .footer-grid {
@@ -55,7 +51,7 @@
 
 .footer-link {
   display: block;
-  color: rgba(255, 255, 255, 0.95);
+  color: rgba(255, 255, 255, 0.92);
   margin-bottom: 0.35rem;
   font-weight: 500;
 }
@@ -77,7 +73,7 @@
 }
 
 .footer-bottom-row {
-  border-top: 1px solid rgba(255, 255, 255, 0.24);
+  border-top: 1px solid rgba(255, 255, 255, 0.18);
   margin-top: 1rem;
   padding-top: 0.75rem;
   position: relative;
@@ -86,7 +82,7 @@
 
 [data-theme='dark'] .footer-muted-text,
 [data-theme='dark'] .footer-link {
-  color: rgba(255, 255, 255, 0.94);
+  color: rgba(255, 255, 255, 0.92);
 }
 
 .footer-logo-static {
@@ -99,8 +95,8 @@
   display: inline-block;
   width: 30px;
   height: 30px;
-  background-color: rgba(255, 255, 255, 0.24);
-  border: 1px solid rgba(255, 255, 255, 0.28);
+  background-color: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.24);
   border-radius: 50%;
   text-align: center;
   line-height: 30px;

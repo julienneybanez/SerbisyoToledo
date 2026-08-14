@@ -2,8 +2,6 @@ import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { authAPI } from '../services/api';
 import { useLanguage } from '../context/LanguageContext';
-import logo from '../assets/logo.png';
-import '../styles/App.css';
 
 const ResetPassword = () => {
   const { token } = useParams();
@@ -19,14 +17,14 @@ const ResetPassword = () => {
     confirmPassword: '',
   });
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+  const handleInputChange = (event) => {
+    const { name, value } = event.target;
+    setFormData((previous) => ({ ...previous, [name]: value }));
     setError('');
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (event) => {
+    event.preventDefault();
     setError('');
     setSuccess('');
 
@@ -57,111 +55,101 @@ const ResetPassword = () => {
   };
 
   return (
-    <div className="gradient-container">
-      <div className="container d-flex justify-content-center align-items-center min-vh-100 py-5">
-        <div className="card content-card shadow-lg">
-          <div className="card-body p-4 p-md-5">
-            <div className="text-center mb-4">
-              <img src={logo} alt="SerbisyoToledo" className="logo-img" />
-              <h1 className="app-title mb-2">
-                Serbisyo<span className="title-green">Toledo</span>
-              </h1>
-              <p className="subtitle text-muted">{t('resetYourPassword')}</p>
-            </div>
+    <section className="auth-page auth-page-compact" aria-labelledby="reset-password-title">
+      <div className="auth-card auth-compact-card">
+        <div className="auth-heading">
+          <p className="auth-eyebrow">SerbisyoToledo</p>
+          <h1 id="reset-password-title">{t('resetPassword')}</h1>
+          <p>{t('resetYourPassword')}</p>
+        </div>
 
-            {error && (
-              <div className="alert alert-danger py-2 mb-3" role="alert">
-                {error}
-              </div>
-            )}
+        {error && (
+          <div className="alert alert-danger auth-alert" role="alert">
+            {error}
+          </div>
+        )}
 
-            {success && (
-              <div className="alert alert-success py-2 mb-3" role="alert">
-                {success}
-              </div>
-            )}
+        {success && (
+          <div className="alert alert-success auth-alert" role="status">
+            {success}
+          </div>
+        )}
 
-            <form onSubmit={handleSubmit}>
-              <div className="mb-3">
-                <label className="form-label">{t('newPassword')}</label>
-                <div className="password-input-wrapper">
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    name="password"
-                    value={formData.password}
-                    onChange={handleInputChange}
-                    className="form-control"
-                    placeholder={t('enterNewPassword')}
-                    minLength={6}
-                    required
-                  />
-                  <button
-                    type="button"
-                    className="password-toggle"
-                    onClick={() => setShowPassword(!showPassword)}
-                    aria-label={t('togglePasswordVisibility')}
-                  >
-                    {showPassword ? t('hide') : t('show')}
-                  </button>
-                </div>
-              </div>
-
-              <div className="mb-4">
-                <label className="form-label">{t('confirmNewPassword')}</label>
-                <div className="password-input-wrapper">
-                  <input
-                    type={showConfirmPassword ? 'text' : 'password'}
-                    name="confirmPassword"
-                    value={formData.confirmPassword}
-                    onChange={handleInputChange}
-                    className="form-control"
-                    placeholder={t('confirmNewPassword')}
-                    minLength={6}
-                    required
-                  />
-                  <button
-                    type="button"
-                    className="password-toggle"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    aria-label={t('toggleConfirmPasswordVisibility')}
-                  >
-                    {showConfirmPassword ? t('hide') : t('show')}
-                  </button>
-                </div>
-              </div>
-
+        <form onSubmit={handleSubmit} className="auth-form">
+          <div className="auth-field">
+            <label htmlFor="reset-password" className="form-label">{t('newPassword')}</label>
+            <div className="password-input-wrapper">
+              <input
+                id="reset-password"
+                type={showPassword ? 'text' : 'password'}
+                name="password"
+                value={formData.password}
+                onChange={handleInputChange}
+                className="form-control"
+                placeholder={t('enterNewPassword')}
+                autoComplete="new-password"
+                minLength={6}
+                required
+              />
               <button
-                type="submit"
-                className="btn btn-primary w-100 mb-3"
-                disabled={isLoading}
+                type="button"
+                className="password-toggle password-toggle-text"
+                onClick={() => setShowPassword((visible) => !visible)}
+                aria-label={t('togglePasswordVisibility')}
               >
-                {isLoading ? (
-                  <>
-                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                    {t('updatingPassword')}
-                  </>
-                ) : (
-                  t('resetPassword')
-                )}
+                {showPassword ? t('hide') : t('show')}
               </button>
-            </form>
-
-            <div className="text-center">
-              <p className="footer-text mb-0">
-              {t('backTo')}{' '}
-              <Link to="/login" className="link">{t('logIn')}</Link>
-              </p>
-            </div>
-
-            <div className="text-center mt-4">
-              <Link to="/" className="back-link text-decoration-none">
-                {t('backToHome')}
-              </Link>
             </div>
           </div>
-        </div>
+
+          <div className="auth-field">
+            <label htmlFor="reset-confirm-password" className="form-label">{t('confirmNewPassword')}</label>
+            <div className="password-input-wrapper">
+              <input
+                id="reset-confirm-password"
+                type={showConfirmPassword ? 'text' : 'password'}
+                name="confirmPassword"
+                value={formData.confirmPassword}
+                onChange={handleInputChange}
+                className="form-control"
+                placeholder={t('confirmNewPassword')}
+                autoComplete="new-password"
+                minLength={6}
+                required
+              />
+              <button
+                type="button"
+                className="password-toggle password-toggle-text"
+                onClick={() => setShowConfirmPassword((visible) => !visible)}
+                aria-label={t('toggleConfirmPasswordVisibility')}
+              >
+                {showConfirmPassword ? t('hide') : t('show')}
+              </button>
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            className="btn btn-primary auth-submit"
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <>
+                <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                {t('updatingPassword')}
+              </>
+            ) : (
+              t('resetPassword')
+            )}
+          </button>
+        </form>
+
+        <p className="auth-switch-copy">
+          {t('backTo')}{' '}
+          <Link to="/login">{t('logIn')}</Link>
+        </p>
       </div>
-    </div>
+    </section>
   );
 };
 
