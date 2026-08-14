@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { authAPI } from '../services/api';
 import { useLanguage } from '../context/LanguageContext';
-import caregiver from '../assets/caregiver.jpg';
+import cleaning from '../assets/cleaning.jpg';
 import logo from '../assets/logo.png';
 
 const Login = () => {
@@ -73,7 +73,9 @@ const Login = () => {
             <img
               src={logo}
               alt="SerbisyoToledo logo"
-              className="auth-page-logo non-draggable-image"
+              width="84"
+              height="84"
+              className="auth-page-logo non-draggable-image d-block mx-auto mb-3"
               draggable="false"
             />
             <p className="auth-eyebrow">SerbisyoToledo</p>
@@ -182,8 +184,8 @@ const Login = () => {
 
         <aside className="auth-visual-pane" aria-label="SerbisyoToledo local services">
           <img
-            src={caregiver}
-            alt="Local caregiver providing a home service"
+            src={cleaning}
+            alt="Local cleaning service in a home"
             className="auth-visual-image non-draggable-image"
             draggable="false"
           />

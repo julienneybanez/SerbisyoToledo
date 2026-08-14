@@ -93,8 +93,8 @@ function Home() {
 
             <figure className="home-hero-visual">
               <img
-                src={carpenter}
-                alt="Local carpenter working on a home service project"
+                src={gardening}
+                alt="Local gardening service for a home in the community"
                 className="home-hero-image non-draggable-image"
                 draggable="false"
               />

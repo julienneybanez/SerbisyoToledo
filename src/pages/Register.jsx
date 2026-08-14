@@ -3,7 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { authAPI } from '../services/api';
 import RoleSelectionCards from '../components/common/RoleSelectionCards';
 import { useLanguage } from '../context/LanguageContext';
-import carpenter from '../assets/carpenter.jpg';
+import electrician from '../assets/electrician.png';
 import logo from '../assets/logo.png';
 
 const LANGUAGE_OPTIONS = [
@@ -113,7 +113,9 @@ const Register = () => {
             <img
               src={logo}
               alt="SerbisyoToledo logo"
-              className="auth-page-logo non-draggable-image"
+              width="84"
+              height="84"
+              className="auth-page-logo non-draggable-image d-block mx-auto mb-3"
               draggable="false"
             />
             <p className="auth-eyebrow">SerbisyoToledo</p>
@@ -207,7 +209,7 @@ const Register = () => {
         </div>
 
         <aside className="auth-visual-pane auth-register-visual-pane" aria-label="SerbisyoToledo service providers">
-          <img src={carpenter} alt="Local carpenter providing a home service" className="auth-visual-image non-draggable-image" draggable="false" />
+          <img src={electrician} alt="Local electrician providing a home service" className="auth-visual-image non-draggable-image" draggable="false" />
           <div className="auth-visual-overlay">
             <p>{t('howProviderCta')}</p>
             <span>{t('howProviderStep2Description')}</span>
