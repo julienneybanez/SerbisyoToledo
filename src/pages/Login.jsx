@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { authAPI } from '../services/api';
 import { useLanguage } from '../context/LanguageContext';
 import caregiver from '../assets/caregiver.jpg';
+import logo from '../assets/logo.png';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -69,6 +70,12 @@ const Login = () => {
       <div className="auth-split-card">
         <div className="auth-form-pane">
           <div className="auth-heading">
+            <img
+              src={logo}
+              alt="SerbisyoToledo logo"
+              className="auth-page-logo non-draggable-image"
+              draggable="false"
+            />
             <p className="auth-eyebrow">SerbisyoToledo</p>
             <h1 id="login-title">{t('logIn')}</h1>
             <p>{t('loginSubtitle')}</p>

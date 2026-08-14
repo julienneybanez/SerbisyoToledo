@@ -1,0 +1,71 @@
+/* Focused follow-up fixes for the public homepage and authentication pages. */
+
+.auth-page-logo {
+  width: 72px;
+  height: 72px;
+  display: block;
+  object-fit: contain;
+  margin: 0 0 0.85rem;
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  background: var(--color-surface);
+}
+
+.auth-page-register {
+  background: linear-gradient(
+    120deg,
+    color-mix(in srgb, var(--brand-primary) 5%, var(--color-page-bg)),
+    var(--color-page-bg)
+  );
+}
+
+.auth-register-split-card {
+  min-height: 700px;
+  grid-template-columns: minmax(0, 1.08fr) minmax(340px, 0.92fr);
+}
+
+.auth-register-form-pane {
+  justify-content: flex-start;
+}
+
+.auth-register-visual-pane .auth-visual-image {
+  min-height: 100%;
+}
+
+.home-primary-cta {
+  column-gap: 0.72rem;
+}
+
+.home-primary-cta i {
+  display: inline-flex;
+  margin-right: 0.08rem;
+}
+
+[data-theme='dark'] .home-secondary-cta {
+  background: var(--color-surface-secondary);
+  border-color: var(--color-border-strong);
+  color: var(--color-text-primary) !important;
+}
+
+[data-theme='dark'] .home-secondary-cta:hover,
+[data-theme='dark'] .home-secondary-cta:focus-visible {
+  background: color-mix(in srgb, var(--brand-primary) 12%, var(--color-surface-secondary));
+  border-color: color-mix(in srgb, var(--brand-primary) 58%, var(--color-border));
+  color: var(--color-text-primary) !important;
+}
+
+@media (max-width: 991.98px) {
+  .auth-register-split-card {
+    max-width: 620px;
+    min-height: auto;
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 639.98px) {
+  .auth-page-logo {
+    width: 60px;
+    height: 60px;
+    border-radius: 14px;
+  }
+}

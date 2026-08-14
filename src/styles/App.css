@@ -20,3 +20,6 @@
 /* Component styles */
 @import '../components/common/BookingModal.css';
 @import '../components/mobile/mobile.css';
+
+/* Small public/auth refinements */
+@import './PublicUiFixes.css';

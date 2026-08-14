@@ -3,6 +3,8 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { authAPI } from '../services/api';
 import RoleSelectionCards from '../components/common/RoleSelectionCards';
 import { useLanguage } from '../context/LanguageContext';
+import carpenter from '../assets/carpenter.jpg';
+import logo from '../assets/logo.png';
 
 const LANGUAGE_OPTIONS = [
   { value: 'ceb', label: 'Cebuano' },
@@ -32,15 +34,8 @@ const Register = () => {
 
   useEffect(() => {
     const requestedRole = (searchParams.get('role') || '').toLowerCase();
-
-    if (requestedRole === 'client') {
-      setUserType('client');
-      return;
-    }
-
-    if (requestedRole === 'provider') {
-      setUserType('tradesperson');
-    }
+    if (requestedRole === 'client') setUserType('client');
+    if (requestedRole === 'provider') setUserType('tradesperson');
   }, [searchParams]);
 
   const handleInputChange = (event) => {
@@ -61,13 +56,9 @@ const Register = () => {
   };
 
   const handleToggleLanguage = (languageCode) => {
-    setLanguages((previous) => {
-      if (previous.includes(languageCode)) {
-        return previous.filter((code) => code !== languageCode);
-      }
-
-      return [...previous, languageCode];
-    });
+    setLanguages((previous) => previous.includes(languageCode)
+      ? previous.filter((code) => code !== languageCode)
+      : [...previous, languageCode]);
   };
 
   const handleSubmit = async (event) => {
@@ -91,28 +82,17 @@ const Register = () => {
       };
 
       if (userType === 'tradesperson') {
-        if (formData.profession) {
-          registrationData.profession = formData.profession;
-        }
-        if (skills.length > 0) {
-          registrationData.skills = skills;
-        }
-        if (languages.length > 0) {
-          registrationData.languages = languages;
-        }
+        if (formData.profession) registrationData.profession = formData.profession;
+        if (skills.length > 0) registrationData.skills = skills;
+        if (languages.length > 0) registrationData.languages = languages;
       }
 
       const response = await authAPI.register(registrationData);
-
       setSuccess(t('registrationSuccessRedirecting'));
 
       setTimeout(() => {
         if (response?.data?.token) {
-          if (userType === 'tradesperson') {
-            navigate('/dashboard');
-          } else {
-            navigate('/feed');
-          }
+          navigate(userType === 'tradesperson' ? '/dashboard' : '/feed');
         } else {
           navigate('/login');
         }
@@ -127,192 +107,112 @@ const Register = () => {
 
   return (
     <section className="auth-page auth-page-register" aria-labelledby="register-title">
-      <div className="auth-card auth-register-card">
-        <div className="auth-heading auth-heading-centered">
-          <p className="auth-eyebrow">SerbisyoToledo</p>
-          <h1 id="register-title">{t('createYourAccount')}</h1>
-          <p>{t('footerTagline')}</p>
-        </div>
-
-        {error && (
-          <div className="alert alert-danger auth-alert" role="alert">
-            {error}
-          </div>
-        )}
-
-        {success && (
-          <div className="alert alert-success auth-alert" role="status">
-            {success}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="auth-form">
-          <RoleSelectionCards value={userType} onChange={setUserType} />
-
-          <div className="auth-two-column">
-            <div className="auth-field">
-              <label htmlFor="register-full-name" className="form-label">{t('fullName')}</label>
-              <input
-                id="register-full-name"
-                type="text"
-                name="fullName"
-                placeholder={t('fullNamePlaceholder')}
-                value={formData.fullName}
-                onChange={handleInputChange}
-                className="form-control"
-                autoComplete="name"
-                required
-              />
-            </div>
-            <div className="auth-field">
-              <label htmlFor="register-email" className="form-label">{t('emailAddress')}</label>
-              <input
-                id="register-email"
-                type="email"
-                name="email"
-                placeholder={t('loginEmailPlaceholder')}
-                value={formData.email}
-                onChange={handleInputChange}
-                className="form-control"
-                autoComplete="email"
-                required
-              />
-            </div>
+      <div className="auth-split-card auth-register-split-card">
+        <div className="auth-form-pane auth-register-form-pane">
+          <div className="auth-heading">
+            <img
+              src={logo}
+              alt="SerbisyoToledo logo"
+              className="auth-page-logo non-draggable-image"
+              draggable="false"
+            />
+            <p className="auth-eyebrow">SerbisyoToledo</p>
+            <h1 id="register-title">{t('createYourAccount')}</h1>
+            <p>{t('footerTagline')}</p>
           </div>
 
-          <div className="auth-field">
-            <label htmlFor="register-password" className="form-label">{t('password')}</label>
-            <div className="password-input-wrapper">
-              <input
-                id="register-password"
-                type={showPassword ? 'text' : 'password'}
-                name="password"
-                placeholder={t('createStrongPassword')}
-                value={formData.password}
-                onChange={handleInputChange}
-                className="form-control"
-                autoComplete="new-password"
-                required
-              />
-              <button
-                type="button"
-                className="password-toggle"
-                onClick={() => setShowPassword((visible) => !visible)}
-                aria-label={t('togglePasswordVisibility')}
-              >
-                <i className={`bi ${showPassword ? 'bi-eye-slash' : 'bi-eye'}`} aria-hidden="true"></i>
-              </button>
-            </div>
-          </div>
+          {error && <div className="alert alert-danger auth-alert" role="alert">{error}</div>}
+          {success && <div className="alert alert-success auth-alert" role="status">{success}</div>}
 
-          {userType === 'tradesperson' && (
-            <section className="professional-details" aria-labelledby="professional-details-title">
-              <div className="professional-details-heading">
-                <div>
-                  <p className="auth-section-kicker">{t('serviceProvider')}</p>
-                  <h2 id="professional-details-title">{t('professionalDetails')}</h2>
-                </div>
-                <i className="bi bi-tools" aria-hidden="true"></i>
-              </div>
+          <form onSubmit={handleSubmit} className="auth-form">
+            <RoleSelectionCards value={userType} onChange={setUserType} />
 
+            <div className="auth-two-column">
               <div className="auth-field">
-                <label htmlFor="register-profession" className="form-label">{t('profession')}</label>
-                <input
-                  id="register-profession"
-                  type="text"
-                  name="profession"
-                  placeholder={t('professionPlaceholder')}
-                  value={formData.profession}
-                  onChange={handleInputChange}
-                  className="form-control"
-                />
+                <label htmlFor="register-full-name" className="form-label">{t('fullName')}</label>
+                <input id="register-full-name" type="text" name="fullName" placeholder={t('fullNamePlaceholder')} value={formData.fullName} onChange={handleInputChange} className="form-control" autoComplete="name" required />
               </div>
-
               <div className="auth-field">
-                <label htmlFor="register-skill" className="form-label">{t('skillsAndSpecializations')}</label>
-                <div className="skill-input-group">
-                  <input
-                    id="register-skill"
-                    type="text"
-                    placeholder={t('addSkillPlaceholder')}
-                    value={currentSkill}
-                    onChange={(event) => setCurrentSkill(event.target.value)}
-                    onKeyDown={(event) => {
-                      if (event.key === 'Enter') {
-                        event.preventDefault();
-                        handleAddSkill();
-                      }
-                    }}
-                    className="form-control"
-                  />
-                  <button
-                    type="button"
-                    className="add-skill-btn"
-                    onClick={handleAddSkill}
-                    aria-label="Add skill"
-                  >
-                    <i className="bi bi-plus-lg" aria-hidden="true"></i>
-                  </button>
+                <label htmlFor="register-email" className="form-label">{t('emailAddress')}</label>
+                <input id="register-email" type="email" name="email" placeholder={t('loginEmailPlaceholder')} value={formData.email} onChange={handleInputChange} className="form-control" autoComplete="email" required />
+              </div>
+            </div>
+
+            <div className="auth-field">
+              <label htmlFor="register-password" className="form-label">{t('password')}</label>
+              <div className="password-input-wrapper">
+                <input id="register-password" type={showPassword ? 'text' : 'password'} name="password" placeholder={t('createStrongPassword')} value={formData.password} onChange={handleInputChange} className="form-control" autoComplete="new-password" required />
+                <button type="button" className="password-toggle" onClick={() => setShowPassword((visible) => !visible)} aria-label={t('togglePasswordVisibility')}>
+                  <i className={`bi ${showPassword ? 'bi-eye-slash' : 'bi-eye'}`} aria-hidden="true"></i>
+                </button>
+              </div>
+            </div>
+
+            {userType === 'tradesperson' && (
+              <section className="professional-details" aria-labelledby="professional-details-title">
+                <div className="professional-details-heading">
+                  <div>
+                    <p className="auth-section-kicker">{t('serviceProvider')}</p>
+                    <h2 id="professional-details-title">{t('professionalDetails')}</h2>
+                  </div>
+                  <i className="bi bi-tools" aria-hidden="true"></i>
                 </div>
 
-                {skills.length > 0 && (
-                  <div className="skill-tags" aria-label="Selected skills">
-                    {skills.map((skill) => (
-                      <span key={skill} className="skill-tag">
-                        {skill}
-                        <button
-                          type="button"
-                          className="skill-tag-remove"
-                          onClick={() => handleRemoveSkill(skill)}
-                          aria-label={`Remove ${skill}`}
-                        >
-                          <i className="bi bi-x" aria-hidden="true"></i>
-                        </button>
-                      </span>
+                <div className="auth-field">
+                  <label htmlFor="register-profession" className="form-label">{t('profession')}</label>
+                  <input id="register-profession" type="text" name="profession" placeholder={t('professionPlaceholder')} value={formData.profession} onChange={handleInputChange} className="form-control" />
+                </div>
+
+                <div className="auth-field">
+                  <label htmlFor="register-skill" className="form-label">{t('skillsAndSpecializations')}</label>
+                  <div className="skill-input-group">
+                    <input id="register-skill" type="text" placeholder={t('addSkillPlaceholder')} value={currentSkill} onChange={(event) => setCurrentSkill(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); handleAddSkill(); } }} className="form-control" />
+                    <button type="button" className="add-skill-btn" onClick={handleAddSkill} aria-label="Add skill"><i className="bi bi-plus-lg" aria-hidden="true"></i></button>
+                  </div>
+                  {skills.length > 0 && (
+                    <div className="skill-tags" aria-label="Selected skills">
+                      {skills.map((skill) => (
+                        <span key={skill} className="skill-tag">
+                          {skill}
+                          <button type="button" className="skill-tag-remove" onClick={() => handleRemoveSkill(skill)} aria-label={`Remove ${skill}`}><i className="bi bi-x" aria-hidden="true"></i></button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="auth-field">
+                  <span className="form-label d-block">{t('languagesSpoken')}</span>
+                  <div className="auth-language-options">
+                    {LANGUAGE_OPTIONS.map((option) => (
+                      <label key={option.value} className="auth-language-option">
+                        <input type="checkbox" checked={languages.includes(option.value)} onChange={() => handleToggleLanguage(option.value)} />
+                        <span>{option.label}</span>
+                      </label>
                     ))}
                   </div>
-                )}
-              </div>
-
-              <div className="auth-field">
-                <span className="form-label d-block">{t('languagesSpoken')}</span>
-                <div className="auth-language-options">
-                  {LANGUAGE_OPTIONS.map((option) => (
-                    <label key={option.value} className="auth-language-option">
-                      <input
-                        type="checkbox"
-                        checked={languages.includes(option.value)}
-                        onChange={() => handleToggleLanguage(option.value)}
-                      />
-                      <span>{option.label}</span>
-                    </label>
-                  ))}
+                  <small className="auth-help-text">{t('languagesSpokenHelp')}</small>
                 </div>
-                <small className="auth-help-text">{t('languagesSpokenHelp')}</small>
-              </div>
-            </section>
-          )}
-
-          <button
-            type="submit"
-            className="btn btn-primary auth-submit"
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <>
-                <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                {t('creatingAccount')}
-              </>
-            ) : (
-              t('createAccount')
+              </section>
             )}
-          </button>
 
-          <p className="auth-switch-copy">
-            {t('alreadyHaveAccount')}{' '}
-            <Link to="/login">{t('loginHere')}</Link>
-          </p>
-        </form>
+            <button type="submit" className="btn btn-primary auth-submit" disabled={isLoading}>
+              {isLoading ? <><span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>{t('creatingAccount')}</> : t('createAccount')}
+            </button>
+
+            <p className="auth-switch-copy">
+              {t('alreadyHaveAccount')}{' '}<Link to="/login">{t('loginHere')}</Link>
+            </p>
+          </form>
+        </div>
+
+        <aside className="auth-visual-pane auth-register-visual-pane" aria-label="SerbisyoToledo service providers">
+          <img src={carpenter} alt="Local carpenter providing a home service" className="auth-visual-image non-draggable-image" draggable="false" />
+          <div className="auth-visual-overlay">
+            <p>{t('howProviderCta')}</p>
+            <span>{t('howProviderStep2Description')}</span>
+          </div>
+        </aside>
       </div>
     </section>
   );
