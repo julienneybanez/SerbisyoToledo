@@ -5,10 +5,18 @@
   height: 72px;
   display: block;
   object-fit: contain;
-  margin: 0 0 0.85rem;
+  margin: 0 auto 0.95rem;
   border: 1px solid var(--color-border);
   border-radius: 16px;
   background: var(--color-surface);
+}
+
+.auth-brand-wordmark {
+  width: max-content;
+  max-width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
 }
 
 .auth-page-register {
@@ -41,16 +49,43 @@
   margin-right: 0.08rem;
 }
 
-[data-theme='dark'] .home-secondary-cta {
-  background: var(--color-surface-secondary);
-  border-color: var(--color-border-strong);
+.home-page .home-hero-secondary-action {
+  display: flex;
+  align-items: center;
+}
+
+.home-page .home-hero-secondary-action .home-secondary-cta {
+  min-height: 46px;
+  padding: 0.68rem 1rem;
+  border: 1px solid color-mix(in srgb, var(--brand-primary) 58%, var(--color-border-strong));
+  border-radius: var(--radius-control-lg);
+  background-color: color-mix(in srgb, var(--brand-primary) 6%, var(--color-surface));
+  color: var(--brand-primary) !important;
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--color-shadow) 12%, transparent);
+  font-weight: 720;
+}
+
+.home-page .home-hero-secondary-action .home-secondary-cta i {
+  color: currentColor;
+}
+
+.home-page .home-hero-secondary-action .home-secondary-cta:hover,
+.home-page .home-hero-secondary-action .home-secondary-cta:focus-visible {
+  border-color: var(--brand-primary);
+  background-color: color-mix(in srgb, var(--brand-primary) 11%, var(--color-surface));
+  color: var(--brand-primary-dark) !important;
+}
+
+[data-theme='dark'] .home-page .home-hero-secondary-action .home-secondary-cta {
+  background-color: color-mix(in srgb, var(--brand-primary) 12%, var(--color-surface-secondary));
+  border-color: color-mix(in srgb, var(--brand-primary) 64%, var(--color-border-strong));
   color: var(--color-text-primary) !important;
 }
 
-[data-theme='dark'] .home-secondary-cta:hover,
-[data-theme='dark'] .home-secondary-cta:focus-visible {
-  background: color-mix(in srgb, var(--brand-primary) 12%, var(--color-surface-secondary));
-  border-color: color-mix(in srgb, var(--brand-primary) 58%, var(--color-border));
+[data-theme='dark'] .home-page .home-hero-secondary-action .home-secondary-cta:hover,
+[data-theme='dark'] .home-page .home-hero-secondary-action .home-secondary-cta:focus-visible {
+  background-color: color-mix(in srgb, var(--brand-primary) 18%, var(--color-surface-secondary));
+  border-color: var(--brand-primary);
   color: var(--color-text-primary) !important;
 }
 
@@ -66,6 +101,7 @@
   .auth-page-logo {
     width: 60px;
     height: 60px;
+    margin-inline: auto;
     border-radius: 14px;
   }
 }
