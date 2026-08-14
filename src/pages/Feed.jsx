@@ -55,7 +55,6 @@ export default function Feed() {
     setActiveServiceType(serviceTypeValue);
   }, [searchParams]);
 
-  // Fetch service profiles on component mount or when filters change
   useEffect(() => {
     let isCurrentRequest = true;
 
@@ -65,7 +64,7 @@ export default function Feed() {
           setIsLoading(true);
           setError(null);
         }
-        
+
         const filterParams = {
           category: activeCategory,
           serviceType: activeServiceType,
@@ -77,7 +76,7 @@ export default function Feed() {
         };
 
         const result = await serviceProfileAPI.getAllProfiles(filterParams);
-        
+
         if (!isCurrentRequest) return;
 
         if (result.success) {
@@ -90,16 +89,13 @@ export default function Feed() {
         console.error('Error fetching profiles:', err);
         setError(t('feedLoadError'));
       } finally {
-        if (isCurrentRequest) {
-          setIsLoading(false);
-        }
+        if (isCurrentRequest) setIsLoading(false);
       }
     };
 
     fetchProfiles();
-
-    // Listen for profile created event
     window.addEventListener('profileCreated', fetchProfiles);
+
     return () => {
       isCurrentRequest = false;
       window.removeEventListener('profileCreated', fetchProfiles);
@@ -172,8 +168,7 @@ export default function Feed() {
       completed: hasClientRequest,
       actionType: 'button',
       onAction: () => {
-        const providerList = document.getElementById('providers-list');
-        providerList?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        document.getElementById('providers-list')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       },
       actionLabel: t('feedChecklistFindProviders'),
     },
@@ -181,12 +176,25 @@ export default function Feed() {
 
   const updateQueryParam = (key, value) => {
     const nextParams = new URLSearchParams(searchParams);
-    if (value) {
-      nextParams.set(key, value);
-    } else {
-      nextParams.delete(key);
-    }
+    if (value) nextParams.set(key, value);
+    else nextParams.delete(key);
     setSearchParams(nextParams, { replace: true });
+  };
+
+  const selectCategory = (category) => {
+    setActiveCategory(category);
+    setActiveServiceType('');
+
+    const nextParams = new URLSearchParams(searchParams);
+    if (category === 'All') nextParams.delete('category');
+    else nextParams.set('category', category);
+    nextParams.delete('serviceType');
+    setSearchParams(nextParams, { replace: true });
+  };
+
+  const selectServiceType = (serviceType) => {
+    setActiveServiceType(serviceType);
+    updateQueryParam('serviceType', serviceType);
   };
 
   const clearFilters = () => {
@@ -210,9 +218,7 @@ export default function Feed() {
 
   const formatPriceLabel = (provider) => {
     const amount = Number(provider.startingPrice ?? provider.dailyRate ?? 0);
-    if (!Number.isFinite(amount) || amount <= 0) {
-      return 'Price on request';
-    }
+    if (!Number.isFinite(amount) || amount <= 0) return 'Price on request';
 
     const unitRaw = provider.pricingUnit || provider.rateUnit || '';
     const unit = String(unitRaw).trim();
@@ -250,31 +256,56 @@ export default function Feed() {
 
   const visiblePrimaryCategories = (() => {
     const ordered = ['All', ...prominentLabels];
-
-    if (showMoreCategories) {
-      ordered.push(...moreLabels);
-    }
-
-    if (activeCategory && !ordered.includes(activeCategory)) {
-      ordered.push(activeCategory);
-    }
-
+    if (showMoreCategories) ordered.push(...moreLabels);
+    if (activeCategory && !ordered.includes(activeCategory)) ordered.push(activeCategory);
     return ordered.filter((label, index, self) => self.indexOf(label) === index);
   })();
 
-  const getProviderInitials = (name) => {
-    return String(name || '')
-      .split(' ')
-      .filter(Boolean)
-      .slice(0, 2)
-      .map((part) => part[0])
-      .join('')
-      .toUpperCase() || 'ST';
+  const selectedServiceTypeLabel = activeCategoryServiceTypes.find(
+    (serviceType) => serviceType.key === activeServiceType,
+  )?.label || activeServiceType;
+
+  const activeFilterItems = [
+    searchTerm ? { key: 'search', label: `“${searchTerm}”` } : null,
+    activeCategory !== 'All' ? { key: 'category', label: activeCategory } : null,
+    activeServiceType ? { key: 'serviceType', label: selectedServiceTypeLabel } : null,
+    filters.location ? { key: 'location', label: filters.location } : null,
+    filters.minPrice ? { key: 'minPrice', label: `₱${Number(filters.minPrice).toLocaleString()}+` } : null,
+    filters.maxPrice ? { key: 'maxPrice', label: `≤ ₱${Number(filters.maxPrice).toLocaleString()}` } : null,
+    filters.minRating ? { key: 'minRating', label: `${filters.minRating}+ ★` } : null,
+  ].filter(Boolean);
+
+  const removeActiveFilter = (key) => {
+    if (key === 'search') {
+      setSearchTerm('');
+      updateQueryParam('q', '');
+      return;
+    }
+
+    if (key === 'category') {
+      selectCategory('All');
+      return;
+    }
+
+    if (key === 'serviceType') {
+      selectServiceType('');
+      return;
+    }
+
+    setFilters((previous) => ({ ...previous, [key]: '' }));
   };
 
+  const getProviderInitials = (name) => String(name || '')
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join('')
+    .toUpperCase() || 'ST';
+
   const handleImageError = (providerId) => {
-    setBrokenImageIds((prev) => {
-      const next = new Set(prev);
+    setBrokenImageIds((previous) => {
+      const next = new Set(previous);
       next.add(providerId);
       return next;
     });
@@ -286,7 +317,7 @@ export default function Feed() {
       setTimeout(() => {
         setShowFilters(false);
         setIsClosing(false);
-      }, 300);
+      }, 180);
     } else {
       setShowFilters(true);
     }
@@ -295,268 +326,325 @@ export default function Feed() {
   return (
     <div className="feed-shell">
       <div className="feed-container">
-        <div className="feed-page-header">
-          <h2 className="feed-page-title" data-tour="browse-services">{t('feedTitle')}</h2>
-          <p className="feed-page-subtitle">{t('feedSubtitle')}</p>
-
-          {isClient && (
-            <ProfileCompletionChecklist
-              title={t('feedGettingStarted')}
-              tasks={clientChecklistTasks}
-              loading={clientChecklistLoading}
-              error={clientChecklistError}
-              initiallyCollapsed={false}
-            />
-          )}
-
-          <div className="search-filter-row" data-tour="feed-search-filters">
-            <div className="search-input-large">
-              <SearchIcon />
-              <input
-                placeholder={t('feedSearchPlaceholder')}
-                value={searchTerm}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  setSearchTerm(value);
-                  updateQueryParam('q', value.trim());
-                }}
-                aria-label={t('feedSearchAria')}
-              />
-            </div>
-            <button 
-              className={`btn-filter ${showFilters ? "active" : ""}`}
-              onClick={toggleFilters}
-            >
-              <FilterIcon /> {t('filters')}
-            </button>
+        <header className="feed-page-header">
+          <div className="feed-heading-block">
+            <p className="feed-page-eyebrow">{t('browseServices')}</p>
+            <h1 className="feed-page-title" data-tour="browse-services">{t('feedTitle')}</h1>
+            <p className="feed-page-subtitle">{t('feedSubtitle')}</p>
           </div>
 
-          {showFilters && (
-            <div className={`advanced-filters ${isClosing ? "closing" : ""}`}>
-              <div className="filters-header">
-                <span className="filters-title">{t('advancedFilters')}</span>
-                <button className="clear-filters-btn" onClick={clearFilters}>
-                  {t('clearFilters')}
-                </button>
-              </div>
-              <div className="filters-grid">
-                <div className="feed-filter-group">
-                  <label className="feed-filter-label">{t('location')}</label>
-                  <input
-                    type="text"
-                    className="feed-filter-input"
-                    placeholder={t('feedEnterLocation')}
-                    value={filters.location}
-                    onChange={(e) => setFilters({ ...filters, location: e.target.value })}
-                  />
-                </div>
-                <div className="feed-filter-group">
-                  <label className="feed-filter-label">{t('minPrice')}</label>
-                  <input
-                    type="number"
-                    className="feed-filter-input"
-                    placeholder="0"
-                    value={filters.minPrice}
-                    onChange={(e) => setFilters({ ...filters, minPrice: e.target.value })}
-                  />
-                </div>
-                <div className="feed-filter-group">
-                  <label className="feed-filter-label">{t('maxPrice')}</label>
-                  <input
-                    type="number"
-                    className="feed-filter-input"
-                    placeholder="1000"
-                    value={filters.maxPrice}
-                    onChange={(e) => setFilters({ ...filters, maxPrice: e.target.value })}
-                  />
-                </div>
-                <div className="feed-filter-group">
-                  <label className="feed-filter-label">{t('minimumRating')}</label>
-                  <select
-                    className="feed-filter-select"
-                    value={filters.minRating}
-                    onChange={(e) => setFilters({ ...filters, minRating: e.target.value })}
-                  >
-                    <option value="">{t('anyRating')}</option>
-                    <option value="4.5">{t('rating45')}</option>
-                    <option value="4">{t('rating4')}</option>
-                    <option value="3.5">{t('rating35')}</option>
-                    <option value="3">{t('rating3')}</option>
-                  </select>
-                </div>
-              </div>
+          {isClient && (
+            <div className="feed-onboarding-panel">
+              <ProfileCompletionChecklist
+                title={t('feedGettingStarted')}
+                tasks={clientChecklistTasks}
+                loading={clientChecklistLoading}
+                error={clientChecklistError}
+                initiallyCollapsed={false}
+              />
             </div>
           )}
 
-          <div className="category-filters">
-            {visiblePrimaryCategories.map((c) => (
-              <button
-                key={c}
-                className={`category-btn ${
-                  activeCategory === c ? "active" : ""
-                }`}
-                onClick={() => {
-                  setActiveCategory(c);
-                  setActiveServiceType('');
-                  updateQueryParam('category', c === 'All' ? '' : c);
-                  updateQueryParam('serviceType', '');
-                }}
-              >
-                {c}
-              </button>
-            ))}
-            {moreLabels.length > 0 && (
+          <section className="feed-discovery-panel" aria-label={t('browseServices')}>
+            <div className="search-filter-row" data-tour="feed-search-filters">
+              <div className="search-input-large">
+                <SearchIcon />
+                <input
+                  placeholder={t('feedSearchPlaceholder')}
+                  value={searchTerm}
+                  onChange={(event) => {
+                    const value = event.target.value;
+                    setSearchTerm(value);
+                    updateQueryParam('q', value.trim());
+                  }}
+                  aria-label={t('feedSearchAria')}
+                />
+              </div>
               <button
                 type="button"
-                className={`category-btn ${showMoreCategories ? 'active' : ''}`}
-                onClick={() => setShowMoreCategories((prev) => !prev)}
-                aria-expanded={showMoreCategories}
-                aria-label="Toggle more service categories"
+                className={`btn-filter ${showFilters ? 'active' : ''}`}
+                onClick={toggleFilters}
+                aria-expanded={showFilters}
               >
-                {showMoreCategories ? 'Less' : 'More'}
+                <FilterIcon />
+                <span>{t('filters')}</span>
+                {activeFilterItems.length > 0 && (
+                  <span className="filter-count" aria-label={`${activeFilterItems.length} active filters`}>
+                    {activeFilterItems.length}
+                  </span>
+                )}
+              </button>
+            </div>
+
+            {showFilters && (
+              <div className={`advanced-filters ${isClosing ? 'closing' : ''}`}>
+                <div className="filters-header">
+                  <span className="filters-title">{t('advancedFilters')}</span>
+                  <button type="button" className="clear-filters-btn" onClick={clearFilters}>
+                    {t('clearFilters')}
+                  </button>
+                </div>
+                <div className="filters-grid">
+                  <div className="feed-filter-group">
+                    <label htmlFor="feed-filter-location" className="feed-filter-label">{t('location')}</label>
+                    <input
+                      id="feed-filter-location"
+                      type="text"
+                      className="feed-filter-input"
+                      placeholder={t('feedEnterLocation')}
+                      value={filters.location}
+                      onChange={(event) => setFilters({ ...filters, location: event.target.value })}
+                    />
+                  </div>
+                  <div className="feed-filter-group">
+                    <label htmlFor="feed-filter-min-price" className="feed-filter-label">{t('minPrice')}</label>
+                    <input
+                      id="feed-filter-min-price"
+                      type="number"
+                      className="feed-filter-input"
+                      placeholder="0"
+                      value={filters.minPrice}
+                      onChange={(event) => setFilters({ ...filters, minPrice: event.target.value })}
+                    />
+                  </div>
+                  <div className="feed-filter-group">
+                    <label htmlFor="feed-filter-max-price" className="feed-filter-label">{t('maxPrice')}</label>
+                    <input
+                      id="feed-filter-max-price"
+                      type="number"
+                      className="feed-filter-input"
+                      placeholder="1000"
+                      value={filters.maxPrice}
+                      onChange={(event) => setFilters({ ...filters, maxPrice: event.target.value })}
+                    />
+                  </div>
+                  <div className="feed-filter-group">
+                    <label htmlFor="feed-filter-rating" className="feed-filter-label">{t('minimumRating')}</label>
+                    <select
+                      id="feed-filter-rating"
+                      className="feed-filter-select"
+                      value={filters.minRating}
+                      onChange={(event) => setFilters({ ...filters, minRating: event.target.value })}
+                    >
+                      <option value="">{t('anyRating')}</option>
+                      <option value="4.5">{t('rating45')}</option>
+                      <option value="4">{t('rating4')}</option>
+                      <option value="3.5">{t('rating35')}</option>
+                      <option value="3">{t('rating3')}</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="feed-category-section">
+              <div className="feed-filter-section-heading">
+                <span>{t('popularServices')}</span>
+              </div>
+              <div className="category-filters">
+                {visiblePrimaryCategories.map((category) => (
+                  <button
+                    key={category}
+                    type="button"
+                    className={`category-btn ${activeCategory === category ? 'active' : ''}`}
+                    onClick={() => selectCategory(category)}
+                  >
+                    {category}
+                  </button>
+                ))}
+                {moreLabels.length > 0 && (
+                  <button
+                    type="button"
+                    className={`category-btn category-more-btn ${showMoreCategories ? 'active' : ''}`}
+                    onClick={() => setShowMoreCategories((previous) => !previous)}
+                    aria-expanded={showMoreCategories}
+                    aria-label="Toggle more service categories"
+                  >
+                    {showMoreCategories ? 'Less' : 'More'}
+                    <i className={`bi ${showMoreCategories ? 'bi-chevron-up' : 'bi-chevron-down'}`} aria-hidden="true"></i>
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {activeCategoryServiceTypes.length > 0 && (
+              <div className="feed-service-type-section">
+                <div className="feed-filter-section-heading">
+                  <span>{getCategory(activeCategory)?.label || activeCategory}</span>
+                </div>
+                <div className="category-filters" aria-label="Service type filters">
+                  <button
+                    type="button"
+                    className={`category-btn ${activeServiceType === '' ? 'active' : ''}`}
+                    onClick={() => selectServiceType('')}
+                  >
+                    {t('all')}
+                  </button>
+                  {activeCategoryServiceTypes.map((serviceType) => (
+                    <button
+                      key={serviceType.key}
+                      type="button"
+                      className={`category-btn ${activeServiceType === serviceType.key ? 'active' : ''}`}
+                      onClick={() => selectServiceType(serviceType.key)}
+                    >
+                      {serviceType.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </section>
+        </header>
+
+        <section className="feed-results-section" aria-live="polite">
+          <div className="feed-results-toolbar">
+            <div className="feed-results-summary">
+              <span className="feed-results-number">{isLoading ? '—' : serviceProviders.length}</span>
+              <span className="feed-results-label">{t('serviceProvider')}</span>
+            </div>
+            {activeFilterItems.length > 0 && (
+              <button type="button" className="feed-clear-all" onClick={clearFilters}>
+                {t('clearFilters')}
               </button>
             )}
           </div>
 
-          {activeCategoryServiceTypes.length > 0 && (
-            <div className="category-filters" aria-label="Service type filters">
-              <button
-                className={`category-btn ${activeServiceType === '' ? 'active' : ''}`}
-                onClick={() => {
-                  setActiveServiceType('');
-                  updateQueryParam('serviceType', '');
-                }}
-              >
-                All {getCategory(activeCategory)?.label || activeCategory}
-              </button>
-              {activeCategoryServiceTypes.map((serviceType) => (
+          {activeFilterItems.length > 0 && (
+            <div className="feed-active-filters" aria-label="Active filters">
+              {activeFilterItems.map((filter) => (
                 <button
-                  key={serviceType.key}
-                  className={`category-btn ${activeServiceType === serviceType.key ? 'active' : ''}`}
-                  onClick={() => {
-                    setActiveServiceType(serviceType.key);
-                    updateQueryParam('serviceType', serviceType.key);
-                  }}
+                  key={filter.key}
+                  type="button"
+                  className="feed-active-filter-chip"
+                  onClick={() => removeActiveFilter(filter.key)}
+                  aria-label={`Remove ${filter.label} filter`}
                 >
-                  {serviceType.label}
+                  <span>{filter.label}</span>
+                  <i className="bi bi-x" aria-hidden="true"></i>
                 </button>
               ))}
             </div>
           )}
-        </div>
 
-        <div className="providers-grid" id="providers-list">
-          {isLoading && (
-            <div className="loading-container">
-              <div className="spinner"></div>
-              <p>{t('feedLoadingProviders')}</p>
-            </div>
-          )}
-
-          {error && !isLoading && (
-            <div className="error-container">
-              <p>⚠️ {error}</p>
-            </div>
-          )}
-
-          {!isLoading && !error && serviceProviders.length === 0 && (
-            <div className="no-providers-container">
-              <h3>{t('feedNoProvidersTitle')}</h3>
-              <p>{t('feedNoProvidersSubtitle')}</p>
-              <button type="button" className="btn-view-profile" onClick={clearFilters}>{t('clearFilters')}</button>
-            </div>
-          )}
-
-          {!isLoading && serviceProviders.map((p) => (
-            <div key={p.id} className="provider-card">
-              {!brokenImageIds.has(p.id) && p.image ? (
-                <img
-                  src={p.image}
-                  className="provider-image non-draggable-image"
-                  alt={`${p.name} service banner`}
-                  draggable="false"
-                  onError={() => handleImageError(p.id)}
-                />
-              ) : (
-                <div className="provider-image provider-image-fallback" aria-hidden="true">
-                  <span className="provider-fallback-initials">{getProviderInitials(p.name)}</span>
-                  <span className="provider-fallback-service">{getPrimaryService(p)}</span>
-                </div>
-              )}
-              <div className="provider-info">
-                <div className="provider-header">
-                  <div className="provider-name-wrap">
-                    <span className="provider-name">{p.name}</span>
-                    {p.verified && (
-                      <span className="verified-badge" aria-label={t('verification')}>
-                        <CheckIcon />
-                      </span>
-                    )}
-                  </div>
-                  <span className="provider-rating">
-                    <StarIcon /> {Number(p.reviews || 0) > 0 ? Number(p.rating || 0).toFixed(1) : '—'}
-                  </span>
-                </div>
-
-                <p className="provider-service-line">{getPrimaryService(p)}</p>
-
-                <div className="provider-meta">
-                  <span className="meta-item provider-reviews-meta">{formatReviewsLabel(p.reviews)}</span>
-                  <span className="meta-item">
-                    <LocationIcon />
-                    {p.location || t('location')}
-                  </span>
-                </div>
-
-                {String(p.availabilitySummary || p.nextAvailableLabel || '').trim() && (
-                  <p className="provider-availability">{String(p.availabilitySummary || p.nextAvailableLabel).trim()}</p>
-                )}
-
-                <p className="provider-description">
-                  {p.description}
-                </p>
-
-                {(() => {
-                  const { visible, remaining } = getVisibleServiceTypes(p);
-                  const skills = getVisibleSkills(p);
-                  if (!visible.length && !remaining && !skills.length) return null;
-                  return (
-                  <div className="provider-tags">
-                    {visible.map((tag) => (
-                      <span className="provider-tag" key={`${p.id}-${tag}`}>
-                        {tag}
-                      </span>
-                    ))}
-                    {remaining > 0 && (
-                      <span className="provider-tag provider-tag-more">+{remaining} more</span>
-                    )}
-                    {skills.map((skill) => (
-                      <span className="provider-tag" key={`${p.id}-skill-${skill}`}>
-                        {skill}
-                      </span>
-                    ))}
-                  </div>
-                  );
-                })()}
-
-                <div className="provider-footer">
-                  <div className="price-block">
-                    <span className="price-label">{formatPriceLabel(p)}</span>
-                  </div>
-                  <button
-                    className="btn-view-profile tour-provider-request-step"
-                    data-tour="provider-profile-trigger"
-                    onClick={() =>
-                      navigate(`/provider/${p.id}`)
-                    }
-                  >
-                    {t('viewProfile')}
-                  </button>
-                </div>
+          <div className="providers-grid" id="providers-list">
+            {isLoading && (
+              <div className="loading-container">
+                <div className="spinner"></div>
+                <p>{t('feedLoadingProviders')}</p>
               </div>
-            </div>
-          ))}
-        </div>
+            )}
+
+            {error && !isLoading && (
+              <div className="error-container">
+                <p>⚠️ {error}</p>
+              </div>
+            )}
+
+            {!isLoading && !error && serviceProviders.length === 0 && (
+              <div className="no-providers-container">
+                <div className="feed-empty-icon" aria-hidden="true"><i className="bi bi-search"></i></div>
+                <h3>{t('feedNoProvidersTitle')}</h3>
+                <p>{t('feedNoProvidersSubtitle')}</p>
+                <button type="button" className="btn-view-profile" onClick={clearFilters}>{t('clearFilters')}</button>
+              </div>
+            )}
+
+            {!isLoading && serviceProviders.map((provider) => {
+              const { visible, remaining } = getVisibleServiceTypes(provider);
+              const skills = getVisibleSkills(provider);
+              const description = String(provider.description || '').trim();
+              const availability = String(provider.availabilitySummary || provider.nextAvailableLabel || '').trim();
+
+              return (
+                <article key={provider.id} className="provider-card">
+                  <div className="provider-media">
+                    {!brokenImageIds.has(provider.id) && provider.image ? (
+                      <img
+                        src={provider.image}
+                        className="provider-image non-draggable-image"
+                        alt={`${provider.name} service banner`}
+                        draggable="false"
+                        loading="lazy"
+                        onError={() => handleImageError(provider.id)}
+                      />
+                    ) : (
+                      <div className="provider-image provider-image-fallback" aria-hidden="true">
+                        <span className="provider-fallback-initials">{getProviderInitials(provider.name)}</span>
+                        <span className="provider-fallback-service">{getPrimaryService(provider)}</span>
+                      </div>
+                    )}
+                    {provider.verified && (
+                      <span className="provider-verified-pill">
+                        <CheckIcon />
+                        <span>{t('verification')}</span>
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="provider-info">
+                    <div className="provider-header">
+                      <div className="provider-name-wrap">
+                        <span className="provider-name">{provider.name}</span>
+                      </div>
+                      <span className="provider-rating">
+                        <StarIcon />
+                        {Number(provider.reviews || 0) > 0 ? Number(provider.rating || 0).toFixed(1) : '—'}
+                      </span>
+                    </div>
+
+                    <p className="provider-service-line">{getPrimaryService(provider)}</p>
+
+                    <div className="provider-meta">
+                      <span className="meta-item">
+                        <LocationIcon />
+                        {provider.location || t('location')}
+                      </span>
+                      <span className="meta-item provider-reviews-meta">{formatReviewsLabel(provider.reviews)}</span>
+                    </div>
+
+                    {availability && (
+                      <p className="provider-availability">
+                        <i className="bi bi-calendar-check" aria-hidden="true"></i>
+                        <span>{availability}</span>
+                      </p>
+                    )}
+
+                    {description && <p className="provider-description">{description}</p>}
+
+                    {(visible.length > 0 || remaining > 0 || skills.length > 0) && (
+                      <div className="provider-tags">
+                        {visible.map((tag) => (
+                          <span className="provider-tag" key={`${provider.id}-${tag}`}>{tag}</span>
+                        ))}
+                        {remaining > 0 && (
+                          <span className="provider-tag provider-tag-more">+{remaining} more</span>
+                        )}
+                        {skills.map((skill) => (
+                          <span className="provider-tag" key={`${provider.id}-skill-${skill}`}>{skill}</span>
+                        ))}
+                      </div>
+                    )}
+
+                    <div className="provider-footer">
+                      <div className="price-block">
+                        <span className="price-label">{formatPriceLabel(provider)}</span>
+                      </div>
+                      <button
+                        type="button"
+                        className="btn-view-profile tour-provider-request-step"
+                        data-tour="provider-profile-trigger"
+                        onClick={() => navigate(`/provider/${provider.id}`)}
+                      >
+                        {t('viewProfile')}
+                        <i className="bi bi-arrow-right" aria-hidden="true"></i>
+                      </button>
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        </section>
       </div>
     </div>
   );
