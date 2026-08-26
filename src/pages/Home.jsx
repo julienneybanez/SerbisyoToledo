@@ -8,6 +8,7 @@ import laundry from '../assets/laundry.webp';
 import { useNavigate } from 'react-router-dom';
 import LandingSearch from '../components/common/LandingSearch';
 import HowItWorks from '../components/common/HowItWorks';
+import HomeFaq from '../components/common/HomeFaq';
 import { useLanguage } from '../context/LanguageContext';
 import useServiceTaxonomy from '../hooks/useServiceTaxonomy';
 
@@ -145,6 +146,8 @@ function Home() {
       </section>
 
       <HowItWorks />
+
+      <HomeFaq />
 
       <section className="home-provider-section" aria-labelledby="provider-cta-title">
         <div className="container">
