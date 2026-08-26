@@ -41,3 +41,6 @@
 
 /* Final provider-profile dark-mode correction */
 @import './PortfolioDarkModeFix.css';
+
+/* Final title/subtitle cleanup */
+@import './TitleSubtitleCleanup.css';
