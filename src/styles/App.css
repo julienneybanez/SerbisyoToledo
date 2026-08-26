@@ -24,3 +24,6 @@
 /* Small public/auth refinements */
 @import './PublicUiFixes.css';
 @import './BrowseServicesRefinement.css';
+
+/* Cross-page readability and accessibility refinement */
+@import './ReadabilityRefinement.css';
