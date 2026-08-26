@@ -1,0 +1,34 @@
+/* Remove decorative helper subtitles beneath page/section titles.
+   Login, Register, and the Popular Services subtitle are intentionally preserved. */
+
+/* Homepage */
+.home-page .home-hero-subtitle,
+.home-page .home-trust-section .section-subtitle,
+.home-page .how-it-works-section .section-subtitle,
+.home-page .home-provider-section .section-subtitle,
+.home-page .home-faq-section .section-subtitle {
+  display: none;
+}
+
+/* Keep the one homepage subtitle the design still uses. */
+.home-page .home-popular-section .section-subtitle {
+  display: block;
+}
+
+/* Public/core pages */
+.feed-shell .feed-page-subtitle,
+.notifications-page-shell .notifications-page-subtitle,
+.user-settings-container .page-subtitle,
+.admin-page .admin-page-subtitle,
+.requests-container .requests-header > p,
+.about-page-shell .about-hero > p,
+.dashboard-container .welcome-content > h1 + p,
+.dashboard-container .jobs-subtitle {
+  display: none;
+}
+
+/* Compact auth utility pages (forgot/reset/verification) lose their title subtitle,
+   while Login and Register keep theirs because they do not use auth-page-compact. */
+.auth-page-compact .auth-heading > h1 + p {
+  display: none;
+}
