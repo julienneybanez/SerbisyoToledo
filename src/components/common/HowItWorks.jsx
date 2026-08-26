@@ -61,8 +61,10 @@ export default function HowItWorks() {
                 {String(index + 1).padStart(2, '0')}
               </span>
               <div className="how-step-copy">
-                <i className={`bi ${step.icon} how-step-icon`} aria-hidden="true"></i>
-                <h3 className="how-step-title">{step.title}</h3>
+                <div className="how-step-title-row">
+                  <i className={`bi ${step.icon} how-step-icon`} aria-hidden="true"></i>
+                  <h3 className="how-step-title">{step.title}</h3>
+                </div>
                 <p className="how-step-description">{step.description}</p>
               </div>
             </Reveal>
