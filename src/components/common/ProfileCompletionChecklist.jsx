@@ -8,34 +8,88 @@ export default function ProfileCompletionChecklist({
   loading = false,
   error = '',
   initiallyCollapsed = false,
+  enhancedSummary = false,
+  continueLabel = 'Continue Setup',
 }) {
   const [collapsed, setCollapsed] = useState(initiallyCollapsed);
 
   const visibleTasks = tasks.filter((task) => task && task.isApplicable !== false);
   const completedCount = visibleTasks.filter((task) => task.completed).length;
+  const remainingCount = visibleTasks.length - completedCount;
   const progress = visibleTasks.length > 0 ? Math.round((completedCount / visibleTasks.length) * 100) : 100;
+  const nextIncompleteTask = visibleTasks.find((task) => !task.completed);
 
   if (!loading && !error && visibleTasks.length === 0) {
     return null;
   }
 
+  const renderTaskAction = (task, className = 'btn btn-sm btn-outline-primary') => {
+    if (!task || task.completed) return null;
+
+    if (task.actionType === 'link' && task.to) {
+      return (
+        <Link className={className} to={task.to}>
+          {task.actionLabel || 'Complete'}
+        </Link>
+      );
+    }
+
+    if (task.actionType === 'button' && typeof task.onAction === 'function') {
+      return (
+        <button type="button" className={className} onClick={task.onAction}>
+          {task.actionLabel || 'Complete'}
+        </button>
+      );
+    }
+
+    return null;
+  };
+
+  const renderContinueAction = () => {
+    if (!enhancedSummary || !nextIncompleteTask) return null;
+
+    if (nextIncompleteTask.actionType === 'link' && nextIncompleteTask.to) {
+      return (
+        <Link className="checklist-continue-btn" to={nextIncompleteTask.to}>
+          {continueLabel}
+        </Link>
+      );
+    }
+
+    if (nextIncompleteTask.actionType === 'button' && typeof nextIncompleteTask.onAction === 'function') {
+      return (
+        <button type="button" className="checklist-continue-btn" onClick={nextIncompleteTask.onAction}>
+          {continueLabel}
+        </button>
+      );
+    }
+
+    return null;
+  };
+
   return (
-    <section className="profile-checklist card border-0 shadow-sm" aria-label="Profile completion checklist">
+    <section className={`profile-checklist card border-0 shadow-sm ${enhancedSummary ? 'profile-checklist-enhanced' : ''}`.trim()} aria-label="Profile completion checklist">
       <div className="card-body">
-        <div className="d-flex justify-content-between align-items-center gap-3">
+        <div className="checklist-header">
           <div>
             <h2 className="h5 mb-1">{title}</h2>
             {!loading && !error && (
-              <p className="text-muted mb-0">Profile setup: {progress}% complete</p>
+              <p className="text-muted mb-0">
+                {enhancedSummary
+                  ? `${progress}% complete · ${remainingCount} item${remainingCount === 1 ? '' : 's'} left`
+                  : `Profile setup: ${progress}% complete`}
+              </p>
             )}
           </div>
           <button
             type="button"
-            className="btn btn-sm btn-outline-secondary"
+            className="btn btn-sm btn-outline-secondary checklist-toggle"
             onClick={() => setCollapsed((prev) => !prev)}
             aria-expanded={!collapsed}
           >
-            {collapsed ? 'Show' : 'Hide'}
+            {enhancedSummary
+              ? (collapsed ? 'Show details' : 'Hide details')
+              : (collapsed ? 'Show' : 'Hide')}
           </button>
         </div>
 
@@ -52,11 +106,36 @@ export default function ProfileCompletionChecklist({
           </div>
         )}
 
+        {!loading && !error && enhancedSummary && (
+          <div
+            className="progress checklist-summary-progress"
+            role="progressbar"
+            aria-label="Profile setup progress"
+            aria-valuenow={progress}
+            aria-valuemin="0"
+            aria-valuemax="100"
+          >
+            <div className="progress-bar" style={{ width: `${progress}%` }}></div>
+          </div>
+        )}
+
+        {!loading && !error && collapsed && enhancedSummary && progress < 100 && (
+          <div className="checklist-collapsed-footer">
+            <p>
+              <span>Next step</span>
+              <strong>{nextIncompleteTask?.label}</strong>
+            </p>
+            {renderContinueAction()}
+          </div>
+        )}
+
         {!loading && !error && !collapsed && (
           <>
-            <div className="progress mt-3" role="progressbar" aria-label="Profile setup progress" aria-valuenow={progress} aria-valuemin="0" aria-valuemax="100">
-              <div className="progress-bar" style={{ width: `${progress}%` }}></div>
-            </div>
+            {!enhancedSummary && (
+              <div className="progress mt-3" role="progressbar" aria-label="Profile setup progress" aria-valuenow={progress} aria-valuemin="0" aria-valuemax="100">
+                <div className="progress-bar" style={{ width: `${progress}%` }}></div>
+              </div>
+            )}
 
             {progress === 100 ? (
               <div className="alert alert-success mt-3 mb-0">
@@ -66,8 +145,8 @@ export default function ProfileCompletionChecklist({
               <ul className="list-group list-group-flush checklist-list mt-3">
                 {visibleTasks.map((task) => (
                   <li className="list-group-item px-0" key={task.key}>
-                    <div className="d-flex justify-content-between align-items-start gap-3">
-                      <div className="d-flex gap-2">
+                    <div className="checklist-task-row">
+                      <div className="checklist-task-copy">
                         <i
                           className={`bi ${task.completed ? 'bi-check-circle-fill text-success' : 'bi-circle text-muted'}`}
                           aria-hidden="true"
@@ -78,17 +157,7 @@ export default function ProfileCompletionChecklist({
                         </div>
                       </div>
 
-                      {!task.completed && task.actionType === 'link' && task.to && (
-                        <Link className="btn btn-sm btn-outline-primary" to={task.to}>
-                          {task.actionLabel || 'Complete'}
-                        </Link>
-                      )}
-
-                      {!task.completed && task.actionType === 'button' && typeof task.onAction === 'function' && (
-                        <button type="button" className="btn btn-sm btn-outline-primary" onClick={task.onAction}>
-                          {task.actionLabel || 'Complete'}
-                        </button>
-                      )}
+                      {renderTaskAction(task)}
                     </div>
                   </li>
                 ))}

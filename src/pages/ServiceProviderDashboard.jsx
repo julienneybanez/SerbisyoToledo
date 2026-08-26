@@ -3,17 +3,94 @@ import { useNavigate, Link } from 'react-router-dom';
 import { getUser, serviceProfileAPI, serviceRequestAPI } from '../services/api';
 import ProfileCompletionChecklist from '../components/common/ProfileCompletionChecklist';
 import ServiceProfileModal from '../components/common/ServiceProfileModal';
+import EditPortfolioModal from '../components/common/EditPortfolioModal';
 import VerificationRequestModal from '../components/common/VerificationRequestModal';
 import RequestDetailsModal from '../components/common/RequestDetailsModal';
 import './ServiceProviderDashboard.css';
+
+const PROVIDER_TIPS = [
+  {
+    id: 'service',
+    icon: 'bi-chat-heart',
+    title: 'Customer Service',
+    description: 'Confirm the job details, schedule, and expectations clearly before you start.',
+    meta: 'Build client trust',
+  },
+  {
+    id: 'tools',
+    icon: 'bi-tools',
+    title: 'Job Readiness',
+    description: 'Prepare the tools and materials you need before travelling to the client.',
+    meta: 'Work more efficiently',
+  },
+  {
+    id: 'pricing',
+    icon: 'bi-cash-coin',
+    title: 'Pricing Your Services',
+    description: 'Keep your starting price realistic and discuss any extra costs before the work begins.',
+    meta: 'Set clear expectations',
+  },
+];
+
+function getInitials(name) {
+  if (!name) return 'SP';
+  return name
+    .split(' ')
+    .map((part) => part[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
+}
+
+function formatJobTitle(value) {
+  const title = String(value || 'Service Request').trim();
+  if (!title) return 'Service Request';
+  return title.replace(/\b\w/g, (character) => character.toUpperCase());
+}
+
+function getScheduledDate(request) {
+  const raw = request?.scheduled_start_at
+    || (request?.scheduled_date
+      ? `${request.scheduled_date}T${request.scheduled_time || '00:00'}`
+      : null);
+
+  if (!raw) return null;
+
+  const date = new Date(raw);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function formatSchedule(request, compact = false) {
+  const date = getScheduledDate(request);
+  if (!date) return 'Schedule not set';
+
+  const dateLabel = date.toLocaleDateString('en-PH', {
+    month: 'short',
+    day: 'numeric',
+    ...(compact ? {} : { year: 'numeric' }),
+  });
+
+  const timeLabel = date.toLocaleTimeString('en-PH', {
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+
+  return `${dateLabel} · ${timeLabel}`;
+}
 
 export default function ServiceProviderDashboard() {
   const navigate = useNavigate();
   const user = getUser();
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [showPortfolioModal, setShowPortfolioModal] = useState(false);
   const [showVerificationRequest, setShowVerificationRequest] = useState(false);
   const [requests, setRequests] = useState([]);
-  const [requestSummary, setRequestSummary] = useState({ pending: 0, active: 0, upcoming: 0 });
+  const [requestSummary, setRequestSummary] = useState({
+    pending: 0,
+    active: 0,
+    upcoming: 0,
+    nextUpcoming: null,
+  });
   const [loadingRequests, setLoadingRequests] = useState(true);
   const [actionLoading, setActionLoading] = useState(null);
   const [checklistLoading, setChecklistLoading] = useState(true);
@@ -45,27 +122,25 @@ export default function ServiceProviderDashboard() {
 
         const pending = allRequests.filter((request) => request.status === 'pending').length;
         const active = allRequests.filter((request) => activeStatuses.includes(request.status)).length;
-        const upcoming = allRequests.filter((request) => {
-          if (!activeStatuses.includes(request.status)) {
-            return false;
-          }
 
-          const startAtRaw = request.scheduled_start_at
-            || (request.scheduled_date ? `${request.scheduled_date}T${request.scheduled_time || '00:00'}` : null);
-
-          if (!startAtRaw) {
-            return false;
-          }
-
-          const startAt = new Date(startAtRaw);
-          return !Number.isNaN(startAt.getTime()) && startAt > now;
-        }).length;
+        const upcomingRequests = allRequests
+          .filter((request) => {
+            if (!activeStatuses.includes(request.status)) return false;
+            const startAt = getScheduledDate(request);
+            return startAt && startAt > now;
+          })
+          .sort((a, b) => getScheduledDate(a) - getScheduledDate(b));
 
         const visibleQueue = allRequests
           .filter((request) => queueStatuses.includes(request.status))
           .slice(0, 4);
 
-        setRequestSummary({ pending, active, upcoming });
+        setRequestSummary({
+          pending,
+          active,
+          upcoming: upcomingRequests.length,
+          nextUpcoming: upcomingRequests[0] || null,
+        });
         setRequests(visibleQueue);
       }
     } catch (err) {
@@ -129,8 +204,8 @@ export default function ServiceProviderDashboard() {
       description: 'Tell clients about your background and services.',
       completed: Boolean((myProfile?.description || myPortfolio?.aboutMe || '').trim()),
       actionType: 'button',
-      actionLabel: 'Edit Portfolio',
-      onAction: () => navigate('/provider-settings'),
+      actionLabel: 'Portfolio & About Me',
+      onAction: () => setShowPortfolioModal(true),
     },
     {
       key: 'starting-price',
@@ -153,20 +228,20 @@ export default function ServiceProviderDashboard() {
     {
       key: 'availability',
       label: 'Set your availability',
-      description: 'Provide expected response/availability details.',
+      description: 'Choose when clients can request your services.',
       completed: Boolean((myPortfolio?.responseTime || '').trim()),
       actionType: 'link',
-      to: '/provider-settings',
-      actionLabel: 'Availability',
+      to: '/provider-settings?section=schedule',
+      actionLabel: 'Schedule',
     },
     {
       key: 'portfolio',
       label: 'Upload portfolio work',
       description: 'Show previous work samples to build trust.',
       completed: Boolean(myPortfolio?.portfolio?.length),
-      actionType: 'link',
-      to: '/provider-settings',
+      actionType: 'button',
       actionLabel: 'Add Work',
+      onAction: () => setShowPortfolioModal(true),
     },
     {
       key: 'verification',
@@ -174,7 +249,7 @@ export default function ServiceProviderDashboard() {
       description: 'Submit your verification request to increase trust.',
       completed: Boolean(user?.isVerified),
       actionType: 'button',
-      actionLabel: 'Verify',
+      actionLabel: 'Verification',
       onAction: () => setShowVerificationRequest(true),
     },
   ];
@@ -185,7 +260,6 @@ export default function ServiceProviderDashboard() {
     try {
       const response = await serviceRequestAPI.updateStatus(requestId, status, reason);
       if (response.success) {
-        // Refresh the requests list
         fetchRequests();
         if (!suppressAlert) {
           const messages = {
@@ -236,69 +310,52 @@ export default function ServiceProviderDashboard() {
 
   const getStatusClass = (status) => {
     const statusMap = {
-      'in_progress': 'status-active',
-      'on_the_way': 'status-active',
-      'pending': 'status-pending',
-      'accepted': 'status-accepted',
-      'completed': 'status-completed',
-      'cancelled': 'status-cancelled',
-      'declined': 'status-cancelled',
+      in_progress: 'status-active',
+      on_the_way: 'status-active',
+      pending: 'status-pending',
+      accepted: 'status-accepted',
+      completed: 'status-completed',
+      cancelled: 'status-cancelled',
+      declined: 'status-cancelled',
     };
     return statusMap[status] || 'status-pending';
   };
 
-  const formatStatus = (status) => {
-    return status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-  };
+  const formatStatus = (status) => (
+    String(status || 'pending')
+      .replace(/_/g, ' ')
+      .replace(/\b\w/g, (letter) => letter.toUpperCase())
+  );
 
-  const [tips] = useState([
-    {
-      id: 1,
-      title: '10 Essential Tips for Excellent Customer Service',
-      description: 'Learn how to exceed customer expectations and build lasting relationships',
-      readTime: '8 min read',
-      image: 'https://wp.sfdcdigital.com/en-us/wp-content/uploads/sites/4/2025/03/what-is-customer-support-1680x1120-1.jpg'
-    },
-    {
-      id: 2,
-      title: '10 Essential Tools You Should Own',
-      description: 'Discover the must-have tools that will improve quality and efficiency',
-      readTime: '5 min read',
-      image: 'https://www.kellerinsurance.com/wp-content/uploads/2023/09/consutrction-tools.jpg'
-    },
-    {
-      id: 3,
-      title: 'Pricing Your Services: A Complete Guide to Fair and Competitive Rates',
-      description: 'Master the art of pricing your services to attract clients while ensuring profitability',
-      readTime: '8 min read',
-      image: 'https://img.freepik.com/premium-vector/buy-idea-business-transaction-light-bulb-as-symbol-innovation-money-hold-hand-crowdfunding-concept-investment-cost-innovations-vector-illustration-flat-design-isolated-background_153097-728.jpg'
-    },
-    {
-      id: 4,
-      title: 'Safety First: Best Practices for Service Providers',
-      description: 'Stay safe on the job with this comprehensive guide to personal safety protocols',
-      readTime: '7 min read',
-      image: 'https://images.pexels.com/photos/8487776/pexels-photo-8487776.jpeg'
-    },
-  ]);
-
-  const checklistVisibleTasks = providerChecklistTasks.filter((task) => task && task.isApplicable !== false);
-  const checklistCompleted = checklistVisibleTasks.filter((task) => task.completed).length;
-  const checklistRemaining = checklistVisibleTasks.length - checklistCompleted;
-  const checklistProgress = checklistVisibleTasks.length > 0
-    ? Math.round((checklistCompleted / checklistVisibleTasks.length) * 100)
-    : 100;
-  const nextChecklistTasks = checklistVisibleTasks.filter((task) => !task.completed).slice(0, 3);
+  const primaryService = myProfile?.categories?.[0] || 'Local Services';
+  const providerLocation = myProfile?.location || 'Toledo City';
+  const providerName = user?.fullName || 'Service Provider';
 
   return (
     <div className="dashboard-container">
       <div className="dashboard-wrapper">
         <section className="welcome-section">
-          <div className="welcome-content">
-            <h1>Good day, <span className="user-name">{user?.fullName || 'Service Provider'}</span></h1>
-            <p>Here is what needs your attention today.</p>
+          <div className="provider-welcome-identity">
+            <div className="provider-welcome-avatar" aria-hidden={!user?.profileImage}>
+              {user?.profileImage ? (
+                <img src={user.profileImage} alt={`${providerName} profile`} draggable="false" />
+              ) : (
+                getInitials(providerName)
+              )}
+            </div>
+
+            <div className="welcome-content">
+              <p className="welcome-eyebrow">Your provider workspace</p>
+              <h1>Good day, <span className="user-name">{providerName}</span></h1>
+              <p>Here is what needs your attention today.</p>
+              <div className="provider-context-row" aria-label="Provider profile summary">
+                <span><i className="bi bi-tools" aria-hidden="true"></i>{primaryService}</span>
+                <span><i className="bi bi-geo-alt" aria-hidden="true"></i>{providerLocation}</span>
+              </div>
+            </div>
           </div>
-          <button 
+
+          <button
             className="btn-post-service"
             data-tour="provider-profile-setup"
             onClick={() => setShowProfileModal(true)}
@@ -309,9 +366,14 @@ export default function ServiceProviderDashboard() {
 
         {requestSummary.pending > 0 && (
           <section className="action-banner" aria-live="polite">
-            <div>
-              <h2>{requestSummary.pending} request{requestSummary.pending > 1 ? 's' : ''} need your response</h2>
-              <p>Clients are waiting for you to accept or decline their booking requests.</p>
+            <div className="action-banner-copy">
+              <span className="action-banner-icon" aria-hidden="true">
+                <i className="bi bi-inbox"></i>
+              </span>
+              <div>
+                <h2>{requestSummary.pending} request{requestSummary.pending > 1 ? 's' : ''} need your response</h2>
+                <p>Clients are waiting for you to accept or decline their booking requests.</p>
+              </div>
             </div>
             <button type="button" className="btn-review-requests" onClick={() => navigate('/requests')}>
               Review Requests
@@ -321,60 +383,63 @@ export default function ServiceProviderDashboard() {
 
         <section className="provider-stats-row" aria-label="Provider quick stats">
           <article className="provider-stat-card">
-            <p>New Requests</p>
-            <strong>{requestSummary.pending}</strong>
+            <span className="provider-stat-icon requests" aria-hidden="true">
+              <i className="bi bi-inbox"></i>
+            </span>
+            <div className="provider-stat-copy">
+              <strong>{requestSummary.pending}</strong>
+              <p>New Request{requestSummary.pending === 1 ? '' : 's'}</p>
+              <small>{requestSummary.pending > 0 ? 'Needs your response' : 'Nothing waiting right now'}</small>
+            </div>
           </article>
+
           <article className="provider-stat-card">
-            <p>Upcoming Jobs</p>
-            <strong>{requestSummary.upcoming}</strong>
+            <span className="provider-stat-icon upcoming" aria-hidden="true">
+              <i className="bi bi-calendar-event"></i>
+            </span>
+            <div className="provider-stat-copy">
+              <strong>{requestSummary.upcoming}</strong>
+              <p>Upcoming Job{requestSummary.upcoming === 1 ? '' : 's'}</p>
+              <small>
+                {requestSummary.nextUpcoming
+                  ? `Next: ${formatSchedule(requestSummary.nextUpcoming, true)}`
+                  : 'No upcoming schedule'}
+              </small>
+            </div>
           </article>
+
           <article className="provider-stat-card">
-            <p>Active Jobs</p>
-            <strong>{requestSummary.active}</strong>
+            <span className="provider-stat-icon active" aria-hidden="true">
+              <i className="bi bi-briefcase"></i>
+            </span>
+            <div className="provider-stat-copy">
+              <strong>{requestSummary.active}</strong>
+              <p>Active Job{requestSummary.active === 1 ? '' : 's'}</p>
+              <small>Accepted or in progress</small>
+            </div>
           </article>
         </section>
 
         <ProfileCompletionChecklist
-          title="Complete Your Profile"
+          title="Complete Your Provider Profile"
           tasks={providerChecklistTasks}
           loading={checklistLoading}
           error={checklistError}
           initiallyCollapsed
+          enhancedSummary
+          continueLabel="Continue Setup"
         />
-
-        {!checklistLoading && !checklistError && (
-          <section className="profile-setup-summary" aria-label="Profile setup summary">
-            <div className="profile-setup-summary-head">
-              <h2>Complete Your Profile - {checklistProgress}%</h2>
-              <p>{checklistRemaining} item{checklistRemaining === 1 ? '' : 's'} remaining</p>
-            </div>
-            <div className="profile-setup-summary-progress" role="progressbar" aria-valuenow={checklistProgress} aria-valuemin="0" aria-valuemax="100">
-              <span style={{ width: `${checklistProgress}%` }}></span>
-            </div>
-            {nextChecklistTasks.length > 0 && (
-              <ul className="profile-setup-next-tasks">
-                {nextChecklistTasks.map((task) => (
-                  <li key={task.key}>{task.label}</li>
-                ))}
-              </ul>
-            )}
-            <div className="profile-setup-actions">
-              <button type="button" className="btn-post-service" onClick={() => navigate('/provider-settings')}>
-                Continue Setup
-              </button>
-            </div>
-          </section>
-        )}
 
         <section className="jobs-section">
           <div className="jobs-header">
             <div>
+              <p className="dashboard-section-kicker">Today&apos;s work</p>
               <h2 className="section-title">Your Work Queue</h2>
               <p className="jobs-subtitle">Review new requests first, then continue accepted jobs.</p>
             </div>
-            <Link to="/requests" className="view-all-link">View All</Link>
+            <Link to="/requests" className="view-all-link">View All Requests</Link>
           </div>
-          
+
           {loadingRequests ? (
             <div className="jobs-loading">
               <div className="spinner-small"></div>
@@ -382,37 +447,53 @@ export default function ServiceProviderDashboard() {
             </div>
           ) : requests.length === 0 ? (
             <div className="jobs-empty">
-              <i className="bi bi-inbox"></i>
-              <p>No active job requests yet. Once clients book your services, they'll appear here.</p>
+              <span className="jobs-empty-icon" aria-hidden="true"><i className="bi bi-inbox"></i></span>
+              <h3>Your work queue is clear</h3>
+              <p>New client requests and accepted jobs will appear here.</p>
             </div>
           ) : (
             <div className="jobs-grid">
               {requests.map((job) => (
-                <div key={job.id} className="job-card">
-                  <div className="job-header">
-                    <h3 className="job-title">{job.job_title}</h3>
+                <article key={job.id} className="job-card">
+                  <div className="job-card-top">
+                    <span className="job-service-icon" aria-hidden="true">
+                      <i className="bi bi-tools"></i>
+                    </span>
+                    <div className="job-heading-copy">
+                      <h3 className="job-title">{formatJobTitle(job.job_title)}</h3>
+                      <p className="job-client">
+                        <i className="bi bi-person" aria-hidden="true"></i>
+                        {job.client_name || 'Client'}
+                      </p>
+                    </div>
                     <span className={`job-status ${getStatusClass(job.status)}`}>
                       {formatStatus(job.status)}
                     </span>
                   </div>
-                  <p className="job-client">From: {job.client_name}</p>
-                  <p className="job-description">{job.job_details?.substring(0, 80)}{job.job_details?.length > 80 ? '...' : ''}</p>
-                  <div className="job-meta">
-                    <div className="meta-item">
-                      <div className="meta-label">Date</div>
-                      <div className="meta-value">{new Date(job.scheduled_date).toLocaleDateString()}</div>
+
+                  {job.job_details && (
+                    <div className="job-detail-block">
+                      <i className="bi bi-card-text" aria-hidden="true"></i>
+                      <p>{job.job_details.substring(0, 110)}{job.job_details.length > 110 ? '...' : ''}</p>
                     </div>
-                    <div className="meta-item">
-                      <div className="meta-label">Time</div>
-                      <div className="meta-value">{job.scheduled_time}</div>
+                  )}
+
+                  <div className="job-schedule">
+                    <span className="job-schedule-icon" aria-hidden="true">
+                      <i className="bi bi-calendar3"></i>
+                    </span>
+                    <div>
+                      <span>Scheduled</span>
+                      <strong>{formatSchedule(job)}</strong>
                     </div>
                   </div>
+
                   <div className="job-actions">
                     {job.status === 'pending' && (
                       <>
-                        <button 
-                            className="job-btn job-btn-primary"
-                            onClick={() => handleStatusUpdate(job.id, 'accepted')}
+                        <button
+                          className="job-btn job-btn-primary"
+                          onClick={() => handleStatusUpdate(job.id, 'accepted')}
                           disabled={actionLoading === job.id}
                         >
                           {actionLoading === job.id ? 'Processing...' : 'Accept Request'}
@@ -424,23 +505,24 @@ export default function ServiceProviderDashboard() {
                         >
                           View Details
                         </button>
-                        <button 
-                            className="job-btn job-btn-decline-subtle"
-                            onClick={() => openDeclineDialog(job.id)}
+                        <button
+                          className="job-btn job-btn-decline-subtle"
+                          onClick={() => openDeclineDialog(job.id)}
                           disabled={actionLoading === job.id}
                         >
                           Decline Request
                         </button>
                       </>
                     )}
+
                     {job.status === 'accepted' && (
                       <>
-                        <button 
+                        <button
                           className="job-btn job-btn-on-way"
                           onClick={() => handleStatusUpdate(job.id, 'on_the_way')}
                           disabled={actionLoading === job.id}
                         >
-                          <i className="bi bi-truck"></i> I'm On My Way
+                          <i className="bi bi-truck"></i> I&apos;m On My Way
                         </button>
                         <button
                           className="job-btn job-btn-secondary"
@@ -451,9 +533,10 @@ export default function ServiceProviderDashboard() {
                         </button>
                       </>
                     )}
+
                     {['on_the_way', 'in_progress'].includes(job.status) && (
                       <>
-                        <button 
+                        <button
                           className="job-btn job-btn-complete"
                           onClick={() => handleStatusUpdate(job.id, 'completed')}
                           disabled={actionLoading === job.id}
@@ -470,32 +553,68 @@ export default function ServiceProviderDashboard() {
                       </>
                     )}
                   </div>
-                </div>
+                </article>
               ))}
             </div>
           )}
         </section>
 
-        <section className="level-up-banner">
-          <p className="level-up-copy">Get verified to build more trust with clients.</p>
-          <button className="btn-get-verified" onClick={() => setShowVerificationRequest(true)}>Get Verified</button>
+        <section className={`level-up-banner ${user?.isVerified ? 'verified' : ''}`}>
+          <span className="level-up-icon" aria-hidden="true">
+            <i className={`bi ${user?.isVerified ? 'bi-patch-check-fill' : 'bi-shield-check'}`}></i>
+          </span>
+          <div className="level-up-copy">
+            <h2>{user?.isVerified ? 'Your provider account is verified' : 'Build more trust with clients'}</h2>
+            <p>
+              {user?.isVerified
+                ? 'Your public profile can show clients that your provider verification has been approved.'
+                : 'Verified providers can display a trust badge on their public profile after admin approval.'}
+            </p>
+          </div>
+          {!user?.isVerified && (
+            <button className="btn-get-verified" onClick={() => setShowVerificationRequest(true)}>
+              Get Verified
+            </button>
+          )}
         </section>
 
-        <section className="tips-section">
-          <h2 className="section-title">Tips for Service Providers</h2>
-          <ul className="tips-list">
-            {tips.slice(0, 3).map((tip) => (
-              <li key={tip.id} className="tips-list-item">
-                <span className="tip-title">{tip.title}</span>
-                <span className="read-time">{tip.readTime}</span>
-              </li>
+        <section className="tips-section" aria-labelledby="provider-tips-title">
+          <div className="tips-section-heading">
+            <div>
+              <p className="dashboard-section-kicker">Helpful reminders</p>
+              <h2 id="provider-tips-title" className="section-title">Provider Tips</h2>
+            </div>
+            <p>Simple habits that help create a smoother experience for you and your clients.</p>
+          </div>
+
+          <div className="tips-grid">
+            {PROVIDER_TIPS.map((tip) => (
+              <article key={tip.id} className="tip-card">
+                <span className="tip-card-icon" aria-hidden="true">
+                  <i className={`bi ${tip.icon}`}></i>
+                </span>
+                <div>
+                  <span className="tip-meta">{tip.meta}</span>
+                  <h3>{tip.title}</h3>
+                  <p>{tip.description}</p>
+                </div>
+              </article>
             ))}
-          </ul>
-          <p className="tips-view-all">View all tips</p>
+          </div>
         </section>
 
         {showProfileModal && (
-          <ServiceProfileModal onClose={() => setShowProfileModal(false)} />
+          <ServiceProfileModal onClose={() => {
+            setShowProfileModal(false);
+            fetchChecklistData();
+          }} />
+        )}
+
+        {showPortfolioModal && (
+          <EditPortfolioModal onClose={() => {
+            setShowPortfolioModal(false);
+            fetchChecklistData();
+          }} />
         )}
 
         {showVerificationRequest && (

@@ -1,5 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useLanguage } from '../../context/LanguageContext';
+import { getUser } from '../../services/api';
 
 const PRIMARY_ITEMS = [
   { key: 'dashboard', to: '/dashboard', labelKey: 'dashboardShort', icon: 'bi-speedometer2' },
@@ -7,9 +8,21 @@ const PRIMARY_ITEMS = [
   { key: 'settings', to: '/provider-settings', labelKey: 'settings', icon: 'bi-gear' },
 ];
 
+function getInitials(name) {
+  if (!name) return 'SP';
+  return name
+    .split(' ')
+    .map((part) => part[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
+}
+
 function ProviderSidebar({ hasServiceProfile = false, publicProfileRoute = '/dashboard' }) {
   const location = useLocation();
   const { language, t } = useLanguage();
+  const user = getUser();
+  const providerName = user?.fullName || t('serviceProvider');
 
   const languagesCredentialsLabel = language === 'ceb'
     ? 'Mga Pinulongan ug Credentials'
@@ -25,10 +38,17 @@ function ProviderSidebar({ hasServiceProfile = false, publicProfileRoute = '/das
   return (
     <aside className="provider-workspace-sidebar" aria-label={`${t('serviceProvider')} navigation`}>
       <div className="provider-workspace-sidebar-heading">
-        <span className="provider-workspace-sidebar-icon" aria-hidden="true">
-          <i className="bi bi-tools"></i>
+        <span className="provider-workspace-sidebar-avatar" aria-hidden="true">
+          {user?.profileImage ? (
+            <img src={user.profileImage} alt="" draggable="false" />
+          ) : (
+            getInitials(providerName)
+          )}
         </span>
-        <span>{t('serviceProvider')}</span>
+        <span className="provider-workspace-sidebar-identity">
+          <strong title={providerName}>{providerName}</strong>
+          <small>{t('serviceProvider')}</small>
+        </span>
       </div>
 
       <nav className="provider-workspace-nav" aria-label={t('serviceProvider')}>

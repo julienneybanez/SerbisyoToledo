@@ -37,27 +37,57 @@
   }
 
   .provider-workspace-sidebar-heading {
-    min-height: 52px;
+    min-height: 58px;
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    padding: 0.45rem 0.55rem 0.75rem;
+    padding: 0.45rem 0.55rem 0.8rem;
     color: var(--color-text-primary);
-    font-size: 0.98rem;
-    font-weight: 750;
   }
 
-  .provider-workspace-sidebar-icon {
-    width: 36px;
-    height: 36px;
+  .provider-workspace-sidebar-avatar {
+    width: 38px;
+    height: 38px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    flex: 0 0 auto;
-    border-radius: 10px;
+    flex: 0 0 38px;
+    overflow: hidden;
+    border: 1px solid color-mix(in srgb, var(--brand-primary) 18%, var(--color-border));
+    border-radius: 12px;
     background: color-mix(in srgb, var(--brand-primary) 10%, var(--color-surface));
-    color: var(--brand-primary);
-    font-size: 1rem;
+    color: var(--brand-primary-dark);
+    font-size: 0.78rem;
+    font-weight: 800;
+  }
+
+  .provider-workspace-sidebar-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .provider-workspace-sidebar-identity {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.08rem;
+  }
+
+  .provider-workspace-sidebar-identity strong {
+    overflow: hidden;
+    color: var(--color-text-primary);
+    font-size: 0.94rem;
+    font-weight: 750;
+    line-height: 1.2;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .provider-workspace-sidebar-identity small {
+    color: var(--color-text-muted);
+    font-size: 0.76rem;
+    font-weight: 600;
   }
 
   .provider-workspace-nav,
@@ -195,6 +225,11 @@
 [data-theme='dark'] .provider-workspace-sidebar {
   background: var(--color-surface);
   border-color: var(--color-border);
+}
+
+[data-theme='dark'] .provider-workspace-sidebar-avatar {
+  color: var(--color-text-primary);
+  background: color-mix(in srgb, var(--brand-primary) 15%, var(--color-surface));
 }
 
 [data-theme='dark'] .provider-workspace-nav-link.active {
