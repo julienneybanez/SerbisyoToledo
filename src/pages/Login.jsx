@@ -11,7 +11,6 @@ const Login = () => {
   const loginHeading = language === 'en' ? 'Welcome back' : t('logIn');
   const loginSubtitle = language === 'en' ? 'Log in to your account' : t('loginSubtitle');
   const [showPassword, setShowPassword] = useState(false);
-  const [loginAs, setLoginAs] = useState('client');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -35,7 +34,6 @@ const Login = () => {
       const response = await authAPI.login({
         email: formData.email,
         password: formData.password,
-        loginAs,
       });
 
       const redirectPath = sessionStorage.getItem('redirectAfterLogin');
@@ -60,12 +58,6 @@ const Login = () => {
       setIsLoading(false);
     }
   };
-
-  const loginRoles = [
-    { value: 'client', label: t('client'), description: t('loginClientDesc') },
-    { value: 'tradesperson', label: t('serviceProvider'), description: t('loginProviderDesc') },
-    { value: 'admin', label: t('admin'), description: t('loginAdminDesc') },
-  ];
 
   return (
     <section className="auth-page auth-page-login" aria-labelledby="login-title">
@@ -137,31 +129,6 @@ const Login = () => {
               </div>
             </div>
 
-            <fieldset className="login-role-fieldset">
-              <legend>{t('loginAs')}</legend>
-              <div className="login-role-list">
-                {loginRoles.map((role) => (
-                  <label
-                    key={role.value}
-                    className={`login-role-option ${loginAs === role.value ? 'selected' : ''}`}
-                  >
-                    <input
-                      type="radio"
-                      name="loginAs"
-                      value={role.value}
-                      checked={loginAs === role.value}
-                      onChange={(event) => setLoginAs(event.target.value)}
-                    />
-                    <span>
-                      <strong>{role.label}</strong>
-                      <small>{role.description}</small>
-                    </span>
-                    <i className="bi bi-check-circle-fill" aria-hidden="true"></i>
-                  </label>
-                ))}
-              </div>
-            </fieldset>
-
             <button
               type="submit"
               className="btn btn-primary auth-submit"
@@ -169,7 +136,7 @@ const Login = () => {
             >
               {isLoading ? (
                 <>
-                  <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                  <span className="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
                   {t('loggingIn')}
                 </>
               ) : (

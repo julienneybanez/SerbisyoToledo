@@ -13,22 +13,19 @@ const PROVIDER_TIPS = [
     id: 'service',
     icon: 'bi-chat-heart',
     title: 'Customer Service',
-    description: 'Confirm the job details, schedule, and expectations clearly before you start.',
-    meta: 'Build client trust',
+    description: 'Confirm the job details and schedule with the client before starting.',
   },
   {
     id: 'tools',
     icon: 'bi-tools',
     title: 'Job Readiness',
-    description: 'Prepare the tools and materials you need before travelling to the client.',
-    meta: 'Work more efficiently',
+    description: 'Prepare the tools and materials you need before going to the client.',
   },
   {
     id: 'pricing',
     icon: 'bi-cash-coin',
-    title: 'Pricing Your Services',
-    description: 'Keep your starting price realistic and discuss any extra costs before the work begins.',
-    meta: 'Set clear expectations',
+    title: 'Pricing',
+    description: 'Discuss extra costs with the client before the work begins.',
   },
 ];
 
@@ -345,9 +342,8 @@ export default function ServiceProviderDashboard() {
             </div>
 
             <div className="welcome-content">
-              <p className="welcome-eyebrow">Your provider workspace</p>
               <h1>Good day, <span className="user-name">{providerName}</span></h1>
-              <p>Here is what needs your attention today.</p>
+              <p>Manage your requests, jobs, and service listing.</p>
               <div className="provider-context-row" aria-label="Provider profile summary">
                 <span><i className="bi bi-tools" aria-hidden="true"></i>{primaryService}</span>
                 <span><i className="bi bi-geo-alt" aria-hidden="true"></i>{providerLocation}</span>
@@ -389,7 +385,7 @@ export default function ServiceProviderDashboard() {
             <div className="provider-stat-copy">
               <strong>{requestSummary.pending}</strong>
               <p>New Request{requestSummary.pending === 1 ? '' : 's'}</p>
-              <small>{requestSummary.pending > 0 ? 'Needs your response' : 'Nothing waiting right now'}</small>
+              <small>{requestSummary.pending > 0 ? 'Needs your response' : 'No pending requests'}</small>
             </div>
           </article>
 
@@ -403,7 +399,7 @@ export default function ServiceProviderDashboard() {
               <small>
                 {requestSummary.nextUpcoming
                   ? `Next: ${formatSchedule(requestSummary.nextUpcoming, true)}`
-                  : 'No upcoming schedule'}
+                  : 'No upcoming jobs'}
               </small>
             </div>
           </article>
@@ -421,7 +417,7 @@ export default function ServiceProviderDashboard() {
         </section>
 
         <ProfileCompletionChecklist
-          title="Complete Your Provider Profile"
+          title="Profile Setup"
           tasks={providerChecklistTasks}
           loading={checklistLoading}
           error={checklistError}
@@ -433,7 +429,6 @@ export default function ServiceProviderDashboard() {
         <section className="jobs-section">
           <div className="jobs-header">
             <div>
-              <p className="dashboard-section-kicker">Today&apos;s work</p>
               <h2 className="section-title">Your Work Queue</h2>
               <p className="jobs-subtitle">Review new requests first, then continue accepted jobs.</p>
             </div>
@@ -448,8 +443,8 @@ export default function ServiceProviderDashboard() {
           ) : requests.length === 0 ? (
             <div className="jobs-empty">
               <span className="jobs-empty-icon" aria-hidden="true"><i className="bi bi-inbox"></i></span>
-              <h3>Your work queue is clear</h3>
-              <p>New client requests and accepted jobs will appear here.</p>
+              <h3>No jobs in your queue</h3>
+              <p>New requests and accepted jobs will appear here.</p>
             </div>
           ) : (
             <div className="jobs-grid">
@@ -564,11 +559,11 @@ export default function ServiceProviderDashboard() {
             <i className={`bi ${user?.isVerified ? 'bi-patch-check-fill' : 'bi-shield-check'}`}></i>
           </span>
           <div className="level-up-copy">
-            <h2>{user?.isVerified ? 'Your provider account is verified' : 'Build more trust with clients'}</h2>
+            <h2>{user?.isVerified ? 'Verification Approved' : 'Provider Verification'}</h2>
             <p>
               {user?.isVerified
-                ? 'Your public profile can show clients that your provider verification has been approved.'
-                : 'Verified providers can display a trust badge on their public profile after admin approval.'}
+                ? 'Your public profile can display your provider verification badge.'
+                : 'Submit a verification request to display a badge after admin approval.'}
             </p>
           </div>
           {!user?.isVerified && (
@@ -580,11 +575,7 @@ export default function ServiceProviderDashboard() {
 
         <section className="tips-section" aria-labelledby="provider-tips-title">
           <div className="tips-section-heading">
-            <div>
-              <p className="dashboard-section-kicker">Helpful reminders</p>
-              <h2 id="provider-tips-title" className="section-title">Provider Tips</h2>
-            </div>
-            <p>Simple habits that help create a smoother experience for you and your clients.</p>
+            <h2 id="provider-tips-title" className="section-title">Tips for Service Providers</h2>
           </div>
 
           <div className="tips-grid">
@@ -594,7 +585,6 @@ export default function ServiceProviderDashboard() {
                   <i className={`bi ${tip.icon}`}></i>
                 </span>
                 <div>
-                  <span className="tip-meta">{tip.meta}</span>
                   <h3>{tip.title}</h3>
                   <p>{tip.description}</p>
                 </div>
