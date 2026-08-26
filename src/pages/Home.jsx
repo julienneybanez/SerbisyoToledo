@@ -79,7 +79,6 @@ function Home() {
                   className="btn home-secondary-cta"
                   onClick={() => navigate('/register?role=provider')}
                 >
-                  <i className="bi bi-tools" aria-hidden="true"></i>
                   {t('howProviderCta')}
                 </button>
               </div>
