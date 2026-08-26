@@ -1,0 +1,23 @@
+/* Keep booking cards at their natural content height instead of stretching
+   to match the tallest card in each grid row. */
+
+.requests-container .requests-grid {
+  align-items: start;
+}
+
+.requests-container .request-card {
+  align-self: start;
+  height: auto;
+  min-height: 0;
+}
+
+@media (max-width: 767px) {
+  .requests-container .requests-grid {
+    align-items: stretch;
+  }
+
+  .requests-container .request-card {
+    align-self: stretch;
+    width: 100%;
+  }
+}

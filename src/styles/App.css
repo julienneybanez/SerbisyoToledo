@@ -44,3 +44,6 @@
 
 /* Final title/subtitle cleanup */
 @import './TitleSubtitleCleanup.css';
+
+/* Keep booking cards compact instead of equal-height per row */
+@import './RequestsCardLayoutFix.css';
