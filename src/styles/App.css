@@ -47,3 +47,6 @@
 
 /* Keep booking cards compact instead of equal-height per row */
 @import './RequestsCardLayoutFix.css';
+
+/* Final Browse Services header/discovery cleanup */
+@import './BrowseHeaderCleanup.css';
