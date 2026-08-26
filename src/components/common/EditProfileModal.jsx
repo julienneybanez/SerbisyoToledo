@@ -5,12 +5,11 @@ import './EditProfileModal.css';
 
 export default function EditProfileModal({ onClose, onProfileUpdated }) {
   const fileInputRef = useRef(null);
-  
+
   const [formData, setFormData] = useState({
     fullName: '',
     phone: '',
     address: '',
-    bio: '',
   });
   const [profilePhoto, setProfilePhoto] = useState(null);
   const [photoPreview, setPhotoPreview] = useState(null);
@@ -28,12 +27,11 @@ export default function EditProfileModal({ onClose, onProfileUpdated }) {
       setIsLoading(true);
       const response = await userProfileAPI.getProfile();
       if (response.success) {
-        const { fullName, phone, address, bio, profilePhoto: existingPhoto } = response.data;
+        const { fullName, phone, address, profilePhoto: existingPhoto } = response.data;
         setFormData({
           fullName: fullName || '',
           phone: phone || '',
           address: address || '',
-          bio: bio || '',
         });
         if (existingPhoto) {
           setPhotoPreview(existingPhoto);
@@ -49,7 +47,7 @@ export default function EditProfileModal({ onClose, onProfileUpdated }) {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handlePhotoSelect = (e) => {
@@ -94,14 +92,13 @@ export default function EditProfileModal({ onClose, onProfileUpdated }) {
       submitData.append('fullName', formData.fullName);
       submitData.append('phone', formData.phone);
       submitData.append('address', formData.address);
-      submitData.append('bio', formData.bio);
-      
+
       if (profilePhoto) {
         submitData.append('profilePhoto', profilePhoto);
       }
 
       const response = await userProfileAPI.updateProfile(submitData);
-      
+
       if (response.success) {
         setSuccess(true);
         setTimeout(() => {
@@ -122,7 +119,7 @@ export default function EditProfileModal({ onClose, onProfileUpdated }) {
 
   const getInitials = (name) => {
     if (!name) return 'U';
-    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+    return name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2);
   };
 
   return createPortal(
@@ -134,7 +131,7 @@ export default function EditProfileModal({ onClose, onProfileUpdated }) {
 
         <div className="edit-profile-header">
           <h2>Edit Profile</h2>
-          <p>Update your personal information</p>
+          <p>Update your account and contact information</p>
         </div>
 
         {isLoading ? (
@@ -158,7 +155,6 @@ export default function EditProfileModal({ onClose, onProfileUpdated }) {
               </div>
             )}
 
-            {/* Profile Photo Section */}
             <div className="photo-section">
               <div className="photo-preview-container">
                 {photoPreview ? (
@@ -200,7 +196,6 @@ export default function EditProfileModal({ onClose, onProfileUpdated }) {
               </div>
             </div>
 
-            {/* Form Fields */}
             <div className="form-group">
               <label htmlFor="fullName">Full Name</label>
               <input
@@ -238,19 +233,6 @@ export default function EditProfileModal({ onClose, onProfileUpdated }) {
               />
             </div>
 
-            <div className="form-group">
-              <label htmlFor="bio">Bio</label>
-              <textarea
-                id="bio"
-                name="bio"
-                value={formData.bio}
-                onChange={handleInputChange}
-                placeholder="Tell us about yourself..."
-                rows="3"
-              />
-            </div>
-
-            {/* Actions */}
             <div className="form-actions">
               <button
                 type="button"

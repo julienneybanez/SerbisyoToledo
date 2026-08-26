@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { authAPI, getUser, userProfileAPI } from '../services/api';
+import { getUser, userProfileAPI, verificationAPI } from '../services/api';
 import { useLanguage } from '../context/LanguageContext';
 import ThemeToggle from '../components/common/ThemeToggle';
 import SettingsFlash from '../components/settings/SettingsFlash';
@@ -10,7 +10,6 @@ function ClientSettings() {
   const navigate = useNavigate();
   const { t } = useLanguage();
   const [searchParams] = useSearchParams();
-  const isVerificationResendDisabled = true;
 
   const [activeSection, setActiveSection] = useState('account');
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
@@ -24,9 +23,8 @@ function ClientSettings() {
     email: '',
     phone: '',
     address: '',
-    bio: '',
     createdAt: '',
-    isVerified: false,
+    emailVerified: false,
   });
 
   useEffect(() => {
@@ -48,9 +46,8 @@ function ClientSettings() {
             email: profile.email || currentUser.email || '',
             phone: profile.phone || '',
             address: profile.address || '',
-            bio: profile.bio || '',
             createdAt: profile.createdAt || '',
-            isVerified: Boolean(currentUser.isVerified),
+            emailVerified: Boolean(currentUser.emailVerified),
           };
           setSettings(nextState);
           setInitialProfile(nextState);
@@ -61,9 +58,8 @@ function ClientSettings() {
           email: currentUser.email || '',
           phone: currentUser.phone || '',
           address: currentUser.address || '',
-          bio: currentUser.bio || '',
           createdAt: '',
-          isVerified: Boolean(currentUser.isVerified),
+          emailVerified: Boolean(currentUser.emailVerified),
         };
         setSettings(fallbackState);
         setInitialProfile(fallbackState);
@@ -93,9 +89,8 @@ function ClientSettings() {
       settings.fullName !== initialProfile.fullName
       || settings.phone !== initialProfile.phone
       || settings.address !== initialProfile.address
-      || settings.bio !== initialProfile.bio
     );
-  }, [initialProfile, settings.address, settings.bio, settings.fullName, settings.phone]);
+  }, [initialProfile, settings.address, settings.fullName, settings.phone]);
 
   const handleChange = (key, value) => {
     setSettings((prev) => ({ ...prev, [key]: value }));
@@ -114,7 +109,6 @@ function ClientSettings() {
       submitData.append('fullName', settings.fullName || '');
       submitData.append('phone', settings.phone || '');
       submitData.append('address', settings.address || '');
-      submitData.append('bio', settings.bio || '');
 
       const response = await userProfileAPI.updateProfile(submitData);
       if (response.success) {
@@ -123,7 +117,6 @@ function ClientSettings() {
           fullName: response.data.fullName || settings.fullName,
           phone: response.data.phone || '',
           address: response.data.address || '',
-          bio: response.data.bio || '',
         };
         setSettings(updated);
         setInitialProfile(updated);
@@ -144,11 +137,6 @@ function ClientSettings() {
   };
 
   const handleResendVerification = async () => {
-    if (isVerificationResendDisabled) {
-      setFlash({ type: 'info', message: t('resendVerificationDisabled') });
-      return;
-    }
-
     if (!settings.email) {
       setFlash({ type: 'error', message: t('noEmailForVerification') });
       return;
@@ -157,7 +145,7 @@ function ClientSettings() {
     try {
       setIsSendingVerification(true);
       setFlash({ type: 'info', message: '' });
-      await authAPI.resendVerification({ email: settings.email });
+      await verificationAPI.resendVerification({ email: settings.email });
       setFlash({ type: 'success', message: t('verificationEmailSent') });
     } catch (err) {
       setFlash({ type: 'error', message: err.message || t('failedSendVerificationEmail') });
@@ -233,19 +221,6 @@ function ClientSettings() {
                 <small className="settings-help">{t('emailChangesNotSupported')}</small>
               </div>
 
-              <div className="settings-group">
-                <label className="settings-label" htmlFor="client-bio">{t('bio')}</label>
-                <textarea
-                  id="client-bio"
-                  className="settings-textarea"
-                  value={settings.bio}
-                  onChange={(e) => handleChange('bio', e.target.value)}
-                  rows={4}
-                  autoComplete="off"
-                  disabled={isLoadingProfile || isSaving}
-                />
-              </div>
-
               {!!settings.createdAt && (
                 <small className="settings-help">
                   {t('accountCreatedOn', { date: new Date(settings.createdAt).toLocaleDateString() })}
@@ -296,15 +271,14 @@ function ClientSettings() {
                   <div className="settings-card-main">
                     <p className="settings-card-title">{t('emailVerificationStatus')}</p>
                     <p className="settings-card-description">
-                      <strong>{settings.isVerified ? t('verified') : t('notVerified')}</strong>
+                      <strong>{settings.emailVerified ? t('verified') : t('notVerified')}</strong>
                     </p>
-                    <p className="settings-help">{t('resendVerificationDisabled')}</p>
                   </div>
-                  {!settings.isVerified && (
+                  {!settings.emailVerified && (
                     <button
                       className="btn-secondary"
                       onClick={handleResendVerification}
-                      disabled={isSendingVerification || isVerificationResendDisabled}
+                      disabled={isSendingVerification}
                       type="button"
                     >
                       {isSendingVerification ? t('sending') : t('resendVerificationEmail')}
@@ -326,14 +300,16 @@ function ClientSettings() {
             </div>
           )}
 
-          <div className="settings-actions">
-            <button className="btn-save" onClick={handleSave} disabled={isSaving || isLoadingProfile || !hasProfileChanges}>
-              {isSaving ? t('saving') : t('saveChanges')}
-            </button>
-            <button className="btn-cancel" onClick={handleReset} disabled={isSaving || isLoadingProfile || !hasProfileChanges}>
-              {t('reset')}
-            </button>
-          </div>
+          {(activeSection === 'account' || activeSection === 'contact') && (
+            <div className="settings-actions">
+              <button className="btn-save" onClick={handleSave} disabled={isSaving || isLoadingProfile || !hasProfileChanges}>
+                {isSaving ? t('saving') : t('saveChanges')}
+              </button>
+              <button className="btn-cancel" onClick={handleReset} disabled={isSaving || isLoadingProfile || !hasProfileChanges}>
+                {t('reset')}
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

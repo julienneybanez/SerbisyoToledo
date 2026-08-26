@@ -1,105 +1,156 @@
 # Settings Guide
 
-## Scope and Constraint
+## Scope
 
-This redesign enforces a functional-control rule for settings pages:
+The settings UI follows one rule: visible controls should either persist to a real backend field or trigger a real, existing action. Controls that only changed temporary React state were removed from the user-facing settings pages.
 
-- Every visible control must either persist to a real backend field or trigger a real, existing action.
-- UI-only toggles and fake global configuration controls were removed.
-- No database schema changes were made.
+No database schema changes are required for this cleanup.
 
-## Route Coverage
+## Routes
 
 - Client settings: `/client-settings`
 - Service provider settings: `/provider-settings`
-- Admin settings: `/admin/settings`
+- Admin system status: `/admin/settings`
 
-## Control Audit and Current Behavior
+## Client Settings
 
-### Client Settings
+### Kept
 
-Functional controls kept:
-
-- Full name, phone, address, bio
-  - Persistence: `PATCH /api/user/profile`
-  - Frontend API: `userProfileAPI.updateProfile(FormData)`
+- Full name
+- Email (read-only)
+- Phone number
+- Address
+- Email verification status
 - Resend verification email
-  - Action: `POST /api/auth/resend-verification`
-  - Frontend API: `authAPI.resendVerification({ email })`
-- Open password reset flow
-  - Action: navigate to `/forgot-password`
+- Password reset flow
+- Appearance/theme
 
-Nonfunctional controls removed:
+Profile changes persist through `PATCH /api/user/profile`.
 
-- Profile visibility
-- Allow messages
-- Show contact information
-- Push/email/SMS notification toggles not backed by persisted preference fields
-- City and postal-code fields that were not persisted
+Verification resend uses `POST /api/auth/resend-verification`.
 
-### Service Provider Settings
+### Removed
 
-Functional controls kept:
+- Client bio from Settings and the quick Edit Profile modal
 
-- Account profile fields (name, phone, address, bio)
-  - Persistence: `PATCH /api/user/profile`
-- Service profile create/update fields
-  - Persistence: `POST /api/service-profiles/create`
-  - Required: display name, barangay address, starting price, at least one category
-- Publish/unpublish profile
-  - Persistence: `PATCH /api/service-profiles/toggle-publish`
-- Portfolio detail updates (about me, response time, skills)
-  - Persistence: `PATCH /api/service-profiles/portfolio/details`
-- Submit provider verification request
-  - Action: opens verification request modal, submits to `POST /api/user/verification-request`
+The client does not currently have a public profile where a bio has a clear user-facing purpose.
 
-Nonfunctional controls removed:
+## Service Provider Settings
 
-- Auto-accept requests
-- Provider-only privacy toggles not backed by persistence
-- SMS/email/push preference toggles without stored preferences
-- Service area and minimum job amount controls without backend support
+The provider settings page is intentionally limited to three areas:
 
-### Admin Settings
+1. Account
+2. Schedule
+3. Languages & Credentials
 
-Functional controls kept:
+### Account
 
-- Refresh operational metrics
-  - Action: loads `dashboard-stats`, users, verifications, reports, and health
-- Export operational snapshot JSON
-  - Action: client-side JSON export of live status
-- Navigation shortcuts to moderation pages
-  - `/admin/verifications`, `/admin/reports`, `/admin/users`
+Kept:
 
-Read-only operational status surfaced from real sources:
+- Full name
+- Email (read-only)
+- Personal phone number
+- Password reset flow
+- Appearance/theme
 
-- `GET /api/admin/dashboard-stats`
-- `GET /api/admin/users`
-- `GET /api/admin/verification-requests`
-- `GET /api/admin/reports`
-- `GET /api/health`
+Full name and phone persist through `PATCH /api/user/profile`.
 
-Nonfunctional controls removed:
+Provider phone remains important because it is used by the booking discussion/contact-sharing workflow.
 
-- Fake global settings (maintenance mode, registration toggles, password policy checkboxes, SMS/email system toggles, session timeout) that had no persisted backend implementation
+### Schedule
 
-## Backend Adjustment Included
+Kept:
 
-One minimal response enhancement was added for provider settings:
+- Availability status
+- Show availability status
+- Same-day booking
+- Minimum advance notice
+- Maximum advance booking window
+- Weekly availability blocks
+- Date exceptions
 
-- `GET /api/service-profiles/user/me` now includes `isPublished` from existing `service_profiles.is_published`.
+These use the existing provider availability APIs.
 
-This enables publish state to be shown and toggled accurately in Settings.
+### Languages & Credentials
 
-## DB Impact Statement
+Kept:
 
-- No schema migrations were created.
-- No table structures or columns were added, removed, or changed.
-- Existing tables/fields are reused only.
+- Languages spoken
+- Credential/certificate creation
+- Credential document upload
+- Submit credential for admin review
+- Existing credential status/notes
 
-## Post-Defense Recommendations
+These use the existing provider language and credential APIs and the existing admin credential-review workflow.
 
-1. Add persisted user notification preferences if push/email/SMS toggle support is desired.
-2. Add dedicated backend-admin config endpoints if true system-level settings are required.
-3. Add provider self endpoint for verification request status (pending/approved/rejected) to avoid user guesswork.
-4. Add integration tests for settings flows per role in frontend and backend test suites.
+### Removed
+
+The old Business section was removed because most of its fields were not persisted:
+
+- Business name
+- Business phone
+- Business city
+- Minimum job amount
+- Service area
+
+Provider marketplace information such as service location, starting price, categories, service types, and banner belongs to the Service Listing editor instead.
+
+The old Notifications section was removed because its Push, Email, and SMS toggles did not persist and were not consumed by the notification system.
+
+The old Privacy section was removed because Profile Visibility and Allow Direct Messages did not persist and the app does not have a general direct-message feature.
+
+Old deep links such as `?section=business`, `?section=notifications`, and `?section=privacy` safely fall back to Account instead of leaving the page in an invalid state.
+
+## Profile Menus
+
+### Client
+
+The profile menu is kept focused on:
+
+- Edit Profile
+- Client Settings
+- Language/theme
+- Logout
+
+The quick Edit Profile modal now contains only profile photo, full name, phone, and address.
+
+### Service Provider
+
+The profile menu is simplified to:
+
+- View Public Profile (when a service listing exists)
+- Edit/Post Service Listing
+- Portfolio & About Me
+- Settings
+- Language/theme
+- Logout
+
+Verification is intentionally not duplicated in this menu because the provider Dashboard already exposes the verification action as part of profile completion.
+
+### Admin
+
+Desktop Admin keeps the simple signed-in identity header and uses the sidebar for actions.
+
+The mobile Admin profile menu no longer shows the client-only Edit Profile action. It contains only System Status, display preferences, and Logout.
+
+## Admin System Status
+
+`/admin/settings` is now a focused, read-only System Status page instead of duplicating Dashboard and moderation controls.
+
+It shows:
+
+- API health
+- Database health/status
+- Last health-check timestamp
+- Health endpoint
+- Refresh action
+
+User management, verification review, and reports remain in their dedicated Admin pages.
+
+## Rollback
+
+The pre-cleanup code is preserved on:
+
+`backup/pre-settings-cleanup-2026-08-26`
+
+This branch points to the exact `main` state before the settings/profile-menu cleanup.

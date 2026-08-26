@@ -7,14 +7,13 @@ const PRIMARY_ITEMS = [
   { key: 'settings', to: '/provider-settings', labelKey: 'settings', icon: 'bi-gear' },
 ];
 
-const QUICK_ITEMS = [
-  { key: 'schedule', to: '/provider-settings?section=schedule', labelKey: 'schedule', icon: 'bi-calendar3' },
-  { key: 'profile-details', to: '/provider-settings?section=profile', labelKey: 'providerSettingsNavProfileDetails', icon: 'bi-person-vcard' },
-];
-
 function ProviderSidebar({ hasServiceProfile = false, publicProfileRoute = '/dashboard' }) {
   const location = useLocation();
-  const { t } = useLanguage();
+  const { language, t } = useLanguage();
+
+  const languagesCredentialsLabel = language === 'ceb'
+    ? 'Mga Pinulongan ug Credentials'
+    : 'Languages & Credentials';
 
   const isPrimaryActive = (item) => {
     if (item.key === 'settings') {
@@ -54,12 +53,16 @@ function ProviderSidebar({ hasServiceProfile = false, publicProfileRoute = '/das
 
       <div className="provider-workspace-quick-links">
         <span className="provider-workspace-section-label">{t('more')}</span>
-        {QUICK_ITEMS.map((item) => (
-          <Link key={item.key} to={item.to} className="provider-workspace-quick-link">
-            <i className={`bi ${item.icon}`} aria-hidden="true"></i>
-            <span>{t(item.labelKey)}</span>
-          </Link>
-        ))}
+
+        <Link to="/provider-settings?section=schedule" className="provider-workspace-quick-link">
+          <i className="bi bi-calendar3" aria-hidden="true"></i>
+          <span>{t('schedule')}</span>
+        </Link>
+
+        <Link to="/provider-settings?section=profile" className="provider-workspace-quick-link">
+          <i className="bi bi-patch-check" aria-hidden="true"></i>
+          <span>{languagesCredentialsLabel}</span>
+        </Link>
 
         {hasServiceProfile && publicProfileRoute !== '/dashboard' && (
           <Link to={publicProfileRoute} className="provider-workspace-quick-link">

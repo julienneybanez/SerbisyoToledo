@@ -6,7 +6,6 @@ import NotificationDropdown from '../common/NotificationDropdown';
 import EditProfileModal from '../common/EditProfileModal';
 import EditPortfolioModal from '../common/EditPortfolioModal';
 import ServiceProfileModal from '../common/ServiceProfileModal';
-import VerificationRequestModal from '../common/VerificationRequestModal';
 import ThemeToggle from '../common/ThemeToggle';
 import { useLanguage } from '../../context/LanguageContext';
 import logo from '../../assets/logo.png';
@@ -25,8 +24,14 @@ function Navbar() {
   const [showServiceProfileForm, setShowServiceProfileForm] = useState(false);
   const [hasServiceProfile, setHasServiceProfile] = useState(false);
   const [providerPublicProfileRoute, setProviderPublicProfileRoute] = useState('/dashboard');
-  const [showVerificationRequest, setShowVerificationRequest] = useState(false);
   const { language, setLanguage, t } = useLanguage();
+
+  const providerListingLabel = language === 'ceb'
+    ? (hasServiceProfile ? 'Usba ang Service Listing' : 'I-post ang Service Listing')
+    : (hasServiceProfile ? 'Edit Service Listing' : 'Post Service Listing');
+  const providerPortfolioLabel = language === 'ceb'
+    ? 'Portfolio ug About Me'
+    : 'Portfolio & About Me';
 
   useEffect(() => {
     const handleScroll = () => {
@@ -76,7 +81,6 @@ function Navbar() {
     };
   }, [loggedIn, user?.id, user?.userType]);
 
-  // Check auth status on mount and when storage changes
   useEffect(() => {
     const checkAuth = () => {
       setLoggedIn(isAuthenticated());
@@ -94,11 +98,8 @@ function Navbar() {
     const handleCloseProviderEditProfile = () => {
       setShowEditPortfolio(false);
     };
-    
-    // Listen for storage changes (login/logout from other tabs)
+
     window.addEventListener('storage', checkAuth);
-    
-    // Custom event for same-tab updates
     window.addEventListener('authChange', checkAuth);
     window.addEventListener('guidedTour:openProviderEditProfile', handleOpenProviderEditProfile);
     window.addEventListener('guidedTour:closeProviderEditProfile', handleCloseProviderEditProfile);
@@ -119,7 +120,7 @@ function Navbar() {
 
     document.addEventListener('pointerdown', handleDocumentPointerDown);
     document.addEventListener('keydown', handleDocumentKeyDown);
-    
+
     return () => {
       window.removeEventListener('storage', checkAuth);
       window.removeEventListener('authChange', checkAuth);
@@ -141,7 +142,7 @@ function Navbar() {
 
   const getInitials = (name) => {
     if (!name) return 'U';
-    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+    return name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2);
   };
 
   const handleNavClick = () => {
@@ -153,6 +154,11 @@ function Navbar() {
   const isAdmin = loggedIn && user?.userType === 'admin';
   const isClient = loggedIn && user?.userType === 'client';
   const brandDestination = isProvider ? '/dashboard' : '/';
+  const settingsRoute = isProvider
+    ? '/provider-settings'
+    : isAdmin
+      ? '/admin/settings'
+      : '/client-settings';
 
   return (
     <nav ref={navbarRef} className={`navbar navbar-expand-lg ${scrolled ? 'navbar-scrolled' : ''}`}>
@@ -167,9 +173,9 @@ function Navbar() {
           </div>
         </Link>
 
-        <button 
-          className={`navbar-toggler ${mobileMenuOpen ? 'is-open' : ''}`} 
-          type="button" 
+        <button
+          className={`navbar-toggler ${mobileMenuOpen ? 'is-open' : ''}`}
+          type="button"
           onClick={() => setMobileMenuOpen((open) => !open)}
           aria-label="Toggle navigation"
           aria-expanded={mobileMenuOpen}
@@ -182,7 +188,7 @@ function Navbar() {
           <ul className="navbar-nav primary-nav ms-lg-auto align-items-lg-center gap-lg-2">
             {!loggedIn && (
               <li className="nav-item">
-                <NavLink 
+                <NavLink
                   className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
                   to="/"
                   onClick={handleNavClick}
@@ -193,7 +199,7 @@ function Navbar() {
             )}
             {!loggedIn && (
               <li className="nav-item">
-                <NavLink 
+                <NavLink
                   className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
                   to="/about"
                   onClick={handleNavClick}
@@ -202,10 +208,9 @@ function Navbar() {
                 </NavLink>
               </li>
             )}
-
             {!loggedIn && (
               <li className="nav-item">
-                <NavLink 
+                <NavLink
                   className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
                   to="/feed"
                   onClick={handleNavClick}
@@ -218,7 +223,7 @@ function Navbar() {
             {isProvider && (
               <>
                 <li className="nav-item">
-                  <NavLink 
+                  <NavLink
                     className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
                     to="/dashboard"
                     onClick={handleNavClick}
@@ -227,7 +232,7 @@ function Navbar() {
                   </NavLink>
                 </li>
                 <li className="nav-item">
-                  <NavLink 
+                  <NavLink
                     className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
                     to="/requests"
                     data-tour="nav-requests"
@@ -237,7 +242,7 @@ function Navbar() {
                   </NavLink>
                 </li>
                 <li className="nav-item">
-                  <NavLink 
+                  <NavLink
                     className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
                     to="/provider-settings?section=schedule"
                     onClick={handleNavClick}
@@ -251,7 +256,7 @@ function Navbar() {
             {isClient && (
               <>
                 <li className="nav-item">
-                  <NavLink 
+                  <NavLink
                     className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
                     to="/feed"
                     onClick={handleNavClick}
@@ -260,7 +265,7 @@ function Navbar() {
                   </NavLink>
                 </li>
                 <li className="nav-item">
-                  <NavLink 
+                  <NavLink
                     className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
                     to="/requests"
                     data-tour="nav-requests"
@@ -274,7 +279,7 @@ function Navbar() {
 
             {isAdmin && (
               <li className="nav-item">
-                <NavLink 
+                <NavLink
                   className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
                   to="/admin/dashboard"
                   onClick={handleNavClick}
@@ -284,7 +289,7 @@ function Navbar() {
               </li>
             )}
           </ul>
-          
+
           <div className="navbar-actions ms-lg-4">
             {loggedIn ? (
               <div className="auth-block logged-in-block">
@@ -292,16 +297,16 @@ function Navbar() {
                   <NotificationDropdown />
                 </div>
                 <div className="profile-dropdown">
-                  <button 
+                  <button
                     className="profile-avatar-btn"
                     onClick={() => setDropdownOpen((open) => !open)}
                     aria-label="Profile menu"
                     aria-expanded={dropdownOpen}
                   >
                     {user?.profileImage ? (
-                      <img 
-                        src={user.profileImage} 
-                        alt="Profile" 
+                      <img
+                        src={user.profileImage}
+                        alt="Profile"
                         className="profile-avatar-img"
                         draggable="false"
                       />
@@ -311,95 +316,79 @@ function Navbar() {
                       </div>
                     )}
                   </button>
+
                   {dropdownOpen && (
                     <div className="profile-dropdown-menu" role="menu" aria-label="Profile menu">
                       <div className="dropdown-user-info">
-                        <span className="dropdown-user-name" title={user?.fullName || 'User'}>{user?.fullName}</span>
-                        <span className="dropdown-user-type">{user?.userType === 'tradesperson' ? t('serviceProvider') : user?.userType === 'admin' ? t('admin') : t('client')}</span>
+                        <span className="dropdown-user-name" title={user?.fullName || 'User'}>
+                          {user?.fullName}
+                        </span>
+                        <span className="dropdown-user-type">
+                          {isProvider ? t('serviceProvider') : isAdmin ? t('admin') : t('client')}
+                        </span>
                       </div>
                       <hr className="dropdown-divider" />
-                      <button 
-                        className="dropdown-item"
-                        onClick={() => {
-                          setDropdownOpen(false);
-                          if (user?.userType === 'tradesperson') {
-                            setShowEditPortfolio(true);
-                          } else {
-                            setShowEditProfile(true);
-                          }
-                        }}
-                      >
-                        <i className="bi bi-pencil-square"></i>
-                        {user?.userType === 'tradesperson' ? t('manageProfile') : t('editProfile')}
-                      </button>
-                      {user?.userType === 'tradesperson' && hasServiceProfile && (
-                        <button 
-                          className="dropdown-item"
-                          onClick={() => {
-                            setDropdownOpen(false);
-                            setShowServiceProfileForm(true);
-                          }}
-                        >
-                          <i className="bi bi-images"></i>
-                          {t('editServiceProfile')}
-                        </button>
-                      )}
-                      {user?.userType === 'tradesperson' && !hasServiceProfile && (
-                        <button 
-                          className="dropdown-item"
-                          onClick={() => {
-                            setDropdownOpen(false);
-                            setShowServiceProfileForm(true);
-                          }}
-                        >
-                          <i className="bi bi-plus-circle"></i>
-                          {t('postServiceProfile')}
-                        </button>
-                      )}
-                      {user?.userType === 'tradesperson' && (
+
+                      {isClient && (
                         <button
                           className="dropdown-item"
                           onClick={() => {
                             setDropdownOpen(false);
-                            setShowVerificationRequest(true);
+                            setShowEditProfile(true);
                           }}
                         >
-                          <i className="bi bi-shield-check"></i>
-                          {t('verification')}
+                          <i className="bi bi-pencil-square"></i>
+                          {t('editProfile')}
                         </button>
                       )}
-                      {user?.userType === 'tradesperson' && (
-                        hasServiceProfile ? (
-                          <Link
-                            to={providerPublicProfileRoute}
-                            state={{ previewMode: window.innerWidth <= 768 ? 'mobile' : 'web' }}
-                            className="dropdown-item"
-                            onClick={() => setDropdownOpen(false)}
-                          >
-                            <i className="bi bi-eye"></i>
-                            {t('viewPublicProfile')}
-                          </Link>
-                        ) : (
-                          <button
-                            className="dropdown-item"
-                            onClick={() => {
-                              setDropdownOpen(false);
-                              setShowServiceProfileForm(true);
-                            }}
-                          >
-                            <i className="bi bi-eye"></i>
-                            {t('viewProfilePostFirst')}
-                          </button>
-                        )
+
+                      {isProvider && hasServiceProfile && (
+                        <Link
+                          to={providerPublicProfileRoute}
+                          state={{ previewMode: window.innerWidth <= 768 ? 'mobile' : 'web' }}
+                          className="dropdown-item"
+                          onClick={() => setDropdownOpen(false)}
+                        >
+                          <i className="bi bi-eye"></i>
+                          {t('viewPublicProfile')}
+                        </Link>
                       )}
-                      <Link 
-                        to={user?.userType === 'tradesperson' ? '/provider-settings' : '/client-settings'} 
+
+                      {isProvider && (
+                        <button
+                          className="dropdown-item"
+                          onClick={() => {
+                            setDropdownOpen(false);
+                            setShowServiceProfileForm(true);
+                          }}
+                        >
+                          <i className={`bi ${hasServiceProfile ? 'bi-card-list' : 'bi-plus-circle'}`}></i>
+                          {providerListingLabel}
+                        </button>
+                      )}
+
+                      {isProvider && (
+                        <button
+                          className="dropdown-item"
+                          onClick={() => {
+                            setDropdownOpen(false);
+                            setShowEditPortfolio(true);
+                          }}
+                        >
+                          <i className="bi bi-images"></i>
+                          {providerPortfolioLabel}
+                        </button>
+                      )}
+
+                      <Link
+                        to={settingsRoute}
                         className="dropdown-item"
                         onClick={() => setDropdownOpen(false)}
                       >
                         <i className="bi bi-gear"></i>
-                        {t('settings')}
+                        {isClient ? t('clientSettings') : isAdmin ? (language === 'ceb' ? 'Status sa System' : 'System Status') : t('settings')}
                       </Link>
+
                       <hr className="dropdown-divider" />
                       <div className="dropdown-preferences" role="group" aria-label="Display preferences">
                         <label className="dropdown-pref-label" htmlFor="navbar-language-select">{t('language')}</label>
@@ -415,8 +404,9 @@ function Navbar() {
                         </select>
                         <ThemeToggle compact className="dropdown-theme-toggle" />
                       </div>
+
                       <hr className="dropdown-divider" />
-                      <button 
+                      <button
                         className="dropdown-item logout-item"
                         onClick={handleLogout}
                       >
@@ -439,15 +429,15 @@ function Navbar() {
                   <option value="ceb">CEB</option>
                 </select>
                 <ThemeToggle compact className="navbar-theme-toggle" />
-                <NavLink 
-                  to="/login" 
+                <NavLink
+                  to="/login"
                   className={({ isActive }) => `btn btn-outline-primary login-btn ${isActive ? 'active-btn' : ''}`}
                   onClick={handleNavClick}
                 >
                   {t('logIn')}
                 </NavLink>
-                <NavLink 
-                  to="/register" 
+                <NavLink
+                  to="/register"
                   className={({ isActive }) => `btn btn-primary signup-btn ${isActive ? 'active-btn' : ''}`}
                   onClick={handleNavClick}
                 >
@@ -459,34 +449,24 @@ function Navbar() {
         </div>
       </div>
 
-      {/* Edit Profile Modal (for clients) */}
       {showEditProfile && (
-        <EditProfileModal 
+        <EditProfileModal
           onClose={() => setShowEditProfile(false)}
           onProfileUpdated={() => {
-            // Profile updates are handled via authChange event in the API
             setShowEditProfile(false);
           }}
         />
       )}
 
-      {/* Edit Portfolio Modal (for tradesperson Edit Profile action) */}
       {showEditPortfolio && (
-        <EditPortfolioModal 
+        <EditPortfolioModal
           onClose={() => setShowEditPortfolio(false)}
         />
       )}
 
-      {/* Service Profile Modal (for posted service profile editing) */}
       {showServiceProfileForm && (
         <ServiceProfileModal
           onClose={() => setShowServiceProfileForm(false)}
-        />
-      )}
-
-      {showVerificationRequest && (
-        <VerificationRequestModal
-          onClose={() => setShowVerificationRequest(false)}
         />
       )}
     </nav>

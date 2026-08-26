@@ -52,7 +52,6 @@ export default function MobileTopBar({
   hasServiceProfile = false,
   onEditProviderProfile,
   onManageServiceProfile,
-  onRequestVerification,
   onPreviewProfile,
 }) {
   const location = useLocation();
@@ -66,6 +65,14 @@ export default function MobileTopBar({
     : role === 'admin'
       ? '/admin/reports'
       : '/notifications';
+
+  const providerListingLabel = language === 'ceb'
+    ? (hasServiceProfile ? 'Usba ang Service Listing' : 'I-post ang Service Listing')
+    : (hasServiceProfile ? 'Edit Service Listing' : 'Post Service Listing');
+  const providerPortfolioLabel = language === 'ceb'
+    ? 'Portfolio ug About Me'
+    : 'Portfolio & About Me';
+  const adminSystemStatusLabel = language === 'ceb' ? 'Status sa System' : 'System Status';
 
   useEffect(() => {
     onCloseProfileMenu?.();
@@ -114,7 +121,11 @@ export default function MobileTopBar({
             <img src={logo} alt="" className="mobile-topbar-logo non-draggable-image" draggable="false" />
           </span>
           <div>
-            <p className="mobile-topbar-title">{title}</p>
+            <p className="mobile-topbar-title">
+              {role === 'admin' && location.pathname.startsWith('/admin/settings')
+                ? adminSystemStatusLabel
+                : title}
+            </p>
             <p className="mobile-topbar-subtitle">SerbisyoToledo</p>
           </div>
         </div>
@@ -142,6 +153,7 @@ export default function MobileTopBar({
             </button>
           </>
         )}
+
         {isLoggedIn && (
           <>
             <Link to={notificationsRoute} className="mobile-topbar-icon-btn" aria-label={t('openNotifications')}>
@@ -178,54 +190,53 @@ export default function MobileTopBar({
               </>
             ) : role === 'tradesperson' ? (
               <>
-                <button
-                  type="button"
-                  className="mobile-profile-menu-item"
-                  role="menuitem"
-                  onClick={onEditProviderProfile}
-                >
-                  <i className="bi bi-pencil-square"></i>
-                  {t('manageProfile')}
-                </button>
+                {hasServiceProfile && (
+                  <button
+                    type="button"
+                    className="mobile-profile-menu-item"
+                    role="menuitem"
+                    onClick={onPreviewProfile}
+                  >
+                    <i className="bi bi-eye"></i>
+                    {t('viewPublicProfile')}
+                  </button>
+                )}
                 <button
                   type="button"
                   className="mobile-profile-menu-item"
                   role="menuitem"
                   onClick={onManageServiceProfile}
                 >
-                  <i className={`bi ${hasServiceProfile ? 'bi-images' : 'bi-plus-circle'}`}></i>
-                  {hasServiceProfile ? t('editServiceProfile') : t('postServiceProfile')}
+                  <i className={`bi ${hasServiceProfile ? 'bi-card-list' : 'bi-plus-circle'}`}></i>
+                  {providerListingLabel}
                 </button>
                 <button
                   type="button"
                   className="mobile-profile-menu-item"
                   role="menuitem"
-                  onClick={onRequestVerification}
+                  onClick={onEditProviderProfile}
                 >
-                  <i className="bi bi-shield-check"></i>
-                  {t('verification')}
-                </button>
-                <button
-                  type="button"
-                  className="mobile-profile-menu-item"
-                  role="menuitem"
-                  onClick={hasServiceProfile ? onPreviewProfile : onManageServiceProfile}
-                >
-                  <i className="bi bi-eye"></i>
-                  {hasServiceProfile ? t('viewPublicProfile') : t('viewProfilePostFirst')}
+                  <i className="bi bi-images"></i>
+                  {providerPortfolioLabel}
                 </button>
               </>
-            ) : (
-              <button type="button" className="mobile-profile-menu-item" role="menuitem" onClick={onEditClientProfile}>
+            ) : role === 'client' ? (
+              <button
+                type="button"
+                className="mobile-profile-menu-item"
+                role="menuitem"
+                onClick={onEditClientProfile}
+              >
                 <i className="bi bi-pencil-square"></i>
                 {t('editProfile')}
               </button>
-            )}
+            ) : null}
+
             {isLoggedIn && (
               <>
                 <Link to={settingsRoute} className="mobile-profile-menu-item" role="menuitem" onClick={onCloseProfileMenu}>
                   <i className="bi bi-gear"></i>
-                  {t('settings')}
+                  {role === 'admin' ? adminSystemStatusLabel : role === 'client' ? t('clientSettings') : t('settings')}
                 </Link>
                 <div className="mobile-profile-menu-divider" role="none"></div>
                 <div className="mobile-profile-preferences" role="group" aria-label="Display preferences">

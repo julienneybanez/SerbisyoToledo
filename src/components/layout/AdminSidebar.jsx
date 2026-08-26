@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import {
   CSidebar,
@@ -68,14 +68,13 @@ function AdminSidebar({ isOpen, onClose }) {
 
   return (
     <>
-      {/* Mobile overlay */}
-      <div 
-        className={`sidebar-overlay ${isOpen ? 'show' : ''}`} 
+      <div
+        className={`sidebar-overlay ${isOpen ? 'show' : ''}`}
         onClick={onClose}
         aria-hidden="true"
       />
 
-      <CSidebar 
+      <CSidebar
         id="admin-sidebar"
         className={`admin-sidebar-coreui ${isOpen ? 'show' : ''}`}
         visible={true}
@@ -95,10 +94,10 @@ function AdminSidebar({ isOpen, onClose }) {
 
         <CSidebarNav>
           <CNavTitle>Main Navigation</CNavTitle>
-          
+
           <CNavItem>
-            <NavLink 
-              to="/admin/dashboard" 
+            <NavLink
+              to="/admin/dashboard"
               className={`nav-link ${isActive('/admin/dashboard') ? 'active' : ''}`}
               onClick={() => window.innerWidth < 992 && onClose()}
             >
@@ -110,8 +109,8 @@ function AdminSidebar({ isOpen, onClose }) {
           <CNavTitle>Management</CNavTitle>
 
           <CNavItem>
-            <NavLink 
-              to="/admin/users" 
+            <NavLink
+              to="/admin/users"
               className={`nav-link ${isActive('/admin/users') ? 'active' : ''}`}
               onClick={() => window.innerWidth < 992 && onClose()}
             >
@@ -121,8 +120,8 @@ function AdminSidebar({ isOpen, onClose }) {
           </CNavItem>
 
           <CNavItem>
-            <NavLink 
-              to="/admin/verifications" 
+            <NavLink
+              to="/admin/verifications"
               className={`nav-link ${isActive('/admin/verifications') ? 'active' : ''}`}
               onClick={() => window.innerWidth < 992 && onClose()}
             >
@@ -133,8 +132,8 @@ function AdminSidebar({ isOpen, onClose }) {
           </CNavItem>
 
           <CNavItem>
-            <NavLink 
-              to="/admin/reports" 
+            <NavLink
+              to="/admin/reports"
               className={`nav-link ${isActive('/admin/reports') ? 'active' : ''}`}
               onClick={() => window.innerWidth < 992 && onClose()}
             >
@@ -147,19 +146,19 @@ function AdminSidebar({ isOpen, onClose }) {
           <CNavTitle>System</CNavTitle>
 
           <CNavItem>
-            <NavLink 
-              to="/admin/settings" 
+            <NavLink
+              to="/admin/settings"
               className={`nav-link ${isActive('/admin/settings') ? 'active' : ''}`}
               onClick={() => window.innerWidth < 992 && onClose()}
             >
               <CIcon customClassName="nav-icon" icon={cilSettings} />
-              Settings
+              System Status
             </NavLink>
           </CNavItem>
 
           <div className="sidebar-footer-section">
             <CNavItem>
-              <button 
+              <button
                 className="nav-link logout-btn"
                 onClick={handleLogout}
               >
