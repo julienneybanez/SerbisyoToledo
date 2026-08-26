@@ -42,11 +42,17 @@
   max-width: 330px;
 }
 
+.how-step-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
 .how-step-icon {
-  display: inline-block;
-  margin-bottom: 0.8rem;
+  flex: 0 0 auto;
   color: var(--brand-teal);
-  font-size: 1.2rem;
+  font-size: 1.1rem;
+  line-height: 1;
 }
 
 .how-step-title {
@@ -99,5 +105,9 @@
 
   .how-step-copy {
     max-width: none;
+  }
+
+  .how-step-title-row {
+    gap: 0.55rem;
   }
 }
