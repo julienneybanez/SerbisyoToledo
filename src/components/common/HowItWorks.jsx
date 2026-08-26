@@ -23,17 +23,14 @@ export default function HowItWorks() {
 
   const steps = [
     {
-      icon: 'bi-search',
       title: t('howClientStep2Title'),
       description: t('howClientStep2Description'),
     },
     {
-      icon: 'bi-people',
       title: compareCopy.title,
       description: compareCopy.description,
     },
     {
-      icon: 'bi-calendar2-check',
       title: t('howClientStep3Title'),
       description: t('howClientStep3Description'),
     },
@@ -61,10 +58,7 @@ export default function HowItWorks() {
                 {String(index + 1).padStart(2, '0')}
               </span>
               <div className="how-step-copy">
-                <div className="how-step-title-row">
-                  <i className={`bi ${step.icon} how-step-icon`} aria-hidden="true"></i>
-                  <h3 className="how-step-title">{step.title}</h3>
-                </div>
+                <h3 className="how-step-title">{step.title}</h3>
                 <p className="how-step-description">{step.description}</p>
               </div>
             </Reveal>
