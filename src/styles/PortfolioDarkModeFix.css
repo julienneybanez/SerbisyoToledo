@@ -1,0 +1,135 @@
+/* Dark-mode correction for the public provider profile.
+   Keeps the light-mode layout unchanged and restores the same visual hierarchy in dark mode. */
+
+[data-theme='dark'] .portfolio-shell {
+  background: var(--color-page-bg);
+}
+
+[data-theme='dark'] .portfolio-shell .provider-section {
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  border-color: var(--color-border);
+  box-shadow: 0 14px 36px color-mix(in srgb, #000 18%, transparent);
+}
+
+/* Keep content sections open, like the light theme, instead of stacking dark panels. */
+[data-theme='dark'] .portfolio-shell .about-section,
+[data-theme='dark'] .portfolio-shell .skills-section,
+[data-theme='dark'] .portfolio-shell .contact-section {
+  background: transparent;
+  border-color: var(--color-border);
+}
+
+[data-theme='dark'] .portfolio-shell .profile-details h1,
+[data-theme='dark'] .portfolio-shell .about-title,
+[data-theme='dark'] .portfolio-shell .skills-title,
+[data-theme='dark'] .portfolio-shell .contact-title,
+[data-theme='dark'] .portfolio-shell .reviewer-name {
+  color: var(--color-text-primary);
+}
+
+[data-theme='dark'] .portfolio-shell .profile-profession,
+[data-theme='dark'] .portfolio-shell .back-link {
+  color: var(--color-primary);
+}
+
+[data-theme='dark'] .portfolio-shell .back-link:hover,
+[data-theme='dark'] .portfolio-shell .back-link:focus-visible {
+  color: var(--color-primary-hover);
+}
+
+[data-theme='dark'] .portfolio-shell .stat-item,
+[data-theme='dark'] .portfolio-shell .about-text,
+[data-theme='dark'] .portfolio-shell .compact-empty-text,
+[data-theme='dark'] .portfolio-shell .profile-availability-note,
+[data-theme='dark'] .portfolio-shell .contact-value,
+[data-theme='dark'] .portfolio-shell .review-text,
+[data-theme='dark'] .portfolio-shell .review-date,
+[data-theme='dark'] .portfolio-shell .rating-label,
+[data-theme='dark'] .portfolio-shell .bar-label {
+  color: var(--color-text-secondary);
+}
+
+/* Booking card stays distinct without becoming another heavy navy slab. */
+[data-theme='dark'] .portfolio-shell .profile-summary-actions {
+  background: color-mix(in srgb, var(--color-surface-secondary) 58%, var(--color-surface));
+  border-color: var(--color-border-strong);
+}
+
+[data-theme='dark'] .portfolio-shell .profile-summary-price {
+  color: var(--color-text-primary);
+}
+
+[data-theme='dark'] .portfolio-shell .profile-verified-badge {
+  background: color-mix(in srgb, var(--color-success) 14%, transparent);
+  color: var(--color-success);
+}
+
+/* Service and skill chips stay readable but visually quiet. */
+[data-theme='dark'] .portfolio-shell .skill-tag {
+  background: color-mix(in srgb, var(--color-primary) 11%, var(--color-surface));
+  border: 1px solid color-mix(in srgb, var(--color-primary) 20%, var(--color-border));
+  color: var(--color-primary-hover);
+}
+
+/* Restore a clear selected state after the generic dark tab rule. */
+[data-theme='dark'] .portfolio-shell .tab-btn {
+  background: transparent;
+  border-color: var(--color-border-strong);
+  color: var(--color-text-secondary);
+}
+
+[data-theme='dark'] .portfolio-shell .tab-btn:hover,
+[data-theme='dark'] .portfolio-shell .tab-btn:focus-visible {
+  background: color-mix(in srgb, var(--color-primary) 8%, transparent);
+  border-color: color-mix(in srgb, var(--color-primary) 45%, var(--color-border));
+  color: var(--color-text-primary);
+}
+
+[data-theme='dark'] .portfolio-shell .tab-btn.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+  box-shadow: 0 6px 16px color-mix(in srgb, var(--primary) 20%, transparent);
+}
+
+/* Portfolio/review content can be contained, but should not overpower the page. */
+[data-theme='dark'] .portfolio-shell .portfolio-item,
+[data-theme='dark'] .portfolio-shell .rating-summary {
+  background: color-mix(in srgb, var(--color-surface-secondary) 54%, var(--color-surface));
+  border-color: var(--color-border);
+}
+
+[data-theme='dark'] .portfolio-shell .portfolio-caption {
+  background: color-mix(in srgb, var(--color-surface-secondary) 52%, transparent);
+  color: var(--color-text-primary);
+}
+
+[data-theme='dark'] .portfolio-shell .reviews-panel,
+[data-theme='dark'] .portfolio-shell .review-card {
+  background: transparent;
+  border-color: var(--color-border);
+}
+
+[data-theme='dark'] .portfolio-shell .rating-number,
+[data-theme='dark'] .portfolio-shell .contact-label {
+  color: var(--color-text-primary);
+}
+
+[data-theme='dark'] .portfolio-shell .bar-track {
+  background: var(--color-border-strong);
+}
+
+[data-theme='dark'] .portfolio-shell .contact-icon {
+  background: color-mix(in srgb, var(--color-surface-secondary) 48%, var(--color-surface));
+  color: var(--color-primary);
+  box-shadow: inset 0 0 0 1px var(--color-border);
+}
+
+[data-theme='dark'] .portfolio-shell .provider-mobile-rate-label {
+  color: var(--color-text-secondary);
+}
+
+[data-theme='dark'] .portfolio-shell .provider-mobile-rate-value {
+  color: var(--color-text-primary);
+}

@@ -38,3 +38,6 @@
 
 /* Lightweight motion for public marketplace pages without Phase 2 visual changes */
 @import './PublicMarketplaceMotion.css';
+
+/* Final provider-profile dark-mode correction */
+@import './PortfolioDarkModeFix.css';
