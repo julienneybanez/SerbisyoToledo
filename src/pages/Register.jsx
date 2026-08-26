@@ -216,10 +216,6 @@ const Register = () => {
             className="auth-visual-image auth-register-visual-image non-draggable-image"
             draggable="false"
           />
-          <div className="auth-visual-overlay">
-            <p>{t('howProviderCta')}</p>
-            <span>{t('howProviderStep2Description')}</span>
-          </div>
         </aside>
       </div>
     </section>

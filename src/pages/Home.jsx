@@ -91,10 +91,6 @@ function Home() {
                 className="home-hero-image non-draggable-image"
                 draggable="false"
               />
-              <figcaption className="home-hero-caption">
-                <i className="bi bi-geo-alt-fill" aria-hidden="true"></i>
-                <span>{t('footerTagline')}</span>
-              </figcaption>
             </figure>
           </div>
         </div>

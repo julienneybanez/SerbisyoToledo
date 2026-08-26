@@ -158,10 +158,6 @@ const Login = () => {
             className="auth-visual-image auth-login-visual-image non-draggable-image"
             draggable="false"
           />
-          <div className="auth-visual-overlay">
-            <p>{t('homeHeroSubtitle')}</p>
-            <span>{t('footerTagline')}</span>
-          </div>
         </aside>
       </div>
     </section>
