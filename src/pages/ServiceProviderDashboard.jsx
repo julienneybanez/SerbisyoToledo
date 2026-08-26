@@ -107,7 +107,7 @@ export default function ServiceProviderDashboard() {
     {
       key: 'taxonomy-refresh',
       label: 'Review your service taxonomy',
-      description: 'Your profile has legacy or incomplete categories. Select updated categories and service types.',
+      description: 'Your service listing has legacy or incomplete categories. Select updated categories and service types.',
       completed: !Boolean(myProfile?.taxonomyNeedsReview),
       isApplicable: Boolean(myProfile?.taxonomyNeedsReview),
       actionType: 'button',
@@ -117,10 +117,10 @@ export default function ServiceProviderDashboard() {
     {
       key: 'service-category',
       label: 'Add your service category',
-      description: 'Select at least one service category in your profile.',
+      description: 'Select at least one service category in your service listing.',
       completed: Boolean(myProfile?.categories?.length),
       actionType: 'button',
-      actionLabel: 'Post Profile',
+      actionLabel: 'Manage Listing',
       onAction: () => setShowProfileModal(true),
     },
     {
@@ -138,7 +138,7 @@ export default function ServiceProviderDashboard() {
       description: 'Set a clear base rate for your services.',
       completed: Number(myProfile?.startingPrice) > 0,
       actionType: 'button',
-      actionLabel: 'Post Profile',
+      actionLabel: 'Manage Listing',
       onAction: () => setShowProfileModal(true),
     },
     {
@@ -147,7 +147,7 @@ export default function ServiceProviderDashboard() {
       description: 'Set your service barangay/address.',
       completed: Boolean((myProfile?.location || '').trim()),
       actionType: 'button',
-      actionLabel: 'Post Profile',
+      actionLabel: 'Manage Listing',
       onAction: () => setShowProfileModal(true),
     },
     {
@@ -303,7 +303,7 @@ export default function ServiceProviderDashboard() {
             data-tour="provider-profile-setup"
             onClick={() => setShowProfileModal(true)}
           >
-            Manage Service Profile
+            Manage Service Listing
           </button>
         </section>
 

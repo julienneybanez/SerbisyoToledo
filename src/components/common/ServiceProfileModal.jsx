@@ -149,10 +149,10 @@ export default function ServiceProfileModal({ onClose }) {
           window.dispatchEvent(new Event('profileCreated'));
         }, 1500);
       } else {
-        setError(result.message || 'Failed to save service profile');
+        setError(result.message || 'Failed to save service listing');
       }
     } catch (err) {
-      setError(err.message || 'An error occurred while saving your service profile');
+      setError(err.message || 'An error occurred while saving your service listing');
       console.error('Error submitting profile:', err);
     } finally {
       setIsLoading(false);
@@ -182,17 +182,17 @@ export default function ServiceProfileModal({ onClose }) {
         {isFetchingProfile ? (
           <div className="edit-profile-loading">
             <div className="spinner"></div>
-            <p>Loading service profile...</p>
+            <p>Loading service listing...</p>
           </div>
         ) : (
         <form onSubmit={handleSubmit} className="service-profile-form">
           {/* Modal Header */}
           <div className="modal-header">
-            <h2 className="modal-title">{isEditMode ? 'Edit Service Profile' : 'Post Service Profile'}</h2>
+            <h2 className="modal-title">{isEditMode ? 'Edit Service Listing' : 'Post Service Listing'}</h2>
             <p className="modal-subtitle">
               {isEditMode
-                ? 'Update your posted service profile details below.'
-                : 'Create your service profile to connect with customers. Fill out the information below and showcase your services.'}
+                ? 'Update your service listing details below.'
+                : 'Create your service listing to connect with clients. Fill out the information below and showcase your services.'}
             </p>
           </div>
 
@@ -206,7 +206,7 @@ export default function ServiceProfileModal({ onClose }) {
           {/* Success Message */}
           {success && (
             <div className="alert alert-success">
-              ✓ Service profile saved successfully!
+              ✓ Service listing saved successfully!
             </div>
           )}
           {/* Service Information Section */}
@@ -345,7 +345,7 @@ export default function ServiceProfileModal({ onClose }) {
             className="btn-submit"
             disabled={isLoading || success}
           >
-            {isLoading ? 'Saving Profile...' : isEditMode ? 'Save Service Profile' : 'Post Service Profile'}
+            {isLoading ? 'Saving Listing...' : isEditMode ? 'Save Service Listing' : 'Post Service Listing'}
           </button>
 
           {/* Terms Agreement */}
