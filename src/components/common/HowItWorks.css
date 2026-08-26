@@ -1,64 +1,58 @@
 .how-it-works-section {
-  padding: clamp(3.2rem, 6vw, 5.4rem) 0;
+  padding: clamp(3.8rem, 7vw, 6.2rem) 0;
   background: var(--color-page-bg);
-  border-top: 1px solid var(--color-border);
-  border-bottom: 1px solid var(--color-border);
 }
 
 .how-it-works-heading {
-  max-width: 720px;
-  margin: 0 auto 1.8rem;
-  text-align: center;
-}
-
-.how-it-works-heading .home-section-kicker {
-  margin-bottom: 0.55rem;
+  max-width: 680px;
+  margin-bottom: 2.4rem;
 }
 
 .how-steps-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 1rem;
 }
 
-.how-step-card {
+.how-step {
   min-width: 0;
-  padding: 1.35rem;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-card);
-  background: var(--color-surface);
-  box-shadow: none;
+  padding: 0.8rem clamp(1.3rem, 2.5vw, 2.2rem) 0;
+  border-left: 1px solid var(--color-border);
 }
 
-.how-step-topline {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 1.1rem;
+.how-step:first-child {
+  padding-left: 0;
+  border-left: 0;
+}
+
+.how-step:last-child {
+  padding-right: 0;
 }
 
 .how-step-number {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--primary);
-  color: #fff;
+  display: block;
+  margin-bottom: 1.05rem;
+  color: color-mix(in srgb, var(--brand-primary) 26%, var(--color-text-muted));
+  font-size: clamp(2.8rem, 5vw, 4.2rem);
   font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.055em;
+}
+
+.how-step-copy {
+  max-width: 330px;
 }
 
 .how-step-icon {
+  display: inline-block;
+  margin-bottom: 0.8rem;
   color: var(--brand-teal);
-  font-size: 1.35rem;
+  font-size: 1.2rem;
 }
 
 .how-step-title {
   margin: 0;
   color: var(--color-text-primary);
-  font-size: 1.05rem;
+  font-size: 1.08rem;
   font-weight: 760;
   line-height: 1.35;
 }
@@ -70,22 +64,40 @@
   line-height: 1.65;
 }
 
-[data-theme='dark'] .how-step-card {
-  background: var(--color-surface);
-  border-color: var(--color-border);
-}
-
 @media (max-width: 767.98px) {
+  .how-it-works-section {
+    padding: 3.2rem 0;
+  }
+
   .how-it-works-heading {
-    text-align: left;
-    margin-inline: 0;
+    margin-bottom: 1.4rem;
   }
 
   .how-steps-grid {
     grid-template-columns: 1fr;
   }
 
-  .how-step-card {
-    padding: 1.15rem;
+  .how-step,
+  .how-step:first-child,
+  .how-step:last-child {
+    display: grid;
+    grid-template-columns: 72px minmax(0, 1fr);
+    gap: 1rem;
+    padding: 1.25rem 0;
+    border-left: 0;
+    border-top: 1px solid var(--color-border);
+  }
+
+  .how-step:last-child {
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .how-step-number {
+    margin: 0;
+    font-size: 2.7rem;
+  }
+
+  .how-step-copy {
+    max-width: none;
   }
 }

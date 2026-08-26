@@ -1,4 +1,5 @@
 import { useLanguage } from '../../context/LanguageContext';
+import Reveal from './Reveal';
 import './HowItWorks.css';
 
 const COMPARE_PROVIDER_COPY = {
@@ -41,24 +42,30 @@ export default function HowItWorks() {
   return (
     <section className="how-it-works-section" aria-labelledby="how-it-works-title">
       <div className="container">
-        <div className="how-it-works-heading">
-          <p className="home-section-kicker">{t('howItWorksTitle')}</p>
+        <Reveal className="how-it-works-heading">
           <h2 id="how-it-works-title" className="section-title">
             {t('howItWorksTitle')}
           </h2>
           <p className="section-subtitle">{t('howItWorksSubtitle')}</p>
-        </div>
+        </Reveal>
 
         <div className="how-steps-grid">
           {steps.map((step, index) => (
-            <article className="how-step-card" key={step.title}>
-              <div className="how-step-topline">
-                <span className="how-step-number" aria-hidden="true">{index + 1}</span>
+            <Reveal
+              as="article"
+              className="how-step"
+              key={step.title}
+              delay={index * 90}
+            >
+              <span className="how-step-number" aria-hidden="true">
+                {String(index + 1).padStart(2, '0')}
+              </span>
+              <div className="how-step-copy">
                 <i className={`bi ${step.icon} how-step-icon`} aria-hidden="true"></i>
+                <h3 className="how-step-title">{step.title}</h3>
+                <p className="how-step-description">{step.description}</p>
               </div>
-              <h3 className="how-step-title">{step.title}</h3>
-              <p className="how-step-description">{step.description}</p>
-            </article>
+            </Reveal>
           ))}
         </div>
       </div>

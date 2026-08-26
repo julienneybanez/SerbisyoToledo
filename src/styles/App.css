@@ -5,6 +5,7 @@
 
 /* Global styles and resets */
 @import './global.css';
+@import './Motion.css';
 
 /* Layout components */
 @import './Navbar.css';

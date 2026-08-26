@@ -1,9 +1,9 @@
 import { useLanguage } from '../../context/LanguageContext';
+import Reveal from './Reveal';
 import './HomeFaq.css';
 
 const FAQ_COPY = {
   en: {
-    eyebrow: 'Help & Information',
     title: 'Frequently Asked Questions',
     subtitle: 'Quick answers about finding, booking, and offering services through SerbisyoToledo.',
     items: [
@@ -38,7 +38,6 @@ const FAQ_COPY = {
     ],
   },
   ceb: {
-    eyebrow: 'Tabang ug Impormasyon',
     title: 'Mga Kasagarang Pangutana',
     subtitle: 'Dali nga tubag sa mga pangutana bahin sa pagpangita, pag-book, ug paghatag og serbisyo pinaagi sa SerbisyoToledo.',
     items: [
@@ -82,15 +81,20 @@ function HomeFaq() {
     <section className="home-faq-section" aria-labelledby="home-faq-title">
       <div className="container">
         <div className="home-faq-shell">
-          <div className="home-faq-heading">
-            <p className="home-section-kicker">{copy.eyebrow}</p>
+          <Reveal className="home-faq-heading">
             <h2 id="home-faq-title" className="section-title">{copy.title}</h2>
             <p className="section-subtitle">{copy.subtitle}</p>
-          </div>
+          </Reveal>
 
           <div className="home-faq-list">
             {copy.items.map((item, index) => (
-              <details className="home-faq-item" key={item.question} open={index === 0 ? true : undefined}>
+              <Reveal
+                as="details"
+                className="home-faq-item"
+                key={item.question}
+                delay={Math.min(index * 55, 220)}
+                open={index === 0 ? true : undefined}
+              >
                 <summary className="home-faq-question">
                   <span>{item.question}</span>
                   <i className="bi bi-chevron-down home-faq-chevron" aria-hidden="true"></i>
@@ -98,7 +102,7 @@ function HomeFaq() {
                 <div className="home-faq-answer">
                   <p>{item.answer}</p>
                 </div>
-              </details>
+              </Reveal>
             ))}
           </div>
         </div>
