@@ -64,7 +64,6 @@ function Home() {
         <div className="container">
           <div className="home-hero-grid">
             <div className="home-hero-copy">
-              <p className="home-eyebrow">SerbisyoToledo · Toledo City</p>
               <h1 id="home-hero-title" className="home-hero-title">
                 {t('homeHeroSubtitle')}
               </h1>
