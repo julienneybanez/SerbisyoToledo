@@ -10,6 +10,7 @@
 
 [data-theme='dark'] .footer {
   background: #0b2133 !important;
+  border-top: none;
 }
 
 .footer a {
