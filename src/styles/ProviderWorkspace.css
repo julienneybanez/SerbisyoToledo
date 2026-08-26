@@ -137,6 +137,34 @@
     display: none !important;
   }
 
+  /* With the center navigation removed, make the provider header a true
+     brand-left / account-actions-right layout instead of leaving an empty flex area. */
+  .provider-workspace-active .navbar .navbar-shell {
+    width: min(1600px, 100%);
+    max-width: 1600px !important;
+    margin-inline: auto;
+    padding-inline: 1rem;
+    justify-content: space-between;
+  }
+
+  .provider-workspace-active .navbar .brand-link {
+    flex: 0 0 auto;
+  }
+
+  .provider-workspace-active .navbar .navbar-collapse {
+    flex: 0 0 auto;
+    width: auto;
+    margin-left: auto;
+  }
+
+  .provider-workspace-active .navbar .navbar-actions {
+    margin-left: 0 !important;
+  }
+
+  .provider-workspace-active .navbar .logged-in-block {
+    justify-content: flex-end;
+  }
+
   /* Avoid two competing sidebars inside Provider Settings. */
   .provider-workspace-main .user-settings-container {
     max-width: none;
