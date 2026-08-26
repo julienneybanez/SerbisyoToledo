@@ -4,6 +4,7 @@ import './styles/App.css';
 import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
 import AuthLayout from './components/layout/AuthLayout';
+import ProviderLayout from './components/layout/ProviderLayout';
 import MobileTopBar from './components/mobile/MobileTopBar';
 import MobileBottomNav from './components/mobile/MobileBottomNav';
 import EditProfileModal from './components/common/EditProfileModal';
@@ -276,6 +277,11 @@ function App() {
   const shouldLiftChatbotButton = isMobileAuthenticated && location.pathname.startsWith('/provider/');
   const isMobileShellLayout = isMobileViewport;
   const hideChatbotOnRoute = location.pathname === '/about';
+  const isProviderWorkspace = Boolean(
+    currentUser?.userType === 'tradesperson'
+    && isAuthenticated()
+    && ['/dashboard', '/requests', '/provider-settings'].includes(location.pathname)
+  );
 
   const mobileRole = currentUser?.userType || 'guest';
   const mobileSettingsRoute = mobileRole === 'tradesperson' ? '/provider-settings' : '/client-settings';
@@ -302,7 +308,7 @@ function App() {
   );
 
   const publicShell = (
-    <div className={`app ${isMobileShellLayout ? 'mobile-shell-layout' : ''} ${isMobileAuthenticated ? 'mobile-auth-layout' : ''}`}>
+    <div className={`app ${isMobileShellLayout ? 'mobile-shell-layout' : ''} ${isMobileAuthenticated ? 'mobile-auth-layout' : ''} ${isProviderWorkspace ? 'provider-workspace-active' : ''}`.trim()}>
       {isMobileShellLayout && (
         <MobileTopBar
           user={currentUser}
@@ -343,7 +349,16 @@ function App() {
       </div>
 
       <main className={`main-content ${isMobileShellLayout ? 'mobile-page-content' : ''} ${isMobileAuthenticated ? 'authenticated-page-content' : ''}`}>
-        <Outlet />
+        {isProviderWorkspace ? (
+          <ProviderLayout
+            hasServiceProfile={hasServiceProfile}
+            publicProfileRoute={providerPublicProfileRoute}
+          >
+            <Outlet />
+          </ProviderLayout>
+        ) : (
+          <Outlet />
+        )}
       </main>
 
       {isMobileShellLayout && (
