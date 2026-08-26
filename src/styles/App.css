@@ -19,6 +19,7 @@
 
 /* Component styles */
 @import '../components/common/BookingModal.css';
+@import '../components/common/RequestActionDialog.css';
 @import '../components/mobile/mobile.css';
 
 /* Small public/auth refinements */
@@ -30,3 +31,6 @@
 
 /* Homepage section flow refinement */
 @import './HomepageSectionFlow.css';
+
+/* Final cross-role modal/theme safeguards */
+@import './ModalThemeHardening.css';

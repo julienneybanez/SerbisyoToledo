@@ -1,5 +1,7 @@
 /* ===================================
-   REQUEST DETAILS MODAL - OVERLAY
+   REQUEST DETAILS MODAL
+   All component styles are scoped to the request-details root so they cannot
+   leak into the service-profile, edit-profile, admin, or Bootstrap modal UI.
    =================================== */
 .request-details-overlay {
   position: fixed;
@@ -10,17 +12,14 @@
   justify-content: center;
   padding: 1.5rem;
   z-index: 1200;
-  animation: fadeIn 0.2s ease;
+  animation: requestDetailsFadeIn 0.2s ease;
 }
 
-@keyframes fadeIn {
+@keyframes requestDetailsFadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
 }
 
-/* ===================================
-   REQUEST DETAILS MODAL - CONTAINER
-   =================================== */
 .request-details-modal {
   background: var(--color-surface-elevated);
   border-radius: 24px;
@@ -29,12 +28,18 @@
   max-height: 90vh;
   overflow-y: auto;
   position: relative;
-  animation: slideUp 0.3s ease;
+  animation: requestDetailsSlideUp 0.3s ease;
   box-shadow: var(--shadow-md);
   padding-bottom: 2rem;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
-@keyframes slideUp {
+.request-details-modal::-webkit-scrollbar {
+  display: none;
+}
+
+@keyframes requestDetailsSlideUp {
   from {
     opacity: 0;
     transform: translateY(30px);
@@ -45,7 +50,7 @@
   }
 }
 
-.modal-close-btn {
+.request-details-modal .modal-close-btn {
   position: absolute;
   top: 1.25rem;
   right: 1.25rem;
@@ -63,22 +68,19 @@
   z-index: 10;
 }
 
-.modal-close-btn:hover {
+.request-details-modal .modal-close-btn:hover {
   background: var(--surface);
   color: var(--text-primary);
 }
 
-/* ===================================
-   MODAL HEADER SECTION
-   =================================== */
-.modal-header-section {
+.request-details-modal .modal-header-section {
   background: var(--primary);
   padding: 2.5rem 2rem 2rem;
   text-align: center;
   border-radius: 24px 24px 0 0;
 }
 
-.status-icon-wrapper {
+.request-details-modal .status-icon-wrapper {
   width: 64px;
   height: 64px;
   background: rgba(255, 255, 255, 0.2);
@@ -89,19 +91,19 @@
   margin: 0 auto 1rem;
 }
 
-.status-icon-wrapper i {
+.request-details-modal .status-icon-wrapper i {
   font-size: 1.75rem;
   color: #fff;
 }
 
-.modal-title {
+.request-details-modal .modal-title {
   font-size: 1.5rem;
   font-weight: 700;
   color: #fff;
   margin-bottom: 0.75rem;
 }
 
-.status-badge-large {
+.request-details-modal .status-badge-large {
   display: inline-block;
   padding: 0.4rem 1rem;
   border-radius: 20px;
@@ -111,60 +113,57 @@
   color: #fff;
 }
 
-.status-badge-large.badge-pending {
+.request-details-modal .status-badge-large.badge-pending {
   background: #fbbf24;
   color: #78350f;
 }
 
-.status-badge-large.badge-accepted {
+.request-details-modal .status-badge-large.badge-accepted {
   background: #bfdbfe;
   color: #1e3a8a;
 }
 
-.status-badge-large.badge-declined,
-.status-badge-large.badge-cancelled {
+.request-details-modal .status-badge-large.badge-declined,
+.request-details-modal .status-badge-large.badge-cancelled {
   background: #fecaca;
   color: #7f1d1d;
 }
 
-.status-badge-large.badge-on-way,
-.status-badge-large.badge-in-progress {
+.request-details-modal .status-badge-large.badge-on-way,
+.request-details-modal .status-badge-large.badge-in-progress {
   background: #a7f3d0;
   color: #065f46;
 }
 
-.status-badge-large.badge-completed {
+.request-details-modal .status-badge-large.badge-completed {
   background: #86efac;
   color: #14532d;
 }
 
-/* ===================================
-   MODAL CONTENT SECTION
-   =================================== */
-.modal-content-section {
+.request-details-modal .modal-content-section {
   padding: 1.5rem 2rem;
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 1rem;
 }
 
-.detail-card {
+.request-details-modal .detail-card {
   background: var(--surface);
   border-radius: 16px;
   padding: 1.25rem;
   border: 1px solid var(--border);
 }
 
-.detail-card.full-width {
+.request-details-modal .detail-card.full-width {
   grid-column: 1 / -1;
 }
 
-.detail-card.contact-card {
+.request-details-modal .detail-card.contact-card {
   background: color-mix(in srgb, var(--primary) 8%, var(--surface));
   border-color: color-mix(in srgb, var(--primary) 28%, var(--border));
 }
 
-.detail-card-header {
+.request-details-modal .detail-card-header {
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -173,39 +172,39 @@
   border-bottom: 1px solid var(--border);
 }
 
-.detail-card-header i {
+.request-details-modal .detail-card-header i {
   font-size: 1.1rem;
   color: var(--primary);
 }
 
-.detail-card-header h3 {
+.request-details-modal .detail-card-header h3 {
   font-size: 0.95rem;
   font-weight: 600;
   color: var(--text-primary);
   margin: 0;
 }
 
-.detail-card-body {
+.request-details-modal .detail-card-body {
   display: flex;
   flex-direction: column;
   gap: 0.65rem;
 }
 
-.info-row {
+.request-details-modal .info-row {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   gap: 1rem;
 }
 
-.info-label {
+.request-details-modal .info-label {
   font-size: 0.9rem;
   font-weight: 600;
   color: var(--text-secondary);
   flex-shrink: 0;
 }
 
-.info-value {
+.request-details-modal .info-value {
   font-size: 0.9rem;
   font-weight: 500;
   color: var(--text-primary);
@@ -213,7 +212,7 @@
   overflow-wrap: anywhere;
 }
 
-.job-details-text {
+.request-details-modal .job-details-text {
   font-size: 0.95rem;
   color: var(--text-secondary);
   line-height: 1.6;
@@ -221,7 +220,7 @@
   white-space: pre-wrap;
 }
 
-.address-text {
+.request-details-modal .address-text {
   font-size: 0.95rem;
   color: var(--text-secondary);
   line-height: 1.5;
@@ -229,12 +228,11 @@
   overflow-wrap: anywhere;
 }
 
-.decline-reason-card .detail-card-header i {
+.request-details-modal .decline-reason-card .detail-card-header i {
   color: var(--color-danger);
 }
 
-/* Contact Display */
-.phone-display {
+.request-details-modal .phone-display {
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -243,34 +241,34 @@
   border-radius: 12px;
 }
 
-.phone-display > i {
+.request-details-modal .phone-display > i {
   font-size: 1.5rem;
   color: var(--status-completed-text);
 }
 
-.phone-display div {
+.request-details-modal .phone-display div {
   display: flex;
   flex-direction: column;
 }
 
-.phone-label {
+.request-details-modal .phone-label {
   font-size: 0.8rem;
   color: var(--text-secondary);
 }
 
-.phone-number {
+.request-details-modal .phone-number {
   font-size: 1.1rem;
   font-weight: 600;
   color: var(--status-completed-text);
   text-decoration: none;
 }
 
-.phone-number:hover {
+.request-details-modal .phone-number:hover {
   text-decoration: underline;
 }
 
-.contact-shared-notice,
-.contact-pending-notice {
+.request-details-modal .contact-shared-notice,
+.request-details-modal .contact-pending-notice {
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -279,53 +277,50 @@
   font-size: 0.9rem;
 }
 
-.contact-shared-notice {
+.request-details-modal .contact-shared-notice {
   background: var(--status-completed-bg);
   color: var(--status-completed-text);
 }
 
-.contact-shared-notice i {
+.request-details-modal .contact-shared-notice i {
   font-size: 1.25rem;
 }
 
-.contact-pending-notice {
+.request-details-modal .contact-pending-notice {
   background: var(--status-progress-bg);
   color: var(--status-progress-text);
 }
 
-.contact-pending-notice i {
+.request-details-modal .contact-pending-notice i {
   font-size: 1.1rem;
 }
 
-.reschedule-list {
+.request-details-modal .reschedule-list {
   display: flex;
   flex-direction: column;
   gap: 0.85rem;
 }
 
-.reschedule-item {
+.request-details-modal .reschedule-item {
   border: 1px solid var(--border);
   border-radius: 12px;
   background: var(--color-surface-elevated);
   padding: 0.75rem;
 }
 
-.reschedule-actions {
+.request-details-modal .reschedule-actions {
   margin-top: 0.65rem;
   display: flex;
   gap: 0.55rem;
 }
 
-/* ===================================
-   DISCUSSION REQUEST/ACCEPT IN MODAL
-   =================================== */
-.discussion-request-modal {
+.request-details-modal .discussion-request-modal {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
 }
 
-.discussion-request-info {
+.request-details-modal .discussion-request-info {
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -337,17 +332,18 @@
   font-weight: 500;
 }
 
-.discussion-request-info i {
+.request-details-modal .discussion-request-info i {
   font-size: 1.25rem;
   flex-shrink: 0;
 }
 
-.btn-accept-discussion-modal {
+.request-details-modal .btn-accept-discussion-modal,
+.request-details-modal .btn-request-discussion-modal {
   width: 100%;
   min-height: 44px;
   padding: 0.75rem 1rem;
   background: var(--primary);
-  color: white;
+  color: #fff;
   border: none;
   border-radius: var(--radius-control);
   font-weight: 600;
@@ -360,43 +356,18 @@
   transition: background-color 0.2s ease;
 }
 
-.btn-accept-discussion-modal:hover:not(:disabled) {
+.request-details-modal .btn-accept-discussion-modal:hover:not(:disabled),
+.request-details-modal .btn-request-discussion-modal:hover:not(:disabled) {
   background: var(--primary-hover);
 }
 
-.btn-accept-discussion-modal:disabled {
+.request-details-modal .btn-accept-discussion-modal:disabled,
+.request-details-modal .btn-request-discussion-modal:disabled {
   opacity: 0.7;
   cursor: not-allowed;
 }
 
-.btn-request-discussion-modal {
-  width: 100%;
-  min-height: 44px;
-  padding: 0.75rem 1rem;
-  background: var(--primary);
-  color: white;
-  border: none;
-  border-radius: var(--radius-control);
-  font-weight: 600;
-  font-size: 0.95rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  transition: background-color 0.2s ease;
-}
-
-.btn-request-discussion-modal:hover:not(:disabled) {
-  background: var(--primary-hover);
-}
-
-.btn-request-discussion-modal:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
-}
-
-.discussion-pending-modal {
+.request-details-modal .discussion-pending-modal {
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -407,27 +378,24 @@
   color: var(--status-pending-text);
 }
 
-.discussion-pending-modal i {
+.request-details-modal .discussion-pending-modal i {
   flex-shrink: 0;
-  animation: hourglass 1.5s ease-in-out infinite;
+  animation: requestDetailsHourglass 1.5s ease-in-out infinite;
 }
 
-@keyframes hourglass {
+@keyframes requestDetailsHourglass {
   0%, 100% { transform: rotate(0deg); }
   50% { transform: rotate(180deg); }
 }
 
-/* ===================================
-   MODAL ACTIONS
-   =================================== */
-.modal-actions {
+.request-details-modal .modal-actions {
   display: flex;
   gap: 0.75rem;
   padding: 0 2rem 3.5rem;
   flex-wrap: wrap;
 }
 
-.action-btn {
+.request-details-modal .action-btn {
   flex: 1;
   min-width: 140px;
   min-height: 44px;
@@ -444,82 +412,91 @@
   transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
-.action-btn:disabled {
+.request-details-modal .action-btn:disabled {
   opacity: 0.7;
   cursor: not-allowed;
 }
 
-.modal-close-btn:focus-visible,
-.action-btn:focus-visible,
-.btn-accept-discussion-modal:focus-visible,
-.btn-request-discussion-modal:focus-visible,
-.btn-close-modal:focus-visible {
+.request-details-modal .modal-close-btn:focus-visible,
+.request-details-modal .action-btn:focus-visible,
+.request-details-modal .btn-accept-discussion-modal:focus-visible,
+.request-details-modal .btn-request-discussion-modal:focus-visible,
+.request-details-modal .btn-close-modal:focus-visible {
   outline: 3px solid color-mix(in srgb, var(--primary) 45%, transparent);
   outline-offset: 2px;
 }
 
-.action-btn.btn-accept {
+.request-details-modal .action-btn.btn-accept {
   background: var(--primary);
   color: #fff;
   box-shadow: none;
 }
 
-.action-btn.btn-accept:hover:not(:disabled) {
+.request-details-modal .action-btn.btn-accept:hover:not(:disabled) {
   background: var(--primary-hover);
 }
 
-.action-btn.btn-decline {
+.request-details-modal .action-btn.btn-decline {
   background: transparent;
   color: var(--color-danger);
   border: 1px solid color-mix(in srgb, var(--color-danger) 35%, var(--border));
 }
 
-.action-btn.btn-decline:hover:not(:disabled) {
+.request-details-modal .action-btn.btn-decline:hover:not(:disabled) {
   background: color-mix(in srgb, var(--color-danger) 10%, var(--surface));
 }
 
-.action-btn.btn-on-way {
+.request-details-modal .action-btn.btn-on-way {
   background: var(--primary-hover);
   color: #fff;
   box-shadow: none;
 }
 
-.action-btn.btn-on-way:hover:not(:disabled) {
+.request-details-modal .action-btn.btn-on-way:hover:not(:disabled) {
   background: var(--primary);
 }
 
-.action-btn.btn-complete {
+.request-details-modal .action-btn.btn-complete {
   background: var(--primary);
   color: #fff;
   box-shadow: none;
 }
 
-.action-btn.btn-complete:hover:not(:disabled) {
+.request-details-modal .action-btn.btn-complete:hover:not(:disabled) {
   background: var(--primary-hover);
 }
 
-.spinner-btn {
+.request-details-modal .action-btn.btn-cancel {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+
+.request-details-modal .action-btn.btn-cancel:hover:not(:disabled) {
+  background: var(--surface-muted);
+  color: var(--text-primary);
+  border-color: var(--color-border-strong);
+}
+
+.request-details-modal .spinner-btn {
   width: 16px;
   height: 16px;
   border: 2px solid rgba(255, 255, 255, 0.3);
   border-top-color: #fff;
   border-radius: 50%;
-  animation: spin 0.6s linear infinite;
+  animation: requestDetailsSpin 0.6s linear infinite;
 }
 
-@keyframes spin {
+@keyframes requestDetailsSpin {
   to { transform: rotate(360deg); }
 }
 
-/* ===================================
-   MODAL FOOTER
-   =================================== */
-.modal-footer {
+.request-details-modal .modal-footer {
   padding: 1rem 2rem 1.5rem;
   text-align: center;
 }
 
-.btn-close-modal {
+.request-details-modal .btn-close-modal {
   min-height: 44px;
   padding: 0.75rem 2rem;
   border-radius: var(--radius-control);
@@ -532,23 +509,20 @@
   transition: all 0.2s ease;
 }
 
-.btn-close-modal:hover {
+.request-details-modal .btn-close-modal:hover {
   background: var(--surface-muted);
   border-color: var(--color-border-strong);
   color: var(--text-primary);
 }
 
-/* ===================================
-   REVIEW (MODAL)
-   =================================== */
-.modal-actions .btn-review {
+.request-details-modal .modal-actions .btn-review {
   display: flex;
   align-items: center;
   gap: 0.5rem;
   min-height: 44px;
   padding: 0.75rem 1rem;
   background: var(--primary);
-  color: white;
+  color: #fff;
   border: none;
   border-radius: var(--radius-control);
   font-size: 0.9rem;
@@ -557,11 +531,11 @@
   transition: background-color 0.2s ease;
 }
 
-.modal-actions .btn-review:hover {
+.request-details-modal .modal-actions .btn-review:hover {
   background: var(--primary-hover);
 }
 
-.modal-actions .review-submitted-badge {
+.request-details-modal .modal-actions .review-submitted-badge {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
@@ -574,23 +548,10 @@
   font-weight: 600;
 }
 
-.modal-actions .review-submitted-badge i {
+.request-details-modal .modal-actions .review-submitted-badge i {
   color: #f59e0b;
 }
 
-/* Hide the scrollbar but keep the modal scrollable */
-.request-details-modal {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-
-.request-details-modal::-webkit-scrollbar {
-  display: none;
-}
-
-/* ===================================
-   RESPONSIVE
-   =================================== */
 @media (max-width: 640px) {
   .request-details-overlay {
     padding: 0;
@@ -603,49 +564,49 @@
     border-radius: 20px 20px 0 0;
   }
 
-  .modal-content-section {
+  .request-details-modal .modal-content-section {
     grid-template-columns: 1fr;
     padding: 1.25rem 1.5rem;
   }
 
-  .modal-header-section {
+  .request-details-modal .modal-header-section {
     padding: 2rem 1.5rem 1.5rem;
   }
 
-  .modal-actions {
+  .request-details-modal .modal-actions {
     flex-direction: column;
     padding: 0 1rem 1rem;
   }
 
-  .action-btn {
+  .request-details-modal .action-btn {
     width: 100%;
     min-height: 44px;
   }
 
-  .info-row {
+  .request-details-modal .info-row {
     flex-direction: column;
     gap: 0.25rem;
   }
 
-  .info-value {
+  .request-details-modal .info-value {
     text-align: left;
   }
 }
 
 @media (max-width: 430px) {
-  .modal-header-section {
+  .request-details-modal .modal-header-section {
     padding: 1.4rem 1rem 1.1rem;
   }
 
-  .modal-content-section {
+  .request-details-modal .modal-content-section {
     padding: 1rem;
   }
 
-  .modal-footer {
+  .request-details-modal .modal-footer {
     padding: 0.8rem 1rem calc(0.9rem + env(safe-area-inset-bottom));
   }
 
-  .btn-close-modal {
+  .request-details-modal .btn-close-modal {
     width: 100%;
     min-height: 44px;
   }
@@ -659,48 +620,42 @@
   background: var(--color-surface-elevated);
 }
 
-[data-theme='dark'] .modal-close-btn,
-[data-theme='dark'] .detail-card,
-[data-theme='dark'] .btn-close-modal {
+[data-theme='dark'] .request-details-modal .modal-close-btn,
+[data-theme='dark'] .request-details-modal .detail-card,
+[data-theme='dark'] .request-details-modal .btn-close-modal {
   background: var(--color-surface);
   color: var(--color-text-secondary);
   border-color: var(--color-border);
 }
 
-[data-theme='dark'] .detail-card,
-[data-theme='dark'] .detail-card-header {
+[data-theme='dark'] .request-details-modal .detail-card,
+[data-theme='dark'] .request-details-modal .detail-card-header {
   border-color: var(--color-border);
 }
 
-[data-theme='dark'] .detail-card.contact-card {
+[data-theme='dark'] .request-details-modal .detail-card.contact-card {
   background: color-mix(in srgb, var(--brand-primary) 12%, var(--color-surface));
 }
 
-[data-theme='dark'] .detail-card-header h3,
-[data-theme='dark'] .info-value {
+[data-theme='dark'] .request-details-modal .detail-card-header h3,
+[data-theme='dark'] .request-details-modal .info-value {
   color: var(--color-text-primary);
 }
 
-[data-theme='dark'] .info-label,
-[data-theme='dark'] .job-details-text,
-[data-theme='dark'] .address-text,
-[data-theme='dark'] .phone-label,
-[data-theme='dark'] .btn-close-modal {
+[data-theme='dark'] .request-details-modal .info-label,
+[data-theme='dark'] .request-details-modal .job-details-text,
+[data-theme='dark'] .request-details-modal .address-text,
+[data-theme='dark'] .request-details-modal .phone-label,
+[data-theme='dark'] .request-details-modal .btn-close-modal {
   color: var(--color-text-secondary);
 }
 
-[data-theme='dark'] .discussion-request-info {
+[data-theme='dark'] .request-details-modal .discussion-request-info {
   background: color-mix(in srgb, var(--status-progress-text) 18%, var(--color-surface));
   color: var(--status-progress-text);
 }
 
-[data-theme='dark'] .discussion-pending-modal {
+[data-theme='dark'] .request-details-modal .discussion-pending-modal {
   background: color-mix(in srgb, var(--color-warning) 16%, var(--color-surface));
   color: var(--color-warning);
-}
-
-[data-theme='dark'] .modal-actions .review-submitted-badge {
-  background: color-mix(in srgb, var(--color-success) 15%, var(--color-surface));
-  color: var(--color-success);
-  border-color: color-mix(in srgb, var(--color-success) 45%, var(--color-border));
 }

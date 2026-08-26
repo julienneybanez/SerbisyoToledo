@@ -1,32 +1,13 @@
-/* Service Profile Modal Styles */
+/* ===================================
+   SHARED SERVICE MODAL FAMILY
+   Used by ServiceProfileModal, VerificationRequestModal and ReportUserModal.
+   The shared .service-profile-form class is the family anchor; generic
+   .modal-*, .form-* and .alert classes are never styled without that scope.
+   =================================== */
 
-/* Alert Messages */
-.alert {
-  padding: 12px 16px;
-  border-radius: 6px;
-  margin-bottom: 20px;
-  font-size: 13px;
-  font-weight: 500;
-}
-
-.alert-error {
-  background-color: #f8d7da;
-  color: #721c24;
-  border: 1px solid #f5c6cb;
-}
-
-.alert-success {
-  background-color: var(--brand-teal-soft);
-  color: var(--brand-accent-dark);
-  border: 1px solid color-mix(in srgb, var(--brand-accent) 35%, #c3e6cb);
-}
-
-.modal-overlay {
+.modal-overlay:has(> .modal-content > .service-profile-form) {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  inset: 0;
   background-color: rgba(0, 0, 0, 0.5);
   display: flex;
   justify-content: center;
@@ -36,8 +17,7 @@
   backdrop-filter: none !important;
 }
 
-.modal-content {
-  background-color: #ffffff !important;
+.modal-overlay:has(> .modal-content > .service-profile-form) > .modal-content {
   background: #ffffff !important;
   border-radius: 28px !important;
   max-width: 700px;
@@ -49,96 +29,121 @@
   position: relative;
   z-index: 10000;
   opacity: 1 !important;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
-.modal-close {
+.modal-overlay:has(> .modal-content > .service-profile-form) > .modal-content::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+.modal-overlay:has(> .modal-content > .service-profile-form) > .modal-content > .modal-close {
   position: absolute;
   top: 18px;
   right: 18px;
-  background: none;
+  width: 44px;
+  height: 44px;
+  background: transparent;
   border: none;
   font-size: 26px;
   color: #333;
   cursor: pointer;
-  width: 32px;
-  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  transition: all 0.3s ease;
+  transition: background-color 0.2s ease, color 0.2s ease;
   z-index: 10;
 }
 
-.modal-close:hover {
+.modal-overlay:has(> .modal-content > .service-profile-form) > .modal-content > .modal-close:hover {
   background-color: #f0f0f0;
   color: #000;
 }
 
-/* Modal Header */
-.modal-header {
+.service-profile-form {
+  padding: 30px;
+  background-color: #ffffff;
+  width: 100%;
+  border-radius: 28px !important;
+  color: #1a1a1a;
+}
+
+.service-profile-form .modal-header {
   padding: 0;
   margin-bottom: 25px;
   background: #ffffff;
   color: #1a1a1a;
 }
 
-.modal-title {
+.service-profile-form .modal-title {
   font-size: 24px;
   font-weight: 700;
-  margin: 0 0 8px 0;
+  margin: 0 0 8px;
   color: var(--brand-primary);
 }
 
-.modal-subtitle {
+.service-profile-form .modal-subtitle {
   font-size: 13px;
   margin: 0;
   color: #555;
   line-height: 1.5;
 }
 
-/* Form Styling */
-.service-profile-form {
-  padding: 30px;
-  background-color: #ffffff;
-  width: 100%;
-  border-radius: 28px !important;
+.service-profile-form .alert {
+  padding: 12px 16px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  font-size: 13px;
+  font-weight: 500;
 }
 
-.form-section {
+.service-profile-form .alert-error {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+.service-profile-form .alert-success {
+  background-color: var(--brand-teal-soft);
+  color: var(--brand-accent-dark);
+  border: 1px solid color-mix(in srgb, var(--brand-accent) 35%, #c3e6cb);
+}
+
+.service-profile-form .form-section {
   margin-bottom: 28px;
   background-color: #ffffff;
 }
 
-.form-section:last-of-type {
+.service-profile-form .form-section:last-of-type {
   margin-bottom: 20px;
 }
 
-.section-header {
+.service-profile-form .section-header {
   font-size: 15px;
   font-weight: 600;
   color: #1a1a1a;
-  margin: 0 0 15px 0;
+  margin: 0 0 15px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
-.section-description {
+.service-profile-form .section-description {
   font-size: 12px;
   color: #666;
-  margin: -12px 0 15px 0;
+  margin: -12px 0 15px;
 }
 
-.required {
+.service-profile-form .required {
   color: #e74c3c;
 }
 
-/* Form Group */
-.form-group {
+.service-profile-form .form-group {
   margin-bottom: 18px;
 }
 
-.form-label {
+.service-profile-form .form-label {
   display: block;
   font-size: 13px;
   font-weight: 500;
@@ -146,109 +151,48 @@
   margin-bottom: 8px;
 }
 
-.form-input {
+.service-profile-form .form-input {
   width: 100%;
+  min-height: 44px;
   padding: 10px 12px;
   border: 1px solid #ddd;
   border-radius: 14px !important;
   font-size: 14px;
   font-family: inherit;
-  transition: all 0.3s ease;
+  color: #1a1a1a;
+  background: #fff;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
   box-sizing: border-box;
 }
 
-.form-input:focus {
+.service-profile-form textarea.form-input {
+  min-height: 100px;
+  resize: vertical;
+}
+
+.service-profile-form .form-input:focus {
   outline: none;
   border-color: var(--brand-primary);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-primary) 14%, transparent);
 }
 
-.form-input::placeholder {
+.service-profile-form .form-input::placeholder {
   color: #999;
 }
 
-/* Form Row */
-.form-row {
+.service-profile-form .form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 15px;
 }
 
-@media (max-width: 600px) {
-  .form-row {
-    grid-template-columns: 1fr;
-  }
-}
-
-[data-theme='dark'] .modal-overlay {
-  background-color: var(--color-overlay);
-}
-
-[data-theme='dark'] .modal-content,
-[data-theme='dark'] .modal-header,
-[data-theme='dark'] .service-profile-form,
-[data-theme='dark'] .form-section {
-  background: var(--color-surface-elevated) !important;
-}
-
-[data-theme='dark'] .modal-close,
-[data-theme='dark'] .modal-subtitle,
-[data-theme='dark'] .section-description,
-[data-theme='dark'] .upload-label,
-[data-theme='dark'] .upload-label p,
-[data-theme='dark'] .terms-text {
-  color: var(--color-text-secondary);
-}
-
-[data-theme='dark'] .section-header,
-[data-theme='dark'] .form-label,
-[data-theme='dark'] .upload-label h4,
-[data-theme='dark'] .important-notes h4 {
-  color: var(--color-text-primary);
-}
-
-[data-theme='dark'] .form-input,
-[data-theme='dark'] .category-pill,
-[data-theme='dark'] .upload-area {
-  background: var(--color-input-bg);
-  color: var(--color-input-text);
-  border-color: var(--color-border);
-}
-
-[data-theme='dark'] .category-pill {
-  color: var(--color-text-secondary);
-}
-
-[data-theme='dark'] .important-notes {
-  background: color-mix(in srgb, var(--brand-primary) 14%, var(--color-surface));
-  border-left-color: var(--brand-primary);
-}
-
-[data-theme='dark'] .important-notes li {
-  color: var(--color-text-secondary);
-}
-
-[data-theme='dark'] .alert-error {
-  background-color: color-mix(in srgb, var(--color-danger) 18%, var(--color-surface));
-  color: #fecaca;
-  border-color: color-mix(in srgb, var(--color-danger) 45%, var(--color-border));
-}
-
-[data-theme='dark'] .alert-success {
-  background-color: color-mix(in srgb, var(--color-success) 16%, var(--color-surface));
-  color: #bbf7d0;
-  border-color: color-mix(in srgb, var(--color-success) 42%, var(--color-border));
-}
-
-
-/* Categories Grid */
-.categories-grid {
+.service-profile-form .categories-grid {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
 }
 
-.category-pill {
+.service-profile-form .category-pill {
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -260,45 +204,44 @@
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
   white-space: nowrap;
 }
 
-.category-pill input {
+.service-profile-form .category-pill input {
   accent-color: var(--brand-primary);
 }
 
-.category-pill:hover {
+.service-profile-form .category-pill:hover {
   border-color: var(--brand-primary);
   color: var(--brand-primary);
   background-color: color-mix(in srgb, var(--brand-primary) 8%, var(--color-surface));
 }
 
-.category-pill.active {
+.service-profile-form .category-pill.active {
   background-color: var(--brand-primary);
-  color: white;
+  color: #fff;
   border-color: var(--brand-primary);
 }
 
-/* Upload Area */
-.upload-area {
+.service-profile-form .upload-area {
   position: relative;
   border: 2px dashed #ddd;
   border-radius: 16px;
   overflow: hidden;
-  transition: all 0.3s ease;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
 }
 
-.upload-area:hover {
+.service-profile-form .upload-area:hover {
   border-color: var(--brand-primary);
   background-color: color-mix(in srgb, var(--brand-primary) 5%, var(--color-surface));
 }
 
-.file-input {
+.service-profile-form .file-input {
   display: none;
 }
 
-.upload-label {
+.service-profile-form .upload-label {
   display: block;
   padding: 40px 20px;
   text-align: center;
@@ -306,163 +249,240 @@
   color: #666;
 }
 
-.upload-icon {
+.service-profile-form .upload-icon {
   font-size: 32px;
   margin-bottom: 10px;
 }
 
-.upload-label h4 {
+.service-profile-form .upload-label h4 {
   font-size: 14px;
   font-weight: 600;
   color: #333;
-  margin: 0 0 5px 0;
+  margin: 0 0 5px;
 }
 
-.upload-label p {
+.service-profile-form .upload-label p {
   font-size: 12px;
   color: #999;
   margin: 0;
 }
 
-.banner-preview {
+.service-profile-form .banner-preview {
   width: 100%;
   height: 200px;
   object-fit: cover;
   display: block;
 }
 
-/* Important Notes */
-.important-notes {
+.service-profile-form .important-notes {
   background-color: color-mix(in srgb, var(--brand-primary) 12%, white);
   padding: 16px;
   border-radius: 16px;
   border-left: 4px solid var(--brand-primary);
 }
 
-.important-notes h4 {
+.service-profile-form .important-notes h4 {
   font-size: 13px;
   font-weight: 600;
   color: #333;
-  margin: 0 0 10px 0;
+  margin: 0 0 10px;
 }
 
-.important-notes ul {
+.service-profile-form .important-notes ul {
   margin: 0;
   padding-left: 20px;
   list-style: disc;
 }
 
-.important-notes li {
+.service-profile-form .important-notes li {
   font-size: 12px;
   color: #666;
   margin-bottom: 5px;
   line-height: 1.5;
 }
 
-.important-notes li:last-child {
+.service-profile-form .important-notes li:last-child {
   margin-bottom: 0;
 }
 
-/* Submit Button */
-.btn-submit {
+.service-profile-form .btn-submit {
   width: auto;
+  min-height: 44px;
   padding: 14px 40px;
   background: var(--brand-primary);
-  color: white;
+  color: #fff;
   border: none;
   border-radius: 999px !important;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
-  margin-top: 10px;
-  margin-bottom: 12px;
-  display: inline-block;
+  transition: background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  margin: 10px 0 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.btn-submit:hover {
-  transform: translateY(-2px);
+.service-profile-form .btn-submit:hover:not(:disabled) {
+  transform: translateY(-1px);
   background: var(--brand-primary-dark);
   box-shadow: 0 8px 20px rgba(47, 125, 225, 0.3);
 }
 
-.btn-submit:active {
+.service-profile-form .btn-submit:active {
   transform: translateY(0);
 }
 
-.btn-submit:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
-}
-
-.btn-submit:disabled {
+.service-profile-form .btn-submit:disabled {
   opacity: 0.6;
   cursor: not-allowed;
   transform: none;
 }
 
-.btn-submit:disabled:hover {
-  transform: none;
-  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
-}
-
-/* Terms Text */
-.terms-text {
+.service-profile-form .terms-text {
   font-size: 11px;
   color: #999;
   text-align: left;
-  margin: 8px 0 0 0;
+  margin: 8px 0 0;
 }
 
-.terms-text a {
+.service-profile-form .terms-text a {
   color: var(--brand-primary);
   text-decoration: none;
   font-weight: 500;
 }
 
-.terms-text a:hover {
+.service-profile-form .terms-text a:hover {
   text-decoration: underline;
 }
 
-/* Scrollbar Styling for Modal Content */
-.modal-content::-webkit-scrollbar {
-  width: 0;
-  height: 0;
+/* Dark theme: keep every surface/text pair inside the same scoped family. */
+[data-theme='dark'] .modal-overlay:has(> .modal-content > .service-profile-form) {
+  background-color: var(--color-overlay);
 }
 
-.modal-content {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+[data-theme='dark'] .modal-overlay:has(> .modal-content > .service-profile-form) > .modal-content,
+[data-theme='dark'] .service-profile-form,
+[data-theme='dark'] .service-profile-form .modal-header,
+[data-theme='dark'] .service-profile-form .form-section {
+  background: var(--color-surface-elevated) !important;
+  color: var(--color-text-primary);
 }
 
-/* Responsive Design */
+[data-theme='dark'] .modal-overlay:has(> .modal-content > .service-profile-form) > .modal-content {
+  border: 1px solid var(--color-border);
+}
+
+[data-theme='dark'] .modal-overlay:has(> .modal-content > .service-profile-form) > .modal-content > .modal-close {
+  color: var(--color-text-secondary);
+}
+
+[data-theme='dark'] .modal-overlay:has(> .modal-content > .service-profile-form) > .modal-content > .modal-close:hover {
+  background: var(--color-surface-secondary);
+  color: var(--color-text-primary);
+}
+
+[data-theme='dark'] .service-profile-form .modal-title,
+[data-theme='dark'] .service-profile-form .section-header,
+[data-theme='dark'] .service-profile-form .form-label,
+[data-theme='dark'] .service-profile-form .upload-label h4,
+[data-theme='dark'] .service-profile-form .important-notes h4 {
+  color: var(--color-text-primary);
+}
+
+[data-theme='dark'] .service-profile-form .modal-subtitle,
+[data-theme='dark'] .service-profile-form .section-description,
+[data-theme='dark'] .service-profile-form .upload-label,
+[data-theme='dark'] .service-profile-form .upload-label p,
+[data-theme='dark'] .service-profile-form .terms-text {
+  color: var(--color-text-secondary);
+}
+
+[data-theme='dark'] .service-profile-form .form-input,
+[data-theme='dark'] .service-profile-form .category-pill,
+[data-theme='dark'] .service-profile-form .upload-area {
+  background: var(--color-input-bg);
+  color: var(--color-input-text);
+  border-color: var(--color-border);
+}
+
+[data-theme='dark'] .service-profile-form .form-input::placeholder {
+  color: var(--color-placeholder);
+}
+
+[data-theme='dark'] .service-profile-form .category-pill {
+  color: var(--color-text-secondary);
+}
+
+[data-theme='dark'] .service-profile-form .category-pill.active {
+  background: var(--brand-primary);
+  color: #fff;
+  border-color: var(--brand-primary);
+}
+
+[data-theme='dark'] .service-profile-form .important-notes {
+  background: color-mix(in srgb, var(--brand-primary) 14%, var(--color-surface));
+  border-left-color: var(--brand-primary);
+}
+
+[data-theme='dark'] .service-profile-form .important-notes li {
+  color: var(--color-text-secondary);
+}
+
+[data-theme='dark'] .service-profile-form .alert-error {
+  background-color: color-mix(in srgb, var(--color-danger) 18%, var(--color-surface));
+  color: #fecaca;
+  border-color: color-mix(in srgb, var(--color-danger) 45%, var(--color-border));
+}
+
+[data-theme='dark'] .service-profile-form .alert-success {
+  background-color: color-mix(in srgb, var(--color-success) 16%, var(--color-surface));
+  color: #bbf7d0;
+  border-color: color-mix(in srgb, var(--color-success) 42%, var(--color-border));
+}
+
 @media (max-width: 600px) {
-  .modal-content {
-    border-radius: 20px 20px 0 0;
-    max-height: 95vh;
+  .modal-overlay:has(> .modal-content > .service-profile-form) {
+    padding: 0;
+    align-items: flex-end;
   }
 
-  .modal-header {
-    padding: 25px;
-  }
-
-  .modal-title {
-    font-size: 20px;
-  }
-
-  .modal-subtitle {
-    font-size: 12px;
+  .modal-overlay:has(> .modal-content > .service-profile-form) > .modal-content {
+    border-radius: 20px 20px 0 0 !important;
+    max-height: 100dvh;
   }
 
   .service-profile-form {
     padding: 20px;
+    padding-bottom: calc(20px + env(safe-area-inset-bottom));
   }
 
-  .form-section {
+  .service-profile-form .modal-header {
+    padding: 0 2.75rem 0 0;
+  }
+
+  .service-profile-form .modal-title {
+    font-size: 20px;
+  }
+
+  .service-profile-form .modal-subtitle {
+    font-size: 12px;
+  }
+
+  .service-profile-form .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .service-profile-form .form-section {
     margin-bottom: 24px;
   }
 
-  .upload-label {
+  .service-profile-form .upload-label {
     padding: 30px 15px;
+  }
+
+  .service-profile-form .btn-submit {
+    width: 100%;
+    border-radius: 12px !important;
   }
 }
