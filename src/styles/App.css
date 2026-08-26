@@ -27,3 +27,6 @@
 
 /* Cross-page readability and accessibility refinement */
 @import './ReadabilityRefinement.css';
+
+/* Homepage section flow refinement */
+@import './HomepageSectionFlow.css';
