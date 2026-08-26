@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import BookingModal from '../components/common/BookingModal';
 import MobileStickyAction from '../components/mobile/MobileStickyAction';
+import Reveal from '../components/common/Reveal';
 import { serviceProfileAPI, isAuthenticated } from '../services/api';
 import {
   ArrowLeftIcon,
@@ -63,6 +64,7 @@ const ProviderCard = ({ provider, profile, onBack, hideBackLink = false }) => {
   const [showBooking, setShowBooking] = useState(false);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [expandedImage, setExpandedImage] = useState(null);
+  const [heroImageFailed, setHeroImageFailed] = useState(false);
   const navigate = useNavigate();
   const canRequestService = provider?.isPublished !== false;
   const initials = provider.name
@@ -99,7 +101,6 @@ const ProviderCard = ({ provider, profile, onBack, hideBackLink = false }) => {
   };
 
   const handleLoginRedirect = () => {
-    // Store the current page to redirect back after login
     sessionStorage.setItem('redirectAfterLogin', window.location.pathname);
     navigate('/login');
   };
@@ -112,186 +113,216 @@ const ProviderCard = ({ provider, profile, onBack, hideBackLink = false }) => {
         </button>
       )}
 
-      <div className="profile-summary">
-        <div className="profile-header">
-          <div className="profile-avatar-large">{initials}</div>
-          <div className="profile-details">
-            <div className="profile-name-row">
-              <h1>{provider.name}</h1>
-              {provider.verified && (
-                <span className="verified-badge profile-verified-badge" title="Verified provider" aria-label="Verified provider">
-                  <CheckIcon />
+      <Reveal className="profile-summary" variant="fade">
+        <div className="profile-hero-media">
+          {provider.image && !heroImageFailed ? (
+            <img
+              src={provider.image}
+              alt={`${provider.name} service banner`}
+              className="profile-hero-image non-draggable-image"
+              draggable="false"
+              onError={() => setHeroImageFailed(true)}
+            />
+          ) : (
+            <div className="profile-hero-fallback" aria-hidden="true">
+              <span className="profile-hero-fallback-initials">{initials}</span>
+              <span className="profile-hero-fallback-service">
+                {profile.profession || provider.tags?.[0] || 'Service Provider'}
+              </span>
+            </div>
+          )}
+        </div>
+
+        <div className="profile-hero-content">
+          <div className="profile-header">
+            <div className="profile-details">
+              <div className="profile-name-row">
+                <h1>{provider.name}</h1>
+                {provider.verified && (
+                  <span className="verified-badge profile-verified-badge" title="Verified provider" aria-label="Verified provider">
+                    <CheckIcon />
+                    <span>Verified</span>
+                  </span>
+                )}
+              </div>
+              <p className="profile-profession">{profile.profession || provider.tags?.[0] || 'Service Provider'}</p>
+              <div className="profile-stats">
+                <span className="stat-item">
+                  <StarIcon /> {hasReviews ? `${numericRating.toFixed(1)} · ${reviewCount} ${reviewCount === 1 ? 'review' : 'reviews'}` : 'No reviews yet'}
                 </span>
+                <span className="stat-item">
+                  <LocationIcon /> {profile.location || provider.location || 'Toledo City'}
+                </span>
+              </div>
+              {availabilitySummary && (
+                <p className="profile-availability-note">{availabilitySummary}</p>
               )}
             </div>
-            <p className="profile-profession">{profile.profession || provider.tags?.[0] || 'Service Provider'}</p>
-            <div className="profile-stats">
-              <span className="stat-item">
-                <StarIcon /> {hasReviews ? `${numericRating.toFixed(1)} · ${reviewCount} ${reviewCount === 1 ? 'review' : 'reviews'}` : 'No reviews yet'}
-              </span>
-              <span className="stat-item">
-                <LocationIcon /> {profile.location || provider.location || 'Toledo City'}
-              </span>
-            </div>
-            {availabilitySummary && (
-              <p className="profile-availability-note">{availabilitySummary}</p>
+          </div>
+
+          <aside className="profile-summary-actions" aria-label="Price and booking actions">
+            <p className="profile-summary-price">{summaryPrice}</p>
+            <button
+              className="btn-request-service profile-summary-request-btn"
+              onClick={handleRequestService}
+              disabled={!canRequestService}
+              data-tour="provider-request-service"
+            >
+              {canRequestService ? 'Request Service' : 'Currently Unavailable'}
+            </button>
+          </aside>
+        </div>
+      </Reveal>
+
+      <Reveal className="profile-overview-grid" delay={80}>
+        <div className="profile-overview-main">
+          <div className="about-section">
+            <h3 className="about-title">About</h3>
+            {profile.about ? (
+              <p className="about-text">{profile.about}</p>
+            ) : (
+              <p className="compact-empty-text">This provider has not added an about section yet.</p>
             )}
           </div>
         </div>
 
-        <aside className="profile-summary-actions" aria-label="Price and booking actions">
-          <p className="profile-summary-price">{summaryPrice}</p>
-          <button
-            className="btn-request-service profile-summary-request-btn"
-            onClick={handleRequestService}
-            disabled={!canRequestService}
-            data-tour="provider-request-service"
-          >
-            {canRequestService ? 'Request Service' : 'Currently Unavailable'}
-          </button>
-        </aside>
-      </div>
-
-      <div className="about-section">
-        <h3 className="about-title">About</h3>
-        {profile.about ? (
-          <p className="about-text">{profile.about}</p>
-        ) : (
-          <p className="compact-empty-text">This provider has not added an about section yet.</p>
-        )}
-      </div>
-
-      <div className="skills-section">
-        <h3 className="skills-title">Services Offered</h3>
-        {profile.serviceTypes && profile.serviceTypes.length > 0 ? (
-          <div className="skills-grid">
-            {profile.serviceTypes.map((serviceType) => (
-              <span key={serviceType.key} className="skill-tag">{serviceType.label}</span>
-            ))}
+        <aside className="profile-facts-column" aria-label="Provider details">
+          <div className="skills-section">
+            <h3 className="skills-title">Services Offered</h3>
+            {profile.serviceTypes && profile.serviceTypes.length > 0 ? (
+              <div className="skills-grid">
+                {profile.serviceTypes.map((serviceType) => (
+                  <span key={serviceType.key} className="skill-tag">{serviceType.label}</span>
+                ))}
+              </div>
+            ) : (
+              <p className="compact-empty-text">Service details not specified yet.</p>
+            )}
           </div>
-        ) : (
-          <p className="compact-empty-text">Service details not specified yet.</p>
-        )}
-      </div>
 
-      <div className="skills-section">
-        <h3 className="skills-title">Skills & Specialties</h3>
-        {profile.skills && profile.skills.length > 0 ? (
-          <div className="skills-grid">
-            {profile.skills.map((skill) => (
-              <span key={skill} className="skill-tag">{skill}</span>
-            ))}
+          <div className="skills-section">
+            <h3 className="skills-title">Skills & Specialties</h3>
+            {profile.skills && profile.skills.length > 0 ? (
+              <div className="skills-grid">
+                {profile.skills.map((skill) => (
+                  <span key={skill} className="skill-tag">{skill}</span>
+                ))}
+              </div>
+            ) : (
+              <p className="compact-empty-text">No additional skills listed yet.</p>
+            )}
           </div>
-        ) : (
-          <p className="compact-empty-text">No additional skills listed yet.</p>
-        )}
-      </div>
 
-      <div className="about-section">
-        <h3 className="about-title">Languages</h3>
-        {Array.isArray(profile.languages) && profile.languages.length > 0 ? (
-          <p className="about-text">{profile.languages.join(', ')}</p>
-        ) : (
-          <p className="compact-empty-text">Not specified.</p>
-        )}
-      </div>
+          <div className="about-section">
+            <h3 className="about-title">Languages</h3>
+            {Array.isArray(profile.languages) && profile.languages.length > 0 ? (
+              <p className="about-text">{profile.languages.join(', ')}</p>
+            ) : (
+              <p className="compact-empty-text">Not specified.</p>
+            )}
+          </div>
 
-      <div className="portfolio-tabs" role="tablist" aria-label="Portfolio and reviews tabs">
-        <button
-          className={`tab-btn ${activeTab === 'portfolio' ? 'active' : ''}`}
-          onClick={() => setActiveTab('portfolio')}
-          role="tab"
-          aria-selected={activeTab === 'portfolio'}
-        >
-          Portfolio ({profile.portfolio?.length || 0})
-        </button>
-        <button
-          className={`tab-btn ${activeTab === 'reviews' ? 'active' : ''}`}
-          onClick={() => setActiveTab('reviews')}
-          role="tab"
-          aria-selected={activeTab === 'reviews'}
-        >
-          Reviews ({profile.reviews?.length || 0})
-        </button>
-      </div>
-
-      {activeTab === 'portfolio' && (
-        <>
-          {profile.portfolio && profile.portfolio.length > 0 ? (
-            <div className="portfolio-grid">
-              {profile.portfolio.map((item, index) => (
-                <div 
-                  key={item.id || index} 
-                  className="portfolio-item clickable"
-                  onClick={() => setExpandedImage(item.src)}
-                >
-                  <img src={item.src} alt={`${provider.name} portfolio item`} className="portfolio-image non-draggable-image" draggable="false" />
-                  {item.completedThroughPlatform && (
-                    <span className="verified-badge portfolio-item-badge">
-                      Completed through SerbisyoToledo
-                    </span>
-                  )}
+          <div className="contact-section">
+            <h3 className="contact-title">Additional Information</h3>
+            {[
+              {
+                icon: <LocationIcon />, label: 'Location', value: profile.location,
+              }, {
+                icon: <ClockIcon />, label: 'Typical response time', value: profile.response,
+              }
+            ].map((item) => (
+              <div key={item.label} className="contact-item">
+                <div className="contact-icon">{item.icon}</div>
+                <div>
+                  <p className="contact-label">{item.label}</p>
+                  <p className="contact-value">{item.value || 'Not specified'}</p>
                 </div>
-              ))}
-            </div>
-          ) : (
-            <p className="compact-empty-text portfolio-empty-copy">No portfolio work added yet.</p>
-          )}
-        </>
-      )}
+              </div>
+            ))}
+          </div>
+        </aside>
+      </Reveal>
 
-      {activeTab === 'reviews' && (
-        <div className="reviews-panel">
-          {profile.reviews && profile.reviews.length > 0 ? (
-            <>
-              <ReviewSummary reviews={profile.reviews} />
-              <div className="review-list">
-                {profile.reviews.map((review, index) => (
-                  <div key={review.id || review.reviewer || index} className="review-card">
-                    <div className="review-header">
-                      <div>
-                        <p className="reviewer-name">{review.reviewer}</p>
-                        <p className="review-date">{review.date}</p>
-                      </div>
-                      <div className="review-rating">
-                        {Array.from({ length: 5 }).map((_, i) => {
-                          const r = Number(review.rating);
-                          return (
-                            <span key={i} className={i + 1 <= Math.floor(r) ? 'star filled' : i + 0.5 < r ? 'star half-filled' : 'star'}>★</span>
-                          );
-                        })}
-                        <span className="rating-value">{Number(review.rating).toFixed(1)}</span>
-                      </div>
-                    </div>
-                    <p className="review-text">{review.comment}</p>
+      <Reveal className="profile-work-section" delay={140}>
+        <div className="portfolio-tabs" role="tablist" aria-label="Portfolio and reviews tabs">
+          <button
+            className={`tab-btn ${activeTab === 'portfolio' ? 'active' : ''}`}
+            onClick={() => setActiveTab('portfolio')}
+            role="tab"
+            aria-selected={activeTab === 'portfolio'}
+          >
+            Portfolio ({profile.portfolio?.length || 0})
+          </button>
+          <button
+            className={`tab-btn ${activeTab === 'reviews' ? 'active' : ''}`}
+            onClick={() => setActiveTab('reviews')}
+            role="tab"
+            aria-selected={activeTab === 'reviews'}
+          >
+            Reviews ({profile.reviews?.length || 0})
+          </button>
+        </div>
+
+        {activeTab === 'portfolio' && (
+          <>
+            {profile.portfolio && profile.portfolio.length > 0 ? (
+              <div className="portfolio-grid">
+                {profile.portfolio.map((item, index) => (
+                  <div
+                    key={item.id || index}
+                    className="portfolio-item clickable"
+                    onClick={() => setExpandedImage(item.src)}
+                  >
+                    <img src={item.src} alt={`${provider.name} portfolio item`} className="portfolio-image non-draggable-image" draggable="false" />
+                    {item.caption && <p className="portfolio-caption">{item.caption}</p>}
+                    {item.completedThroughPlatform && (
+                      <span className="verified-badge portfolio-item-badge">
+                        Completed through SerbisyoToledo
+                      </span>
+                    )}
                   </div>
                 ))}
               </div>
-            </>
-          ) : (
-            <p className="compact-empty-text">No reviews yet.</p>
-          )}
-        </div>
-      )}
+            ) : (
+              <p className="compact-empty-text portfolio-empty-copy">No portfolio work added yet.</p>
+            )}
+          </>
+        )}
 
-      <div className="contact-section">
-        <h3 className="contact-title">Additional Information</h3>
-        {[
-          {
-          icon: <LocationIcon />, label: 'Location', value: profile.location,
-          }, {
-          icon: <ClockIcon />, label: 'Typical response time', value: profile.response,
-          }
-        ].map((item) => (
-          <div key={item.label} className="contact-item">
-            <div className="contact-icon">{item.icon}</div>
-            <div>
-              <p className="contact-label">{item.label}</p>
-              <p className="contact-value">{item.value || 'Not specified'}</p>
-            </div>
+        {activeTab === 'reviews' && (
+          <div className="reviews-panel">
+            {profile.reviews && profile.reviews.length > 0 ? (
+              <>
+                <ReviewSummary reviews={profile.reviews} />
+                <div className="review-list">
+                  {profile.reviews.map((review, index) => (
+                    <div key={review.id || review.reviewer || index} className="review-card">
+                      <div className="review-header">
+                        <div>
+                          <p className="reviewer-name">{review.reviewer}</p>
+                          <p className="review-date">{review.date}</p>
+                        </div>
+                        <div className="review-rating">
+                          {Array.from({ length: 5 }).map((_, i) => {
+                            const r = Number(review.rating);
+                            return (
+                              <span key={i} className={i + 1 <= Math.floor(r) ? 'star filled' : i + 0.5 < r ? 'star half-filled' : 'star'}>★</span>
+                            );
+                          })}
+                          <span className="rating-value">{Number(review.rating).toFixed(1)}</span>
+                        </div>
+                      </div>
+                      <p className="review-text">{review.comment}</p>
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <p className="compact-empty-text">No reviews yet.</p>
+            )}
           </div>
-        ))}
-      </div>
+        )}
+      </Reveal>
 
       {showLoginPrompt && (
         <div className="login-prompt-overlay" onClick={() => setShowLoginPrompt(false)}>
@@ -327,8 +358,8 @@ const ProviderCard = ({ provider, profile, onBack, hideBackLink = false }) => {
         className="provider-mobile-request-bar"
         leftContent={(
           <div className="provider-mobile-rate">
-            <p className="provider-mobile-rate-label">Starting at</p>
-            <p className="provider-mobile-rate-value">₱{profile.rate}</p>
+            <p className="provider-mobile-rate-label">Rate</p>
+            <p className="provider-mobile-rate-value">{summaryPrice}</p>
           </div>
         )}
       >
@@ -348,9 +379,9 @@ const ProviderCard = ({ provider, profile, onBack, hideBackLink = false }) => {
           <button className="lightbox-close" onClick={() => setExpandedImage(null)}>
             <i className="bi bi-x-lg"></i>
           </button>
-          <img 
-            src={expandedImage} 
-            alt="Portfolio image" 
+          <img
+            src={expandedImage}
+            alt="Portfolio image"
             className="lightbox-image"
             draggable="false"
             onClick={(e) => e.stopPropagation()}
@@ -370,7 +401,7 @@ const ServiceProviderPortfolio = () => {
     location.state?.previewMode
     || new URLSearchParams(location.search).get('previewMode')
   );
-  
+
   const [provider, setProvider] = useState(null);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -381,10 +412,9 @@ const ServiceProviderPortfolio = () => {
       try {
         setLoading(true);
         const response = await serviceProfileAPI.getProfileById(providerId);
-        
+
         if (response.success && response.data) {
           const apiProfile = response.data;
-          // Transform API data to match component structure
           const transformedProvider = {
             id: apiProfile.id,
             userId: apiProfile.userId,
@@ -404,7 +434,7 @@ const ServiceProviderPortfolio = () => {
             image: apiProfile.image,
             isPublished: apiProfile.isPublished !== false,
           };
-          
+
           const transformedProfile = {
             profession: apiProfile.profession || apiProfile.categories?.[0] || 'Service Provider',
             jobs: apiProfile.jobsCompleted || apiProfile.reviewsCount || 0,
@@ -421,7 +451,7 @@ const ServiceProviderPortfolio = () => {
             rateUnit: apiProfile.pricingUnit || (apiProfile.dailyRate != null ? '/day' : ''),
             availabilitySummary: apiProfile.availabilitySummary || apiProfile.nextAvailableLabel || '',
           };
-          
+
           setProvider(transformedProvider);
           setProfile(transformedProfile);
         } else {
@@ -434,7 +464,7 @@ const ServiceProviderPortfolio = () => {
         setLoading(false);
       }
     };
-    
+
     fetchProfile();
   }, [providerId]);
 

@@ -35,3 +35,6 @@
 
 /* Final cross-role modal/theme safeguards */
 @import './ModalThemeHardening.css';
+
+/* Phase 2 public marketplace visual system */
+@import './Phase2PublicMarketplace.css';
