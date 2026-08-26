@@ -1,0 +1,7 @@
+/* Homepage section transitions: rely on whitespace and background tone instead of full-width divider lines. */
+.home-page .home-hero,
+.home-page .how-it-works-section,
+.home-page .home-faq-section {
+  border-top: 0;
+  border-bottom: 0;
+}
