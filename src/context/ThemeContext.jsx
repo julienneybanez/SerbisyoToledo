@@ -34,6 +34,7 @@ const applyThemeToDocument = (theme) => {
   }
 
   document.documentElement.setAttribute('data-theme', theme);
+  document.documentElement.setAttribute('data-bs-theme', theme);
 };
 
 export function ThemeProvider({ children }) {
