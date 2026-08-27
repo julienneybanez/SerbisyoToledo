@@ -745,3 +745,16 @@
     font-size: 0.92rem;
   }
 }
+
+/* Consolidated title/subtitle cleanup */
+.home-page .home-hero-subtitle,
+.home-page .home-trust-section .section-subtitle,
+.home-page .how-it-works-section .section-subtitle,
+.home-page .home-provider-section .section-subtitle,
+.home-page .home-faq-section .section-subtitle {
+  display: none;
+}
+
+.home-page .home-popular-section .section-subtitle {
+  display: block;
+}
