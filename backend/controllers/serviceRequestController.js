@@ -3,6 +3,8 @@ const { parseJsonArray } = require('../utils/jsonHelpers');
 const {
   normalizeCategoryLabels,
   getServiceTypesForProfile,
+  getServiceTypeByKey,
+  toCategoryKey,
 } = require('../config/serviceTaxonomy');
 const {
   BLOCKING_STATUSES,
@@ -11,7 +13,11 @@ const {
   parseTimeInputToSql,
   calculateDurationDays,
   checkScheduleConflict,
+  checkScheduleConflictForDates,
+  normalizeBookingDates,
+  isScheduleAvailableForDates,
   isScheduleAvailableForRange,
+  supportsRequestDatesTable,
 } = require('../utils/bookingAvailability');
 
 const MAX_JOB_TITLE_LENGTH = 255;
@@ -19,6 +25,8 @@ const MAX_JOB_DETAILS_LENGTH = 2000;
 const MAX_DECLINE_REASON_LENGTH = 500;
 const MAX_RESCHEDULE_REASON_LENGTH = 1000;
 const MAX_DURATION_MINUTES = 24 * 60;
+const MAX_BOOKING_DATES = 90;
+const ACTIVE_REQUEST_STATUSES = ['pending', 'accepted', 'on_the_way', 'in_progress'];
 
 const CANCELLATION_REASONS = new Set([
   'Schedule conflict',
@@ -64,6 +72,7 @@ const getProviderProfile = async (connection, serviceProfileId) => {
 
 const validateBookingPayload = ({
   bookingType,
+  dates,
   startDate,
   endDate,
   scheduledDate,
@@ -71,53 +80,64 @@ const validateBookingPayload = ({
   scheduledTime,
   estimatedDurationMinutes,
 }) => {
-  const normalizedBookingType = bookingType === 'multi_day' ? 'multi_day' : 'one_day';
-  const normalizedStartDate = startDate || scheduledDate;
-  const normalizedEndDate = normalizedBookingType === 'multi_day'
-    ? (endDate || startDate || scheduledDate)
-    : (startDate || scheduledDate);
+  const rawBookingType = String(bookingType || 'one_day').trim().toLowerCase();
+  const canonicalBookingType = rawBookingType === 'multi_day'
+    ? 'date_range'
+    : rawBookingType;
+
+  if (!['one_day', 'date_range', 'specific_dates'].includes(canonicalBookingType)) {
+    return { error: 'Invalid booking type' };
+  }
+
   const normalizedStartTime = parseTimeInputToSql(startTime || scheduledTime);
   const normalizedDurationMinutes = Number(estimatedDurationMinutes || 0);
+  const fallbackStartDate = startDate || scheduledDate;
 
-  if (!normalizedStartDate || !normalizedEndDate || !normalizedStartTime) {
-    return { error: 'Booking date and start time are required' };
+  const normalizedDates = normalizeBookingDates({
+    bookingType: canonicalBookingType,
+    startDate: fallbackStartDate,
+    endDate: endDate || fallbackStartDate,
+    dates: Array.isArray(dates) ? dates : [],
+  });
+
+  if (!normalizedStartTime || normalizedDates.length === 0) {
+    return { error: 'Booking date(s) and start time are required' };
+  }
+
+  if (normalizedDates.length > MAX_BOOKING_DATES) {
+    return { error: `A booking can include at most ${MAX_BOOKING_DATES} service dates` };
+  }
+
+  if (canonicalBookingType === 'one_day' && normalizedDates.length !== 1) {
+    return { error: 'One-day booking must contain exactly one service date' };
   }
 
   if (!Number.isInteger(normalizedDurationMinutes) || normalizedDurationMinutes <= 0 || normalizedDurationMinutes > MAX_DURATION_MINUTES) {
     return { error: 'Estimated duration must be between 1 and 1440 minutes' };
   }
 
-  const parsedStartDate = parseDateOnly(normalizedStartDate);
-  const parsedEndDate = parseDateOnly(normalizedEndDate);
-
-  if (!parsedStartDate || !parsedEndDate) {
-    return { error: 'Invalid booking date range' };
-  }
-
-  if (parsedEndDate < parsedStartDate) {
-    return { error: 'End date cannot be earlier than start date' };
-  }
-
   const today = new Date();
   const todayUtc = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()));
 
-  if (parsedStartDate < todayUtc) {
-    return { error: 'Schedule date cannot be in the past' };
-  }
-
-  const durationDays = calculateDurationDays(normalizedStartDate, normalizedEndDate);
-
-  if (!durationDays) {
-    return { error: 'Invalid booking duration' };
+  for (const date of normalizedDates) {
+    const parsed = parseDateOnly(date);
+    if (!parsed) {
+      return { error: 'Invalid booking date selection' };
+    }
+    if (parsed < todayUtc) {
+      return { error: 'Schedule date cannot be in the past' };
+    }
   }
 
   return {
-    normalizedBookingType,
-    normalizedStartDate,
-    normalizedEndDate,
+    canonicalBookingType,
+    storageBookingType: canonicalBookingType === 'one_day' ? 'one_day' : 'multi_day',
+    normalizedDates,
+    normalizedStartDate: normalizedDates[0],
+    normalizedEndDate: normalizedDates[normalizedDates.length - 1],
     normalizedStartTime,
     normalizedDurationMinutes,
-    durationDays,
+    durationDays: normalizedDates.length,
   };
 };
 
@@ -135,6 +155,104 @@ const normalizeRequestSchedule = (requestRow) => {
   };
 };
 
+const getRequestCategoryKeys = (requestRow = {}) => {
+  const serviceType = getServiceTypeByKey(requestRow.service_type_key);
+  if (serviceType?.categoryKey) {
+    return [serviceType.categoryKey];
+  }
+
+  return normalizeCategoryLabels(
+    parseJsonArray(requestRow.service_categories, []),
+    { preserveUnknown: false }
+  )
+    .map((label) => toCategoryKey(label))
+    .filter(Boolean);
+};
+
+const getPersistedRequestDates = async (queryable, requestRow = {}) => {
+  if (await supportsRequestDatesTable(queryable)) {
+    const [rows] = await queryable.query(
+      `SELECT DATE_FORMAT(service_date, '%Y-%m-%d') AS service_date
+       FROM service_request_dates
+       WHERE service_request_id = ?
+       ORDER BY service_date ASC`,
+      [requestRow.id]
+    );
+
+    const exactDates = rows
+      .map((row) => String(row.service_date || '').trim())
+      .filter(Boolean);
+
+    if (exactDates.length > 0) {
+      return exactDates;
+    }
+  }
+
+  return normalizeBookingDates({
+    bookingType: requestRow.booking_type === 'multi_day' ? 'date_range' : 'one_day',
+    startDate: requestRow.start_date,
+    endDate: requestRow.end_date || requestRow.start_date,
+  });
+};
+
+const attachBookingDates = async (queryable, requestRows = []) => {
+  const rows = Array.isArray(requestRows) ? requestRows : [];
+  if (rows.length === 0) return [];
+
+  let exactDatesByRequest = new Map();
+
+  if (await supportsRequestDatesTable(queryable)) {
+    const ids = rows.map((row) => Number(row.id)).filter(Number.isFinite);
+    if (ids.length > 0) {
+      const placeholders = ids.map(() => '?').join(', ');
+      const [dateRows] = await queryable.query(
+        `SELECT service_request_id, DATE_FORMAT(service_date, '%Y-%m-%d') AS service_date
+         FROM service_request_dates
+         WHERE service_request_id IN (${placeholders})
+         ORDER BY service_request_id, service_date`,
+        ids
+      );
+
+      exactDatesByRequest = dateRows.reduce((map, row) => {
+        const id = Number(row.service_request_id);
+        if (!map.has(id)) map.set(id, []);
+        map.get(id).push(String(row.service_date));
+        return map;
+      }, new Map());
+    }
+  }
+
+  return rows.map((row) => {
+    const fallbackDates = normalizeBookingDates({
+      bookingType: row.booking_type === 'multi_day' ? 'date_range' : 'one_day',
+      startDate: row.start_date,
+      endDate: row.end_date || row.start_date,
+    });
+    const bookingDates = exactDatesByRequest.get(Number(row.id)) || fallbackDates;
+    const continuousDates = bookingDates.length > 0
+      ? normalizeBookingDates({
+          bookingType: 'date_range',
+          startDate: bookingDates[0],
+          endDate: bookingDates[bookingDates.length - 1],
+        })
+      : [];
+    const isContinuous = bookingDates.length === continuousDates.length
+      && bookingDates.every((date, index) => date === continuousDates[index]);
+    const bookingMode = bookingDates.length <= 1
+      ? 'one_day'
+      : (isContinuous ? 'date_range' : 'specific_dates');
+
+    return {
+      ...row,
+      booking_dates: bookingDates,
+      selected_dates: bookingDates,
+      booking_mode: bookingMode,
+      multi_day_mode: bookingMode === 'specific_dates' ? 'specific_dates' : 'continuous',
+      duration_days: bookingDates.length || Number(row.duration_days || 1),
+    };
+  });
+};
+
 // Create a new service request
 exports.createRequest = async (req, res) => {
   let connection;
@@ -146,6 +264,7 @@ exports.createRequest = async (req, res) => {
       serviceProfileId,
       serviceTypeKey,
       bookingType,
+      dates,
       startDate,
       endDate,
       startTime,
@@ -180,6 +299,7 @@ exports.createRequest = async (req, res) => {
 
     const normalized = validateBookingPayload({
       bookingType,
+      dates,
       startDate,
       endDate,
       scheduledDate,
@@ -273,11 +393,61 @@ exports.createRequest = async (req, res) => {
       ? offeredServiceTypeByKey.get(requestedServiceTypeKey)
       : (offeredServiceTypes[0] || null);
 
-    const scheduleAvailability = await isScheduleAvailableForRange(connection, {
+    // Serialize booking creation for the client and provider. This prevents
+    // simultaneous requests from racing past category and schedule checks.
+    const participantIds = [Number(clientId), Number(profile.provider_id)].sort((a, b) => a - b);
+    await connection.query(
+      'SELECT id FROM users WHERE id IN (?, ?) ORDER BY id FOR UPDATE',
+      participantIds
+    );
+
+    const targetCategoryKey = effectiveServiceType?.categoryKey
+      || profileCategories.map((label) => toCategoryKey(label)).find(Boolean)
+      || null;
+
+    if (targetCategoryKey) {
+      const [activeClientRequests] = await connection.query(
+        `SELECT sr.id, sr.provider_id, sr.service_type_key, sr.status, sp.service_categories
+         FROM service_requests sr
+         JOIN service_profiles sp ON sp.id = sr.service_profile_id
+         WHERE sr.client_id = ?
+           AND sr.status IN ('pending', 'accepted', 'on_the_way', 'in_progress')`,
+        [clientId]
+      );
+
+      const activeCategoryConflict = activeClientRequests.find((row) => (
+        Number(row.provider_id) !== Number(profile.provider_id)
+        && getRequestCategoryKeys(row).includes(targetCategoryKey)
+      ));
+
+      if (activeCategoryConflict) {
+        await connection.rollback();
+        return res.status(409).json({
+          success: false,
+          code: 'ACTIVE_SERVICE_CATEGORY_REQUEST_EXISTS',
+          message: `You already have an active ${effectiveServiceType?.categoryLabel || 'service'} request with another provider. Finish, cancel, or wait for that request to close before requesting the same service category from a different provider.`,
+          data: {
+            existingRequestId: activeCategoryConflict.id,
+            categoryKey: targetCategoryKey,
+          },
+        });
+      }
+    }
+
+    const requestDatesStorageAvailable = await supportsRequestDatesTable(connection);
+    if (normalized.canonicalBookingType === 'specific_dates' && !requestDatesStorageAvailable) {
+      await connection.rollback();
+      return res.status(503).json({
+        success: false,
+        code: 'BOOKING_DATES_SCHEMA_REQUIRED',
+        message: 'Specific-date booking is prepared in the frontend/backend, but the booking-dates database migration still needs to be applied.',
+      });
+    }
+
+    const scheduleAvailability = await isScheduleAvailableForDates(connection, {
       serviceProfileId: profile.service_profile_id,
       providerId: profile.provider_id,
-      startDate: normalized.normalizedStartDate,
-      endDate: normalized.normalizedEndDate,
+      dates: normalized.normalizedDates,
       startTime: normalized.normalizedStartTime,
       durationMinutes: normalized.normalizedDurationMinutes,
     });
@@ -300,7 +470,6 @@ exports.createRequest = async (req, res) => {
          AND start_date = ?
          AND end_date = ?
          AND start_time = ?
-         AND LOWER(job_title) = LOWER(?)
          AND status IN ('pending', 'accepted', 'on_the_way', 'in_progress')
        LIMIT 1`,
       [
@@ -310,7 +479,6 @@ exports.createRequest = async (req, res) => {
         normalized.normalizedStartDate,
         normalized.normalizedEndDate,
         normalized.normalizedStartTime,
-        jobTitle,
       ]
     );
 
@@ -322,10 +490,9 @@ exports.createRequest = async (req, res) => {
       });
     }
 
-    const conflict = await checkScheduleConflict(connection, {
+    const conflict = await checkScheduleConflictForDates(connection, {
       providerId: profile.provider_id,
-      requestedStartDate: normalized.normalizedStartDate,
-      requestedEndDate: normalized.normalizedEndDate,
+      dates: normalized.normalizedDates,
       requestedStartTime: normalized.normalizedStartTime,
       requestedDurationMinutes: normalized.normalizedDurationMinutes,
     });
@@ -370,7 +537,7 @@ exports.createRequest = async (req, res) => {
         effectiveServiceType?.label || null,
         jobTitle,
         jobDetails,
-        normalized.normalizedBookingType,
+        normalized.storageBookingType,
         normalized.normalizedStartDate,
         normalized.normalizedEndDate,
         normalized.normalizedStartTime,
@@ -384,6 +551,17 @@ exports.createRequest = async (req, res) => {
     );
 
     const requestId = result.insertId;
+
+    if (requestDatesStorageAvailable) {
+      const valuesSql = normalized.normalizedDates.map(() => '(?, ?)').join(', ');
+      const values = normalized.normalizedDates.flatMap((date) => [requestId, date]);
+      await connection.query(
+        `INSERT INTO service_request_dates (service_request_id, service_date)
+         VALUES ${valuesSql}
+         ON DUPLICATE KEY UPDATE service_date = VALUES(service_date)`,
+        values
+      );
+    }
 
     const [clientRows] = await connection.query('SELECT full_name FROM users WHERE id = ? LIMIT 1', [clientId]);
     const clientName = clientRows[0]?.full_name || 'A client';
@@ -403,7 +581,8 @@ exports.createRequest = async (req, res) => {
         requestId,
         serviceTypeKey: effectiveServiceType?.key || null,
         serviceTypeLabel: effectiveServiceType?.label || null,
-        bookingType: normalized.normalizedBookingType,
+        bookingType: normalized.canonicalBookingType,
+        bookingDates: normalized.normalizedDates,
         startDate: normalized.normalizedStartDate,
         endDate: normalized.normalizedEndDate,
         startTime: normalized.normalizedStartTime,
@@ -448,7 +627,8 @@ exports.getClientRequests = async (req, res) => {
       [clientId]
     );
 
-    const processedRequests = requests.map((request) => ({
+    const requestsWithDates = await attachBookingDates(db, requests);
+    const processedRequests = requestsWithDates.map((request) => ({
       ...request,
       provider_phone: request.discussion_accepted ? request.provider_phone : null,
       has_review: request.has_review > 0,
@@ -483,9 +663,11 @@ exports.getProviderRequests = async (req, res) => {
       [providerId]
     );
 
+    const requestsWithDates = await attachBookingDates(db, requests);
+
     res.json({
       success: true,
-      data: { requests }
+      data: { requests: requestsWithDates }
     });
   } catch (error) {
     console.error('Get provider requests error:', error);
@@ -563,10 +745,10 @@ exports.updateRequestStatus = async (req, res) => {
       );
 
       const schedule = normalizeRequestSchedule(request);
-      const conflict = await checkScheduleConflict(connection, {
+      const requestDates = await getPersistedRequestDates(connection, request);
+      const conflict = await checkScheduleConflictForDates(connection, {
         providerId: request.provider_id,
-        requestedStartDate: schedule.startDate,
-        requestedEndDate: schedule.endDate,
+        dates: requestDates,
         requestedStartTime: schedule.startTime,
         requestedDurationMinutes: schedule.durationMinutes,
         excludeRequestId: request.id,
@@ -1339,7 +1521,7 @@ exports.getRequestById = async (req, res) => {
       });
     }
 
-    const request = requests[0];
+    const [request] = await attachBookingDates(db, requests);
 
     if (!request.discussion_accepted) {
       request.provider_phone = null;

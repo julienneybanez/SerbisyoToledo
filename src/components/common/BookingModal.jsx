@@ -110,6 +110,15 @@ export default function BookingModal({ provider, onClose }) {
     moved: false,
   });
   const suppressRangeClickRef = useRef(false);
+  const specificDragRef = useRef({
+    active: false,
+    pointerId: null,
+    anchorDate: '',
+    lastDate: '',
+    action: 'add',
+    moved: false,
+  });
+  const suppressSpecificClickRef = useRef(false);
 
   const [availableDates, setAvailableDates] = useState([]);
   const [dateLoading, setDateLoading] = useState(false);
@@ -535,9 +544,96 @@ export default function BookingModal({ provider, onClose }) {
     }
   }, []);
 
+  const syncSpecificDateBounds = useCallback((dates) => {
+    const sorted = Array.from(new Set(dates)).sort();
+    setStartDate(sorted[0] || '');
+    setEndDate(sorted[sorted.length - 1] || '');
+    return sorted;
+  }, []);
+
+  const updateSpecificDrag = useCallback((dateKey) => {
+    const drag = specificDragRef.current;
+    if (!drag.active || !dateKey || !availableDateSet.has(dateKey) || dateKey === drag.lastDate) {
+      return;
+    }
+
+    drag.moved = true;
+    drag.lastDate = dateKey;
+
+    setSelectedDates((prev) => {
+      const next = new Set(prev);
+      const apply = (value) => {
+        if (drag.action === 'remove') next.delete(value);
+        else next.add(value);
+      };
+
+      apply(drag.anchorDate);
+      apply(dateKey);
+      return syncSpecificDateBounds(Array.from(next));
+    });
+  }, [availableDateSet, syncSpecificDateBounds]);
+
+  const handleSpecificPointerDown = useCallback((event, day) => {
+    if (bookingType !== BOOKING_TYPE.SPECIFIC_DATES || !day || !isDateAvailable(day)) {
+      return;
+    }
+
+    const dateKey = getDateKeyForDay(day);
+    specificDragRef.current = {
+      active: true,
+      pointerId: event.pointerId,
+      anchorDate: dateKey,
+      lastDate: dateKey,
+      action: selectedDates.includes(dateKey) ? 'remove' : 'add',
+      moved: false,
+    };
+    suppressSpecificClickRef.current = false;
+    event.currentTarget.closest('.calendar-grid')?.setPointerCapture?.(event.pointerId);
+    event.preventDefault();
+  }, [bookingType, getDateKeyForDay, isDateAvailable, selectedDates]);
+
+  const handleSpecificPointerMove = useCallback((event) => {
+    const drag = specificDragRef.current;
+    if (!drag.active || drag.pointerId !== event.pointerId) return;
+
+    const hoveredButton = document
+      .elementFromPoint(event.clientX, event.clientY)
+      ?.closest?.('[data-booking-date]');
+
+    if (!hoveredButton) return;
+    updateSpecificDrag(hoveredButton.dataset.bookingDate || '');
+    event.preventDefault();
+  }, [updateSpecificDrag]);
+
+  const finishSpecificDrag = useCallback((event) => {
+    const drag = specificDragRef.current;
+    if (!drag.active || drag.pointerId !== event.pointerId) return;
+
+    suppressSpecificClickRef.current = drag.moved;
+    specificDragRef.current = {
+      active: false,
+      pointerId: null,
+      anchorDate: '',
+      lastDate: '',
+      action: 'add',
+      moved: false,
+    };
+
+    try {
+      event.currentTarget.releasePointerCapture?.(event.pointerId);
+    } catch {
+      // Pointer capture may already be released.
+    }
+  }, []);
+
   const handleSelectDay = useCallback((day) => {
     if (suppressRangeClickRef.current) {
       suppressRangeClickRef.current = false;
+      return;
+    }
+
+    if (suppressSpecificClickRef.current) {
+      suppressSpecificClickRef.current = false;
       return;
     }
 
@@ -558,11 +654,12 @@ export default function BookingModal({ provider, onClose }) {
     }
 
     if (bookingType === BOOKING_TYPE.SPECIFIC_DATES) {
-      setSelectedDates((prev) => (
-        prev.includes(dateKey)
+      setSelectedDates((prev) => {
+        const next = prev.includes(dateKey)
           ? prev.filter((value) => value !== dateKey)
-          : [...prev, dateKey].sort()
-      ));
+          : [...prev, dateKey];
+        return syncSpecificDateBounds(next);
+      });
       return;
     }
 
@@ -589,7 +686,7 @@ export default function BookingModal({ provider, onClose }) {
 
     setStartDate(nextStart);
     setEndDate(nextEnd);
-  }, [availableDateSet, bookingType, endDate, getDateKeyForDay, isRangeContinuous, startDate, t]);
+  }, [availableDateSet, bookingType, endDate, getDateKeyForDay, isRangeContinuous, startDate, syncSpecificDateBounds, t]);
 
   const canProceed = () => {
     if (step === 1) {
@@ -649,9 +746,10 @@ export default function BookingModal({ provider, onClose }) {
         providerId: provider.userId,
         serviceProfileId: provider.id,
         serviceTypeKey: selectedServiceTypeKey || null,
-        bookingType: bookingType === BOOKING_TYPE.DATE_RANGE ? 'multi_day' : bookingType,
-        startDate,
-        endDate: bookingType === BOOKING_TYPE.DATE_RANGE ? endDate : startDate,
+        bookingType,
+        dates: resolvedBookingDates,
+        startDate: resolvedBookingDates[0] || startDate,
+        endDate: resolvedBookingDates[resolvedBookingDates.length - 1] || endDate || startDate,
         startTime: selectedTime,
         scheduledDate: startDate,
         scheduledTime: selectedTime,
@@ -706,11 +804,23 @@ export default function BookingModal({ provider, onClose }) {
       </div>
 
       <div
-        className={`calendar-grid ${bookingType === BOOKING_TYPE.DATE_RANGE ? 'range-drag-enabled' : ''}`}
-        onPointerMove={handleRangePointerMove}
-        onPointerUp={finishRangeDrag}
-        onPointerCancel={finishRangeDrag}
-        onLostPointerCapture={finishRangeDrag}
+        className={`calendar-grid ${[BOOKING_TYPE.DATE_RANGE, BOOKING_TYPE.SPECIFIC_DATES].includes(bookingType) ? 'range-drag-enabled' : ''}`}
+        onPointerMove={(event) => {
+          handleRangePointerMove(event);
+          handleSpecificPointerMove(event);
+        }}
+        onPointerUp={(event) => {
+          finishRangeDrag(event);
+          finishSpecificDrag(event);
+        }}
+        onPointerCancel={(event) => {
+          finishRangeDrag(event);
+          finishSpecificDrag(event);
+        }}
+        onLostPointerCapture={(event) => {
+          finishRangeDrag(event);
+          finishSpecificDrag(event);
+        }}
       >
         {calendarCells.map((cell, index) => {
           if (!cell) {
@@ -728,7 +838,10 @@ export default function BookingModal({ provider, onClose }) {
               type="button"
               data-booking-date={dateKey}
               className={`calendar-day ${available ? 'available' : 'unavailable'} ${selected ? 'selected' : ''} ${rangeState}`.trim()}
-              onPointerDown={(event) => handleRangePointerDown(event, cell)}
+              onPointerDown={(event) => {
+                handleRangePointerDown(event, cell);
+                handleSpecificPointerDown(event, cell);
+              }}
               onClick={() => handleSelectDay(cell)}
               disabled={!available}
               aria-label={available ? t('bookingSelectDate', { date: `${monthNames[currentMonth]} ${cell}` }) : t('bookingDateUnavailable', { date: `${monthNames[currentMonth]} ${cell}` })}

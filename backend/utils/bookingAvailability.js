@@ -2,6 +2,33 @@ const BLOCKING_STATUSES = ['accepted', 'on_the_way', 'in_progress'];
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
+const requestDatesTableSupport = new WeakMap();
+
+const supportsRequestDatesTable = async (connection) => {
+  if (!connection || typeof connection.query !== 'function') {
+    return false;
+  }
+
+  if (requestDatesTableSupport.has(connection)) {
+    return requestDatesTableSupport.get(connection);
+  }
+
+  try {
+    const [rows] = await connection.query(
+      `SELECT COUNT(*) AS table_count
+       FROM information_schema.tables
+       WHERE table_schema = DATABASE()
+         AND table_name = 'service_request_dates'`
+    );
+    const supported = Number(rows?.[0]?.table_count || 0) > 0;
+    requestDatesTableSupport.set(connection, supported);
+    return supported;
+  } catch {
+    requestDatesTableSupport.set(connection, false);
+    return false;
+  }
+};
+
 const parseDateOnly = (dateString) => {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(String(dateString || ''))) {
     return null;
@@ -131,17 +158,16 @@ const getDurationMinutesFromScheduledTimestamps = (startValue, endValue) => {
 };
 
 const getEffectiveBookingDurationMinutes = (row = {}) => {
-  const fromTimestamps = getDurationMinutesFromScheduledTimestamps(row.scheduled_start_at, row.scheduled_end_at);
-  if (fromTimestamps > 0) {
-    return fromTimestamps;
-  }
-
+  // A multi-day request repeats the same service duration on each selected date.
+  // Never infer a per-day duration from scheduled_start_at -> scheduled_end_at,
+  // because that span may cover several calendar days.
   const fromEstimate = Number(row.estimated_duration_minutes || 0);
   if (Number.isFinite(fromEstimate) && fromEstimate > 0) {
     return fromEstimate;
   }
 
-  return 0;
+  const fromTimestamps = getDurationMinutesFromScheduledTimestamps(row.scheduled_start_at, row.scheduled_end_at);
+  return fromTimestamps > 0 ? fromTimestamps : 0;
 };
 
 const ensureAvailabilitySchema = async (connection) => {
@@ -236,22 +262,63 @@ const ensureAvailabilitySettings = async (connection, serviceProfileId) => {
 };
 
 const getConfirmedBookingsForDate = async (connection, providerId, dateString, excludeRequestId = null) => {
-  const params = [providerId, dateString, dateString, ...BLOCKING_STATUSES];
-  let sql = `
-    SELECT id, scheduled_start_at, scheduled_end_at
-    FROM service_requests
-    WHERE provider_id = ?
-      AND DATE(scheduled_start_at) <= ?
-      AND DATE(scheduled_end_at) >= ?
-      AND status IN (?, ?, ?)`;
+  const exactDateStorage = await supportsRequestDatesTable(connection);
+  const params = [providerId, dateString, ...BLOCKING_STATUSES];
+
+  let sql;
+
+  if (exactDateStorage) {
+    sql = `
+      SELECT sr.id,
+             sr.start_time,
+             sr.estimated_duration_minutes,
+             sr.scheduled_start_at,
+             sr.scheduled_end_at
+      FROM service_requests sr
+      JOIN service_request_dates srd ON srd.service_request_id = sr.id
+      WHERE sr.provider_id = ?
+        AND srd.service_date = ?
+        AND sr.status IN (?, ?, ?)`;
+  } else {
+    params.splice(2, 0, dateString);
+    sql = `
+      SELECT sr.id,
+             sr.start_time,
+             sr.estimated_duration_minutes,
+             sr.scheduled_start_at,
+             sr.scheduled_end_at
+      FROM service_requests sr
+      WHERE sr.provider_id = ?
+        AND COALESCE(sr.start_date, DATE(sr.scheduled_start_at)) <= ?
+        AND COALESCE(sr.end_date, DATE(sr.scheduled_end_at)) >= ?
+        AND sr.status IN (?, ?, ?)`;
+  }
 
   if (excludeRequestId != null) {
-    sql += ' AND id <> ?';
+    sql += ' AND sr.id <> ?';
     params.push(excludeRequestId);
   }
 
   const [rows] = await connection.query(sql, params);
   return rows;
+};
+
+const getBookingRowStartTime = (row = {}) => {
+  const explicit = parseTimeInputToSql(row.start_time);
+  if (explicit) return explicit;
+
+  if (row.scheduled_start_at instanceof Date) {
+    const hh = String(row.scheduled_start_at.getUTCHours()).padStart(2, '0');
+    const mm = String(row.scheduled_start_at.getUTCMinutes()).padStart(2, '0');
+    const ss = String(row.scheduled_start_at.getUTCSeconds()).padStart(2, '0');
+    return `${hh}:${mm}:${ss}`;
+  }
+
+  if (typeof row.scheduled_start_at === 'string' && row.scheduled_start_at.length >= 16) {
+    return parseTimeInputToSql(row.scheduled_start_at.slice(11, 19));
+  }
+
+  return null;
 };
 
 const isExceptionBlockingWholeDay = (exception) => {
@@ -366,6 +433,65 @@ const getAvailabilityWindowsForDate = async (connection, serviceProfileId, dateS
   return result;
 };
 
+const checkScheduleConflictForDates = async (
+  connection,
+  {
+    providerId,
+    dates,
+    requestedStartTime,
+    requestedDurationMinutes,
+    excludeRequestId = null,
+  }
+) => {
+  const normalizedDates = normalizeBookingDates({
+    bookingType: 'specific_dates',
+    dates,
+  });
+  const normalizedStartTime = parseTimeInputToSql(requestedStartTime);
+  const requestStartMinutes = timeToMinutes(normalizedStartTime);
+  const requestDuration = Number(requestedDurationMinutes || 0);
+  const requestEndMinutes = requestStartMinutes != null && requestDuration > 0
+    ? requestStartMinutes + requestDuration
+    : null;
+
+  if (normalizedDates.length === 0 || requestStartMinutes == null || requestEndMinutes == null) {
+    return { conflict: true, reason: 'Invalid booking dates, time, or duration' };
+  }
+
+  for (const date of normalizedDates) {
+    const rows = await getConfirmedBookingsForDate(
+      connection,
+      providerId,
+      date,
+      excludeRequestId
+    );
+
+    for (const row of rows) {
+      const existingStartMinutes = timeToMinutes(getBookingRowStartTime(row));
+      const existingDuration = getEffectiveBookingDurationMinutes(row);
+      const existingEndMinutes = existingStartMinutes != null && existingDuration > 0
+        ? existingStartMinutes + existingDuration
+        : null;
+
+      // Unknown stored timing is treated conservatively as occupied.
+      if (existingStartMinutes == null || existingEndMinutes == null) {
+        return { conflict: true, conflictRequestId: row.id, date };
+      }
+
+      if (timeRangesOverlap(
+        existingStartMinutes,
+        existingEndMinutes,
+        requestStartMinutes,
+        requestEndMinutes
+      )) {
+        return { conflict: true, conflictRequestId: row.id, date };
+      }
+    }
+  }
+
+  return { conflict: false };
+};
+
 const checkScheduleConflict = async (
   connection,
   {
@@ -377,77 +503,19 @@ const checkScheduleConflict = async (
     excludeRequestId = null,
   }
 ) => {
-  const requestedStart = parseDateOnly(requestedStartDate);
-  const requestedEnd = parseDateOnly(requestedEndDate);
+  const dates = normalizeBookingDates({
+    bookingType: 'date_range',
+    startDate: requestedStartDate,
+    endDate: requestedEndDate || requestedStartDate,
+  });
 
-  if (!requestedStart || !requestedEnd) {
-    return { conflict: true, reason: 'Invalid schedule range' };
-  }
-
-  const [rows] = await connection.query(
-    `SELECT id, booking_type, status,
-            DATE(scheduled_start_at) AS effective_start_date,
-            DATE(scheduled_end_at) AS effective_end_date,
-            TIME(scheduled_start_at) AS effective_start_time,
-            estimated_duration_minutes,
-            scheduled_start_at,
-            scheduled_end_at
-     FROM service_requests
-     WHERE provider_id = ?
-       AND DATE(scheduled_start_at) <= ?
-       AND DATE(scheduled_end_at) >= ?
-       AND status IN (?, ?, ?)
-       ${excludeRequestId != null ? 'AND id <> ?' : ''}`,
-    excludeRequestId != null
-      ? [providerId, requestedEndDate, requestedStartDate, ...BLOCKING_STATUSES, excludeRequestId]
-      : [providerId, requestedEndDate, requestedStartDate, ...BLOCKING_STATUSES]
-  );
-
-  const requestStartMinutes = timeToMinutes(requestedStartTime);
-  const requestDuration = Number(requestedDurationMinutes || 0);
-  const requestEndMinutes = requestStartMinutes != null && requestDuration > 0
-    ? requestStartMinutes + requestDuration
-    : null;
-
-  for (const row of rows) {
-    const existingStart = parseDateOnly(row.effective_start_date);
-    const existingEnd = parseDateOnly(row.effective_end_date);
-
-    if (!existingStart || !existingEnd) {
-      continue;
-    }
-
-    const existingStartIso = formatDateOnly(existingStart);
-    const existingEndIso = formatDateOnly(existingEnd);
-    const requestedStartIso = formatDateOnly(requestedStart);
-    const requestedEndIso = formatDateOnly(requestedEnd);
-
-    if (!dateRangeOverlaps(existingStartIso, existingEndIso, requestedStartIso, requestedEndIso)) {
-      continue;
-    }
-
-    const existingStartTime = parseTimeInputToSql(row.effective_start_time);
-    const existingStartMinutes = timeToMinutes(existingStartTime);
-    const existingDuration = getEffectiveBookingDurationMinutes(row);
-    const existingEndMinutes = existingStartMinutes != null && existingDuration > 0
-      ? existingStartMinutes + existingDuration
-      : null;
-
-    const bothSingleDay = existingStartIso === existingEndIso && requestedStartIso === requestedEndIso;
-    const sameDay = existingStartIso === requestedStartIso;
-
-    if (bothSingleDay && sameDay && existingStartMinutes != null && existingEndMinutes != null && requestStartMinutes != null && requestEndMinutes != null) {
-      if (timeRangesOverlap(existingStartMinutes, existingEndMinutes, requestStartMinutes, requestEndMinutes)) {
-        return { conflict: true, conflictRequestId: row.id };
-      }
-      continue;
-    }
-
-    // Any overlapping date range conflicts for multi-day or unknown-time bookings.
-    return { conflict: true, conflictRequestId: row.id };
-  }
-
-  return { conflict: false };
+  return checkScheduleConflictForDates(connection, {
+    providerId,
+    dates,
+    requestedStartTime,
+    requestedDurationMinutes,
+    excludeRequestId,
+  });
 };
 
 const getAvailableSlotsForDate = async (
@@ -504,18 +572,7 @@ const getAvailableSlotsForDate = async (
   const bookings = await getConfirmedBookingsForDate(connection, providerId, normalizedDate, excludeRequestId);
 
   const bookingRanges = bookings.map((row) => {
-    let startFallback = null;
-    if (row.scheduled_start_at instanceof Date) {
-      const hh = String(row.scheduled_start_at.getUTCHours()).padStart(2, '0');
-      const mm = String(row.scheduled_start_at.getUTCMinutes()).padStart(2, '0');
-      const ss = String(row.scheduled_start_at.getUTCSeconds()).padStart(2, '0');
-      startFallback = `${hh}:${mm}:${ss}`;
-    } else if (typeof row.scheduled_start_at === 'string') {
-      startFallback = row.scheduled_start_at.slice(11, 19);
-    }
-
-    const parsed = parseTimeInputToSql(startFallback);
-    const startMinutes = timeToMinutes(parsed);
+    const startMinutes = timeToMinutes(getBookingRowStartTime(row));
     const bookingDuration = getEffectiveBookingDurationMinutes(row);
 
     if (startMinutes == null || bookingDuration <= 0) {
@@ -818,6 +875,8 @@ module.exports = {
   minutesToSqlTime,
   calculateDurationDays,
   checkScheduleConflict,
+  checkScheduleConflictForDates,
+  supportsRequestDatesTable,
   ensureAvailabilitySettings,
   getAvailabilityWindowsForDate,
   getAvailableSlotsForDate,

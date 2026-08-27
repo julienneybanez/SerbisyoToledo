@@ -695,6 +695,26 @@ export default function Requests() {
     });
   };
 
+  const formatBookingDates = (request) => {
+    const dates = Array.isArray(request.booking_dates)
+      ? request.booking_dates.filter(Boolean)
+      : [];
+
+    if (dates.length === 0) {
+      return formatDate(request.start_date || request.scheduled_date);
+    }
+
+    if (request.booking_mode === 'specific_dates') {
+      return dates.map((date) => formatDate(date)).join(' • ');
+    }
+
+    if (dates.length > 1) {
+      return `${formatDate(dates[0])} – ${formatDate(dates[dates.length - 1])}`;
+    }
+
+    return formatDate(dates[0]);
+  };
+
   const filteredRequests = requests.filter(req => {
     if (activeFilter === 'all') return true;
     if (activeFilter === 'active') 
@@ -905,14 +925,8 @@ export default function Requests() {
                   <div className="request-meta">
                     <div className="meta-row">
                       <i className="bi bi-calendar"></i>
-                      <span>{formatDate(request.start_date || request.scheduled_date)}</span>
+                      <span>{formatBookingDates(request)}</span>
                     </div>
-                    {(request.end_date && request.end_date !== request.start_date) && (
-                      <div className="meta-row">
-                        <i className="bi bi-calendar-range"></i>
-                        <span>{t('untilDate', { date: formatDate(request.end_date) })}</span>
-                      </div>
-                    )}
                     <div className="meta-row">
                       <i className="bi bi-clock"></i>
                       <span>{request.start_time || request.scheduled_time}</span>
