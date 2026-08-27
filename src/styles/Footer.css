@@ -1,48 +1,47 @@
 /* ===================================
-   SERBISYOTOLEDO MINIMAL FOOTER
+   FOOTER STYLES
    =================================== */
 .footer {
+  background: #133149 !important;
   position: relative;
   overflow: hidden;
-  padding: 1.8rem 0;
-  background: #133149 !important;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 [data-theme='dark'] .footer {
   background: #0b2133 !important;
-  border-top-color: rgba(255, 255, 255, 0.06);
+  border-top: none;
 }
 
-.footer-simple {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 2rem;
+.footer a {
+  text-decoration: none;
+  transition: color 0.2s ease, opacity 0.2s ease;
 }
 
-.footer-brand {
-  min-width: 0;
+.footer a:hover {
+  color: white !important;
 }
 
-.footer-brand-line {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.7rem;
+.footer-muted-text {
+  color: rgba(255, 255, 255, 0.86);
 }
 
-.footer-logo-static {
-  flex: 0 0 auto;
-  object-fit: contain;
-  user-select: none;
-  -webkit-user-drag: none;
-  pointer-events: none;
+.footer-grid {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.footer-brand-block,
+.footer-links-block {
+  position: relative;
+  z-index: 1;
 }
 
 .footer-wordmark {
   font-family: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   color: #7fc0ff;
-  font-size: 1.28rem;
+  font-size: 1.22rem;
   font-weight: 800;
   line-height: 1;
   letter-spacing: -0.04em;
@@ -52,21 +51,69 @@
   color: #5ee0cf;
 }
 
-.footer-tagline {
-  max-width: 34rem;
-  margin: 0.75rem 0 0;
-  color: rgba(255, 255, 255, 0.88);
-  font-size: 0.96rem;
-  line-height: 1.55;
+.footer-description {
+  max-width: 30rem;
+  line-height: 1.5;
 }
 
-.footer-copyright {
-  flex: 0 0 auto;
+.footer-heading {
+  color: #ffffff;
+  margin-bottom: 0.5rem;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+}
+
+.footer-link {
+  display: block;
+  color: rgba(255, 255, 255, 0.92);
+  margin-bottom: 0.35rem;
+  font-weight: 500;
+}
+
+.footer-contact-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.footer-contact-link {
+  margin-bottom: 0;
+  font-weight: 600;
+}
+
+.footer-contact-line {
   margin: 0;
-  color: rgba(255, 255, 255, 0.84);
-  font-size: 0.9rem;
   line-height: 1.5;
-  text-align: right;
+}
+
+.footer-bottom-row {
+  border-top: 1px solid rgba(255, 255, 255, 0.18);
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  position: relative;
+  z-index: 1;
+}
+
+[data-theme='dark'] .footer-muted-text,
+[data-theme='dark'] .footer-link {
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.footer-logo-static {
+  user-select: none;
+  -webkit-user-drag: none;
+  pointer-events: none;
+}
+
+.social-icons a {
+  display: inline-block;
+  width: 30px;
+  height: 30px;
+  background-color: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 50%;
+  text-align: center;
+  line-height: 30px;
 }
 
 /* ===================================
@@ -102,22 +149,17 @@
   outline-offset: 2px;
 }
 
+/* ===================================
+   FOOTER RESPONSIVE
+   =================================== */
 @media (max-width: 768px) {
-  .footer {
-    padding: 1.55rem 0;
+  .footer-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
   }
 
-  .footer-simple {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 1.15rem;
-  }
-
-  .footer-copyright {
-    width: 100%;
-    padding-top: 1rem;
-    border-top: 1px solid rgba(255, 255, 255, 0.14);
-    text-align: left;
+  .footer-bottom-row {
+    margin-top: 0.75rem;
   }
 
   .floating-btn {
@@ -125,23 +167,10 @@
     height: 52px;
     bottom: 1.5rem;
     left: 1.5rem;
-    right: auto;
   }
 }
 
 @media (max-width: 576px) {
-  .footer-brand-line {
-    gap: 0.6rem;
-  }
-
-  .footer-wordmark {
-    font-size: 1.18rem;
-  }
-
-  .footer-tagline {
-    font-size: 0.92rem;
-  }
-
   .floating-btn {
     width: 50px;
     height: 50px;
@@ -153,4 +182,29 @@
     width: 20px;
     height: 20px;
   }
+
+  .footer {
+    padding: 1.5rem 0 !important;
+  }
+}
+
+/* Consolidated from ReadabilityRefinement.css: Footer.css */
+/* Footer: stronger contrast and readable link sizing. */
+.footer .footer-description,
+.footer .footer-link,
+.footer .footer-contact-line,
+.footer .footer-bottom-row {
+  font-size: 1rem;
+}
+
+.footer .footer-muted-text {
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.footer .footer-link {
+  color: rgba(255, 255, 255, 0.96);
+}
+
+.footer .footer-heading {
+  font-size: 1.05rem;
 }
