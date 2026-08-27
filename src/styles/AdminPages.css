@@ -1993,3 +1993,27 @@ input:checked + .slider:before {
     display: none;
   }
 }
+
+/* Admin modal theme consolidated refinement */
+/* ===================================
+   MODAL THEME HARDENING
+   Cross-role fixes that must load after page/component styles.
+   =================================== */
+
+/* Admin danger dialogs used to re-apply a light gradient after the generic
+   dark dialog rule. Keep the danger state dark in dark mode as well. */
+[data-theme='dark'] .admin-page .admin-dialog-card.danger {
+  background: linear-gradient(
+    180deg,
+    var(--admin-surface) 0%,
+    color-mix(in srgb, var(--admin-danger) 7%, var(--admin-surface-soft)) 100%
+  );
+  border-color: color-mix(in srgb, var(--admin-danger) 42%, var(--admin-border));
+  color: var(--admin-text);
+}
+
+[data-theme='dark'] .admin-page .admin-dialog-card.danger .admin-dialog-header,
+[data-theme='dark'] .admin-page .admin-dialog-card.danger .admin-dialog-body,
+[data-theme='dark'] .admin-page .admin-dialog-card.danger .admin-dialog-actions {
+  color: var(--admin-text);
+}
