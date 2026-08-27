@@ -1596,3 +1596,94 @@
     animation: none !important;
   }
 }
+
+/* Consolidated from ReadabilityRefinement.css: Feed.css */
+/* Browse Services: several old labels were below comfortable reading size. */
+.feed-shell .feed-page-eyebrow,
+.feed-shell .feed-filter-section-heading {
+  letter-spacing: 0.045em;
+}
+
+.feed-shell .feed-page-title {
+  font-weight: 750;
+}
+
+.feed-shell .feed-page-subtitle {
+  font-size: 1.05rem;
+}
+
+.feed-shell .search-input-large input {
+  font-size: 1rem;
+}
+
+.feed-shell .feed-filter-label {
+  font-size: 0.86rem;
+}
+
+.feed-shell .filters-title {
+  font-size: 0.95rem;
+}
+
+.feed-shell .clear-filters-btn,
+.feed-shell .feed-clear-all {
+  font-size: 0.88rem;
+}
+
+.feed-shell .category-btn {
+  min-height: 44px;
+  padding: 0.55rem 0.9rem;
+  font-size: 0.92rem;
+}
+
+.feed-shell .feed-results-label {
+  font-size: 0.95rem;
+}
+
+.feed-shell .feed-active-filter-chip {
+  min-height: 38px;
+  font-size: 0.84rem;
+}
+
+.feed-shell .provider-verified-pill {
+  font-size: 0.76rem;
+}
+
+.feed-shell .provider-name {
+  font-size: 1.08rem;
+}
+
+.feed-shell .provider-service-line {
+  font-size: 0.92rem;
+}
+
+.feed-shell .provider-meta {
+  font-size: 0.84rem;
+}
+
+.feed-shell .provider-availability {
+  font-size: 0.84rem;
+}
+
+.feed-shell .provider-description {
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.feed-shell .provider-tag {
+  font-size: 0.78rem;
+}
+
+.feed-shell .price-label {
+  font-size: 0.92rem;
+}
+
+.feed-shell .btn-view-profile {
+  min-height: 44px;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 767.98px) {
+  .feed-shell .category-btn {
+    min-height: 44px;
+  }
+}
