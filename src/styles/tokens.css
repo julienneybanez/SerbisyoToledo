@@ -1,0 +1,175 @@
+/* SerbisyoToledo design tokens.
+   Keep brand, spacing, type, radius, shadow, motion, and theme values here.
+   Components and pages should consume these variables instead of introducing new one-off values. */
+:root,
+[data-theme='light'] {
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+
+  --brand-blue: #3f8ee8;
+  --brand-blue-hover: #2f7de1;
+  --brand-blue-soft: #e9f3ff;
+  --brand-teal: #22b8a5;
+  --brand-teal-hover: #159985;
+  --brand-teal-soft: #e8f8f5;
+  --gradient-brand: linear-gradient(120deg, #3f8ee8 0%, #22b8a5 100%);
+  --gradient-brand-soft: linear-gradient(135deg, #eef5ff 0%, #edf9f7 100%);
+  --gradient-brand-deep: linear-gradient(125deg, #153a72 0%, #0f5f73 100%);
+
+  --brand-primary: var(--brand-blue);
+  --brand-primary-dark: var(--brand-blue-hover);
+  --brand-accent: var(--brand-teal);
+  --brand-accent-dark: var(--brand-teal-hover);
+  --brand-text: #13233b;
+  --brand-muted: #52647a;
+
+  --color-page-bg: #f3f7fc;
+  --color-surface: #ffffff;
+  --color-surface-secondary: #f1f6fc;
+  --color-surface-elevated: #ffffff;
+  --color-text-primary: #1e293b;
+  --color-text-secondary: #52647a;
+  --color-text-muted: #6b7f96;
+  --color-text-inverse: #ffffff;
+  --color-border: #dbe5f1;
+  --color-border-strong: #c5d3e5;
+  --color-input-bg: #ffffff;
+  --color-input-text: #1e293b;
+  --color-placeholder: #6b7f96;
+  --color-overlay: rgba(15, 23, 42, 0.58);
+  --color-shadow: rgba(15, 23, 42, 0.12);
+
+  --color-primary: var(--brand-primary);
+  --color-primary-hover: var(--brand-primary-dark);
+  --color-danger: #dc2626;
+  --color-success: var(--brand-teal);
+  --color-warning: #d97706;
+  --color-info: #0ea5e9;
+
+  --primary: var(--color-primary);
+  --primary-hover: var(--color-primary-hover);
+  --primary-soft: #e8f4fd;
+  --success: var(--color-success);
+  --warning: var(--color-warning);
+  --danger: var(--color-danger);
+  --info: var(--color-info);
+  --background: var(--color-page-bg);
+  --surface: var(--color-surface);
+  --surface-muted: var(--color-surface-secondary);
+  --text-primary: var(--color-text-primary);
+  --text-secondary: var(--color-text-secondary);
+  --border: var(--color-border);
+
+  --status-pending-bg: #fff7e6;
+  --status-pending-text: #9a6100;
+  --status-accepted-bg: #e8f1ff;
+  --status-accepted-text: #1e4db7;
+  --status-attention-bg: #fff3e8;
+  --status-attention-text: #b45309;
+  --status-progress-bg: #e7f0ff;
+  --status-progress-text: #1f56ba;
+  --status-completed-bg: #e8f8f5;
+  --status-completed-text: #0f7c6a;
+  --status-danger-bg: #feecef;
+  --status-danger-text: #b42318;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.5rem;
+  --text-page-title: clamp(1.55rem, 2vw, 1.9rem);
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 18px;
+  --radius-control: 12px;
+  --radius-control-lg: 14px;
+  --radius-input: 11px;
+  --radius-card: 15px;
+  --radius-pill: 999px;
+
+  --control-height: 44px;
+  --control-height-lg: 48px;
+  --page-max-width: 1180px;
+  --content-max-width: 1100px;
+  --reading-max-width: 720px;
+
+  --shadow-sm: 0 4px 14px rgba(15, 23, 42, 0.08);
+  --shadow-md: 0 12px 30px rgba(15, 23, 42, 0.12);
+
+  --motion-fast: 150ms;
+  --motion-normal: 220ms;
+  --motion-slow: 350ms;
+  --motion-ease: ease;
+
+  --mobile-nav-height: 72px;
+  --mobile-sticky-action-height: 74px;
+
+  color-scheme: light;
+}
+
+[data-theme='dark'] {
+  --color-page-bg: #0f172a;
+  --color-surface: #1e293b;
+  --color-surface-secondary: #273549;
+  --color-surface-elevated: #334155;
+  --color-text-primary: #f8fafc;
+  --color-text-secondary: #cbd5e1;
+  --color-text-muted: #a9b8cc;
+  --color-text-inverse: #0f172a;
+  --color-border: #334155;
+  --color-border-strong: #475569;
+  --color-input-bg: #223245;
+  --color-input-text: #f8fafc;
+  --color-placeholder: #a9b8cc;
+  --color-overlay: rgba(2, 6, 23, 0.78);
+  --color-shadow: rgba(0, 0, 0, 0.35);
+
+  --color-primary: #74baf5;
+  --color-primary-hover: #95cfff;
+  --color-danger: #f87171;
+  --color-success: #4cd5c4;
+  --color-warning: #fbbf24;
+  --color-info: #7dd3fc;
+
+  --primary: var(--color-primary);
+  --primary-hover: var(--color-primary-hover);
+  --primary-soft: #1b2a41;
+  --success: var(--color-success);
+  --warning: var(--color-warning);
+  --danger: var(--color-danger);
+  --info: var(--color-info);
+  --background: var(--color-page-bg);
+  --surface: var(--color-surface);
+  --surface-muted: var(--color-surface-secondary);
+  --text-primary: var(--color-text-primary);
+  --text-secondary: var(--color-text-secondary);
+  --border: var(--color-border);
+
+  --status-pending-bg: #3f3320;
+  --status-pending-text: #fbbf24;
+  --status-accepted-bg: #1c2e4e;
+  --status-accepted-text: #93c5fd;
+  --status-attention-bg: #3e2d20;
+  --status-attention-text: #fdba74;
+  --status-progress-bg: #1a2f52;
+  --status-progress-text: #9cc7ff;
+  --status-completed-bg: #153a39;
+  --status-completed-text: #72e6d7;
+  --status-danger-bg: #3b1f28;
+  --status-danger-text: #fda4af;
+
+  --shadow-sm: 0 6px 16px rgba(0, 0, 0, 0.26);
+  --shadow-md: 0 18px 36px rgba(0, 0, 0, 0.34);
+
+  color-scheme: dark;
+}

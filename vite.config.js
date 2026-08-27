@@ -11,7 +11,6 @@ export default defineConfig({
           'vendor-react': ['react', 'react-dom', 'react-router-dom'],
           'vendor-bootstrap': ['bootstrap'],
           'vendor-coreui': ['@coreui/react', '@coreui/coreui', '@coreui/icons', '@coreui/icons-react'],
-          'vendor-icons': ['react-icons'],
         },
       },
     },

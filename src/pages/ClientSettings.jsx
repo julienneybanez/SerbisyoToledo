@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { getUser, userProfileAPI, verificationAPI } from '../services/api';
 import { useLanguage } from '../context/LanguageContext';
 import SettingsFlash from '../components/settings/SettingsFlash';
+import { AppButton, PageHeader } from '../components/ui';
 import '../styles/UserSettings.css';
 
 function ClientSettings() {
@@ -155,9 +156,11 @@ function ClientSettings() {
 
   return (
     <div className="user-settings-container">
-      <div className="settings-page-heading">
-        <h1 className="settings-page-title">{t('clientSettings')}</h1>
-      </div>
+      <PageHeader
+        title={t('clientSettings')}
+        className="settings-page-heading"
+        titleClassName="settings-page-title"
+      />
 
       <div className="settings-layout">
         <div className="settings-nav">
@@ -272,14 +275,14 @@ function ClientSettings() {
                     </p>
                   </div>
                   {!settings.emailVerified && (
-                    <button
+                    <AppButton
+                      variant="secondary"
                       className="btn-secondary"
                       onClick={handleResendVerification}
                       disabled={isSendingVerification}
-                      type="button"
                     >
                       {isSendingVerification ? t('sending') : t('resendVerificationEmail')}
-                    </button>
+                    </AppButton>
                   )}
                 </div>
               </div>
@@ -289,9 +292,9 @@ function ClientSettings() {
                   <div className="settings-card-main">
                     <p className="settings-card-title">{t('needChangePassword')}</p>
                   </div>
-                  <button className="btn-change-password" onClick={() => navigate('/forgot-password')}>
+                  <AppButton className="btn-change-password" onClick={() => navigate('/forgot-password')}>
                     {t('openPasswordReset')}
-                  </button>
+                  </AppButton>
                 </div>
               </div>
             </div>
@@ -299,12 +302,12 @@ function ClientSettings() {
 
           {(activeSection === 'account' || activeSection === 'contact') && (
             <div className="settings-actions">
-              <button className="btn-save" onClick={handleSave} disabled={isSaving || isLoadingProfile || !hasProfileChanges}>
+              <AppButton className="btn-save" onClick={handleSave} disabled={isSaving || isLoadingProfile || !hasProfileChanges}>
                 {isSaving ? t('saving') : t('saveChanges')}
-              </button>
-              <button className="btn-cancel" onClick={handleReset} disabled={isSaving || isLoadingProfile || !hasProfileChanges}>
+              </AppButton>
+              <AppButton variant="secondary" className="btn-cancel" onClick={handleReset} disabled={isSaving || isLoadingProfile || !hasProfileChanges}>
                 {t('reset')}
-              </button>
+              </AppButton>
             </div>
           )}
         </div>
