@@ -71,7 +71,7 @@ function ServiceProviderSettings() {
       : 'account';
 
   const pageTitle = pageMode === 'schedule'
-    ? t('schedule')
+    ? t('providerSettingsNavAvailability')
     : pageMode === 'profile'
       ? languagesCredentialsLabel
       : t('providerSettingsPageTitle');
