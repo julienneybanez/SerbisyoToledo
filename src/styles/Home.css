@@ -561,3 +561,187 @@
   border-color: var(--brand-primary);
   color: var(--color-text-primary) !important;
 }
+
+/* Consolidated from ReadabilityRefinement.css: Home.css */
+/* Homepage: reduce poster-like scale while making functional content easier to read. */
+.home-page .home-hero {
+  padding: clamp(2.8rem, 5vw, 4.5rem) 0;
+}
+
+.home-page .home-eyebrow,
+.home-page .home-section-kicker {
+  font-size: 0.84rem;
+  font-weight: 750;
+  letter-spacing: 0.045em;
+}
+
+.home-page .home-hero-title {
+  max-width: 690px;
+  font-size: clamp(2.55rem, 4.15vw, 3.65rem);
+  font-weight: 750;
+  line-height: 1.08;
+  letter-spacing: -0.025em;
+}
+
+.home-page .home-hero-subtitle {
+  margin-top: 1rem;
+  font-size: clamp(1.05rem, 1.45vw, 1.16rem);
+  line-height: 1.65;
+}
+
+.home-page .home-hero .landing-search-wrap {
+  margin-top: 1.4rem;
+}
+
+.home-page .home-popular-section,
+.home-page .home-provider-section {
+  padding: clamp(2.7rem, 4.5vw, 4.1rem) 0;
+}
+
+.home-page .section-title {
+  font-size: clamp(1.85rem, 2.6vw, 2.35rem);
+  font-weight: 740;
+  letter-spacing: -0.018em;
+}
+
+.home-page .section-subtitle {
+  font-size: 1.05rem;
+  line-height: 1.6;
+}
+
+.home-page .home-section-heading {
+  margin-bottom: 1.4rem;
+}
+
+.home-page .home-category-card {
+  min-height: 108px;
+  grid-template-columns: 78px minmax(0, 1fr) 36px;
+  gap: 1rem;
+  padding: 0.9rem;
+  border-color: color-mix(in srgb, var(--color-border-strong) 72%, var(--color-border));
+}
+
+.home-page .home-category-image {
+  width: 78px;
+  height: 78px;
+}
+
+.home-page .home-category-name {
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.home-page .home-category-arrow {
+  width: 36px;
+  height: 36px;
+  border-color: var(--color-border-strong);
+  color: var(--brand-primary-dark);
+}
+
+.home-page .home-provider-copy h2 {
+  font-weight: 740;
+}
+
+.home-page .home-provider-copy p:last-child {
+  font-size: 1rem;
+}
+
+/* Homepage search: preserve the interaction, enlarge the smaller controls. */
+.home-page .landing-search-wrap .search-box-home {
+  min-height: 60px;
+}
+
+.home-page .landing-search-wrap .search-box-home input {
+  font-size: 1rem;
+}
+
+.home-page .landing-search-wrap .btn-search-home {
+  min-height: 48px;
+  padding-inline: 1.1rem;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.home-page .landing-search-wrap .popular-searches {
+  gap: 0.5rem;
+  margin-top: 0.8rem;
+}
+
+.home-page .landing-search-wrap .popular-search-chip {
+  min-height: 44px;
+  padding: 0.48rem 0.9rem;
+  border-color: var(--color-border-strong);
+  color: var(--color-text-secondary);
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+/* How It Works: tighter section spacing, more readable cards. */
+.home-page .how-it-works-section {
+  padding: clamp(2.7rem, 4.5vw, 4rem) 0;
+}
+
+.home-page .how-it-works-heading {
+  margin-bottom: 1.5rem;
+}
+
+.home-page .how-step-card {
+  padding: 1.2rem;
+}
+
+.home-page .how-step-topline {
+  margin-bottom: 0.9rem;
+}
+
+.home-page .how-step-number {
+  width: 38px;
+  height: 38px;
+  font-weight: 750;
+}
+
+.home-page .how-step-icon {
+  color: var(--brand-teal-hover);
+  font-size: 1.45rem;
+}
+
+.home-page .how-step-title {
+  font-size: 1.08rem;
+  font-weight: 700;
+}
+
+.home-page .how-step-description {
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+@media (max-width: 767.98px) {
+  .home-page .home-hero {
+    padding: 2.25rem 0 2.6rem;
+  }
+
+  .home-page .home-hero-title {
+    font-size: clamp(2.15rem, 9vw, 2.7rem);
+    line-height: 1.1;
+  }
+
+  .home-page .home-popular-section,
+  .home-page .how-it-works-section,
+  .home-page .home-provider-section {
+    padding: 2.4rem 0;
+  }
+
+  .home-page .home-category-card {
+    min-height: 102px;
+    grid-template-columns: 72px minmax(0, 1fr) 34px;
+  }
+
+  .home-page .home-category-image {
+    width: 72px;
+    height: 72px;
+  }
+
+  .home-page .landing-search-wrap .popular-search-chip {
+    min-height: 42px;
+    font-size: 0.92rem;
+  }
+}
