@@ -275,20 +275,64 @@ const ProviderCard = ({ provider, profile, onBack, hideBackLink = false }) => {
         <>
           {profile.portfolio && profile.portfolio.length > 0 ? (
             <div className="portfolio-grid">
-              {profile.portfolio.map((item, index) => (
-                <div 
-                  key={item.id || index} 
-                  className="portfolio-item clickable"
-                  onClick={() => setExpandedImage(item.src)}
-                >
-                  <img src={item.src} alt={t('providerPortfolioImageAlt', { name: provider.name })} className="portfolio-image non-draggable-image" draggable="false" />
-                  {item.completedThroughPlatform && (
-                    <span className="verified-badge portfolio-item-badge">
-                      {t('providerCompletedThroughPlatform')}
-                    </span>
-                  )}
-                </div>
-              ))}
+              {profile.portfolio.map((item, index) => {
+                const hasImage = Boolean(item.src);
+                const title = item.jobTitle || item.caption || t('providerCompletedJobFallback');
+                const completedDate = item.completedAt
+                  ? new Date(item.completedAt).toLocaleDateString(undefined, {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric',
+                    })
+                  : '';
+
+                return (
+                  <div
+                    key={item.id || index}
+                    className={`portfolio-item ${hasImage ? 'clickable' : 'portfolio-item-no-photo'}`}
+                    onClick={hasImage ? () => setExpandedImage(item.src) : undefined}
+                    role={hasImage ? 'button' : undefined}
+                    tabIndex={hasImage ? 0 : undefined}
+                    onKeyDown={hasImage ? (event) => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        setExpandedImage(item.src);
+                      }
+                    } : undefined}
+                  >
+                    <div className="portfolio-item-media">
+                      {hasImage ? (
+                        <img
+                          src={item.src}
+                          alt={t('providerPortfolioImageAlt', { name: provider.name })}
+                          className="portfolio-image non-draggable-image"
+                          draggable="false"
+                        />
+                      ) : (
+                        <div className="portfolio-image-placeholder" aria-hidden="true">
+                          <i className="bi bi-briefcase-fill"></i>
+                          <span>{t('providerCompletedJobFallback')}</span>
+                        </div>
+                      )}
+
+                      {item.completedThroughPlatform && (
+                        <span className="verified-badge portfolio-item-badge">
+                          {t('providerCompletedThroughPlatform')}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="portfolio-item-details">
+                      <p className="portfolio-item-title">{title}</p>
+                      {completedDate && (
+                        <p className="portfolio-item-meta">
+                          {t('providerPortfolioCompletedOn', { date: completedDate })}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           ) : (
             <p className="compact-empty-text portfolio-empty-copy">{t('providerPortfolioEmpty')}</p>

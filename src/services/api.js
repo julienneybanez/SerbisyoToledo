@@ -833,13 +833,31 @@ export const serviceProfileAPI = {
 
   createPortfolioFromRequest: async (payload) => {
     const token = getToken();
+    const isFormData = typeof FormData !== 'undefined' && payload instanceof FormData;
+    const headers = {
+      'Authorization': `Bearer ${token}`,
+    };
+
+    if (!isFormData) {
+      headers['Content-Type'] = 'application/json';
+    }
+
     const response = await fetch(`${API_BASE_URL}/service-profiles/portfolio/from-request`, {
       method: 'POST',
+      headers,
+      body: isFormData ? payload : JSON.stringify(payload),
+    });
+    return handleResponse(response);
+  },
+
+  updateCompletedPortfolioItemImage: async (itemId, formData) => {
+    const token = getToken();
+    const response = await fetch(`${API_BASE_URL}/service-profiles/portfolio/item/${itemId}/image`, {
+      method: 'PUT',
       headers: {
-        'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`,
       },
-      body: JSON.stringify(payload),
+      body: formData,
     });
     return handleResponse(response);
   },

@@ -584,3 +584,177 @@
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
+/* Completed job portfolio workflow */
+.completed-job-linker {
+  margin-bottom: 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 0.9rem;
+  background: #f8fafc;
+}
+
+.completed-job-linker-title {
+  display: block;
+  font-weight: 700;
+  margin-bottom: 0.55rem;
+  color: #334155;
+}
+
+.completed-job-linker select {
+  margin-bottom: 0.65rem;
+}
+
+.portfolio-hidden-file-input {
+  display: none;
+}
+
+.completed-job-photo-row {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-bottom: 0.65rem;
+  min-width: 0;
+}
+
+.btn-completed-job-photo,
+.btn-add-linked-job-photo {
+  min-height: 40px;
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  background: #fff;
+  color: #334155;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+.btn-completed-job-photo {
+  padding: 0.55rem 0.85rem;
+  flex: 0 0 auto;
+}
+
+.btn-completed-job-photo:hover:not(:disabled),
+.btn-add-linked-job-photo:hover:not(:disabled) {
+  border-color: var(--brand-primary);
+  color: var(--brand-primary);
+}
+
+.completed-job-photo-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #64748b;
+  font-size: 0.8rem;
+}
+
+.completed-job-linker-help {
+  margin: 0.65rem 0 0;
+  color: #64748b;
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.edit-portfolio-modal .portfolio-item-no-photo {
+  background: linear-gradient(145deg, #f8fafc, #eef4fa);
+  border: 1px solid #dbe5ef;
+}
+
+.edit-portfolio-job-placeholder {
+  width: 100%;
+  height: 100%;
+  min-height: 140px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 0.45rem;
+  text-align: center;
+  color: #334155;
+}
+
+.edit-portfolio-job-placeholder i {
+  font-size: 1.65rem;
+  color: var(--brand-primary);
+}
+
+.edit-portfolio-job-placeholder strong {
+  font-size: 0.88rem;
+  line-height: 1.3;
+}
+
+.edit-portfolio-job-placeholder span {
+  font-size: 0.72rem;
+  color: #64748b;
+}
+
+.edit-portfolio-modal .portfolio-item-overlay {
+  gap: 0.45rem;
+}
+
+.btn-add-linked-job-photo {
+  width: auto;
+  padding: 0.38rem 0.6rem;
+  border: 0;
+  background: rgba(255, 255, 255, 0.94);
+  color: #1e3a5f;
+}
+
+.btn-add-linked-job-photo:disabled,
+.btn-completed-job-photo:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@media (max-width: 480px) {
+  .completed-job-photo-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .btn-completed-job-photo {
+    width: 100%;
+  }
+
+  .completed-job-photo-name {
+    width: 100%;
+  }
+
+  .btn-add-linked-job-photo span {
+    display: none;
+  }
+}
+
+[data-theme='dark'] .completed-job-linker {
+  background: var(--surface-muted);
+  border-color: var(--border);
+}
+
+[data-theme='dark'] .completed-job-linker-title,
+[data-theme='dark'] .edit-portfolio-job-placeholder {
+  color: var(--text);
+}
+
+[data-theme='dark'] .completed-job-linker-help,
+[data-theme='dark'] .completed-job-photo-name,
+[data-theme='dark'] .edit-portfolio-job-placeholder span {
+  color: var(--text-muted);
+}
+
+[data-theme='dark'] .btn-completed-job-photo {
+  background: var(--surface);
+  color: var(--text);
+  border-color: var(--border);
+}
+
+[data-theme='dark'] .edit-portfolio-modal .portfolio-item-no-photo {
+  background: var(--surface-muted);
+  border-color: var(--border);
+}

@@ -1268,16 +1268,21 @@ exports.addPortfolioImage = async (req, res) => {
     let imagePublicId = null;
 
     if (req.file) {
-      if (hasCloudinaryConfig()) {
-        const uploadResult = await uploadImageBuffer({
-          buffer: req.file.buffer,
-          mimeType: req.file.mimetype,
-          folder: 'serbisyo-toledo/portfolio',
+      if (!hasCloudinaryConfig()) {
+        return res.status(503).json({
+          success: false,
+          message: 'Portfolio image storage is temporarily unavailable'
         });
-
-        imageUrl = uploadResult.secure_url;
-        imagePublicId = uploadResult.public_id;
       }
+
+      const uploadResult = await uploadImageBuffer({
+        buffer: req.file.buffer,
+        mimeType: req.file.mimetype,
+        folder: 'serbisyo-toledo/portfolio',
+      });
+
+      imageUrl = uploadResult.secure_url;
+      imagePublicId = uploadResult.public_id;
     } else {
       return res.status(400).json({
         success: false,
@@ -2143,6 +2148,7 @@ exports.listEligibleCompletedRequests = async (req, res) => {
 
 exports.createPortfolioFromCompletedRequest = async (req, res) => {
   let connection;
+  let uploadedImagePublicId = null;
 
   try {
     const userId = req.user?.userId;
@@ -2162,7 +2168,10 @@ exports.createPortfolioFromCompletedRequest = async (req, res) => {
     connection = await db.getConnection();
     await connection.beginTransaction();
 
-    const [profiles] = await connection.query('SELECT id FROM service_profiles WHERE user_id = ? LIMIT 1', [userId]);
+    const [profiles] = await connection.query(
+      'SELECT id FROM service_profiles WHERE user_id = ? LIMIT 1',
+      [userId]
+    );
     if (profiles.length === 0) {
       await connection.rollback();
       return res.status(404).json({ success: false, message: 'Service profile not found' });
@@ -2198,19 +2207,48 @@ exports.createPortfolioFromCompletedRequest = async (req, res) => {
       return res.status(409).json({ success: false, message: 'This completed request is already linked to a portfolio item' });
     }
 
+    let imageUrl = null;
+    let imagePublicId = null;
+
+    if (req.file) {
+      if (!hasCloudinaryConfig()) {
+        await connection.rollback();
+        return res.status(503).json({
+          success: false,
+          message: 'Portfolio image storage is temporarily unavailable. You can link the completed job without a photo and add one later.'
+        });
+      }
+
+      const uploadResult = await uploadImageBuffer({
+        buffer: req.file.buffer,
+        mimeType: req.file.mimetype,
+        folder: 'serbisyo-toledo/portfolio/completed-jobs',
+      });
+
+      imageUrl = uploadResult.secure_url;
+      imagePublicId = uploadResult.public_id;
+      uploadedImagePublicId = imagePublicId;
+    }
+
     const [orderResult] = await connection.query(
       'SELECT COALESCE(MAX(display_order), 0) + 1 AS nextOrder FROM portfolio_items WHERE service_profile_id = ?',
       [serviceProfileId]
     );
 
+    // Never auto-publish the client's private request details. Providers may
+    // provide a separate public description explicitly.
     const safeDescription = String(description || '').trim();
+    const publishFlag = isPublished == null
+      ? true
+      : !['false', '0', 'no'].includes(String(isPublished).trim().toLowerCase());
+    const featuredFlag = ['true', '1', 'yes'].includes(
+      String(isFeatured ?? false).trim().toLowerCase()
+    );
 
     const [insertResult] = await connection.query(
       `INSERT INTO portfolio_items (
          service_profile_id,
          service_request_id,
-         image_url,
-         image_public_id,
          caption,
          display_order,
          job_title,
@@ -2219,9 +2257,11 @@ exports.createPortfolioFromCompletedRequest = async (req, res) => {
          completed_at,
          is_published,
          is_featured,
-         completed_through_platform
+         completed_through_platform,
+         image_url,
+         image_public_id
        )
-      VALUES (?, ?, NULL, NULL, ?, ?, ?, ?, ?, NOW(), ?, ?, TRUE)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), ?, ?, TRUE, ?, ?)`,
       [
         serviceProfileId,
         serviceRequestId,
@@ -2230,21 +2270,36 @@ exports.createPortfolioFromCompletedRequest = async (req, res) => {
         requests[0].job_title,
         safeDescription,
         String(serviceCategory || '').trim() || null,
-        isPublished !== false,
-        Boolean(isFeatured),
+        publishFlag,
+        featuredFlag,
+        imageUrl,
+        imagePublicId,
       ]
     );
 
     await connection.commit();
+    uploadedImagePublicId = null;
 
     return res.status(201).json({
       success: true,
       message: 'Completed job linked to portfolio successfully',
-      data: { id: insertResult.insertId }
+      data: {
+        id: insertResult.insertId,
+        src: imageUrl,
+        hasPhoto: Boolean(imageUrl),
+      }
     });
   } catch (error) {
     if (connection) {
       await connection.rollback();
+    }
+
+    if (uploadedImagePublicId) {
+      try {
+        await deleteImageByPublicId(uploadedImagePublicId);
+      } catch (cleanupError) {
+        console.error('Failed to clean up completed-job portfolio image:', cleanupError);
+      }
     }
 
     console.error('Error creating portfolio from request:', error);
@@ -2253,6 +2308,100 @@ exports.createPortfolioFromCompletedRequest = async (req, res) => {
     if (connection) {
       connection.release();
     }
+  }
+};
+
+exports.updateCompletedPortfolioItemImage = async (req, res) => {
+  let uploadedImagePublicId = null;
+
+  try {
+    const userId = req.user?.userId;
+    const portfolioItemId = Number(req.params.itemId);
+
+    if (!portfolioItemId) {
+      return res.status(400).json({ success: false, message: 'Invalid portfolio item id' });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: 'Image file is required' });
+    }
+
+    if (!hasCloudinaryConfig()) {
+      return res.status(503).json({
+        success: false,
+        message: 'Portfolio image storage is temporarily unavailable'
+      });
+    }
+
+    const [items] = await db.query(
+      `SELECT pi.id, pi.image_public_id, pi.completed_through_platform
+       FROM portfolio_items pi
+       JOIN service_profiles sp ON sp.id = pi.service_profile_id
+       WHERE pi.id = ? AND sp.user_id = ?
+       LIMIT 1`,
+      [portfolioItemId, userId]
+    );
+
+    if (items.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Portfolio item not found or not authorized'
+      });
+    }
+
+    if (!Boolean(items[0].completed_through_platform)) {
+      return res.status(409).json({
+        success: false,
+        message: 'This photo action is only for completed-job portfolio entries'
+      });
+    }
+
+    const uploadResult = await uploadImageBuffer({
+      buffer: req.file.buffer,
+      mimeType: req.file.mimetype,
+      folder: 'serbisyo-toledo/portfolio/completed-jobs',
+    });
+    uploadedImagePublicId = uploadResult.public_id;
+
+    await db.query(
+      `UPDATE portfolio_items
+       SET image_url = ?, image_public_id = ?
+       WHERE id = ?`,
+      [uploadResult.secure_url, uploadResult.public_id, portfolioItemId]
+    );
+
+    if (items[0].image_public_id && items[0].image_public_id !== uploadResult.public_id) {
+      try {
+        await deleteImageByPublicId(items[0].image_public_id);
+      } catch (cleanupError) {
+        console.error('Failed to remove previous completed-job image:', cleanupError);
+      }
+    }
+
+    uploadedImagePublicId = null;
+
+    return res.json({
+      success: true,
+      message: 'Completed job photo updated successfully',
+      data: {
+        id: portfolioItemId,
+        src: uploadResult.secure_url,
+      }
+    });
+  } catch (error) {
+    if (uploadedImagePublicId) {
+      try {
+        await deleteImageByPublicId(uploadedImagePublicId);
+      } catch (cleanupError) {
+        console.error('Failed to clean up replacement portfolio image:', cleanupError);
+      }
+    }
+
+    console.error('Error updating completed-job portfolio photo:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to update completed job photo'
+    });
   }
 };
 

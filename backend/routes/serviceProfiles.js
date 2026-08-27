@@ -62,7 +62,22 @@ router.patch('/portfolio/details', authenticateToken, requireUserType('tradesper
 router.post('/portfolio/image', authenticateToken, requireUserType('tradesperson'), upload.single('portfolioImage'), validateSingleUpload({ allowedKinds: ['image'], required: true, fieldName: 'portfolioImage' }), serviceProfileController.addPortfolioImage);
 router.delete('/portfolio/image/:imageId', authenticateToken, requireUserType('tradesperson'), serviceProfileController.deletePortfolioImage);
 router.get('/portfolio/completed-requests', authenticateToken, requireUserType('tradesperson'), serviceProfileController.listEligibleCompletedRequests);
-router.post('/portfolio/from-request', authenticateToken, requireUserType('tradesperson'), serviceProfileController.createPortfolioFromCompletedRequest);
+router.post(
+  '/portfolio/from-request',
+  authenticateToken,
+  requireUserType('tradesperson'),
+  upload.single('portfolioImage'),
+  validateSingleUpload({ allowedKinds: ['image'], required: false, fieldName: 'portfolioImage' }),
+  serviceProfileController.createPortfolioFromCompletedRequest
+);
+router.put(
+  '/portfolio/item/:itemId/image',
+  authenticateToken,
+  requireUserType('tradesperson'),
+  upload.single('portfolioImage'),
+  validateSingleUpload({ allowedKinds: ['image'], required: true, fieldName: 'portfolioImage' }),
+  serviceProfileController.updateCompletedPortfolioItemImage
+);
 
 // Public route with dynamic param (must come last)
 router.get('/:id', serviceProfileController.getProfileById);

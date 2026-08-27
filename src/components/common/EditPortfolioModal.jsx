@@ -5,6 +5,8 @@ import './EditPortfolioModal.css';
 
 export default function EditPortfolioModal({ onClose }) {
   const fileInputRef = useRef(null);
+  const completedJobPhotoInputRef = useRef(null);
+  const linkedJobPhotoInputRef = useRef(null);
   
   const [formData, setFormData] = useState({
     aboutMe: '',
@@ -14,7 +16,10 @@ export default function EditPortfolioModal({ onClose }) {
   const [portfolio, setPortfolio] = useState([]);
   const [eligibleCompletedRequests, setEligibleCompletedRequests] = useState([]);
   const [selectedCompletedRequestId, setSelectedCompletedRequestId] = useState('');
+  const [completedJobPhoto, setCompletedJobPhoto] = useState(null);
+  const [linkedJobPhotoTargetId, setLinkedJobPhotoTargetId] = useState(null);
   const [isLinkingCompletedRequest, setIsLinkingCompletedRequest] = useState(false);
+  const [isUpdatingLinkedJobPhoto, setIsUpdatingLinkedJobPhoto] = useState(false);
   const [newSkill, setNewSkill] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -84,23 +89,98 @@ export default function EditPortfolioModal({ onClose }) {
       setIsLinkingCompletedRequest(true);
       setError(null);
 
-      const response = await serviceProfileAPI.createPortfolioFromRequest({
-        serviceRequestId: Number(selectedCompletedRequestId),
-        caption: selectedRequest.job_title || 'Completed project',
-        description: '',
-        serviceCategory: null,
-        isPublished: true,
-        isFeatured: false,
-      });
+      const payload = new FormData();
+      payload.append('serviceRequestId', String(Number(selectedCompletedRequestId)));
+      payload.append('caption', selectedRequest.job_title || 'Completed project');
+      payload.append('description', '');
+      payload.append('serviceCategory', '');
+      payload.append('isPublished', 'true');
+      payload.append('isFeatured', 'false');
+      if (completedJobPhoto) {
+        payload.append('portfolioImage', completedJobPhoto);
+      }
+
+      const response = await serviceProfileAPI.createPortfolioFromRequest(payload);
 
       if (response.success) {
         setSelectedCompletedRequestId('');
+        setCompletedJobPhoto(null);
+        if (completedJobPhotoInputRef.current) {
+          completedJobPhotoInputRef.current.value = '';
+        }
         await fetchPortfolio();
       }
     } catch (err) {
       setError(err.message || 'Failed to link completed request');
     } finally {
       setIsLinkingCompletedRequest(false);
+    }
+  };
+
+  const validatePortfolioPhoto = (file) => {
+    if (!file) return false;
+    if (!file.type?.startsWith('image/')) {
+      setError('Please choose an image file.');
+      return false;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setError('Image must be less than 5MB');
+      return false;
+    }
+    return true;
+  };
+
+  const handleCompletedJobPhotoSelect = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      setCompletedJobPhoto(null);
+      return;
+    }
+    if (!validatePortfolioPhoto(file)) {
+      event.target.value = '';
+      return;
+    }
+    setError(null);
+    setCompletedJobPhoto(file);
+  };
+
+  const openLinkedJobPhotoPicker = (itemId) => {
+    setLinkedJobPhotoTargetId(itemId);
+    if (linkedJobPhotoInputRef.current) {
+      linkedJobPhotoInputRef.current.value = '';
+      linkedJobPhotoInputRef.current.click();
+    }
+  };
+
+  const handleLinkedJobPhotoSelect = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file || !linkedJobPhotoTargetId) return;
+
+    if (!validatePortfolioPhoto(file)) {
+      event.target.value = '';
+      return;
+    }
+
+    setIsUpdatingLinkedJobPhoto(true);
+    setError(null);
+
+    try {
+      const formDataUpload = new FormData();
+      formDataUpload.append('portfolioImage', file);
+      const response = await serviceProfileAPI.updateCompletedPortfolioItemImage(
+        linkedJobPhotoTargetId,
+        formDataUpload
+      );
+
+      if (response.success) {
+        await fetchPortfolio();
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to update completed job photo');
+    } finally {
+      setIsUpdatingLinkedJobPhoto(false);
+      setLinkedJobPhotoTargetId(null);
+      event.target.value = '';
     }
   };
 
@@ -294,13 +374,12 @@ export default function EditPortfolioModal({ onClose }) {
             <div className="form-section" data-tour="provider-portfolio-images">
               <h3><i className="bi bi-images"></i> Portfolio Images</h3>
 
-              <div style={{ marginBottom: '1rem', border: '1px solid #e5e7eb', borderRadius: '10px', padding: '0.75rem' }}>
-                <label style={{ display: 'block', fontWeight: 600, marginBottom: '0.5rem' }}>Link Completed Job</label>
+              <div className="completed-job-linker">
+                <label className="completed-job-linker-title">Link Completed Job</label>
                 <select
                   value={selectedCompletedRequestId}
                   onChange={(e) => setSelectedCompletedRequestId(e.target.value)}
                   disabled={isLinkingCompletedRequest || eligibleCompletedRequests.length === 0}
-                  style={{ width: '100%', marginBottom: '0.5rem' }}
                 >
                   <option value="">
                     {eligibleCompletedRequests.length > 0 ? 'Select a completed request' : 'No completed requests available'}
@@ -311,6 +390,32 @@ export default function EditPortfolioModal({ onClose }) {
                     </option>
                   ))}
                 </select>
+
+                <input
+                  ref={completedJobPhotoInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleCompletedJobPhotoSelect}
+                  className="portfolio-hidden-file-input"
+                />
+
+                <div className="completed-job-photo-row">
+                  <button
+                    type="button"
+                    className="btn-completed-job-photo"
+                    onClick={() => completedJobPhotoInputRef.current?.click()}
+                    disabled={isLinkingCompletedRequest}
+                  >
+                    <i className="bi bi-image"></i>
+                    {completedJobPhoto ? 'Change optional photo' : 'Add optional work photo'}
+                  </button>
+                  {completedJobPhoto && (
+                    <span className="completed-job-photo-name" title={completedJobPhoto.name}>
+                      {completedJobPhoto.name}
+                    </span>
+                  )}
+                </div>
+
                 <button
                   type="button"
                   className="btn-upload-image"
@@ -319,20 +424,54 @@ export default function EditPortfolioModal({ onClose }) {
                 >
                   {isLinkingCompletedRequest ? 'Linking...' : 'Link Job to Portfolio'}
                 </button>
-                <p style={{ marginTop: '0.5rem', fontSize: '0.85rem', color: '#6b7280' }}>
-                  Linked jobs create a portfolio entry without exposing private request details by default.
+                <p className="completed-job-linker-help">
+                  The photo is optional. Linked jobs are still shown as verified completed-work cards when no photo is added. Private client request details are not published automatically.
                 </p>
               </div>
-              
+
+              <input
+                ref={linkedJobPhotoInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleLinkedJobPhotoSelect}
+                className="portfolio-hidden-file-input"
+              />
+
               <div className="portfolio-grid">
                 {portfolio.map((item) => (
-                  <div key={item.id} className="portfolio-item">
-                    <img src={item.src} alt="Portfolio image" />
+                  <div
+                    key={item.id}
+                    className={`portfolio-item ${!item.src ? 'portfolio-item-no-photo' : ''}`}
+                  >
+                    {item.src ? (
+                      <img src={item.src} alt={item.jobTitle || item.caption || 'Portfolio image'} />
+                    ) : (
+                      <div className="edit-portfolio-job-placeholder">
+                        <i className="bi bi-briefcase-fill" aria-hidden="true"></i>
+                        <strong>{item.jobTitle || item.caption || 'Completed job'}</strong>
+                        {item.completedThroughPlatform && (
+                          <span>Completed through SerbisyoToledo</span>
+                        )}
+                      </div>
+                    )}
+
                     <div className="portfolio-item-overlay">
+                      {item.completedThroughPlatform && !item.src && (
+                        <button
+                          type="button"
+                          onClick={() => openLinkedJobPhotoPicker(item.id)}
+                          className="btn-add-linked-job-photo"
+                          disabled={isUpdatingLinkedJobPhoto}
+                        >
+                          <i className="bi bi-image"></i>
+                          <span>Add photo</span>
+                        </button>
+                      )}
                       <button
                         type="button"
                         onClick={() => handleDeleteImage(item.id)}
                         className="btn-delete-image"
+                        aria-label="Remove portfolio item"
                       >
                         <i className="bi bi-trash"></i>
                       </button>
