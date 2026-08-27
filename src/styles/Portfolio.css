@@ -644,7 +644,7 @@
   }
 }
 
-@media (max-width: 767px) {
+@media (max-width: 768px) {
   .provider-section {
     padding-bottom: calc(var(--mobile-nav-height) + var(--mobile-sticky-action-height) + 24px + env(safe-area-inset-bottom));
   }
