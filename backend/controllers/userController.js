@@ -69,7 +69,7 @@ exports.getProfile = async (req, res) => {
     }
 
     const [users] = await db.query(
-      `SELECT id, full_name, email, user_type, phone, address, bio, profile_photo_url, profile_image, created_at
+      `SELECT id, full_name, email, email_verified, user_type, phone, address, bio, profile_photo_url, profile_image, created_at
        FROM users WHERE id = ?`,
       [userId]
     );
@@ -89,6 +89,7 @@ exports.getProfile = async (req, res) => {
         id: user.id,
         fullName: user.full_name,
         email: user.email,
+        emailVerified: Boolean(user.email_verified),
         userType: user.user_type,
         phone: user.phone,
         address: user.address,
@@ -197,7 +198,7 @@ exports.updateProfile = async (req, res) => {
 
     // Fetch updated user data
     const [users] = await db.query(
-      `SELECT id, full_name, email, user_type, phone, address, bio, profile_photo, profile_photo_url
+      `SELECT id, full_name, email, email_verified, user_type, phone, address, bio, profile_photo, profile_photo_url
        FROM users WHERE id = ?`,
       [userId]
     );
