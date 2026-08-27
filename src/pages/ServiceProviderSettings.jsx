@@ -64,7 +64,7 @@ function ServiceProviderSettings() {
     ? 'Mga Pinulongan ug Credentials'
     : 'Languages & Credentials';
 
-  const pageMode = location.pathname === '/provider-schedule'
+  const pageMode = location.pathname === '/provider-availability'
     ? 'schedule'
     : location.pathname === '/provider-credentials'
       ? 'profile'
@@ -83,7 +83,7 @@ function ServiceProviderSettings() {
 
     const section = new URLSearchParams(location.search).get('section');
     if (section === 'schedule' || section === 'availability') {
-      navigate('/provider-schedule', { replace: true });
+      navigate('/provider-availability', { replace: true });
     } else if (section === 'profile') {
       navigate('/provider-credentials', { replace: true });
     }
