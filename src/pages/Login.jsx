@@ -49,7 +49,7 @@ const Login = () => {
       } else if (userType === 'tradesperson') {
         navigate('/dashboard');
       } else {
-        navigate('/feed');
+        navigate('/client-dashboard');
       }
     } catch (err) {
       console.error('Login error:', err);
