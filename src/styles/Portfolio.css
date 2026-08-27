@@ -649,7 +649,7 @@
     padding-bottom: calc(var(--mobile-nav-height) + var(--mobile-sticky-action-height) + 24px + env(safe-area-inset-bottom));
   }
 
-  .portfolio-desktop-request-btn {
+  .profile-summary-actions {
     display: none;
   }
 
@@ -1048,3 +1048,16 @@
   color: var(--color-text-primary);
 }
 
+
+
+@media (max-width: 360px) {
+  .provider-mobile-request-btn {
+    min-width: 146px;
+    padding-inline: 0.75rem;
+  }
+
+  .provider-mobile-rate-value {
+    font-size: 1rem;
+    line-height: 1.2;
+  }
+}
