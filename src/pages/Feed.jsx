@@ -15,6 +15,24 @@ import {
 
 const BROWSE_REQUEST_DEBOUNCE_MS = 300;
 
+const formatProviderAvailability = (provider, t) => {
+  if (!provider?.showAvailabilityStatus) return '';
+
+  switch (provider.availabilityStatus) {
+    case 'busy':
+      return t('availabilityBusyNow');
+    case 'unavailable':
+      return t('availabilityNotAccepting');
+    case 'no_slots':
+      return t('availabilityNoBookableDates');
+    case 'available':
+    case 'accepting_requests':
+      return t('availabilityAcceptingRequests');
+    default:
+      return provider.acceptingRequests ? t('availabilityAcceptingRequests') : '';
+  }
+};
+
 export default function Feed() {
   const { t } = useLanguage();
   const {
@@ -605,7 +623,7 @@ export default function Feed() {
               const { visible, remaining } = getVisibleServiceTypes(provider);
               const skills = getVisibleSkills(provider);
               const description = String(provider.description || '').trim();
-              const availability = String(provider.availabilitySummary || provider.nextAvailableLabel || '').trim();
+              const availability = formatProviderAvailability(provider, t);
 
               return (
                 <article key={provider.id} className="provider-card">

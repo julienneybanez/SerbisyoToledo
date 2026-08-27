@@ -91,7 +91,25 @@ const ACTIVE_BOOKING_EXISTS_SQL = `
   )
 `;
 
-const derivePublicAvailabilityStatus = (profile) => {
+const FUTURE_AVAILABILITY_CONFIGURED_SQL = `
+  (
+    EXISTS (
+      SELECT 1
+      FROM provider_availability_exceptions pae_future
+      WHERE pae_future.service_profile_id = sp.id
+        AND pae_future.exception_type = 'available'
+        AND pae_future.exception_date >= DATE(${TOLEDO_NOW_SQL})
+    )
+    OR EXISTS (
+      SELECT 1
+      FROM provider_weekly_availability pwa_future
+      WHERE pwa_future.service_profile_id = sp.id
+        AND pwa_future.is_available = TRUE
+    )
+  )
+`;
+
+const derivePublicAvailabilityStatus = (profile, hasFutureBookableSlot = null) => {
   if (!Boolean(profile.show_availability_status)) {
     return null;
   }
@@ -104,7 +122,102 @@ const derivePublicAvailabilityStatus = (profile) => {
     return 'busy';
   }
 
-  return 'available';
+  if (hasFutureBookableSlot === false) {
+    return 'no_slots';
+  }
+
+  if (hasFutureBookableSlot === true) {
+    return 'available';
+  }
+
+  return Boolean(profile.has_future_availability_config)
+    ? 'accepting_requests'
+    : 'no_slots';
+};
+
+const getToledoTodayIso = () => {
+  const shifted = new Date(Date.now() + (8 * 60 * 60 * 1000));
+  return shifted.toISOString().slice(0, 10);
+};
+
+const addDaysIso = (dateString, days) => {
+  const parsed = parseDateOnly(dateString);
+  if (!parsed) return '';
+  parsed.setUTCDate(parsed.getUTCDate() + days);
+  return formatDateOnly(parsed);
+};
+
+const findNextBookableSlot = async (queryable, profile) => {
+  if (String(profile.availability_status || 'available').toLowerCase() === 'unavailable') {
+    return null;
+  }
+
+  const maxAdvanceDays = Math.min(
+    Math.max(Number(profile.max_advance_booking_days || 60), 1),
+    365
+  );
+  const todayIso = getToledoTodayIso();
+  const endIso = addDaysIso(todayIso, maxAdvanceDays);
+  const candidateDates = new Set();
+
+  try {
+    const [specificRows] = await queryable.query(
+      `SELECT DISTINCT DATE_FORMAT(exception_date, '%Y-%m-%d') AS service_date
+       FROM provider_availability_exceptions
+       WHERE service_profile_id = ?
+         AND exception_type = 'available'
+         AND exception_date BETWEEN ? AND ?
+       ORDER BY exception_date ASC`,
+      [profile.id, todayIso, endIso]
+    );
+
+    for (const row of specificRows) {
+      if (row.service_date) candidateDates.add(String(row.service_date));
+    }
+
+    const [weeklyRows] = await queryable.query(
+      `SELECT DISTINCT day_of_week
+       FROM provider_weekly_availability
+       WHERE service_profile_id = ?
+         AND is_available = TRUE`,
+      [profile.id]
+    );
+    const weeklyDays = new Set(weeklyRows.map((row) => Number(row.day_of_week)));
+
+    if (weeklyDays.size > 0) {
+      for (let offset = 0; offset <= maxAdvanceDays; offset += 1) {
+        const date = addDaysIso(todayIso, offset);
+        const parsed = parseDateOnly(date);
+        if (parsed && weeklyDays.has(parsed.getUTCDay())) {
+          candidateDates.add(date);
+        }
+      }
+    }
+
+    for (const date of Array.from(candidateDates).sort()) {
+      const slots = await getAvailableSlotsForDate(queryable, {
+        serviceProfileId: profile.id,
+        providerId: profile.user_id,
+        date,
+        durationMinutes: 30,
+        slotStepMinutes: 30,
+      });
+
+      if (slots.length > 0) {
+        return {
+          date,
+          time: slots[0].time,
+          endTime: slots[0].endTime,
+        };
+      }
+    }
+  } catch (error) {
+    if (!['ER_NO_SUCH_TABLE', 'ER_BAD_FIELD_ERROR'].includes(error.code)) {
+      throw error;
+    }
+  }
+
+  return null;
 };
 
 const deriveOnlineFromLastSeen = (lastSeenAt) => {
@@ -418,7 +531,9 @@ exports.getAllProfiles = async (req, res) => {
         u.is_verified,
         COALESCE(pas.availability_status, 'available') AS availability_status,
         COALESCE(pas.show_availability_status, TRUE) AS show_availability_status,
-        ${ACTIVE_BOOKING_EXISTS_SQL} AS has_active_booking
+        COALESCE(pas.max_advance_booking_days, 60) AS max_advance_booking_days,
+        ${ACTIVE_BOOKING_EXISTS_SQL} AS has_active_booking,
+        ${FUTURE_AVAILABILITY_CONFIGURED_SQL} AS has_future_availability_config
       FROM service_profiles sp
       JOIN users u ON sp.user_id = u.id
       LEFT JOIN provider_availability_settings pas ON pas.service_profile_id = sp.id
@@ -503,6 +618,8 @@ exports.getAllProfiles = async (req, res) => {
         serviceTypes,
         taxonomyNeedsReview: Boolean(profile.taxonomy_needs_review),
         availabilityStatus: derivePublicAvailabilityStatus(profile),
+        acceptingRequests: String(profile.availability_status || 'available').toLowerCase() !== 'unavailable',
+        hasConfiguredAvailability: Boolean(profile.has_future_availability_config),
         showAvailabilityStatus: Boolean(profile.show_availability_status),
       };
     });
@@ -583,7 +700,9 @@ exports.getRecommendedProviders = async (req, res) => {
         u.is_verified,
         COALESCE(pas.availability_status, 'available') AS availability_status,
         COALESCE(pas.show_availability_status, TRUE) AS show_availability_status,
-        ${ACTIVE_BOOKING_EXISTS_SQL} AS has_active_booking
+        COALESCE(pas.max_advance_booking_days, 60) AS max_advance_booking_days,
+        ${ACTIVE_BOOKING_EXISTS_SQL} AS has_active_booking,
+        ${FUTURE_AVAILABILITY_CONFIGURED_SQL} AS has_future_availability_config
       FROM service_profiles sp
       JOIN users u ON sp.user_id = u.id
       LEFT JOIN provider_availability_settings pas ON pas.service_profile_id = sp.id
@@ -688,6 +807,8 @@ exports.getRecommendedProviders = async (req, res) => {
         taxonomyNeedsReview: Boolean(profile.taxonomy_needs_review),
         languages: languageRows.map((row) => row.language_code),
         availabilityStatus: derivePublicAvailabilityStatus(profile),
+        acceptingRequests: String(profile.availability_status || 'available').toLowerCase() !== 'unavailable',
+        hasConfiguredAvailability: Boolean(profile.has_future_availability_config),
         showAvailabilityStatus: Boolean(profile.show_availability_status),
       });
     }
@@ -731,7 +852,9 @@ exports.getProfileById = async (req, res) => {
         u.is_verified,
         COALESCE(pas.availability_status, 'available') AS availability_status,
         COALESCE(pas.show_availability_status, TRUE) AS show_availability_status,
-        ${ACTIVE_BOOKING_EXISTS_SQL} AS has_active_booking
+        COALESCE(pas.max_advance_booking_days, 60) AS max_advance_booking_days,
+        ${ACTIVE_BOOKING_EXISTS_SQL} AS has_active_booking,
+        ${FUTURE_AVAILABILITY_CONFIGURED_SQL} AS has_future_availability_config
       FROM service_profiles sp
       JOIN users u ON sp.user_id = u.id
       LEFT JOIN provider_availability_settings pas ON pas.service_profile_id = sp.id
@@ -748,6 +871,7 @@ exports.getProfileById = async (req, res) => {
     }
 
     const profile = profiles[0];
+    const nextBookableSlot = await findNextBookableSlot(db, profile);
 
     // Fetch portfolio items; fall back for environments where Stage 1 columns are not migrated yet.
     let portfolioItems = [];
@@ -818,6 +942,8 @@ exports.getProfileById = async (req, res) => {
         `SELECT id, credential_name, issuing_organization, issue_date, expiration_date, does_not_expire, related_skills, verification_status
          FROM provider_credentials
          WHERE service_profile_id = ?
+           AND verification_status = 'verified'
+           AND (does_not_expire = TRUE OR expiration_date IS NULL OR expiration_date >= CURDATE())
          ORDER BY created_at DESC`,
         [id]
       );
@@ -881,7 +1007,12 @@ exports.getProfileById = async (req, res) => {
       serviceTypes,
       taxonomyNeedsReview: Boolean(profile.taxonomy_needs_review),
       isPublished: Boolean(profile.is_published),
-      availabilityStatus: derivePublicAvailabilityStatus(profile),
+      availabilityStatus: derivePublicAvailabilityStatus(profile, Boolean(nextBookableSlot)),
+      acceptingRequests: String(profile.availability_status || 'available').toLowerCase() !== 'unavailable',
+      hasConfiguredAvailability: Boolean(profile.has_future_availability_config),
+      hasFutureBookableSlot: Boolean(nextBookableSlot),
+      nextAvailableDate: nextBookableSlot?.date || null,
+      nextAvailableTime: nextBookableSlot?.time || null,
       showAvailabilityStatus: Boolean(profile.show_availability_status),
       languages: languages.map((row) => row.language_code),
       credentials: credentialRows.map((credential) => {
@@ -1334,6 +1465,7 @@ exports.getAvailableSlots = async (req, res) => {
       .split(',')
       .map((value) => value.trim())
       .filter(Boolean);
+    const excludeRequestId = Number(req.query.excludeRequestId || 0) || null;
 
     if (!serviceProfileId || (!date && requestedDates.length === 0)) {
       return res.status(400).json({
@@ -1383,6 +1515,7 @@ exports.getAvailableSlots = async (req, res) => {
       dates,
       durationMinutes: duration,
       slotStepMinutes: 60,
+      excludeRequestId,
     });
 
     return res.json({
@@ -1415,6 +1548,7 @@ exports.getAvailableDates = async (req, res) => {
     const fromDateRaw = String(req.query.fromDate || '').trim();
     const toDateRaw = String(req.query.toDate || '').trim();
     const duration = Number(req.query.duration || 120);
+    const excludeRequestId = Number(req.query.excludeRequestId || 0) || null;
 
     if (!serviceProfileId || !fromDateRaw || !toDateRaw) {
       return res.status(400).json({
@@ -1469,6 +1603,7 @@ exports.getAvailableDates = async (req, res) => {
         date,
         durationMinutes: duration,
         slotStepMinutes: 60,
+        excludeRequestId,
       });
 
       if (slots.length > 0) {

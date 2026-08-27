@@ -60,6 +60,38 @@ const ReviewSummary = ({ reviews }) => {
   );
 };
 
+const formatPublicAvailabilitySummary = (apiProfile, t) => {
+  if (!apiProfile?.showAvailabilityStatus) return '';
+
+  const nextDate = apiProfile.nextAvailableDate
+    ? new Date(`${apiProfile.nextAvailableDate}T00:00:00`).toLocaleDateString(undefined, {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      })
+    : '';
+
+  if (apiProfile.availabilityStatus === 'unavailable') {
+    return t('availabilityNotAccepting');
+  }
+
+  if (apiProfile.availabilityStatus === 'no_slots') {
+    return t('availabilityNoBookableDates');
+  }
+
+  if (apiProfile.availabilityStatus === 'busy') {
+    return nextDate
+      ? t('availabilityBusyNext', { date: nextDate })
+      : t('availabilityBusyNow');
+  }
+
+  if (nextDate) {
+    return t('availabilityNextAvailable', { date: nextDate });
+  }
+
+  return apiProfile.acceptingRequests ? t('availabilityAcceptingRequests') : '';
+};
+
 const ProviderCard = ({ provider, profile, onBack, hideBackLink = false }) => {
   const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState('portfolio');
@@ -67,7 +99,14 @@ const ProviderCard = ({ provider, profile, onBack, hideBackLink = false }) => {
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [expandedImage, setExpandedImage] = useState(null);
   const navigate = useNavigate();
-  const canRequestService = provider?.isPublished !== false;
+  const canRequestService = provider?.isPublished !== false
+    && provider?.acceptingRequests !== false
+    && provider?.hasFutureBookableSlot !== false;
+  const unavailableActionLabel = provider?.acceptingRequests === false
+    ? t('currentlyUnavailable')
+    : provider?.hasFutureBookableSlot === false
+      ? t('availabilityNoBookableDates')
+      : t('currentlyUnavailable');
   const initials = String(provider?.name || 'ST')
     .split(' ')
     .map((n) => n[0])
@@ -164,7 +203,7 @@ const ProviderCard = ({ provider, profile, onBack, hideBackLink = false }) => {
             disabled={!canRequestService}
             data-tour="provider-request-service"
           >
-            {canRequestService ? t('requestService') : t('currentlyUnavailable')}
+            {canRequestService ? t('requestService') : unavailableActionLabel}
           </button>
         </aside>
       </div>
@@ -356,7 +395,7 @@ const ProviderCard = ({ provider, profile, onBack, hideBackLink = false }) => {
           disabled={!canRequestService}
           data-tour="provider-request-service"
         >
-          {canRequestService ? t('requestService') : t('unavailable')}
+          {canRequestService ? t('requestService') : unavailableActionLabel}
         </button>
       </MobileStickyAction>
 
@@ -421,6 +460,10 @@ const ServiceProviderPortfolio = () => {
             verified: apiProfile.verified || false,
             image: apiProfile.image,
             isPublished: apiProfile.isPublished !== false,
+            availabilityStatus: apiProfile.availabilityStatus,
+            acceptingRequests: apiProfile.acceptingRequests !== false,
+            hasFutureBookableSlot: apiProfile.hasFutureBookableSlot !== false,
+            nextAvailableDate: apiProfile.nextAvailableDate || null,
           };
           
           const transformedProfile = {
@@ -437,7 +480,7 @@ const ServiceProviderPortfolio = () => {
             response: apiProfile.responseTime || t('within24Hours'),
             rate: apiProfile.dailyRate ?? apiProfile.startingPrice,
             rateUnit: apiProfile.pricingUnit || (apiProfile.dailyRate != null ? '/day' : ''),
-            availabilitySummary: apiProfile.availabilitySummary || apiProfile.nextAvailableLabel || '',
+            availabilitySummary: formatPublicAvailabilitySummary(apiProfile, t),
           };
           
           setProvider(transformedProvider);

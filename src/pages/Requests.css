@@ -1008,3 +1008,58 @@
 .requests-container .requests-header > p {
   display: none;
 }
+
+/* Specific-date reschedule selector */
+.reschedule-specific-date-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+  gap: 0.55rem;
+  max-height: 220px;
+  padding: 0.25rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.reschedule-date-chip {
+  min-height: 44px;
+  padding: 0.6rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+  transition: transform 100ms ease, border-color 140ms ease, background-color 140ms ease;
+}
+
+.reschedule-date-chip:hover:not(:disabled) {
+  border-color: var(--primary);
+}
+
+.reschedule-date-chip:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.reschedule-date-chip.selected {
+  border-color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 14%, var(--surface));
+  font-weight: 700;
+}
+
+.reschedule-date-summary {
+  margin: 0.25rem 0 0;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+@media (max-width: 430px) {
+  .reschedule-specific-date-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reschedule-date-chip {
+    transition: none;
+  }
+}
