@@ -4,6 +4,7 @@ import { getUser, serviceRequestAPI } from '../services/api';
 import RequestDetailsModal from '../components/common/RequestDetailsModal';
 import ReviewModal from '../components/common/ReviewModal';
 import ReportUserModal from '../components/common/ReportUserModal';
+import NextStepHelp from '../components/common/NextStepHelp';
 import { useLanguage } from '../context/LanguageContext';
 import './Requests.css';
 
@@ -548,6 +549,116 @@ export default function Requests() {
     return true;
   });
 
+  const pendingRequests = requests.filter((request) => request.status === 'pending');
+  const activeRequests = requests.filter((request) => (
+    ['accepted', 'on_the_way', 'in_progress'].includes(request.status)
+  ));
+
+  const showAllRequests = () => {
+    setActiveFilter('all');
+    window.setTimeout(() => {
+      document.querySelector('.requests-grid')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 0);
+  };
+
+  const requestsHelpGuidance = (() => {
+    if (isProvider) {
+      if (pendingRequests.length > 0) {
+        return {
+          title: pendingRequests.length === 1 ? '1 request needs your response' : `${pendingRequests.length} requests need your response`,
+          description: 'Review the request details first, then accept or decline based on your availability.',
+          steps: [
+            'Open the request details and check the service, schedule, and client information.',
+            'Accept the request if you can take the job, or decline it with a clear reason.',
+            'After accepting, keep the job status updated as the service progresses.',
+          ],
+          actionLabel: 'Review requests',
+          onAction: showAllRequests,
+          targetSelector: '.requests-grid',
+        };
+      }
+
+      if (activeRequests.length > 0) {
+        return {
+          title: 'Check your active jobs',
+          description: 'Your current requests are already accepted or in progress. Review their schedules and update the job status when needed.',
+          steps: [
+            'Open View Details to confirm the schedule and service information.',
+            'Use the available status action when you are on the way or the service is complete.',
+          ],
+          actionLabel: 'View active jobs',
+          onAction: showAllRequests,
+          targetSelector: '.requests-grid',
+        };
+      }
+
+      return {
+        title: 'No requests need action right now',
+        description: 'Keep your service listing and schedule up to date so clients can send suitable booking requests.',
+        steps: [
+          'Check your Dashboard for profile setup or upcoming work.',
+          'Update your Schedule whenever your availability changes.',
+        ],
+        actionLabel: 'Go to Dashboard',
+        actionTo: '/dashboard',
+      };
+    }
+
+    if (requests.length === 0) {
+      return {
+        title: 'Start your first booking',
+        description: 'Browse local providers, compare their profiles, then send a service request.',
+        steps: [
+          'Find the service you need in Browse Services.',
+          'Open a provider profile and check their rate, location, availability, and reviews.',
+          'Choose Request Service and submit your preferred schedule.',
+        ],
+        actionLabel: 'Browse Services',
+        actionTo: '/feed',
+      };
+    }
+
+    if (activeRequests.length > 0) {
+      return {
+        title: 'Check your active booking',
+        description: 'Open the booking details to review the latest status, schedule, and available actions.',
+        steps: [
+          'Use View Details for the complete booking information.',
+          'Check the status before proposing a schedule change or confirming completion.',
+        ],
+        actionLabel: 'View bookings',
+        onAction: showAllRequests,
+        targetSelector: '.requests-grid',
+      };
+    }
+
+    if (pendingRequests.length > 0) {
+      return {
+        title: 'Your request is waiting for the provider',
+        description: 'You can review the booking details while waiting for the provider to accept or decline the request.',
+        steps: [
+          'Use View Details to confirm what you submitted.',
+          'Watch the booking status here for the provider response.',
+        ],
+        actionLabel: 'View bookings',
+        onAction: showAllRequests,
+        targetSelector: '.requests-grid',
+      };
+    }
+
+    return {
+      title: 'Need another service?',
+      description: 'Your current bookings do not need an immediate action. You can browse providers again whenever you need another service.',
+      steps: [
+        'Review completed bookings here when needed.',
+        'Return to Browse Services to find another provider.',
+      ],
+      actionLabel: 'Browse Services',
+      actionTo: '/feed',
+      targetSelector: '.requests-grid',
+    };
+  })();
+
   if (loading) {
     return (
       <div className="requests-container">
@@ -563,7 +674,10 @@ export default function Requests() {
     <div className="requests-container">
       <div className="requests-wrapper">
         <div className="requests-header">
-          <h1 data-tour={isProvider ? 'incoming-requests' : undefined}>{isProvider ? t('serviceRequests') : t('myBookings')}</h1>
+          <div className="requests-title-row">
+            <h1 data-tour={isProvider ? 'incoming-requests' : undefined}>{isProvider ? t('serviceRequests') : t('myBookings')}</h1>
+            <NextStepHelp guidance={requestsHelpGuidance} />
+          </div>
           <p>{isProvider ? t('requestsProviderSubtitle') : t('requestsClientSubtitle')}</p>
         </div>
 

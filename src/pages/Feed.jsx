@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { getUser, isAuthenticated, serviceProfileAPI, serviceRequestAPI } from "../services/api";
 import useServiceTaxonomy from '../hooks/useServiceTaxonomy';
 import ProfileCompletionChecklist from "../components/common/ProfileCompletionChecklist";
+import NextStepHelp from "../components/common/NextStepHelp";
 import { useLanguage } from "../context/LanguageContext";
 import {
   SearchIcon,
@@ -174,6 +175,27 @@ export default function Feed() {
     },
   ];
 
+  const visibleClientChecklistTasks = clientChecklistTasks.filter(
+    (task) => task && task.isApplicable !== false,
+  );
+  const isClientChecklistComplete = visibleClientChecklistTasks.length > 0
+    && visibleClientChecklistTasks.every((task) => task.completed);
+
+  const clientBrowseGuidance = {
+    title: 'Find the service you need',
+    description: 'Use search or the service categories, compare provider profiles, then send a request when you find the right provider.',
+    steps: [
+      'Search for a service, provider, skill, or location.',
+      'Open View Profile to compare services, rates, availability, and reviews.',
+      'Choose Request Service on the provider profile when you are ready to book.',
+    ],
+    actionLabel: 'View providers',
+    onAction: () => {
+      document.getElementById('providers-list')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    },
+    targetSelector: '[data-tour="feed-search-filters"]',
+  };
+
   const updateQueryParam = (key, value) => {
     const nextParams = new URLSearchParams(searchParams);
     if (value) nextParams.set(key, value);
@@ -328,12 +350,14 @@ export default function Feed() {
       <div className="feed-container">
         <header className="feed-page-header">
           <div className="feed-heading-block">
-            <p className="feed-page-eyebrow">{t('browseServices')}</p>
-            <h1 className="feed-page-title" data-tour="browse-services">{t('feedTitle')}</h1>
+            <div className="feed-heading-row">
+              <h1 className="feed-page-title" data-tour="browse-services">{t('feedTitle')}</h1>
+              {isClient && <NextStepHelp guidance={clientBrowseGuidance} />}
+            </div>
             <p className="feed-page-subtitle">{t('feedSubtitle')}</p>
           </div>
 
-          {isClient && (
+          {isClient && !isClientChecklistComplete && (
             <div className="feed-onboarding-panel">
               <ProfileCompletionChecklist
                 title={t('feedGettingStarted')}

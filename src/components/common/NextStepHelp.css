@@ -1,0 +1,284 @@
+/* Contextual, opt-in help for users who are unsure what to do next. */
+.next-step-help {
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.next-step-trigger {
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.48rem;
+  padding: 0.55rem 0.8rem;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 10px;
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  font-size: 0.82rem;
+  font-weight: 700;
+  line-height: 1.2;
+  cursor: pointer;
+  box-shadow: none;
+  transition: border-color 0.18s ease, background-color 0.18s ease, color 0.18s ease;
+}
+
+.next-step-trigger:hover,
+.next-step-trigger:focus-visible {
+  border-color: color-mix(in srgb, var(--brand-primary) 48%, var(--color-border));
+  background: color-mix(in srgb, var(--brand-primary) 5%, var(--color-surface));
+  color: var(--brand-primary);
+}
+
+.next-step-trigger:focus-visible,
+.next-step-close:focus-visible,
+.next-step-primary:focus-visible,
+.next-step-secondary:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--brand-primary) 32%, transparent);
+  outline-offset: 2px;
+}
+
+.next-step-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 5000;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(7, 20, 32, 0.46);
+}
+
+.next-step-dialog {
+  width: min(470px, 100%);
+  max-height: min(680px, calc(100vh - 2rem));
+  overflow-y: auto;
+  padding: 1.15rem;
+  border: 1px solid var(--color-border);
+  border-radius: 18px;
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  box-shadow: 0 24px 70px rgba(7, 20, 32, 0.24);
+}
+
+.next-step-dialog-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.next-step-dialog-header h2 {
+  margin: 0;
+  color: var(--color-text-primary);
+  font-size: 1.18rem;
+  font-weight: 780;
+  line-height: 1.3;
+}
+
+.next-step-dialog-header p {
+  margin: 0.45rem 0 0;
+  color: var(--color-text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.next-step-close {
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-surface-secondary);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+
+.next-step-list {
+  display: grid;
+  gap: 0.7rem;
+  margin: 1rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.next-step-list li {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  gap: 0.7rem;
+  align-items: start;
+}
+
+.next-step-list li > span {
+  width: 30px;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--brand-primary) 9%, var(--color-surface));
+  color: var(--brand-primary);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.next-step-list p {
+  margin: 0.18rem 0 0;
+  color: var(--color-text-secondary);
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.next-step-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.65rem;
+  margin-top: 1.15rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.next-step-primary,
+.next-step-secondary {
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  padding: 0.62rem 0.9rem;
+  border-radius: 10px;
+  font-size: 0.84rem;
+  font-weight: 720;
+  cursor: pointer;
+}
+
+.next-step-primary {
+  border: 1px solid var(--primary);
+  background: var(--primary);
+  color: #fff;
+}
+
+.next-step-primary:hover {
+  border-color: var(--primary-hover);
+  background: var(--primary-hover);
+}
+
+.next-step-secondary {
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+}
+
+.next-step-secondary:hover {
+  border-color: color-mix(in srgb, var(--brand-primary) 42%, var(--color-border));
+  color: var(--brand-primary);
+}
+
+.feed-heading-row,
+.requests-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.requests-title-row h1 {
+  margin-bottom: 0;
+}
+
+.provider-welcome-actions {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.65rem;
+}
+
+.next-step-highlight {
+  position: relative;
+  z-index: 2;
+  outline: 3px solid color-mix(in srgb, var(--brand-primary) 66%, transparent);
+  outline-offset: 5px;
+  border-radius: 12px;
+  animation: nextStepPulse 1.2s ease-in-out 2;
+}
+
+@keyframes nextStepPulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--brand-primary) 22%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 9px color-mix(in srgb, var(--brand-primary) 8%, transparent);
+  }
+}
+
+[data-theme='dark'] .next-step-dialog,
+[data-theme='dark'] .next-step-trigger,
+[data-theme='dark'] .next-step-secondary {
+  background: var(--color-surface);
+  border-color: var(--color-border);
+}
+
+[data-theme='dark'] .next-step-close {
+  background: var(--color-surface-secondary);
+  color: var(--color-text-secondary);
+  border-color: var(--color-border);
+}
+
+@media (max-width: 768px) {
+  .feed-heading-row,
+  .requests-title-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.65rem;
+  }
+
+  .provider-welcome-actions {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .provider-welcome-actions .next-step-help,
+  .provider-welcome-actions .next-step-trigger {
+    width: 100%;
+  }
+}
+
+@media (max-width: 520px) {
+  .next-step-overlay {
+    align-items: end;
+    padding: 0.6rem;
+  }
+
+  .next-step-dialog {
+    width: 100%;
+    max-height: calc(100vh - 1.2rem);
+    border-radius: 16px;
+    padding: 1rem;
+  }
+
+  .next-step-actions {
+    flex-direction: column-reverse;
+  }
+
+  .next-step-primary,
+  .next-step-secondary {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .next-step-trigger,
+  .next-step-highlight {
+    transition: none;
+    animation: none;
+  }
+
+  .next-step-highlight {
+    scroll-behavior: auto;
+  }
+}

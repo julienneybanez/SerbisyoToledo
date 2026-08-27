@@ -1,5 +1,5 @@
 import { Outlet, Route, Routes, useLocation } from 'react-router-dom';
-import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react';
+import { Suspense, lazy, useCallback, useEffect, useState } from 'react';
 import './styles/App.css';
 import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
@@ -16,8 +16,6 @@ import ProtectedRoute from './components/common/ProtectedRoute';
 // Admin imports
 import AdminLayout from './components/layout/AdminLayout';
 import { clearAuthSession, getUser, isAuthenticated, serviceProfileAPI } from './services/api';
-import GuidedTour from './components/common/GuidedTour';
-import TourWelcomeModal from './components/common/TourWelcomeModal';
 
 const Home = lazy(() => import('./pages/Home'));
 const About = lazy(() => import('./pages/About'));
@@ -40,80 +38,12 @@ const AdminVerifications = lazy(() => import('./pages/admin/AdminVerifications')
 const AdminReports = lazy(() => import('./pages/admin/AdminReports'));
 const AdminSettings = lazy(() => import('./pages/admin/AdminSettings'));
 
-const CLIENT_TOUR_STEPS = [
-  {
-    title: 'Browse Services',
-    description: 'Discover available service providers in Toledo City from this page.',
-    route: '/feed',
-    selector: '[data-tour="browse-services"]',
-  },
-  {
-    title: 'Search and Filters',
-    description: 'Use search, category buttons, and filters to narrow providers quickly.',
-    route: '/feed',
-    selector: '[data-tour="feed-search-filters"]',
-  },
-  {
-    title: 'Provider Profile',
-    description: 'Open a provider profile to see ratings, details, and services offered.',
-    route: '/feed',
-    selector: '[data-tour="provider-profile-trigger"]',
-  },
-  {
-    title: 'Request Service',
-    description: 'Inside a provider profile, use Request Service to submit your booking details.',
-    route: '/feed',
-    selector: '.tour-provider-request-step',
-  },
-  {
-    title: 'My Bookings',
-    description: 'Track your bookings and progress updates from this section.',
-    route: '/requests',
-    selector: '[data-tour="nav-requests"]',
-  },
-];
-
-const PROVIDER_TOUR_STEPS = [
-  {
-    title: 'Provider Profile',
-    description: 'Use this action to create or update your service profile.',
-    route: '/dashboard',
-    selector: '[data-tour="provider-profile-setup"]',
-  },
-  {
-    title: 'Services Offered',
-    description: 'Complete your profile checklist so clients can discover your services.',
-    route: '/dashboard',
-    selector: '.profile-checklist',
-  },
-  {
-    title: 'Schedule',
-    description: 'Configure weekly availability, booking windows, and date exceptions in Schedule settings.',
-    route: '/provider-settings?section=schedule',
-    selector: '[data-tour="provider-schedule-tab"]',
-  },
-  {
-    title: 'Portfolio',
-    description: 'Use Manage Profile to update your public portfolio and service details.',
-    route: '/dashboard',
-    selector: '[data-tour="provider-profile-setup"]',
-  },
-  {
-    title: 'Incoming Booking Requests',
-    description: 'Review and respond to client requests from your request list.',
-    route: '/requests',
-    selector: '[data-tour="incoming-requests"]',
-  },
-];
-
 const MOBILE_BREAKPOINT_PX = 768;
 
 function App() {
   const location = useLocation();
   const [isChatbotOpen, setIsChatbotOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState(getUser());
-  const [showTourPrompt, setShowTourPrompt] = useState(false);
-  const [showGuidedTour, setShowGuidedTour] = useState(false);
   const [isMobileViewport, setIsMobileViewport] = useState(() => (
     window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT_PX}px)`).matches
   ));
@@ -124,8 +54,6 @@ function App() {
   const [showMobileVerificationRequest, setShowMobileVerificationRequest] = useState(false);
   const [hasServiceProfile, setHasServiceProfile] = useState(false);
   const [providerPublicProfileRoute, setProviderPublicProfileRoute] = useState('/dashboard');
-
-  const getTourStorageKey = (user) => `serbisyoToledoTour_${user.id}_${user.userType}`;
 
   useEffect(() => {
     const updateAuthState = () => {
@@ -194,79 +122,6 @@ function App() {
       isMounted = false;
     };
   }, [currentUser]);
-
-  useEffect(() => {
-    if (!isAuthenticated() || !currentUser) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setShowTourPrompt(false);
-      setShowGuidedTour(false);
-      return;
-    }
-
-    if (!['client', 'tradesperson'].includes(currentUser.userType)) {
-      setShowTourPrompt(false);
-      setShowGuidedTour(false);
-      return;
-    }
-
-    const key = getTourStorageKey(currentUser);
-    const persisted = localStorage.getItem(key);
-    const sessionLater = sessionStorage.getItem(`${key}_later`);
-
-    if (persisted === 'completed' || persisted === 'dismissed' || sessionLater === '1') {
-      setShowTourPrompt(false);
-      return;
-    }
-
-    setShowTourPrompt(true);
-  }, [currentUser]);
-
-  const activeTourSteps = useMemo(() => {
-    if (currentUser?.userType === 'tradesperson') {
-      return PROVIDER_TOUR_STEPS;
-    }
-
-    if (currentUser?.userType === 'client') {
-      return CLIENT_TOUR_STEPS;
-    }
-
-    return [];
-  }, [currentUser]);
-
-  const handleStartTour = () => {
-    setShowTourPrompt(false);
-    setShowGuidedTour(true);
-  };
-
-  const handleMaybeLater = () => {
-    if (!currentUser) return;
-    const key = getTourStorageKey(currentUser);
-    sessionStorage.setItem(`${key}_later`, '1');
-    setShowTourPrompt(false);
-  };
-
-  const handleDontShowAgain = () => {
-    if (!currentUser) return;
-    const key = getTourStorageKey(currentUser);
-    localStorage.setItem(key, 'dismissed');
-    setShowTourPrompt(false);
-    setShowGuidedTour(false);
-  };
-
-  const handleTourFinish = () => {
-    if (!currentUser) return;
-    const key = getTourStorageKey(currentUser);
-    localStorage.setItem(key, 'completed');
-    setShowGuidedTour(false);
-  };
-
-  const handleTourSkip = () => {
-    if (currentUser) {
-      const key = getTourStorageKey(currentUser);
-      sessionStorage.setItem(`${key}_later`, '1');
-    }
-    setShowGuidedTour(false);
-  };
 
   const isMobileAuthenticated = Boolean(
     isMobileViewport
@@ -496,20 +351,6 @@ function App() {
         </Routes>
       </Suspense>
 
-      <TourWelcomeModal
-        show={showTourPrompt}
-        roleLabel={currentUser?.userType === 'tradesperson' ? 'service providers' : 'clients'}
-        onStart={handleStartTour}
-        onMaybeLater={handleMaybeLater}
-        onDontShowAgain={handleDontShowAgain}
-      />
-
-      <GuidedTour
-        show={showGuidedTour}
-        steps={activeTourSteps}
-        onFinish={handleTourFinish}
-        onSkip={handleTourSkip}
-      />
     </>
   );
 }

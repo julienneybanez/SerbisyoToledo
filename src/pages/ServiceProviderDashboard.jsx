@@ -6,6 +6,7 @@ import ServiceProfileModal from '../components/common/ServiceProfileModal';
 import EditPortfolioModal from '../components/common/EditPortfolioModal';
 import VerificationRequestModal from '../components/common/VerificationRequestModal';
 import RequestDetailsModal from '../components/common/RequestDetailsModal';
+import NextStepHelp from '../components/common/NextStepHelp';
 import './ServiceProviderDashboard.css';
 
 const PROVIDER_TIPS = [
@@ -251,6 +252,73 @@ export default function ServiceProviderDashboard() {
     },
   ];
 
+  const applicableProviderChecklistTasks = providerChecklistTasks.filter(
+    (task) => task && task.isApplicable !== false,
+  );
+  const incompleteProviderChecklistTasks = checklistLoading
+    ? []
+    : applicableProviderChecklistTasks.filter((task) => !task.completed);
+
+  const providerHelpGuidance = (() => {
+    if (requestSummary.pending > 0) {
+      return {
+        title: requestSummary.pending === 1 ? '1 request needs your response' : `${requestSummary.pending} requests need your response`,
+        description: 'Review new booking requests before anything else so clients are not left waiting.',
+        steps: [
+          'Open Requests and review the service details and requested schedule.',
+          'Accept the request if you can take the job, or decline it with a reason.',
+        ],
+        actionLabel: 'Review Requests',
+        actionTo: '/requests',
+        targetSelector: '.action-banner',
+      };
+    }
+
+    if (incompleteProviderChecklistTasks.length > 0) {
+      return {
+        title: 'Continue your profile setup',
+        description: `${incompleteProviderChecklistTasks.length} profile item${incompleteProviderChecklistTasks.length === 1 ? '' : 's'} still need attention.`,
+        steps: [
+          'Open Profile Setup to see the remaining items.',
+          'Complete your listing, schedule, portfolio, or verification as needed.',
+        ],
+        actionLabel: 'Show Profile Setup',
+        onAction: () => {
+          document.querySelector('.profile-checklist')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        },
+        targetSelector: '.profile-checklist',
+      };
+    }
+
+    if (requestSummary.upcoming > 0) {
+      return {
+        title: 'Check your upcoming job',
+        description: requestSummary.nextUpcoming
+          ? `Your next scheduled job is ${formatSchedule(requestSummary.nextUpcoming, true)}.`
+          : 'You have an upcoming accepted job.',
+        steps: [
+          'Open Requests to review the job details and schedule.',
+          'Update the job status when you are on the way or when the work is complete.',
+        ],
+        actionLabel: 'View Requests',
+        actionTo: '/requests',
+        targetSelector: '.provider-stats-row',
+      };
+    }
+
+    return {
+      title: 'Nothing urgent right now',
+      description: 'Your dashboard has no pending requests or upcoming jobs that need attention.',
+      steps: [
+        'Keep your service listing and schedule current.',
+        'Check Requests when a client sends a new booking.',
+      ],
+      actionLabel: 'View Requests',
+      actionTo: '/requests',
+      targetSelector: '.provider-stats-row',
+    };
+  })();
+
   const handleStatusUpdate = async (requestId, status, reason = null, options = {}) => {
     const { suppressAlert = false } = options;
     setActionLoading(requestId);
@@ -351,13 +419,16 @@ export default function ServiceProviderDashboard() {
             </div>
           </div>
 
-          <button
-            className="btn-post-service"
-            data-tour="provider-profile-setup"
-            onClick={() => setShowProfileModal(true)}
-          >
-            Manage Service Listing
-          </button>
+          <div className="provider-welcome-actions">
+            <NextStepHelp guidance={providerHelpGuidance} />
+            <button
+              className="btn-post-service"
+              data-tour="provider-profile-setup"
+              onClick={() => setShowProfileModal(true)}
+            >
+              Manage Service Listing
+            </button>
+          </div>
         </section>
 
         {requestSummary.pending > 0 && (
