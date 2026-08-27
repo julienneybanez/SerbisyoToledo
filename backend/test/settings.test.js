@@ -101,6 +101,137 @@ describe('Settings-related backend endpoints', () => {
     expect(res.body.success).toBe(false);
   });
 
+  it('saves provider-selected dates and time slots as authoritative availability', async () => {
+    vi.spyOn(db, 'query').mockImplementation(async (sql) => {
+      if (sql === authUserSql) {
+        return [[{ id: 21, user_type: 'tradesperson', is_active: 1 }]];
+      }
+
+      if (sql.includes('SELECT id FROM service_profiles WHERE user_id = ? LIMIT 1')) {
+        return [[{ id: 77 }]];
+      }
+
+      return [[]];
+    });
+
+    const connection = {
+      beginTransaction: vi.fn(async () => {}),
+      commit: vi.fn(async () => {}),
+      rollback: vi.fn(async () => {}),
+      release: vi.fn(),
+      query: vi.fn(async (sql) => {
+        if (sql.includes('FROM provider_availability_settings') && sql.includes('LIMIT 1')) {
+          return [[{
+            id: 1,
+            allow_same_day_booking: 0,
+            min_advance_notice_minutes: 720,
+            max_advance_booking_days: 60,
+            availability_status: 'available',
+            show_availability_status: 1,
+          }]];
+        }
+
+        return [{ affectedRows: 1 }];
+      }),
+    };
+
+    vi.spyOn(db, 'getConnection').mockResolvedValue(connection);
+
+    const date = new Date(Date.now() + (30 * 24 * 60 * 60 * 1000));
+    const futureDate = date.toISOString().slice(0, 10);
+
+    const res = await request(app)
+      .put('/api/service-profiles/availability/me')
+      .set('Authorization', `Bearer ${signToken(21)}`)
+      .send({
+        settings: {
+          availabilityStatus: 'available',
+          showAvailabilityStatus: true,
+          allowSameDayBooking: false,
+          minAdvanceNoticeMinutes: 720,
+          maxAdvanceBookingDays: 60,
+        },
+        specificAvailability: [
+          { date: futureDate, startTime: '09:00', endTime: '11:00' },
+          { date: futureDate, startTime: '13:00', endTime: '15:00' },
+        ],
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data).toMatchObject({
+      mode: 'specific',
+      specificAvailabilityCount: 2,
+    });
+    expect(connection.commit).toHaveBeenCalledTimes(1);
+
+    const sqlCalls = connection.query.mock.calls.map(([sql]) => String(sql));
+    expect(sqlCalls.some((sql) => sql.includes('DELETE FROM provider_weekly_availability'))).toBe(true);
+    expect(sqlCalls.some((sql) => sql.includes('DELETE FROM provider_availability_exceptions'))).toBe(true);
+    expect(sqlCalls.filter((sql) => sql.includes('INSERT INTO provider_availability_exceptions'))).toHaveLength(2);
+  });
+
+  it('rejects overlapping provider-selected time slots on the same date', async () => {
+    vi.spyOn(db, 'query').mockImplementation(async (sql) => {
+      if (sql === authUserSql) {
+        return [[{ id: 21, user_type: 'tradesperson', is_active: 1 }]];
+      }
+
+      if (sql.includes('SELECT id FROM service_profiles WHERE user_id = ? LIMIT 1')) {
+        return [[{ id: 77 }]];
+      }
+
+      return [[]];
+    });
+
+    const connection = {
+      beginTransaction: vi.fn(async () => {}),
+      commit: vi.fn(async () => {}),
+      rollback: vi.fn(async () => {}),
+      release: vi.fn(),
+      query: vi.fn(async (sql) => {
+        if (sql.includes('FROM provider_availability_settings') && sql.includes('LIMIT 1')) {
+          return [[{
+            id: 1,
+            allow_same_day_booking: 0,
+            min_advance_notice_minutes: 720,
+            max_advance_booking_days: 60,
+            availability_status: 'available',
+            show_availability_status: 1,
+          }]];
+        }
+        return [{ affectedRows: 1 }];
+      }),
+    };
+
+    vi.spyOn(db, 'getConnection').mockResolvedValue(connection);
+
+    const date = new Date(Date.now() + (30 * 24 * 60 * 60 * 1000));
+    const futureDate = date.toISOString().slice(0, 10);
+
+    const res = await request(app)
+      .put('/api/service-profiles/availability/me')
+      .set('Authorization', `Bearer ${signToken(21)}`)
+      .send({
+        settings: {
+          availabilityStatus: 'available',
+          showAvailabilityStatus: true,
+          allowSameDayBooking: false,
+          minAdvanceNoticeMinutes: 720,
+          maxAdvanceBookingDays: 60,
+        },
+        specificAvailability: [
+          { date: futureDate, startTime: '09:00', endTime: '11:00' },
+          { date: futureDate, startTime: '10:00', endTime: '12:00' },
+        ],
+      });
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toMatch(/overlap/i);
+    expect(connection.rollback).toHaveBeenCalled();
+    expect(connection.commit).not.toHaveBeenCalled();
+  });
+
   it('updates account profile fields used by settings', async () => {
     vi.spyOn(db, 'query').mockImplementation(async (sql) => {
       if (sql === authUserSql) {
@@ -115,11 +246,12 @@ describe('Settings-related backend endpoints', () => {
         return [{ affectedRows: 1 }];
       }
 
-      if (sql.includes('SELECT id, full_name, email, user_type, phone, address, bio, profile_photo, profile_photo_url')) {
+      if (sql.includes('SELECT id, full_name, email, email_verified, user_type, phone, address, bio, profile_photo, profile_photo_url')) {
         return [[{
           id: 10,
           full_name: 'Updated Client',
           email: 'client@example.com',
+          email_verified: 1,
           user_type: 'client',
           phone: '09998887777',
           address: 'Updated Address',
