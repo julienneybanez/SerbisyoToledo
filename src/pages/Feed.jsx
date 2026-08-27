@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+
+const BROWSE_REQUEST_DEBOUNCE_MS = 300;
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { getUser, isAuthenticated, serviceProfileAPI, serviceRequestAPI } from "../services/api";
 import useServiceTaxonomy from '../hooks/useServiceTaxonomy';
@@ -41,6 +43,8 @@ export default function Feed() {
     maxPrice: "",
     minRating: "",
   });
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(searchTerm);
+  const [debouncedFilters, setDebouncedFilters] = useState(filters);
   const navigate = useNavigate();
   const user = getUser();
   const isClient = user?.userType === 'client';
@@ -57,6 +61,15 @@ export default function Feed() {
   }, [searchParams]);
 
   useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm.trim());
+      setDebouncedFilters(filters);
+    }, BROWSE_REQUEST_DEBOUNCE_MS);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [filters, searchTerm]);
+
+  useEffect(() => {
     let isCurrentRequest = true;
 
     const fetchProfiles = async () => {
@@ -69,11 +82,11 @@ export default function Feed() {
         const filterParams = {
           category: activeCategory,
           serviceType: activeServiceType,
-          location: filters.location,
-          minPrice: filters.minPrice,
-          maxPrice: filters.maxPrice,
-          minRating: filters.minRating,
-          search: searchTerm,
+          location: debouncedFilters.location,
+          minPrice: debouncedFilters.minPrice,
+          maxPrice: debouncedFilters.maxPrice,
+          minRating: debouncedFilters.minRating,
+          search: debouncedSearchTerm,
         };
 
         const result = await serviceProfileAPI.getAllProfiles(filterParams);
@@ -101,7 +114,7 @@ export default function Feed() {
       isCurrentRequest = false;
       window.removeEventListener('profileCreated', fetchProfiles);
     };
-  }, [activeCategory, activeServiceType, filters, searchTerm, t]);
+  }, [activeCategory, activeServiceType, debouncedFilters, debouncedSearchTerm, t]);
 
   useEffect(() => {
     const fetchClientChecklistData = async () => {
@@ -182,14 +195,14 @@ export default function Feed() {
     && visibleClientChecklistTasks.every((task) => task.completed);
 
   const clientBrowseGuidance = {
-    title: 'Find the service you need',
-    description: 'Use search or the service categories, compare provider profiles, then send a request when you find the right provider.',
+    title: t('feedGuideTitle'),
+    description: t('feedGuideDescription'),
     steps: [
-      'Search for a service, provider, skill, or location.',
-      'Open View Profile to compare services, rates, availability, and reviews.',
-      'Choose Request Service on the provider profile when you are ready to book.',
+      t('feedGuideStepSearch'),
+      t('feedGuideStepCompare'),
+      t('feedGuideStepRequest'),
     ],
-    actionLabel: 'View providers',
+    actionLabel: t('feedGuideAction'),
     onAction: () => {
       document.getElementById('providers-list')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     },
@@ -234,17 +247,30 @@ export default function Feed() {
 
   const formatReviewsLabel = (reviews) => {
     const reviewCount = Number(reviews || 0);
-    if (!reviewCount) return 'No reviews yet';
-    return `${reviewCount} ${reviewCount === 1 ? 'review' : 'reviews'}`;
+    if (!reviewCount) return t('noReviewsYet');
+    return `${reviewCount} ${t(reviewCount === 1 ? 'reviewSingular' : 'reviewPlural')}`;
   };
 
   const formatPriceLabel = (provider) => {
     const amount = Number(provider.startingPrice ?? provider.dailyRate ?? 0);
-    if (!Number.isFinite(amount) || amount <= 0) return 'Price on request';
+    if (!Number.isFinite(amount) || amount <= 0) return t('priceOnRequest');
 
-    const unitRaw = provider.pricingUnit || provider.rateUnit || '';
-    const unit = String(unitRaw).trim();
-    const unitSuffix = unit ? `/${unit.replace(/^per\s+/i, '')}` : '';
+    const normalizedUnit = String(provider.pricingUnit || provider.rateUnit || '')
+      .trim()
+      .toLowerCase()
+      .replace(/[\s-]+/g, '_');
+    const unitKey = {
+      per_day: 'pricingPerDay',
+      day: 'pricingPerDay',
+      '/day': 'pricingPerDay',
+      per_hour: 'pricingPerHour',
+      hour: 'pricingPerHour',
+      '/hour': 'pricingPerHour',
+      per_job: 'pricingPerJob',
+      job: 'pricingPerJob',
+      '/job': 'pricingPerJob',
+    }[normalizedUnit];
+    const unitSuffix = unitKey ? `/${t(unitKey)}` : '';
 
     return `${t('startingAt')} ₱${amount.toLocaleString()}${unitSuffix}`;
   };
@@ -393,7 +419,7 @@ export default function Feed() {
                 <FilterIcon />
                 <span>{t('filters')}</span>
                 {activeFilterItems.length > 0 && (
-                  <span className="filter-count" aria-label={`${activeFilterItems.length} active filters`}>
+                  <span className="filter-count" aria-label={t('feedActiveFiltersCount', { count: activeFilterItems.length })}>
                     {activeFilterItems.length}
                   </span>
                 )}
@@ -482,9 +508,9 @@ export default function Feed() {
                     className={`category-btn category-more-btn ${showMoreCategories ? 'active' : ''}`}
                     onClick={() => setShowMoreCategories((previous) => !previous)}
                     aria-expanded={showMoreCategories}
-                    aria-label="Toggle more service categories"
+                    aria-label={t('feedToggleMoreCategories')}
                   >
-                    {showMoreCategories ? 'Less' : 'More'}
+                    {showMoreCategories ? t('feedLess') : t('feedMore')}
                     <i className={`bi ${showMoreCategories ? 'bi-chevron-up' : 'bi-chevron-down'}`} aria-hidden="true"></i>
                   </button>
                 )}
@@ -496,7 +522,7 @@ export default function Feed() {
                 <div className="feed-filter-section-heading">
                   <span>{getCategory(activeCategory)?.label || activeCategory}</span>
                 </div>
-                <div className="category-filters" aria-label="Service type filters">
+                <div className="category-filters" aria-label={t('feedServiceTypeFilters')}>
                   <button
                     type="button"
                     className={`category-btn ${activeServiceType === '' ? 'active' : ''}`}
@@ -524,7 +550,9 @@ export default function Feed() {
           <div className="feed-results-toolbar">
             <div className="feed-results-summary">
               <span className="feed-results-number">{isLoading ? '—' : serviceProviders.length}</span>
-              <span className="feed-results-label">{t('serviceProvider')}</span>
+              <span className="feed-results-label">
+                {t(serviceProviders.length === 1 ? 'serviceProvider' : 'serviceProviders')}
+              </span>
             </div>
             {activeFilterItems.length > 0 && (
               <button type="button" className="feed-clear-all" onClick={clearFilters}>
@@ -534,14 +562,14 @@ export default function Feed() {
           </div>
 
           {activeFilterItems.length > 0 && (
-            <div className="feed-active-filters" aria-label="Active filters">
+            <div className="feed-active-filters" aria-label={t('feedActiveFilters')}>
               {activeFilterItems.map((filter) => (
                 <button
                   key={filter.key}
                   type="button"
                   className="feed-active-filter-chip"
                   onClick={() => removeActiveFilter(filter.key)}
-                  aria-label={`Remove ${filter.label} filter`}
+                  aria-label={t('feedRemoveFilter', { filter: filter.label })}
                 >
                   <span>{filter.label}</span>
                   <i className="bi bi-x" aria-hidden="true"></i>
@@ -586,7 +614,7 @@ export default function Feed() {
                       <img
                         src={provider.image}
                         className="provider-image non-draggable-image"
-                        alt={`${provider.name} service banner`}
+                        alt={t('feedProviderBannerAlt', { name: provider.name })}
                         draggable="false"
                         loading="lazy"
                         onError={() => handleImageError(provider.id)}
@@ -641,7 +669,7 @@ export default function Feed() {
                           <span className="provider-tag" key={`${provider.id}-${tag}`}>{tag}</span>
                         ))}
                         {remaining > 0 && (
-                          <span className="provider-tag provider-tag-more">+{remaining} more</span>
+                          <span className="provider-tag provider-tag-more">{t('feedMoreCount', { count: remaining })}</span>
                         )}
                         {skills.map((skill) => (
                           <span className="provider-tag" key={`${provider.id}-skill-${skill}`}>{skill}</span>
