@@ -90,8 +90,10 @@ export default function ServiceProviderDashboard() {
     pending: 0,
     active: 0,
     upcoming: 0,
+    completed: 0,
     nextUpcoming: null,
   });
+  const [upcomingJobs, setUpcomingJobs] = useState([]);
   const [loadingRequests, setLoadingRequests] = useState(true);
   const [actionLoading, setActionLoading] = useState(null);
   const [checklistLoading, setChecklistLoading] = useState(true);
@@ -124,6 +126,7 @@ export default function ServiceProviderDashboard() {
 
         const pending = allRequests.filter((request) => request.status === REQUEST_STATUS.PENDING).length;
         const active = allRequests.filter((request) => activeStatuses.includes(request.status)).length;
+        const completed = allRequests.filter((request) => request.status === REQUEST_STATUS.COMPLETED).length;
 
         const upcomingRequests = allRequests
           .filter((request) => {
@@ -141,8 +144,10 @@ export default function ServiceProviderDashboard() {
           pending,
           active,
           upcoming: upcomingRequests.length,
+          completed,
           nextUpcoming: upcomingRequests[0] || null,
         });
+        setUpcomingJobs(upcomingRequests.slice(0, 4));
         setRequests(visibleQueue);
       }
     } catch (err) {
@@ -243,8 +248,8 @@ export default function ServiceProviderDashboard() {
         || (Array.isArray(myAvailability?.weeklyBlocks) && myAvailability.weeklyBlocks.length > 0)
       ),
       actionType: 'link',
-      to: '/provider-schedule',
-      actionLabel: 'Schedule',
+      to: '/provider-availability',
+      actionLabel: 'Availability',
     },
     {
       key: 'portfolio',
@@ -314,8 +319,8 @@ export default function ServiceProviderDashboard() {
           'Open Requests to review the job details and schedule.',
           'Update the job status when you are on the way or when the work is complete.',
         ],
-        actionLabel: 'View Requests',
-        actionTo: '/requests',
+        actionLabel: 'Open Schedule',
+        actionTo: '/provider-schedule',
         targetSelector: '.provider-stats-row',
       };
     }
@@ -500,6 +505,17 @@ export default function ServiceProviderDashboard() {
               <small>Accepted or in progress</small>
             </div>
           </article>
+
+          <article className="provider-stat-card">
+            <span className="provider-stat-icon completed" aria-hidden="true">
+              <i className="bi bi-check2-circle"></i>
+            </span>
+            <div className="provider-stat-copy">
+              <strong>{requestSummary.completed}</strong>
+              <p>Completed Job{requestSummary.completed === 1 ? '' : 's'}</p>
+              <small>Finished service requests</small>
+            </div>
+          </article>
         </section>
 
         <ProfileCompletionChecklist
@@ -511,6 +527,51 @@ export default function ServiceProviderDashboard() {
           enhancedSummary
           continueLabel="Continue Setup"
         />
+
+        <section className="dashboard-schedule-section">
+          <div className="jobs-header">
+            <div>
+              <h2 className="section-title">Upcoming Schedule</h2>
+              <p className="jobs-subtitle">Accepted jobs that are coming up next.</p>
+            </div>
+            <Link to="/provider-schedule" className="view-all-link">Open Calendar</Link>
+          </div>
+
+          {loadingRequests ? (
+            <div className="dashboard-schedule-list">
+              <div className="dashboard-schedule-empty"><div className="spinner-small"></div><p>Loading schedule...</p></div>
+            </div>
+          ) : upcomingJobs.length === 0 ? (
+            <div className="dashboard-schedule-list">
+              <div className="dashboard-schedule-empty">
+                <span className="jobs-empty-icon" aria-hidden="true"><i className="bi bi-calendar2-check"></i></span>
+                <h3>No upcoming accepted jobs</h3>
+                <p>Accepted bookings will appear here and on your Schedule calendar.</p>
+              </div>
+            </div>
+          ) : (
+            <div className="dashboard-schedule-list">
+              {upcomingJobs.map((job) => (
+                <button
+                  key={job.id}
+                  type="button"
+                  className="dashboard-schedule-row"
+                  onClick={() => navigate(`/requests?request=${job.id}`)}
+                >
+                  <span className="dashboard-schedule-date" aria-hidden="true">
+                    <i className="bi bi-calendar-event"></i>
+                  </span>
+                  <span className="dashboard-schedule-copy">
+                    <strong>{formatServiceLabel(job)}</strong>
+                    <small>{job.client_name || 'Client'} · {formatSchedule(job)}</small>
+                  </span>
+                  <span className={`job-status ${getStatusClass(job.status)}`}>{formatStatus(job.status)}</span>
+                  <i className="bi bi-chevron-right dashboard-schedule-chevron" aria-hidden="true"></i>
+                </button>
+              ))}
+            </div>
+          )}
+        </section>
 
         <section className="jobs-section">
           <div className="jobs-header">
