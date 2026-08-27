@@ -558,6 +558,7 @@ function ServiceProviderSettings() {
           {activeSection === 'schedule' && (
             <div className="settings-section">
               <h2 className="settings-section-title">{t('providerSettingsScheduleTitle')}</h2>
+              <small className="settings-help">{t('providerScheduleClientChoiceHelp')}</small>
 
               <div className="settings-toggle-group">
                 <div className="settings-toggle">
@@ -601,6 +602,7 @@ function ServiceProviderSettings() {
 
               <div className="settings-section-divider"></div>
               <h3 className="settings-subsection-title">{t('providerBookingConfigurationTitle')}</h3>
+              <small className="settings-help">{t('providerBookingRulesHelp')}</small>
 
               <div className="settings-group">
                 <label className="settings-label">{t('providerAllowSameDayBookingLabel')}</label>
@@ -652,6 +654,7 @@ function ServiceProviderSettings() {
 
               <div className="settings-section-divider"></div>
               <h3 className="settings-subsection-title">{t('providerWeeklyAvailabilityBlocksTitle')}</h3>
+              <small className="settings-help">{t('providerWeeklyAvailabilityHelp')}</small>
 
               <div className="settings-group settings-inline-tag-list">
                 {WEEK_DAYS.map((day) => (
@@ -722,6 +725,7 @@ function ServiceProviderSettings() {
 
               <div className="settings-section-divider"></div>
               <h3 className="settings-subsection-title">{t('providerDateExceptionsTitle')}</h3>
+              <small className="settings-help">{t('providerDateExceptionsHelp')}</small>
 
               <div className="settings-surface-block">
                 <label className="settings-label">{t('providerExceptionDateLabel')}</label>
