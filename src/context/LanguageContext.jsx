@@ -924,7 +924,7 @@ const DICTIONARY = {
     noReviewsYet: 'Wala pay reviews',
     reviewSingular: 'review',
     reviewPlural: 'reviews',
-    priceOnRequest: 'Presyo kung mangayo og quote',
+    priceOnRequest: 'Pangayo og presyo',
     pricingPerDay: 'adlaw',
     pricingPerHour: 'oras',
     pricingPerJob: 'trabaho',
