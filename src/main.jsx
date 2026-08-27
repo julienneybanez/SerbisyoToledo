@@ -2,6 +2,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './styles/index.css'
 import App from './App.jsx'
+import AppErrorBoundary from './components/common/AppErrorBoundary.jsx'
 import { ThemeProvider } from './context/ThemeContext'
 import { LanguageProvider } from './context/LanguageContext'
 
@@ -29,12 +30,14 @@ initializeTheme()
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <LanguageProvider>
+    <AppErrorBoundary>
+      <LanguageProvider>
       <ThemeProvider>
         <BrowserRouter>
           <App />
         </BrowserRouter>
       </ThemeProvider>
-    </LanguageProvider>
+      </LanguageProvider>
+    </AppErrorBoundary>
   </StrictMode>
 )
