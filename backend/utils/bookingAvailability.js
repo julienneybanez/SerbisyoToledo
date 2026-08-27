@@ -560,6 +560,54 @@ const getAvailableSlotsForDate = async (
   return slots;
 };
 
+const normalizeBookingDates = ({ bookingType = 'one_day', startDate, endDate, dates = [] } = {}) => {
+  const normalizedType = String(bookingType || 'one_day').trim().toLowerCase();
+
+  if (normalizedType === 'specific_dates') {
+    return Array.from(new Set(
+      (Array.isArray(dates) ? dates : [])
+        .map((value) => String(value || '').trim())
+        .filter((value) => parseDateOnly(value))
+    )).sort();
+  }
+
+  const parsedStart = parseDateOnly(startDate);
+  if (!parsedStart) return [];
+
+  if (normalizedType !== 'date_range' && normalizedType !== 'multi_day') {
+    return [formatDateOnly(parsedStart)];
+  }
+
+  const parsedEnd = parseDateOnly(endDate || startDate);
+  if (!parsedEnd || parsedEnd < parsedStart) return [];
+
+  const result = [];
+  for (const cursor = new Date(parsedStart); cursor <= parsedEnd; cursor.setUTCDate(cursor.getUTCDate() + 1)) {
+    result.push(formatDateOnly(cursor));
+  }
+  return result;
+};
+
+const intersectSlotsByTime = (slotsByDate = []) => {
+  const normalized = Array.isArray(slotsByDate)
+    ? slotsByDate.filter((slots) => Array.isArray(slots))
+    : [];
+
+  if (normalized.length === 0 || normalized.some((slots) => slots.length === 0)) {
+    return [];
+  }
+
+  const commonTimes = new Set(normalized[0].map((slot) => slot.time));
+  for (const slots of normalized.slice(1)) {
+    const times = new Set(slots.map((slot) => slot.time));
+    for (const time of Array.from(commonTimes)) {
+      if (!times.has(time)) commonTimes.delete(time);
+    }
+  }
+
+  return normalized[0].filter((slot) => commonTimes.has(slot.time));
+};
+
 const getCommonAvailableSlotsForDates = async (
   connection,
   {
@@ -571,11 +619,10 @@ const getCommonAvailableSlotsForDates = async (
     excludeRequestId = null,
   }
 ) => {
-  const normalizedDates = Array.from(new Set(
-    (Array.isArray(dates) ? dates : [])
-      .map((value) => String(value || '').trim())
-      .filter((value) => parseDateOnly(value))
-  )).sort();
+  const normalizedDates = normalizeBookingDates({
+    bookingType: 'specific_dates',
+    dates,
+  });
 
   if (normalizedDates.length === 0) {
     return [];
@@ -597,17 +644,7 @@ const getCommonAvailableSlotsForDates = async (
     }
   }
 
-  const commonTimes = new Set(slotsByDate[0].map((slot) => slot.time));
-  for (const slots of slotsByDate.slice(1)) {
-    const times = new Set(slots.map((slot) => slot.time));
-    for (const time of Array.from(commonTimes)) {
-      if (!times.has(time)) {
-        commonTimes.delete(time);
-      }
-    }
-  }
-
-  return slotsByDate[0].filter((slot) => commonTimes.has(slot.time));
+  return intersectSlotsByTime(slotsByDate);
 };
 
 const isScheduleAvailableForDates = async (
@@ -762,6 +799,8 @@ module.exports = {
   ensureAvailabilitySettings,
   getAvailabilityWindowsForDate,
   getAvailableSlotsForDate,
+  normalizeBookingDates,
+  intersectSlotsByTime,
   getCommonAvailableSlotsForDates,
   isScheduleAvailableForDates,
   isScheduleAvailableForRange,
