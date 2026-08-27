@@ -12,6 +12,7 @@ import EditPortfolioModal from './components/common/EditPortfolioModal';
 import ServiceProfileModal from './components/common/ServiceProfileModal';
 import VerificationRequestModal from './components/common/VerificationRequestModal';
 import ProtectedRoute from './components/common/ProtectedRoute';
+import InitialLoadingScreen from './components/common/InitialLoadingScreen';
 
 // Admin imports
 import AdminLayout from './components/layout/AdminLayout';
@@ -40,6 +41,14 @@ const AdminSettings = lazy(() => import('./pages/admin/AdminSettings'));
 
 const MOBILE_BREAKPOINT_PX = 768;
 
+function InitialLoadReady({ onReady }) {
+  useEffect(() => {
+    onReady();
+  }, [onReady]);
+
+  return null;
+}
+
 function App() {
   const location = useLocation();
   const [isChatbotOpen, setIsChatbotOpen] = useState(false);
@@ -54,6 +63,7 @@ function App() {
   const [showMobileVerificationRequest, setShowMobileVerificationRequest] = useState(false);
   const [hasServiceProfile, setHasServiceProfile] = useState(false);
   const [providerPublicProfileRoute, setProviderPublicProfileRoute] = useState('/dashboard');
+  const [hasCompletedInitialLoad, setHasCompletedInitialLoad] = useState(false);
 
   useEffect(() => {
     const updateAuthState = () => {
@@ -158,8 +168,14 @@ function App() {
     setMobileProfileMenuOpen(false);
   };
 
-  const appLoadingFallback = (
+  const handleInitialLoadReady = useCallback(() => {
+    setHasCompletedInitialLoad(true);
+  }, []);
+
+  const appLoadingFallback = hasCompletedInitialLoad ? (
     <div className="text-center py-4">Loading...</div>
+  ) : (
+    <InitialLoadingScreen />
   );
 
   const publicShell = (
@@ -349,6 +365,7 @@ function App() {
             />
           </Route>
         </Routes>
+        {!hasCompletedInitialLoad && <InitialLoadReady onReady={handleInitialLoadReady} />}
       </Suspense>
 
     </>
