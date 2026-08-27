@@ -23,34 +23,6 @@
 @import '../components/common/RequestActionDialog.css';
 @import '../components/mobile/mobile.css';
 
-/* Small public/auth refinements */
-@import './PublicUiFixes.css';
-@import './BrowseServicesRefinement.css';
-
-/* Cross-page readability and accessibility refinement */
-@import './ReadabilityRefinement.css';
-
-/* Homepage section flow refinement */
-@import './HomepageSectionFlow.css';
-
-/* Final cross-role modal/theme safeguards */
-@import './ModalThemeHardening.css';
-
-/* Lightweight motion for public marketplace pages without Phase 2 visual changes */
-@import './PublicMarketplaceMotion.css';
-
-/* Final provider-profile dark-mode correction */
-@import './PortfolioDarkModeFix.css';
-
-/* Final title/subtitle cleanup */
-@import './TitleSubtitleCleanup.css';
-
-/* Keep booking cards compact instead of equal-height per row */
-@import './RequestsCardLayoutFix.css';
-
-/* Final Browse Services header/discovery cleanup */
-@import './BrowseHeaderCleanup.css';
-
 /* Consolidated from ReadabilityRefinement.css: App.css */
 /* Consolidated cross-page readability defaults */
 /*
