@@ -120,3 +120,9 @@
     align-items: stretch;
   }
 }
+
+/* Consolidated from ReadabilityRefinement.css: Notifications.css */
+/* Notifications. */
+.notifications-page-shell .notifications-page-subtitle {
+  font-size: 1rem;
+}
