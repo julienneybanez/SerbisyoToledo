@@ -722,3 +722,36 @@ input:checked + .slider:before {
 [data-theme='dark'] .user-settings-container .page-subtitle {
   color: var(--color-text-secondary);
 }
+
+/* Consolidated from ReadabilityRefinement.css: UserSettings.css */
+/* Settings pages: keep the existing two-column structure, improve scanning and controls. */
+.user-settings-container .page-subtitle {
+  font-size: 1rem;
+}
+
+.user-settings-container .settings-nav-item {
+  min-height: 44px;
+  font-size: 0.95rem;
+}
+
+.user-settings-container .settings-section-title {
+  font-size: 1.3rem;
+  font-weight: 650;
+}
+
+.user-settings-container .settings-label {
+  font-size: 0.98rem;
+  font-weight: 600;
+}
+
+.user-settings-container .settings-input,
+.user-settings-container .settings-select,
+.user-settings-container .settings-textarea {
+  min-height: 46px;
+  font-size: 1rem;
+}
+
+.user-settings-container .settings-help {
+  font-size: 0.86rem;
+  line-height: 1.5;
+}
