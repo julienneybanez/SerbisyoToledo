@@ -10,6 +10,7 @@ import {
 } from './Icons';
 import { isAuthenticated, serviceProfileAPI, serviceRequestAPI } from '../../services/api';
 import { BOOKING_TYPE, SPECIFIC_DATE_BOOKING_ENABLED } from '../../constants/domain';
+import { useLanguage } from '../../context/LanguageContext';
 import './BookingModal.css';
 
 const weekdayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -95,6 +96,7 @@ const getDurationDays = (startDate, endDate) => {
 const formatMoney = (amount) => `P${Number(amount || 0).toLocaleString('en-PH', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
 
 export default function BookingModal({ provider, onClose }) {
+  const { t } = useLanguage();
   const today = new Date();
   const bookingWindowStart = today;
   const bookingWindowEnd = addDays(today, 60);
@@ -629,7 +631,7 @@ export default function BookingModal({ provider, onClose }) {
 
           <div className="booking-time-panel">
             <div className="booking-form-group">
-              <label>Booking Type</label>
+              <label>{t('bookingTypeLabel')}</label>
               <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
                 <label>
                   <input
@@ -639,7 +641,7 @@ export default function BookingModal({ provider, onClose }) {
                     checked={bookingType === BOOKING_TYPE.ONE_DAY}
                     onChange={() => setBookingType(BOOKING_TYPE.ONE_DAY)}
                   />{' '}
-                  One day
+                  {t('bookingOneDay')}
                 </label>
                 <label>
                   <input
@@ -649,7 +651,7 @@ export default function BookingModal({ provider, onClose }) {
                     checked={bookingType === BOOKING_TYPE.DATE_RANGE}
                     onChange={() => setBookingType(BOOKING_TYPE.DATE_RANGE)}
                   />{' '}
-                  Date range
+                  {t('bookingDateRange')}
                 </label>
                 {SPECIFIC_DATE_BOOKING_ENABLED && (
                   <label>
@@ -660,14 +662,14 @@ export default function BookingModal({ provider, onClose }) {
                       checked={bookingType === BOOKING_TYPE.SPECIFIC_DATES}
                       onChange={() => setBookingType(BOOKING_TYPE.SPECIFIC_DATES)}
                     />{' '}
-                    Specific dates
+                    {t('bookingSpecificDates')}
                   </label>
                 )}
               </div>
             </div>
 
             <div className="booking-form-group">
-              <label>Estimated Duration (minutes)</label>
+              <label>{t('bookingDurationMinutes')}</label>
               <input
                 className="booking-input"
                 type="number"
@@ -680,21 +682,21 @@ export default function BookingModal({ provider, onClose }) {
             </div>
 
             <div className="booking-hint-card" style={{ marginTop: 0 }}>
-              <p><strong>Selected:</strong> {formattedSelectedRange}</p>
-              <p><strong>Duration:</strong> {durationDays} day(s)</p>
-              <p><strong>Daily rate:</strong> {formatMoney(dailyRate)} per day</p>
-              <p><strong>Estimated service cost:</strong> {formatMoney(estimatedTotal)}</p>
+              <p><strong>{t('bookingSelectedLabel')}:</strong> {formattedSelectedRange}</p>
+              <p><strong>{t('bookingDurationLabel')}:</strong> {durationDays} day(s)</p>
+              <p><strong>{t('bookingDailyRateLabel')}:</strong> {formatMoney(dailyRate)} per day</p>
+              <p><strong>{t('bookingEstimatedCostLabel')}:</strong> {formatMoney(estimatedTotal)}</p>
               <p className="hint-subtext">
-                Clients can only select dates and times made available by this provider.
+                {t('bookingProviderChoiceHelp')}
                 {SPECIFIC_DATE_BOOKING_ENABLED && bookingType === BOOKING_TYPE.SPECIFIC_DATES
-                  ? ' Tap a selected date again to remove it.'
+                  ? ` ${t('bookingSpecificDatesHelp')}`
                   : bookingType === BOOKING_TYPE.DATE_RANGE
-                    ? ' Date ranges must use consecutive available dates.'
+                    ? ` ${t('bookingRangeHelp')}`
                     : ''}
               </p>
             </div>
 
-            {dateLoading && <p className="booking-subtitle">Loading provider availability...</p>}
+            {dateLoading && <p className="booking-subtitle">{t('bookingLoadingAvailability')}</p>}
           </div>
         </>
       );
@@ -708,9 +710,9 @@ export default function BookingModal({ provider, onClose }) {
           <div className="booking-time-panel">
             <p className="time-panel-label">{formattedSelectedRange}</p>
             {slotLoading ? (
-              <p className="booking-subtitle">Loading available slots...</p>
+              <p className="booking-subtitle">{t('bookingLoadingSlots')}</p>
             ) : availableSlots.length === 0 ? (
-              <p className="booking-subtitle">No valid slots available for this schedule.</p>
+              <p className="booking-subtitle">{t('bookingNoCommonSlots')}</p>
             ) : (
               <div className="time-slots">
                 {availableSlots.map((slot) => (
