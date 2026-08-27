@@ -804,3 +804,28 @@
     border-radius: 14px;
   }
 }
+
+/* Consolidated from ReadabilityRefinement.css: Auth.css */
+/* Authentication: make field labels and input text easier to read. */
+.auth-layout .form-label,
+.auth-layout .login-role-fieldset legend {
+  font-size: 0.95rem;
+}
+
+.auth-layout .form-control,
+.auth-layout .form-select {
+  font-size: 1rem;
+}
+
+.auth-layout .auth-heading p:last-child,
+.auth-layout .auth-switch-copy {
+  font-size: 0.95rem;
+}
+
+.auth-layout .login-role-option strong {
+  font-size: 0.94rem;
+}
+
+.auth-layout .login-role-option small {
+  font-size: 0.82rem;
+}
