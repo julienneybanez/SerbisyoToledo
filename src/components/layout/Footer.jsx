@@ -25,7 +25,7 @@ function Footer({ className = '' }) {
           </div>
 
           <p className="footer-copyright">
-            © 2026 SerbisyoToledo. All Rights Reserved.
+            All Rights Reserved.
           </p>
         </div>
       </div>
