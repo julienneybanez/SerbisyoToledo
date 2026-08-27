@@ -232,7 +232,7 @@ export default function MobileTopBar({
                   onClick={onCloseProfileMenu}
                 >
                   <i className="bi bi-calendar2-check"></i>
-                  {t('availability')}
+                  {t('providerSettingsNavAvailability')}
                 </Link>
                 <Link
                   to="/provider-credentials"
