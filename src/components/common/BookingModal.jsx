@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
   CalendarIcon,
   CheckIcon,
@@ -801,7 +802,11 @@ export default function BookingModal({ provider, onClose }) {
     );
   };
 
-  return (
+  if (typeof document === 'undefined') {
+    return null;
+  }
+
+  return createPortal(
     <div className="booking-overlay" role="dialog" aria-modal="true" onClick={onClose}>
       <div className="booking-modal" onClick={(event) => event.stopPropagation()}>
         <aside className="booking-sidebar">
@@ -886,6 +891,7 @@ export default function BookingModal({ provider, onClose }) {
           </div>
         </section>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
