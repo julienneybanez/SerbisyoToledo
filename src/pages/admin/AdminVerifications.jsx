@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { adminAPI } from '../../services/api';
 import { useLanguage } from '../../context/LanguageContext';
+import { PageHeader } from '../../components/ui';
 import '../../styles/AdminPages.css';
 
 function AdminVerifications() {
@@ -296,10 +297,13 @@ function AdminVerifications() {
 
   return (
     <div className="admin-page">
-      <div className="admin-page-header">
-        <h1 className="admin-page-title">{t('verificationRequests')}</h1>
-        <p className="admin-page-subtitle">{t('verificationRequestsSubtitle')}</p>
-      </div>
+      <PageHeader
+        title={t('verificationRequests')}
+        subtitle={t('verificationRequestsSubtitle')}
+        className="admin-page-header"
+        titleClassName="admin-page-title"
+        subtitleClassName="admin-page-subtitle"
+      />
 
       <div className="mini-stats">
         <div className="mini-stat">
