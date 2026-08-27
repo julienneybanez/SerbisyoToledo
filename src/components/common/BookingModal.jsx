@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
   CalendarIcon,
@@ -102,6 +102,14 @@ export default function BookingModal({ provider, onClose }) {
   const [endDate, setEndDate] = useState(formatDateInput(today));
   const [selectedDates, setSelectedDates] = useState([formatDateInput(today)]);
   const [estimatedDurationMinutes, setEstimatedDurationMinutes] = useState(120);
+  const rangeDragRef = useRef({
+    active: false,
+    pointerId: null,
+    anchorDate: '',
+    lastDate: '',
+    moved: false,
+  });
+  const suppressRangeClickRef = useRef(false);
 
   const [availableDates, setAvailableDates] = useState([]);
   const [dateLoading, setDateLoading] = useState(false);
@@ -429,7 +437,111 @@ export default function BookingModal({ provider, onClose }) {
     return key >= startDate && key <= endDate;
   }, [bookingType, endDate, getDateKeyForDay, selectedDates, startDate]);
 
+  const getRangeDayState = useCallback((day) => {
+    if (!day || bookingType !== BOOKING_TYPE.DATE_RANGE || !startDate) {
+      return '';
+    }
+
+    const key = getDateKeyForDay(day);
+    if (key === startDate && key === endDate) return 'range-single';
+    if (key === startDate) return 'range-start';
+    if (key === endDate) return 'range-end';
+    if (endDate && key > startDate && key < endDate) return 'range-middle';
+    return '';
+  }, [bookingType, endDate, getDateKeyForDay, startDate]);
+
+  const updateDraggedRange = useCallback((dateKey) => {
+    const drag = rangeDragRef.current;
+    if (!drag.active || !dateKey || !availableDateSet.has(dateKey) || dateKey === drag.lastDate) {
+      return;
+    }
+
+    const nextStart = dateKey < drag.anchorDate ? dateKey : drag.anchorDate;
+    const nextEnd = dateKey < drag.anchorDate ? drag.anchorDate : dateKey;
+
+    if (!isRangeContinuous(nextStart, nextEnd)) {
+      setSubmitError(t('bookingRangeUnavailable'));
+      return;
+    }
+
+    drag.lastDate = dateKey;
+    drag.moved = dateKey !== drag.anchorDate;
+    setStartDate(nextStart);
+    setEndDate(nextEnd);
+    setSelectedDates(getDateRange(nextStart, nextEnd));
+    setSubmitError('');
+  }, [availableDateSet, isRangeContinuous, t]);
+
+  const handleRangePointerDown = useCallback((event, day) => {
+    if (bookingType !== BOOKING_TYPE.DATE_RANGE || !day || !isDateAvailable(day)) {
+      return;
+    }
+
+    const dateKey = getDateKeyForDay(day);
+    rangeDragRef.current = {
+      active: true,
+      pointerId: event.pointerId,
+      anchorDate: dateKey,
+      lastDate: dateKey,
+      moved: false,
+    };
+    suppressRangeClickRef.current = false;
+
+    setStartDate(dateKey);
+    setEndDate(dateKey);
+    setSelectedDates([dateKey]);
+    setSubmitError('');
+
+    event.currentTarget.closest('.calendar-grid')?.setPointerCapture?.(event.pointerId);
+    event.preventDefault();
+  }, [bookingType, getDateKeyForDay, isDateAvailable]);
+
+  const handleRangePointerMove = useCallback((event) => {
+    const drag = rangeDragRef.current;
+    if (!drag.active || drag.pointerId !== event.pointerId) {
+      return;
+    }
+
+    const hoveredButton = document
+      .elementFromPoint(event.clientX, event.clientY)
+      ?.closest?.('[data-booking-date]');
+
+    if (!hoveredButton) {
+      return;
+    }
+
+    updateDraggedRange(hoveredButton.dataset.bookingDate || '');
+    event.preventDefault();
+  }, [updateDraggedRange]);
+
+  const finishRangeDrag = useCallback((event) => {
+    const drag = rangeDragRef.current;
+    if (!drag.active || drag.pointerId !== event.pointerId) {
+      return;
+    }
+
+    suppressRangeClickRef.current = drag.moved;
+    rangeDragRef.current = {
+      active: false,
+      pointerId: null,
+      anchorDate: '',
+      lastDate: '',
+      moved: false,
+    };
+
+    try {
+      event.currentTarget.releasePointerCapture?.(event.pointerId);
+    } catch {
+      // Pointer capture may already be released by the browser.
+    }
+  }, []);
+
   const handleSelectDay = useCallback((day) => {
+    if (suppressRangeClickRef.current) {
+      suppressRangeClickRef.current = false;
+      return;
+    }
+
     if (!day) return;
 
     const dateKey = getDateKeyForDay(day);
@@ -594,7 +706,13 @@ export default function BookingModal({ provider, onClose }) {
         ))}
       </div>
 
-      <div className="calendar-grid">
+      <div
+        className={`calendar-grid ${bookingType === BOOKING_TYPE.DATE_RANGE ? 'range-drag-enabled' : ''}`}
+        onPointerMove={handleRangePointerMove}
+        onPointerUp={finishRangeDrag}
+        onPointerCancel={finishRangeDrag}
+        onLostPointerCapture={finishRangeDrag}
+      >
         {calendarCells.map((cell, index) => {
           if (!cell) {
             return <span key={`empty-${index}`} className="calendar-day empty"></span>;
@@ -602,12 +720,16 @@ export default function BookingModal({ provider, onClose }) {
 
           const available = isDateAvailable(cell);
           const selected = isSelectedDay(cell);
+          const rangeState = getRangeDayState(cell);
+          const dateKey = getDateKeyForDay(cell);
 
           return (
             <button
               key={`day-${cell}`}
               type="button"
-              className={`calendar-day ${available ? 'available' : 'unavailable'} ${selected ? 'selected' : ''}`}
+              data-booking-date={dateKey}
+              className={`calendar-day ${available ? 'available' : 'unavailable'} ${selected ? 'selected' : ''} ${rangeState}`.trim()}
+              onPointerDown={(event) => handleRangePointerDown(event, cell)}
               onClick={() => handleSelectDay(cell)}
               disabled={!available}
               aria-label={available ? t('bookingSelectDate', { date: `${monthNames[currentMonth]} ${cell}` }) : t('bookingDateUnavailable', { date: `${monthNames[currentMonth]} ${cell}` })}
