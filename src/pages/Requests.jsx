@@ -423,7 +423,12 @@ export default function Requests() {
 
   useEffect(() => {
     const loadRescheduleSlots = async () => {
-      if (!rescheduleDialog.open || !rescheduleDialog.serviceProfileId || !rescheduleDialog.proposedStartDate) {
+      if (
+        !rescheduleDialog.open
+        || !rescheduleDialog.serviceProfileId
+        || !rescheduleDialog.proposedStartDate
+        || rescheduleDialog.availableDates.length === 0
+      ) {
         return;
       }
 
@@ -1340,7 +1345,8 @@ export default function Requests() {
                 min="1"
                 max="1440"
                 value={rescheduleDialog.estimatedDurationMinutes}
-                onChange={(event) => setRescheduleDialog((prev) => ({ ...prev, estimatedDurationMinutes: event.target.value, error: '' }))}
+                disabled
+                aria-readonly="true"
               />
 
               <label htmlFor="reschedule-reason" className="decline-dialog-label">Reason</label>
@@ -1360,7 +1366,18 @@ export default function Requests() {
               <button type="button" className="decline-btn-cancel" onClick={closeRescheduleDialog} disabled={actionLoading === rescheduleDialog.requestId}>
                 {t('requestsCancelAction')}
               </button>
-              <button type="button" className="decline-btn-confirm" onClick={handleSubmitReschedule} disabled={actionLoading === rescheduleDialog.requestId}>
+              <button
+                type="button"
+                className="decline-btn-confirm"
+                onClick={handleSubmitReschedule}
+                disabled={
+                  actionLoading === rescheduleDialog.requestId
+                  || rescheduleDialog.availabilityLoading
+                  || !rescheduleDialog.proposedStartDate
+                  || !rescheduleDialog.proposedStartTime
+                  || rescheduleDialog.availableSlots.length === 0
+                }
+              >
                 {actionLoading === rescheduleDialog.requestId ? t('requestsSending') : t('requestsSendProposal')}
               </button>
             </div>
