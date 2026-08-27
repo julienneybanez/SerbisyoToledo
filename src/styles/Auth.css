@@ -829,3 +829,8 @@
 .auth-layout .login-role-option small {
   font-size: 0.82rem;
 }
+
+/* Consolidated title/subtitle cleanup */
+.auth-page-compact .auth-heading > h1 + p {
+  display: none;
+}
