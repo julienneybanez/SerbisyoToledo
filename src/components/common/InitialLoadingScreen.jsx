@@ -1,13 +1,16 @@
 import logo from '../../assets/logo.png';
 import './InitialLoadingScreen.css';
+import { useLanguage } from '../../context/LanguageContext';
 
 export default function InitialLoadingScreen() {
+  const { t } = useLanguage();
+
   return (
     <div
       className="initial-loading-screen"
       role="status"
       aria-live="polite"
-      aria-label="Loading SerbisyoToledo"
+      aria-label={t('initialLoadingAria')}
     >
       <div className="initial-loading-content">
         <div className="initial-loading-brand" aria-hidden="true">
@@ -21,7 +24,7 @@ export default function InitialLoadingScreen() {
             <div className="initial-loading-name">
               Serbisyo<span>Toledo</span>
             </div>
-            <p className="initial-loading-tagline">Local services, made easier.</p>
+            <p className="initial-loading-tagline">{t('initialLoadingTagline')}</p>
           </div>
         </div>
 
@@ -29,7 +32,7 @@ export default function InitialLoadingScreen() {
           <span className="initial-loading-bar" />
         </div>
 
-        <span className="initial-loading-sr-only">Loading SerbisyoToledo</span>
+        <span className="initial-loading-sr-only">{t('initialLoadingAria')}</span>
       </div>
     </div>
   );
