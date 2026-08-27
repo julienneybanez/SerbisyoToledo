@@ -911,3 +911,19 @@
     transform: none;
   }
 }
+
+/* Consolidated from ReadabilityRefinement.css: ServiceProviderDashboard.css */
+/* Provider dashboard: raise only the smallest functional labels. */
+.dashboard-container .btn-post-service {
+  font-size: 0.95rem;
+}
+
+.dashboard-container .provider-stat-card p {
+  font-size: 0.88rem;
+  letter-spacing: 0.025em;
+}
+
+.dashboard-container .profile-setup-summary-head p,
+.dashboard-container .read-time {
+  font-size: 0.9rem;
+}
