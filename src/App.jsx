@@ -1,5 +1,5 @@
 import { Outlet, Route, Routes, useLocation } from 'react-router-dom';
-import { Suspense, lazy, useCallback, useEffect, useState } from 'react';
+import { Suspense, useCallback, useEffect, useState } from 'react';
 import './styles/App.css';
 import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
@@ -13,31 +13,32 @@ import ServiceProfileModal from './components/common/ServiceProfileModal';
 import VerificationRequestModal from './components/common/VerificationRequestModal';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import InitialLoadingScreen from './components/common/InitialLoadingScreen';
+import lazyWithRetry from './utils/lazyWithRetry';
 
 // Admin imports
 import AdminLayout from './components/layout/AdminLayout';
 import { clearAuthSession, getUser, isAuthenticated, serviceProfileAPI } from './services/api';
 
-const Home = lazy(() => import('./pages/Home'));
-const About = lazy(() => import('./pages/About'));
-const Login = lazy(() => import('./pages/Login'));
-const Register = lazy(() => import('./pages/Register'));
-const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
-const ResetPassword = lazy(() => import('./pages/ResetPassword'));
-const VerifyEmail = lazy(() => import('./pages/VerifyEmail'));
-const Feed = lazy(() => import('./pages/Feed'));
-const Notifications = lazy(() => import('./pages/Notifications'));
-const ServiceProviderPortfolio = lazy(() => import('./pages/ServiceProviderPortfolio'));
-const ServiceProviderDashboard = lazy(() => import('./pages/ServiceProviderDashboard'));
-const Requests = lazy(() => import('./pages/Requests'));
-const ClientSettings = lazy(() => import('./pages/ClientSettings'));
-const ServiceProviderSettings = lazy(() => import('./pages/ServiceProviderSettings'));
-const Chatbot = lazy(() => import('./components/common/Chatbot'));
-const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
-const AdminUsers = lazy(() => import('./pages/admin/AdminUsers'));
-const AdminVerifications = lazy(() => import('./pages/admin/AdminVerifications'));
-const AdminReports = lazy(() => import('./pages/admin/AdminReports'));
-const AdminSettings = lazy(() => import('./pages/admin/AdminSettings'));
+const Home = lazyWithRetry(() => import('./pages/Home'), 'Home');
+const About = lazyWithRetry(() => import('./pages/About'), 'About');
+const Login = lazyWithRetry(() => import('./pages/Login'), 'Login');
+const Register = lazyWithRetry(() => import('./pages/Register'), 'Register');
+const ForgotPassword = lazyWithRetry(() => import('./pages/ForgotPassword'), 'ForgotPassword');
+const ResetPassword = lazyWithRetry(() => import('./pages/ResetPassword'), 'ResetPassword');
+const VerifyEmail = lazyWithRetry(() => import('./pages/VerifyEmail'), 'VerifyEmail');
+const Feed = lazyWithRetry(() => import('./pages/Feed'), 'Feed');
+const Notifications = lazyWithRetry(() => import('./pages/Notifications'), 'Notifications');
+const ServiceProviderPortfolio = lazyWithRetry(() => import('./pages/ServiceProviderPortfolio'), 'ServiceProviderPortfolio');
+const ServiceProviderDashboard = lazyWithRetry(() => import('./pages/ServiceProviderDashboard'), 'ServiceProviderDashboard');
+const Requests = lazyWithRetry(() => import('./pages/Requests'), 'Requests');
+const ClientSettings = lazyWithRetry(() => import('./pages/ClientSettings'), 'ClientSettings');
+const ServiceProviderSettings = lazyWithRetry(() => import('./pages/ServiceProviderSettings'), 'ServiceProviderSettings');
+const Chatbot = lazyWithRetry(() => import('./components/common/Chatbot'), 'Chatbot');
+const AdminDashboard = lazyWithRetry(() => import('./pages/admin/AdminDashboard'), 'AdminDashboard');
+const AdminUsers = lazyWithRetry(() => import('./pages/admin/AdminUsers'), 'AdminUsers');
+const AdminVerifications = lazyWithRetry(() => import('./pages/admin/AdminVerifications'), 'AdminVerifications');
+const AdminReports = lazyWithRetry(() => import('./pages/admin/AdminReports'), 'AdminReports');
+const AdminSettings = lazyWithRetry(() => import('./pages/admin/AdminSettings'), 'AdminSettings');
 
 const MOBILE_BREAKPOINT_PX = 768;
 
