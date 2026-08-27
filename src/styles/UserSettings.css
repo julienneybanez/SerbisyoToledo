@@ -755,3 +755,8 @@ input:checked + .slider:before {
   font-size: 0.86rem;
   line-height: 1.5;
 }
+
+/* Consolidated title/subtitle cleanup */
+.user-settings-container .page-subtitle {
+  display: none;
+}
