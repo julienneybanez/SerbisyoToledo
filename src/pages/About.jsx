@@ -27,7 +27,6 @@ const About = () => {
         <div className="container">
           <div className="about-hero-grid">
             <Reveal className="about-hero-copy" delay={40}>
-              <span className="about-kicker">LOCAL SERVICES IN TOLEDO CITY</span>
               <h1 id="about-title">About SerbisyoToledo</h1>
               <p>
                 SerbisyoToledo brings local clients and service providers into one practical platform,
@@ -59,7 +58,6 @@ const About = () => {
         <div className="container">
           <div className="about-mission-grid">
             <Reveal className="about-section-heading">
-              <span className="about-kicker">OUR PURPOSE</span>
               <h2 id="about-mission-title">Making local service connections simpler.</h2>
             </Reveal>
 
@@ -81,7 +79,6 @@ const About = () => {
       <section className="about-help-section" aria-labelledby="about-help-title">
         <div className="container">
           <Reveal className="about-section-heading about-help-heading">
-            <span className="about-kicker">HOW IT HELPS</span>
             <h2 id="about-help-title">Useful information before you book.</h2>
           </Reveal>
 
@@ -107,7 +104,6 @@ const About = () => {
         <div className="container">
           <Reveal className="about-local-panel">
             <div className="about-local-copy">
-              <span className="about-kicker">BUILT FOR THE COMMUNITY</span>
               <h2 id="about-local-title">Focused on Toledo City.</h2>
               <p>
                 SerbisyoToledo is centered on local service discovery and booking for homes and
