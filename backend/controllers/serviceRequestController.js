@@ -911,6 +911,24 @@ exports.proposeReschedule = async (req, res) => {
     const proposedStartDateIso = formatDateOnly(parsedProposedStart);
     const proposedEndDateIso = formatDateOnly(parsedProposedEnd);
 
+    const availability = await isScheduleAvailableForRange(connection, {
+      serviceProfileId: request.service_profile_id,
+      providerId: request.provider_id,
+      startDate: proposedStartDateIso,
+      endDate: proposedEndDateIso,
+      startTime: normalizedProposedTime,
+      durationMinutes: normalizedDurationMinutes,
+      excludeRequestId: request.id,
+    });
+
+    if (!availability.available) {
+      await connection.rollback();
+      return res.status(409).json({
+        success: false,
+        message: availability.message || 'The proposed schedule is outside the provider\'s availability.'
+      });
+    }
+
     const conflict = await checkScheduleConflict(connection, {
       providerId: request.provider_id,
       requestedStartDate: proposedStartDateIso,
@@ -1052,6 +1070,24 @@ exports.respondToReschedule = async (req, res) => {
     }
 
     if (action === 'accepted') {
+      const availability = await isScheduleAvailableForRange(connection, {
+        serviceProfileId: request.service_profile_id,
+        providerId: request.provider_id,
+        startDate: proposal.proposed_start_date,
+        endDate: proposal.proposed_end_date,
+        startTime: proposal.proposed_start_time,
+        durationMinutes: Number(request.estimated_duration_minutes || 0),
+        excludeRequestId: request.id,
+      });
+
+      if (!availability.available) {
+        await connection.rollback();
+        return res.status(409).json({
+          success: false,
+          message: availability.message || 'The proposed schedule is no longer within the provider\'s availability.'
+        });
+      }
+
       const conflict = await checkScheduleConflict(connection, {
         providerId: request.provider_id,
         requestedStartDate: proposal.proposed_start_date,
