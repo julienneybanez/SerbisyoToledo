@@ -319,9 +319,16 @@
     line-height: 1;
   }
 
-  .mobile-shell-layout .mobile-page-content,
+  .mobile-shell-layout .mobile-page-content {
+    padding-bottom: 0;
+  }
+
   .mobile-auth-layout .authenticated-page-content {
     padding-bottom: calc(var(--mobile-nav-height) + 16px + env(safe-area-inset-bottom));
+  }
+
+  .mobile-shell-layout:not(.mobile-auth-layout) .footer {
+    padding-bottom: calc(1.5rem + var(--mobile-nav-height) + env(safe-area-inset-bottom)) !important;
   }
 
   .mobile-shell-layout .floating-btn,
