@@ -927,3 +927,9 @@
 .dashboard-container .read-time {
   font-size: 0.9rem;
 }
+
+/* Consolidated title/subtitle cleanup */
+.dashboard-container .welcome-content > h1 + p,
+.dashboard-container .jobs-subtitle {
+  display: none;
+}
