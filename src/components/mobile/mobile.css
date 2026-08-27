@@ -289,8 +289,8 @@
   }
 
   .mobile-bottom-nav-item.active .mobile-bottom-nav-icon-wrap {
-    background: color-mix(in srgb, var(--brand-primary, #5da9dd) 18%, transparent);
-    transform: translateY(-1px);
+    background: transparent;
+    transform: none;
   }
 
   .mobile-bottom-nav-label {

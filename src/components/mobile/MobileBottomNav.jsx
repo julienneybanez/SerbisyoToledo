@@ -7,8 +7,7 @@ const ROLE_ITEMS = {
   guest: [
     { to: '/', labelKey: 'home', icon: 'bi-house-door' },
     { to: '/feed', labelKey: 'browseShort', icon: 'bi-search' },
-    { to: '/login', labelKey: 'logInShort', icon: 'bi-box-arrow-in-right' },
-    { to: '/register', labelKey: 'signUpShort', icon: 'bi-person-plus' },
+    { to: '/login', labelKey: 'authAccessShort', icon: 'bi-person' },
   ],
   client: [
     { to: '/', labelKey: 'home', icon: 'bi-house-door' },
