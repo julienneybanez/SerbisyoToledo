@@ -174,3 +174,24 @@
     padding: 1.5rem 0 !important;
   }
 }
+
+/* Consolidated from ReadabilityRefinement.css: Footer.css */
+/* Footer: stronger contrast and readable link sizing. */
+.footer .footer-description,
+.footer .footer-link,
+.footer .footer-contact-line,
+.footer .footer-bottom-row {
+  font-size: 1rem;
+}
+
+.footer .footer-muted-text {
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.footer .footer-link {
+  color: rgba(255, 255, 255, 0.96);
+}
+
+.footer .footer-heading {
+  font-size: 1.05rem;
+}
