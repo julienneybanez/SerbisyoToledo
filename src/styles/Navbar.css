@@ -604,3 +604,21 @@
   }
 }
 
+/* Consolidated from ReadabilityRefinement.css: Navbar.css */
+/* Public navigation: slightly larger functional text and a stronger active state. */
+.navbar .nav-link {
+  font-size: 1rem;
+}
+
+.navbar .nav-link.active {
+  font-weight: 700;
+}
+
+.navbar .login-btn,
+.navbar .signup-btn {
+  font-size: 1rem;
+}
+
+.navbar .navbar-language-select {
+  font-size: 0.95rem;
+}
