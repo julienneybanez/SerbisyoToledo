@@ -19,6 +19,7 @@ const {
   parseTimeInputToSql,
   getAvailableSlotsForDate,
   getCommonAvailableSlotsForDates,
+  normalizeBookingDates,
   ensureAvailabilitySettings,
 } = require('../utils/bookingAvailability');
 
@@ -1348,28 +1349,18 @@ exports.getAvailableSlots = async (req, res) => {
       });
     }
 
-    let dates = [];
+    const dates = normalizeBookingDates({
+      bookingType,
+      startDate: date,
+      endDate,
+      dates: requestedDates,
+    });
 
-    if (bookingType === 'specific_dates') {
-      dates = Array.from(new Set(requestedDates)).sort();
-      if (dates.length === 0 || dates.some((value) => !parseDateOnly(value))) {
-        return res.status(400).json({ success: false, message: 'Invalid specific dates.' });
-      }
-    } else if (bookingType === 'date_range' || bookingType === 'multi_day') {
-      const parsedStart = parseDateOnly(date);
-      const parsedEnd = parseDateOnly(endDate);
-      if (!parsedStart || !parsedEnd || parsedEnd < parsedStart) {
-        return res.status(400).json({ success: false, message: 'Invalid date range' });
-      }
-      for (let cursor = new Date(parsedStart); cursor <= parsedEnd; cursor.setUTCDate(cursor.getUTCDate() + 1)) {
-        dates.push(formatDateOnly(cursor));
-      }
-    } else {
-      const parsedStart = parseDateOnly(date);
-      if (!parsedStart) {
-        return res.status(400).json({ success: false, message: 'Invalid date' });
-      }
-      dates = [formatDateOnly(parsedStart)];
+    if (dates.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: bookingType === 'specific_dates' ? 'Invalid specific dates.' : 'Invalid booking date selection.'
+      });
     }
 
     if (dates.length > 90) {
