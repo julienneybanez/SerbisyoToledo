@@ -156,13 +156,9 @@ function ClientSettings() {
 
   return (
     <div className="user-settings-container">
-      <div className="page-header">
-        <h1 className="page-title">{t('clientSettings')}</h1>
-        <p className="page-subtitle">{t('clientSettingsSubtitle')}</p>
-        <div className="settings-theme-row">
-          <span className="settings-theme-label">{t('appearance')}</span>
-          <ThemeToggle />
-        </div>
+      <div className="settings-page-heading">
+        <h1 className="settings-page-title">{t('clientSettings')}</h1>
+        <ThemeToggle compact className="settings-header-theme-toggle" />
       </div>
 
       <div className="settings-layout">
@@ -171,18 +167,21 @@ function ClientSettings() {
             className={`settings-nav-item ${activeSection === 'account' ? 'active' : ''}`}
             onClick={() => setActiveSection('account')}
           >
+            <i className="bi bi-person" aria-hidden="true"></i>
             {t('account')}
           </button>
           <button
             className={`settings-nav-item ${activeSection === 'contact' ? 'active' : ''}`}
             onClick={() => setActiveSection('contact')}
           >
+            <i className="bi bi-telephone" aria-hidden="true"></i>
             {t('contact')}
           </button>
           <button
             className={`settings-nav-item ${activeSection === 'security' ? 'active' : ''}`}
             onClick={() => setActiveSection('security')}
           >
+            <i className="bi bi-shield-lock" aria-hidden="true"></i>
             {t('security')}
           </button>
         </div>

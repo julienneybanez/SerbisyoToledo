@@ -65,10 +65,6 @@ function ServiceProviderSettings() {
     ? 'Mga Pinulongan ug Credentials'
     : 'Languages & Credentials';
 
-  const settingsSubtitle = language === 'ceb'
-    ? 'Dumalahon ang imong account, schedule, mga pinulongan, ug credentials.'
-    : 'Manage your account, schedule, languages, and credentials.';
-
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const section = params.get('section');
@@ -465,13 +461,9 @@ function ServiceProviderSettings() {
 
   return (
     <div className="user-settings-container">
-      <div className="page-header">
-        <h1 className="page-title">{t('providerSettingsPageTitle')}</h1>
-        <p className="page-subtitle">{settingsSubtitle}</p>
-        <div className="settings-theme-row">
-          <span className="settings-theme-label">{t('appearance')}</span>
-          <ThemeToggle />
-        </div>
+      <div className="settings-page-heading">
+        <h1 className="settings-page-title">{t('providerSettingsPageTitle')}</h1>
+        <ThemeToggle compact className="settings-header-theme-toggle" />
       </div>
 
       <div className="settings-layout">
