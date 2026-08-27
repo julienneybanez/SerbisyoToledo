@@ -3,6 +3,7 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import BookingModal from '../components/common/BookingModal';
 import MobileStickyAction from '../components/mobile/MobileStickyAction';
 import { serviceProfileAPI, isAuthenticated } from '../services/api';
+import { useLanguage } from '../context/LanguageContext';
 import {
   ArrowLeftIcon,
   StarIcon,
@@ -12,6 +13,7 @@ import {
 } from '../components/common/Icons';
 
 const ReviewSummary = ({ reviews }) => {
+  const { t } = useLanguage();
   const maxRating = 5;
   const counts = Array.from({ length: maxRating }, () => 0);
   reviews.forEach(({ rating }) => {
@@ -27,7 +29,7 @@ const ReviewSummary = ({ reviews }) => {
     <div className="rating-summary">
       <div className="rating-score">
         <span className="rating-number">{average}</span>
-        <p className="rating-label">Based on {reviews.length} reviews</p>
+        <p className="rating-label">{t('providerReviewsBasedOn', { count: reviews.length })}</p>
         <div className="rating-stars">
           {Array.from({ length: 5 }).map((_, idx) => {
             const val = idx + 1;
@@ -59,13 +61,14 @@ const ReviewSummary = ({ reviews }) => {
 };
 
 const ProviderCard = ({ provider, profile, onBack, hideBackLink = false }) => {
+  const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState('portfolio');
   const [showBooking, setShowBooking] = useState(false);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [expandedImage, setExpandedImage] = useState(null);
   const navigate = useNavigate();
   const canRequestService = provider?.isPublished !== false;
-  const initials = provider.name
+  const initials = String(provider?.name || 'ST')
     .split(' ')
     .map((n) => n[0])
     .join('')
@@ -76,11 +79,25 @@ const ProviderCard = ({ provider, profile, onBack, hideBackLink = false }) => {
   const hasReviews = reviewCount > 0 && numericRating > 0;
   const availabilitySummary = String(profile.availabilitySummary || '').trim();
   const numericRate = Number(profile.rate);
-  const safeRateUnit = String(profile.rateUnit || '').trim();
-  const rateSuffix = safeRateUnit ? ` ${safeRateUnit}` : '';
-  const summaryPrice = Number.isFinite(numericRate) && numericRate > 0
-    ? `From ₱${numericRate.toLocaleString()}${rateSuffix}`
-    : 'Price on request';
+  const hasRate = Number.isFinite(numericRate) && numericRate > 0;
+  const normalizedRateUnit = String(profile.rateUnit || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[\s-]+/g, '_');
+  const rateUnitKey = {
+    per_day: 'pricingPerDay',
+    day: 'pricingPerDay',
+    '/day': 'pricingPerDay',
+    per_hour: 'pricingPerHour',
+    hour: 'pricingPerHour',
+    '/hour': 'pricingPerHour',
+    per_job: 'pricingPerJob',
+    job: 'pricingPerJob',
+    '/job': 'pricingPerJob',
+  }[normalizedRateUnit];
+  const rateUnitSuffix = rateUnitKey ? `/${t(rateUnitKey)}` : '';
+  const rateValue = hasRate ? `₱${numericRate.toLocaleString()}${rateUnitSuffix}` : t('priceOnRequest');
+  const summaryPrice = hasRate ? `${t('startingAt')} ${rateValue}` : rateValue;
 
   const handleBack = () => {
     if (onBack) {
@@ -108,7 +125,7 @@ const ProviderCard = ({ provider, profile, onBack, hideBackLink = false }) => {
     <section className="provider-section">
       {!hideBackLink && (
         <button type="button" className="back-link" onClick={handleBack}>
-          <ArrowLeftIcon /> Back to Browse
+          <ArrowLeftIcon /> {t('providerBackToBrowse')}
         </button>
       )}
 
@@ -119,15 +136,15 @@ const ProviderCard = ({ provider, profile, onBack, hideBackLink = false }) => {
             <div className="profile-name-row">
               <h1>{provider.name}</h1>
               {provider.verified && (
-                <span className="verified-badge profile-verified-badge" title="Verified provider" aria-label="Verified provider">
+                <span className="verified-badge profile-verified-badge" title={t('providerVerifiedTitle')} aria-label={t('providerVerifiedTitle')}>
                   <CheckIcon />
                 </span>
               )}
             </div>
-            <p className="profile-profession">{profile.profession || provider.tags?.[0] || 'Service Provider'}</p>
+            <p className="profile-profession">{profile.profession || provider.tags?.[0] || t('serviceProvider')}</p>
             <div className="profile-stats">
               <span className="stat-item">
-                <StarIcon /> {hasReviews ? `${numericRating.toFixed(1)} · ${reviewCount} ${reviewCount === 1 ? 'review' : 'reviews'}` : 'No reviews yet'}
+                <StarIcon /> {hasReviews ? `${numericRating.toFixed(1)} · ${reviewCount} ${t(reviewCount === 1 ? 'reviewSingular' : 'reviewPlural')}` : t('noReviewsYet')}
               </span>
               <span className="stat-item">
                 <LocationIcon /> {profile.location || provider.location || 'Toledo City'}
@@ -139,7 +156,7 @@ const ProviderCard = ({ provider, profile, onBack, hideBackLink = false }) => {
           </div>
         </div>
 
-        <aside className="profile-summary-actions" aria-label="Price and booking actions">
+        <aside className="profile-summary-actions" aria-label={t('providerPriceActionsAria')}>
           <p className="profile-summary-price">{summaryPrice}</p>
           <button
             className="btn-request-service profile-summary-request-btn"
@@ -147,22 +164,22 @@ const ProviderCard = ({ provider, profile, onBack, hideBackLink = false }) => {
             disabled={!canRequestService}
             data-tour="provider-request-service"
           >
-            {canRequestService ? 'Request Service' : 'Currently Unavailable'}
+            {canRequestService ? t('requestService') : t('currentlyUnavailable')}
           </button>
         </aside>
       </div>
 
       <div className="about-section">
-        <h3 className="about-title">About</h3>
+        <h3 className="about-title">{t('providerAboutTitle')}</h3>
         {profile.about ? (
           <p className="about-text">{profile.about}</p>
         ) : (
-          <p className="compact-empty-text">This provider has not added an about section yet.</p>
+          <p className="compact-empty-text">{t('providerAboutEmpty')}</p>
         )}
       </div>
 
       <div className="skills-section">
-        <h3 className="skills-title">Services Offered</h3>
+        <h3 className="skills-title">{t('providerServicesOffered')}</h3>
         {profile.serviceTypes && profile.serviceTypes.length > 0 ? (
           <div className="skills-grid">
             {profile.serviceTypes.map((serviceType) => (
@@ -170,12 +187,12 @@ const ProviderCard = ({ provider, profile, onBack, hideBackLink = false }) => {
             ))}
           </div>
         ) : (
-          <p className="compact-empty-text">Service details not specified yet.</p>
+          <p className="compact-empty-text">{t('providerServiceDetailsEmpty')}</p>
         )}
       </div>
 
       <div className="skills-section">
-        <h3 className="skills-title">Skills & Specialties</h3>
+        <h3 className="skills-title">{t('providerSkillsSpecialties')}</h3>
         {profile.skills && profile.skills.length > 0 ? (
           <div className="skills-grid">
             {profile.skills.map((skill) => (
@@ -183,27 +200,27 @@ const ProviderCard = ({ provider, profile, onBack, hideBackLink = false }) => {
             ))}
           </div>
         ) : (
-          <p className="compact-empty-text">No additional skills listed yet.</p>
+          <p className="compact-empty-text">{t('providerSkillsEmpty')}</p>
         )}
       </div>
 
       <div className="about-section">
-        <h3 className="about-title">Languages</h3>
+        <h3 className="about-title">{t('providerLanguagesTitle')}</h3>
         {Array.isArray(profile.languages) && profile.languages.length > 0 ? (
           <p className="about-text">{profile.languages.join(', ')}</p>
         ) : (
-          <p className="compact-empty-text">Not specified.</p>
+          <p className="compact-empty-text">{t('notSpecified')}.</p>
         )}
       </div>
 
-      <div className="portfolio-tabs" role="tablist" aria-label="Portfolio and reviews tabs">
+      <div className="portfolio-tabs" role="tablist" aria-label={t('providerPortfolioReviewsTabs')}>
         <button
           className={`tab-btn ${activeTab === 'portfolio' ? 'active' : ''}`}
           onClick={() => setActiveTab('portfolio')}
           role="tab"
           aria-selected={activeTab === 'portfolio'}
         >
-          Portfolio ({profile.portfolio?.length || 0})
+          {t('portfolio')} ({profile.portfolio?.length || 0})
         </button>
         <button
           className={`tab-btn ${activeTab === 'reviews' ? 'active' : ''}`}
@@ -211,7 +228,7 @@ const ProviderCard = ({ provider, profile, onBack, hideBackLink = false }) => {
           role="tab"
           aria-selected={activeTab === 'reviews'}
         >
-          Reviews ({profile.reviews?.length || 0})
+          {t('reviews')} ({profile.reviews?.length || 0})
         </button>
       </div>
 
@@ -225,17 +242,17 @@ const ProviderCard = ({ provider, profile, onBack, hideBackLink = false }) => {
                   className="portfolio-item clickable"
                   onClick={() => setExpandedImage(item.src)}
                 >
-                  <img src={item.src} alt={`${provider.name} portfolio item`} className="portfolio-image non-draggable-image" draggable="false" />
+                  <img src={item.src} alt={t('providerPortfolioImageAlt', { name: provider.name })} className="portfolio-image non-draggable-image" draggable="false" />
                   {item.completedThroughPlatform && (
                     <span className="verified-badge portfolio-item-badge">
-                      Completed through SerbisyoToledo
+                      {t('providerCompletedThroughPlatform')}
                     </span>
                   )}
                 </div>
               ))}
             </div>
           ) : (
-            <p className="compact-empty-text portfolio-empty-copy">No portfolio work added yet.</p>
+            <p className="compact-empty-text portfolio-empty-copy">{t('providerPortfolioEmpty')}</p>
           )}
         </>
       )}
@@ -269,25 +286,25 @@ const ProviderCard = ({ provider, profile, onBack, hideBackLink = false }) => {
               </div>
             </>
           ) : (
-            <p className="compact-empty-text">No reviews yet.</p>
+            <p className="compact-empty-text">{t('noReviewsYet')}.</p>
           )}
         </div>
       )}
 
       <div className="contact-section">
-        <h3 className="contact-title">Additional Information</h3>
+        <h3 className="contact-title">{t('providerAdditionalInformation')}</h3>
         {[
           {
-          icon: <LocationIcon />, label: 'Location', value: profile.location,
+          icon: <LocationIcon />, label: t('location'), value: profile.location,
           }, {
-          icon: <ClockIcon />, label: 'Typical response time', value: profile.response,
+          icon: <ClockIcon />, label: t('providerTypicalResponseTime'), value: profile.response,
           }
         ].map((item) => (
           <div key={item.label} className="contact-item">
             <div className="contact-icon">{item.icon}</div>
             <div>
               <p className="contact-label">{item.label}</p>
-              <p className="contact-value">{item.value || 'Not specified'}</p>
+              <p className="contact-value">{item.value || t('notSpecified')}</p>
             </div>
           </div>
         ))}
@@ -302,14 +319,14 @@ const ProviderCard = ({ provider, profile, onBack, hideBackLink = false }) => {
             <div className="login-prompt-icon">
               <i className="bi bi-person-lock"></i>
             </div>
-            <h3>Login Required</h3>
-            <p>You need to be logged in to request a service from this provider.</p>
+            <h3>{t('providerLoginRequired')}</h3>
+            <p>{t('providerLoginRequestMessage')}</p>
             <div className="login-prompt-actions">
               <button className="btn-login-prompt" onClick={handleLoginRedirect}>
-                Log In
+                {t('logIn')}
               </button>
               <button className="btn-register-prompt" onClick={() => navigate('/register')}>
-                Create Account
+                {t('createAccount')}
               </button>
             </div>
           </div>
@@ -327,8 +344,8 @@ const ProviderCard = ({ provider, profile, onBack, hideBackLink = false }) => {
         className="provider-mobile-request-bar"
         leftContent={(
           <div className="provider-mobile-rate">
-            <p className="provider-mobile-rate-label">Starting at</p>
-            <p className="provider-mobile-rate-value">₱{profile.rate}</p>
+            {hasRate && <p className="provider-mobile-rate-label">{t('startingAt')}</p>}
+            <p className="provider-mobile-rate-value">{rateValue}</p>
           </div>
         )}
       >
@@ -339,7 +356,7 @@ const ProviderCard = ({ provider, profile, onBack, hideBackLink = false }) => {
           disabled={!canRequestService}
           data-tour="provider-request-service"
         >
-          {canRequestService ? 'Request Service' : 'Unavailable'}
+          {canRequestService ? t('requestService') : t('unavailable')}
         </button>
       </MobileStickyAction>
 
@@ -350,7 +367,7 @@ const ProviderCard = ({ provider, profile, onBack, hideBackLink = false }) => {
           </button>
           <img 
             src={expandedImage} 
-            alt="Portfolio image" 
+            alt={t('portfolio')} 
             className="lightbox-image"
             draggable="false"
             onClick={(e) => e.stopPropagation()}
@@ -362,6 +379,7 @@ const ProviderCard = ({ provider, profile, onBack, hideBackLink = false }) => {
 };
 
 const ServiceProviderPortfolio = () => {
+  const { t } = useLanguage();
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
@@ -406,7 +424,7 @@ const ServiceProviderPortfolio = () => {
           };
           
           const transformedProfile = {
-            profession: apiProfile.profession || apiProfile.categories?.[0] || 'Service Provider',
+            profession: apiProfile.profession || apiProfile.categories?.[0] || t('serviceProvider'),
             jobs: apiProfile.jobsCompleted || apiProfile.reviewsCount || 0,
             about: apiProfile.aboutMe || apiProfile.description || '',
             categories: apiProfile.categories || [],
@@ -416,7 +434,7 @@ const ServiceProviderPortfolio = () => {
             reviews: apiProfile.reviews || [],
             languages: (apiProfile.languages || []).map((code) => ({ ceb: 'Cebuano', en: 'English', fil: 'Filipino' }[code] || code)),
             location: apiProfile.location,
-            response: apiProfile.responseTime || 'Within 24 hours',
+            response: apiProfile.responseTime || t('within24Hours'),
             rate: apiProfile.dailyRate ?? apiProfile.startingPrice,
             rateUnit: apiProfile.pricingUnit || (apiProfile.dailyRate != null ? '/day' : ''),
             availabilitySummary: apiProfile.availabilitySummary || apiProfile.nextAvailableLabel || '',
@@ -425,18 +443,18 @@ const ServiceProviderPortfolio = () => {
           setProvider(transformedProvider);
           setProfile(transformedProfile);
         } else {
-          setError('Provider not found');
+          setError(t('providerNotFound'));
         }
       } catch (err) {
         console.error('Error fetching profile:', err);
-        setError('Failed to load provider profile');
+        setError(t('providerLoadErrorText'));
       } finally {
         setLoading(false);
       }
     };
     
     fetchProfile();
-  }, [providerId]);
+  }, [providerId, t]);
 
   if (loading) {
     return (
@@ -444,7 +462,7 @@ const ServiceProviderPortfolio = () => {
         <div className="portfolio-container">
           <div className="loading-state">
             <div className="spinner"></div>
-            <p>Loading profile...</p>
+            <p>{t('providerLoadingProfile')}</p>
           </div>
         </div>
       </div>
@@ -455,10 +473,10 @@ const ServiceProviderPortfolio = () => {
     return (
       <div className="portfolio-shell empty-state">
         <div className="portfolio-container">
-          <h2>Provider not found</h2>
-          <p>We could not load this profile. Please return to the feed and try again.</p>
+          <h2>{t('providerNotFound')}</h2>
+          <p>{t('providerLoadErrorText')}</p>
           <button className="btn-view-profile" onClick={() => navigate('/feed')}>
-            Back to Feed
+            {t('backToFeed')}
           </button>
         </div>
       </div>
