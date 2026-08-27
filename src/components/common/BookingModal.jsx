@@ -486,12 +486,11 @@ export default function BookingModal({ provider, onClose }) {
       moved: false,
     };
     suppressRangeClickRef.current = false;
-
-    setStartDate(dateKey);
-    setEndDate(dateKey);
-    setSelectedDates([dateKey]);
     setSubmitError('');
 
+    // Do not change the selected range until the pointer actually moves.
+    // This keeps normal "tap start, tap end" selection working while still
+    // allowing a drag gesture to start from any available date.
     event.currentTarget.closest('.calendar-grid')?.setPointerCapture?.(event.pointerId);
     event.preventDefault();
   }, [bookingType, getDateKeyForDay, isDateAvailable]);
