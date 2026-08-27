@@ -46,6 +46,24 @@
   box-shadow: 0 8px 28px color-mix(in srgb, var(--color-shadow) 72%, transparent);
 }
 
+.settings-layout-single {
+  grid-template-columns: minmax(0, 1fr);
+  max-width: 900px;
+}
+
+.provider-tool-page .settings-page-heading {
+  max-width: 900px;
+}
+
+.provider-tool-page .settings-content {
+  padding: 2rem 2.25rem 2.25rem;
+}
+
+.provider-tool-intro {
+  margin: 0 0 1.25rem;
+  font-size: 0.92rem;
+}
+
 .settings-nav {
   background: var(--color-surface-secondary);
   padding: 1.25rem 0.8rem;

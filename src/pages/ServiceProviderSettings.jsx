@@ -15,7 +15,6 @@ function ServiceProviderSettings() {
   const navigate = useNavigate();
   const location = useLocation();
   const { language, t } = useLanguage();
-  const [activeSection, setActiveSection] = useState('account');
   const [isSaving, setIsSaving] = useState(false);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const [flash, setFlash] = useState({ type: 'info', message: '' });
@@ -64,22 +63,30 @@ function ServiceProviderSettings() {
     ? 'Mga Pinulongan ug Credentials'
     : 'Languages & Credentials';
 
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const section = params.get('section');
-    const aliasMap = {
-      availability: 'schedule',
-      business: 'account',
-      notifications: 'account',
-      privacy: 'account',
-    };
-    const normalizedSection = aliasMap[section] || section;
-    const allowedSections = new Set(['account', 'schedule', 'profile']);
+  const pageMode = location.pathname === '/provider-schedule'
+    ? 'schedule'
+    : location.pathname === '/provider-credentials'
+      ? 'profile'
+      : 'account';
 
-    if (normalizedSection && allowedSections.has(normalizedSection)) {
-      setActiveSection(normalizedSection);
+  const pageTitle = pageMode === 'schedule'
+    ? t('schedule')
+    : pageMode === 'profile'
+      ? languagesCredentialsLabel
+      : t('providerSettingsPageTitle');
+
+  useEffect(() => {
+    if (location.pathname !== '/provider-settings') {
+      return;
     }
-  }, [location.search]);
+
+    const section = new URLSearchParams(location.search).get('section');
+    if (section === 'schedule' || section === 'availability') {
+      navigate('/provider-schedule', { replace: true });
+    } else if (section === 'profile') {
+      navigate('/provider-credentials', { replace: true });
+    }
+  }, [location.pathname, location.search, navigate]);
 
   useEffect(() => {
     const currentUser = getUser();
@@ -459,49 +466,16 @@ function ServiceProviderSettings() {
   };
 
   return (
-    <div className="user-settings-container">
+    <div className={`user-settings-container provider-tool-page provider-tool-${pageMode}`}>
       <div className="settings-page-heading">
-        <h1 className="settings-page-title">{t('providerSettingsPageTitle')}</h1>
+        <h1 className="settings-page-title">{pageTitle}</h1>
       </div>
 
-      <div className="settings-layout">
-        <div className="settings-nav">
-          <button
-            className={`settings-nav-item ${activeSection === 'account' ? 'active' : ''}`}
-            onClick={() => setActiveSection('account')}
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-              <circle cx="12" cy="7" r="4"></circle>
-            </svg>
-            {t('account')}
-          </button>
-          <button
-            className={`settings-nav-item ${activeSection === 'schedule' ? 'active' : ''}`}
-            data-tour="provider-schedule-tab"
-            onClick={() => setActiveSection('schedule')}
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <rect x="3" y="4" width="18" height="17" rx="2"></rect>
-              <path d="M8 2v4M16 2v4M3 10h18"></path>
-            </svg>
-            {t('schedule')}
-          </button>
-          <button
-            className={`settings-nav-item ${activeSection === 'profile' ? 'active' : ''}`}
-            onClick={() => setActiveSection('profile')}
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-            </svg>
-            {languagesCredentialsLabel}
-          </button>
-        </div>
-
+      <div className="settings-layout settings-layout-single">
         <div className="settings-content">
           <SettingsFlash type={flash.type} message={flash.message} />
 
-          {activeSection === 'account' && (
+          {pageMode === 'account' && (
             <div className="settings-section">
               <h2 className="settings-section-title">{t('providerAccountSettingsTitle')}</h2>
 
@@ -582,10 +556,9 @@ function ServiceProviderSettings() {
             </div>
           )}
 
-          {activeSection === 'schedule' && (
+          {pageMode === 'schedule' && (
             <div className="settings-section">
-              <h2 className="settings-section-title">{t('providerSettingsScheduleTitle')}</h2>
-              <small className="settings-help">{t('providerScheduleClientChoiceHelp')}</small>
+              <p className="settings-help provider-tool-intro">{t('providerScheduleClientChoiceHelp')}</p>
 
               <div className="settings-toggle-group">
                 <div className="settings-toggle">
@@ -782,11 +755,9 @@ function ServiceProviderSettings() {
             </div>
           )}
 
-          {activeSection === 'profile' && (
+          {pageMode === 'profile' && (
             <div className="settings-section">
-              <h2 className="settings-section-title">{languagesCredentialsLabel}</h2>
-
-              <h3 className="settings-subsection-title">{t('languagesSpoken')}</h3>
+              <h2 className="settings-section-title">{t('languagesSpoken')}</h2>
               <div className="settings-group">
                 {LANGUAGE_OPTIONS.map((option) => (
                   <label key={option.value} className="settings-help" style={{ display: 'block', marginBottom: '0.35rem' }}>

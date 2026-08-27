@@ -11,6 +11,8 @@ const TITLES = [
   { test: (path) => path.startsWith('/requests'), key: 'requests' },
   { test: (path) => path.startsWith('/notifications'), key: 'notifications' },
   { test: (path) => path.startsWith('/dashboard'), key: 'myDashboard' },
+  { test: (path) => path.startsWith('/provider-schedule'), key: 'schedule' },
+  { test: (path) => path.startsWith('/provider-credentials'), key: 'providerLanguagesCredentials' },
   { test: (path) => path.startsWith('/provider-settings'), key: 'providerSettings' },
   { test: (path) => path.startsWith('/client-settings'), key: 'settings' },
   { test: (path) => path.startsWith('/admin/dashboard'), key: 'adminDashboard' },
@@ -221,6 +223,15 @@ export default function MobileTopBar({
                   <i className="bi bi-images"></i>
                   {providerPortfolioLabel}
                 </button>
+                <Link
+                  to="/provider-credentials"
+                  className="mobile-profile-menu-item"
+                  role="menuitem"
+                  onClick={onCloseProfileMenu}
+                >
+                  <i className="bi bi-patch-check"></i>
+                  {t('providerLanguagesCredentials')}
+                </Link>
               </>
             ) : role === 'client' ? (
               <button

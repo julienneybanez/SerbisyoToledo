@@ -18,7 +18,7 @@ const ROLE_ITEMS = {
   tradesperson: [
     { to: '/dashboard', labelKey: 'dashboardShort', icon: 'bi-speedometer2' },
     { to: '/requests', labelKey: 'requests', icon: 'bi-inbox' },
-    { to: '/provider-settings?section=schedule', labelKey: 'schedule', icon: 'bi-calendar3' },
+    { to: '/provider-schedule', labelKey: 'schedule', icon: 'bi-calendar3' },
     { action: 'profile-menu', labelKey: 'profile', icon: 'bi-person-circle' },
   ],
   admin: [

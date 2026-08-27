@@ -96,6 +96,7 @@ describe('Settings pages', () => {
 
     expect(await screen.findByText('Client Settings')).toBeInTheDocument();
     expect(screen.queryByText('Bio')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('theme-toggle')).not.toBeInTheDocument();
 
     fireEvent.change(screen.getByDisplayValue('Client User'), {
       target: { value: 'Client Updated' },
@@ -119,7 +120,7 @@ describe('Settings pages', () => {
     });
   });
 
-  it('provider settings only exposes persisted account, schedule, language, and credential controls', async () => {
+  it('provider settings is account-only and does not expose schedule, credentials, or a theme toggle', async () => {
     getUser.mockReturnValue({
       userType: 'tradesperson',
       fullName: 'Provider User',
@@ -147,62 +148,27 @@ describe('Settings pages', () => {
 
     serviceProfileAPI.getMyAvailability.mockResolvedValue({
       success: true,
-      data: {
-        settings: {
-          allowSameDayBooking: false,
-          minAdvanceNoticeMinutes: 720,
-          maxAdvanceBookingDays: 60,
-        },
-        weeklyBlocks: [],
-        exceptions: [],
-        specificAvailability: [],
-      },
+      data: { settings: {}, weeklyBlocks: [], exceptions: [], specificAvailability: [] },
     });
-
     serviceProfileAPI.getMyLanguages.mockResolvedValue({
       success: true,
       data: { languages: ['en'] },
     });
-
     serviceProfileAPI.getMyCredentials.mockResolvedValue({
       success: true,
       data: { credentials: [] },
     });
-
-    serviceProfileAPI.saveMyAvailability.mockResolvedValue({
-      success: true,
-      data: { mode: 'specific', specificAvailabilityCount: 0 },
-    });
-
-    verificationAPI.resendVerification.mockResolvedValue({
-      success: true,
-    });
+    verificationAPI.resendVerification.mockResolvedValue({ success: true });
 
     renderWithProviders(<ServiceProviderSettings />);
 
     expect(await screen.findByText('Service Provider Settings')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Business' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Notifications' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Privacy' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Schedule' })).not.toBeInTheDocument();
+    expect(screen.queryByText('Languages & Credentials')).not.toBeInTheDocument();
+    expect(screen.queryByText('Schedule & Booking Settings')).not.toBeInTheDocument();
+    expect(screen.queryByText('Languages Spoken')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('theme-toggle')).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Schedule' }));
-    expect(await screen.findByText('Schedule & Booking Settings')).toBeInTheDocument();
-    expect(screen.getByText('Available Dates & Time Slots')).toBeInTheDocument();
-    expect(screen.queryByText('Date Exceptions')).not.toBeInTheDocument();
-    expect(screen.queryByText('Booked')).not.toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole('button', { name: 'Save Availability' }));
-    await waitFor(() => {
-      expect(serviceProfileAPI.saveMyAvailability).toHaveBeenCalledWith(expect.objectContaining({
-        specificAvailability: [],
-      }));
-    });
-
-    fireEvent.click(screen.getByRole('button', { name: 'Languages & Credentials' }));
-    expect(await screen.findByText('Languages Spoken')).toBeInTheDocument();
-    expect(screen.getByText('Credentials and Certificates')).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole('button', { name: 'Account' }));
     expect(screen.getByText('Not Verified')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Resend Verification Email' }));

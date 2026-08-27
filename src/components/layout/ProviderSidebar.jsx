@@ -5,6 +5,7 @@ import { getUser } from '../../services/api';
 const PRIMARY_ITEMS = [
   { key: 'dashboard', to: '/dashboard', labelKey: 'dashboardShort', icon: 'bi-speedometer2' },
   { key: 'requests', to: '/requests', labelKey: 'requests', icon: 'bi-inbox' },
+  { key: 'schedule', to: '/provider-schedule', labelKey: 'schedule', icon: 'bi-calendar3' },
   { key: 'settings', to: '/provider-settings', labelKey: 'settings', icon: 'bi-gear' },
 ];
 
@@ -29,9 +30,6 @@ function ProviderSidebar({ hasServiceProfile = false, publicProfileRoute = '/das
     : 'Languages & Credentials';
 
   const isPrimaryActive = (item) => {
-    if (item.key === 'settings') {
-      return location.pathname === '/provider-settings';
-    }
     return location.pathname === item.to;
   };
 
@@ -74,12 +72,11 @@ function ProviderSidebar({ hasServiceProfile = false, publicProfileRoute = '/das
       <div className="provider-workspace-quick-links">
         <span className="provider-workspace-section-label">{t('more')}</span>
 
-        <Link to="/provider-settings?section=schedule" className="provider-workspace-quick-link">
-          <i className="bi bi-calendar3" aria-hidden="true"></i>
-          <span>{t('schedule')}</span>
-        </Link>
-
-        <Link to="/provider-settings?section=profile" className="provider-workspace-quick-link">
+        <Link
+          to="/provider-credentials"
+          className={`provider-workspace-quick-link ${location.pathname === '/provider-credentials' ? 'active' : ''}`}
+          aria-current={location.pathname === '/provider-credentials' ? 'page' : undefined}
+        >
           <i className="bi bi-patch-check" aria-hidden="true"></i>
           <span>{languagesCredentialsLabel}</span>
         </Link>

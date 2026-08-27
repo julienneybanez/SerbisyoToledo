@@ -148,7 +148,7 @@ function App() {
   const isProviderWorkspace = Boolean(
     currentUser?.userType === 'tradesperson'
     && isAuthenticated()
-    && ['/dashboard', '/requests', '/provider-settings'].includes(location.pathname)
+    && ['/dashboard', '/requests', '/provider-settings', '/provider-schedule', '/provider-credentials'].includes(location.pathname)
   );
 
   const mobileRole = currentUser?.userType || 'guest';
@@ -362,6 +362,22 @@ function App() {
             />
             <Route
               path="/provider-settings"
+              element={(
+                <ProtectedRoute allowedRoles={['tradesperson']}>
+                  <ServiceProviderSettings />
+                </ProtectedRoute>
+              )}
+            />
+            <Route
+              path="/provider-schedule"
+              element={(
+                <ProtectedRoute allowedRoles={['tradesperson']}>
+                  <ServiceProviderSettings />
+                </ProtectedRoute>
+              )}
+            />
+            <Route
+              path="/provider-credentials"
               element={(
                 <ProtectedRoute allowedRoles={['tradesperson']}>
                   <ServiceProviderSettings />

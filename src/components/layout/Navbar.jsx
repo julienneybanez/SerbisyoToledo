@@ -244,7 +244,7 @@ function Navbar() {
                 <li className="nav-item">
                   <NavLink
                     className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
-                    to="/provider-settings?section=schedule"
+                    to="/provider-schedule"
                     onClick={handleNavClick}
                   >
                     {t('schedule')}

@@ -243,7 +243,7 @@ export default function ServiceProviderDashboard() {
         || (Array.isArray(myAvailability?.weeklyBlocks) && myAvailability.weeklyBlocks.length > 0)
       ),
       actionType: 'link',
-      to: '/provider-settings?section=schedule',
+      to: '/provider-schedule',
       actionLabel: 'Schedule',
     },
     {
