@@ -121,7 +121,6 @@ const Register = () => {
             />
             <p className="auth-eyebrow auth-brand-wordmark">Serbisyo<span className="brand-toledo">Toledo</span></p>
             <h1 id="register-title">{registerHeading}</h1>
-            <p>{t('footerTagline')}</p>
           </div>
 
           {error && <div className="alert alert-danger auth-alert" role="alert">{error}</div>}
