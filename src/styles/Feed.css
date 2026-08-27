@@ -1687,3 +1687,8 @@
     min-height: 44px;
   }
 }
+
+/* Consolidated title/subtitle cleanup */
+.feed-shell .feed-page-subtitle {
+  display: none;
+}
