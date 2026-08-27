@@ -2,7 +2,7 @@
 .workspace-stage, .workspace-content { min-width: 0; }
 .workspace-sidebar, .workspace-topbar { display: none; }
 
-@media (min-width: 992px) {
+@media (min-width: 769px) {
   .authenticated-workspace-active .desktop-public-navbar { display: none !important; }
   .authenticated-workspace-active .main-content { background: var(--color-page-bg); }
   .workspace-shell { min-height: 100vh; display: grid; grid-template-columns: 248px minmax(0, 1fr); background: var(--color-page-bg); }
@@ -47,7 +47,7 @@
   .workspace-topbar { padding-inline: 2rem; }
 }
 
-@media (max-width: 991.98px) {
+@media (max-width: 768px) {
   .workspace-shell, .workspace-stage, .workspace-content { display: contents; }
 }
 
