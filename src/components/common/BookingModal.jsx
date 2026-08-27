@@ -614,6 +614,7 @@ export default function BookingModal({ provider, onClose }) {
               onClick={() => handleSelectDay(cell)}
               disabled={!available}
               aria-label={available ? `Select ${monthNames[currentMonth]} ${cell}` : `${monthNames[currentMonth]} ${cell} unavailable`}
+              aria-pressed={available ? selected : undefined}
             >
               {cell}
             </button>
@@ -632,7 +633,7 @@ export default function BookingModal({ provider, onClose }) {
           <div className="booking-time-panel">
             <div className="booking-form-group">
               <label>{t('bookingTypeLabel')}</label>
-              <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }} aria-describedby="booking-provider-availability-help">
                 <label>
                   <input
                     type="radio"
@@ -686,7 +687,7 @@ export default function BookingModal({ provider, onClose }) {
               <p><strong>{t('bookingDurationLabel')}:</strong> {durationDays} day(s)</p>
               <p><strong>{t('bookingDailyRateLabel')}:</strong> {formatMoney(dailyRate)} per day</p>
               <p><strong>{t('bookingEstimatedCostLabel')}:</strong> {formatMoney(estimatedTotal)}</p>
-              <p className="hint-subtext">
+              <p className="hint-subtext" id="booking-provider-availability-help">
                 {t('bookingProviderChoiceHelp')}
                 {SPECIFIC_DATE_BOOKING_ENABLED && bookingType === BOOKING_TYPE.SPECIFIC_DATES
                   ? ` ${t('bookingSpecificDatesHelp')}`
@@ -721,6 +722,7 @@ export default function BookingModal({ provider, onClose }) {
                     type="button"
                     className={`time-slot ${selectedTime === slot.time ? 'selected' : ''}`}
                     onClick={() => setSelectedTime(slot.time)}
+                    aria-pressed={selectedTime === slot.time}
                   >
                     {slot.time}
                   </button>
