@@ -11,7 +11,7 @@ function Footer({ className = '' }) {
           <div className="footer-brand-block">
             <div className="d-flex align-items-center mb-2">
               <img src={logo} alt="SerbisyoToledo Logo" width="40" height="40" className="me-2 footer-logo-static" draggable="false" />
-              <span className="text-white fw-bold fs-5">SerbisyoToledo</span>
+              <span className="footer-wordmark">Serbisyo<span>Toledo</span></span>
             </div>
             <p className="footer-muted-text footer-description mb-0">{t('footerTagline')}</p>
           </div>

@@ -58,7 +58,7 @@ const ResetPassword = () => {
     <section className="auth-page auth-page-compact" aria-labelledby="reset-password-title">
       <div className="auth-card auth-compact-card">
         <div className="auth-heading">
-          <p className="auth-eyebrow">SerbisyoToledo</p>
+          <p className="auth-eyebrow auth-brand-wordmark">Serbisyo<span className="brand-toledo">Toledo</span></p>
           <h1 id="reset-password-title">{t('resetPassword')}</h1>
           <p>{t('resetYourPassword')}</p>
         </div>

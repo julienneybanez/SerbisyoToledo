@@ -119,7 +119,7 @@ const Register = () => {
               className="auth-page-logo non-draggable-image"
               draggable="false"
             />
-            <p className="auth-eyebrow auth-brand-wordmark">SerbisyoToledo</p>
+            <p className="auth-eyebrow auth-brand-wordmark">Serbisyo<span className="brand-toledo">Toledo</span></p>
             <h1 id="register-title">{registerHeading}</h1>
             <p>{t('footerTagline')}</p>
           </div>

@@ -31,7 +31,7 @@ const ForgotPassword = () => {
     <section className="auth-page auth-page-compact" aria-labelledby="forgot-password-title">
       <div className="auth-card auth-compact-card">
         <div className="auth-heading">
-          <p className="auth-eyebrow">SerbisyoToledo</p>
+          <p className="auth-eyebrow auth-brand-wordmark">Serbisyo<span className="brand-toledo">Toledo</span></p>
           <h1 id="forgot-password-title">{t('forgotPasswordQuestion')}</h1>
           <p>{t('forgotPasswordSubtitle')}</p>
         </div>

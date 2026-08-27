@@ -126,7 +126,9 @@ export default function MobileTopBar({
                 ? adminSystemStatusLabel
                 : title}
             </p>
-            <p className="mobile-topbar-subtitle">SerbisyoToledo</p>
+            <p className="mobile-topbar-subtitle mobile-brand-wordmark">
+              Serbisyo<span>Toledo</span>
+            </p>
           </div>
         </div>
       </div>
