@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { getUser, userProfileAPI, serviceProfileAPI, verificationAPI } from '../services/api';
-import ThemeToggle from '../components/common/ThemeToggle';
 import SettingsFlash from '../components/settings/SettingsFlash';
 import { useLanguage } from '../context/LanguageContext';
 import '../styles/UserSettings.css';
@@ -463,7 +462,6 @@ function ServiceProviderSettings() {
     <div className="user-settings-container">
       <div className="settings-page-heading">
         <h1 className="settings-page-title">{t('providerSettingsPageTitle')}</h1>
-        <ThemeToggle compact className="settings-header-theme-toggle" />
       </div>
 
       <div className="settings-layout">

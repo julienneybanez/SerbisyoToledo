@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { getUser, userProfileAPI, verificationAPI } from '../services/api';
 import { useLanguage } from '../context/LanguageContext';
-import ThemeToggle from '../components/common/ThemeToggle';
 import SettingsFlash from '../components/settings/SettingsFlash';
 import '../styles/UserSettings.css';
 
@@ -158,7 +157,6 @@ function ClientSettings() {
     <div className="user-settings-container">
       <div className="settings-page-heading">
         <h1 className="settings-page-title">{t('clientSettings')}</h1>
-        <ThemeToggle compact className="settings-header-theme-toggle" />
       </div>
 
       <div className="settings-layout">
