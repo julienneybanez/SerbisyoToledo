@@ -101,6 +101,7 @@ export default function BookingModal({ provider, onClose }) {
   const [startDate, setStartDate] = useState(formatDateInput(today));
   const [endDate, setEndDate] = useState(formatDateInput(today));
   const [selectedDates, setSelectedDates] = useState([formatDateInput(today)]);
+  const selectedDatesRef = useRef([formatDateInput(today)]);
   const [estimatedDurationMinutes, setEstimatedDurationMinutes] = useState(120);
   const rangeDragRef = useRef({
     active: false,
@@ -544,12 +545,18 @@ export default function BookingModal({ provider, onClose }) {
     }
   }, []);
 
-  const syncSpecificDateBounds = useCallback((dates) => {
+  const commitSpecificDates = useCallback((dates) => {
     const sorted = Array.from(new Set(dates)).sort();
+    selectedDatesRef.current = sorted;
+    setSelectedDates(sorted);
     setStartDate(sorted[0] || '');
     setEndDate(sorted[sorted.length - 1] || '');
     return sorted;
   }, []);
+
+  useEffect(() => {
+    selectedDatesRef.current = selectedDates;
+  }, [selectedDates]);
 
   const updateSpecificDrag = useCallback((dateKey) => {
     const drag = specificDragRef.current;
@@ -560,18 +567,16 @@ export default function BookingModal({ provider, onClose }) {
     drag.moved = true;
     drag.lastDate = dateKey;
 
-    setSelectedDates((prev) => {
-      const next = new Set(prev);
-      const apply = (value) => {
-        if (drag.action === 'remove') next.delete(value);
-        else next.add(value);
-      };
+    const next = new Set(selectedDatesRef.current);
+    const apply = (value) => {
+      if (drag.action === 'remove') next.delete(value);
+      else next.add(value);
+    };
 
-      apply(drag.anchorDate);
-      apply(dateKey);
-      return syncSpecificDateBounds(Array.from(next));
-    });
-  }, [availableDateSet, syncSpecificDateBounds]);
+    apply(drag.anchorDate);
+    apply(dateKey);
+    commitSpecificDates(Array.from(next));
+  }, [availableDateSet, commitSpecificDates]);
 
   const handleSpecificPointerDown = useCallback((event, day) => {
     if (bookingType !== BOOKING_TYPE.SPECIFIC_DATES || !day || !isDateAvailable(day)) {
@@ -654,12 +659,11 @@ export default function BookingModal({ provider, onClose }) {
     }
 
     if (bookingType === BOOKING_TYPE.SPECIFIC_DATES) {
-      setSelectedDates((prev) => {
-        const next = prev.includes(dateKey)
-          ? prev.filter((value) => value !== dateKey)
-          : [...prev, dateKey];
-        return syncSpecificDateBounds(next);
-      });
+      const current = selectedDatesRef.current;
+      const next = current.includes(dateKey)
+        ? current.filter((value) => value !== dateKey)
+        : [...current, dateKey];
+      commitSpecificDates(next);
       return;
     }
 
@@ -686,7 +690,7 @@ export default function BookingModal({ provider, onClose }) {
 
     setStartDate(nextStart);
     setEndDate(nextEnd);
-  }, [availableDateSet, bookingType, endDate, getDateKeyForDay, isRangeContinuous, startDate, syncSpecificDateBounds, t]);
+  }, [availableDateSet, bookingType, commitSpecificDates, endDate, getDateKeyForDay, isRangeContinuous, startDate, t]);
 
   const canProceed = () => {
     if (step === 1) {

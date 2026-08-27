@@ -26,7 +26,7 @@ const MAX_DECLINE_REASON_LENGTH = 500;
 const MAX_RESCHEDULE_REASON_LENGTH = 1000;
 const MAX_DURATION_MINUTES = 24 * 60;
 const MAX_BOOKING_DATES = 90;
-const ACTIVE_REQUEST_STATUSES = ['pending', 'accepted', 'on_the_way', 'in_progress'];
+const ACTIVE_REQUEST_STATUSES = ['pending', ...BLOCKING_STATUSES];
 
 const CANCELLATION_REASONS = new Set([
   'Schedule conflict',
@@ -406,13 +406,14 @@ exports.createRequest = async (req, res) => {
       || null;
 
     if (targetCategoryKey) {
+      const activeStatusPlaceholders = ACTIVE_REQUEST_STATUSES.map(() => '?').join(', ');
       const [activeClientRequests] = await connection.query(
         `SELECT sr.id, sr.provider_id, sr.service_type_key, sr.status, sp.service_categories
          FROM service_requests sr
          JOIN service_profiles sp ON sp.id = sr.service_profile_id
          WHERE sr.client_id = ?
-           AND sr.status IN ('pending', 'accepted', 'on_the_way', 'in_progress')`,
-        [clientId]
+           AND sr.status IN (${activeStatusPlaceholders})`,
+        [clientId, ...ACTIVE_REQUEST_STATUSES]
       );
 
       const activeCategoryConflict = activeClientRequests.find((row) => (
