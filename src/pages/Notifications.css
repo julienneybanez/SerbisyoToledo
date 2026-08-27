@@ -126,3 +126,8 @@
 .notifications-page-shell .notifications-page-subtitle {
   font-size: 1rem;
 }
+
+/* Consolidated title/subtitle cleanup */
+.notifications-page-shell .notifications-page-subtitle {
+  display: none;
+}
