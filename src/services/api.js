@@ -614,12 +614,13 @@ export const serviceProfileAPI = {
   },
 
   // Get available booking slots for a provider/date
-  getAvailableSlots: async (id, { date, duration, bookingType = 'one_day', endDate = null }) => {
+  getAvailableSlots: async (id, { date, duration, bookingType = 'one_day', endDate = null, dates = [] }) => {
     const params = new URLSearchParams();
     if (date) params.set('date', date);
     if (duration) params.set('duration', String(duration));
     if (bookingType) params.set('bookingType', bookingType);
     if (endDate) params.set('endDate', endDate);
+    if (Array.isArray(dates) && dates.length > 0) params.set('dates', dates.join(','));
 
     const response = await fetch(`${API_BASE_URL}/service-profiles/${id}/available-slots?${params.toString()}`, {
       method: 'GET',

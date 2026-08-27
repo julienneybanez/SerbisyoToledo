@@ -20,8 +20,15 @@ export const REQUEST_STATUS = Object.freeze({
 
 export const BOOKING_TYPE = Object.freeze({
   ONE_DAY: 'one_day',
-  MULTI_DAY: 'multi_day',
+  DATE_RANGE: 'date_range',
+  SPECIFIC_DATES: 'specific_dates',
 });
+
+// Specific-date persistence is intentionally feature-gated until the database
+// audit finalizes the canonical request-date storage model.
+export const SPECIFIC_DATE_BOOKING_ENABLED = (
+  String(import.meta.env?.VITE_ENABLE_SPECIFIC_DATE_BOOKING || '').toLowerCase() === 'true'
+);
 
 /** @param {unknown} value */
 export const isUserRole = (value) => (

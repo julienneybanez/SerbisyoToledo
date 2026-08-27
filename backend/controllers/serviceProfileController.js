@@ -18,6 +18,8 @@ const {
   formatDateOnly,
   parseTimeInputToSql,
   getAvailableSlotsForDate,
+  getCommonAvailableSlotsForDates,
+  normalizeBookingDates,
   ensureAvailabilitySettings,
 } = require('../utils/bookingAvailability');
 
@@ -1316,22 +1318,17 @@ exports.getAvailableSlots = async (req, res) => {
     const serviceProfileId = Number(req.params.id);
     const date = String(req.query.date || '').trim();
     const duration = Number(req.query.duration || 120);
-    const bookingType = String(req.query.bookingType || 'one_day');
+    const bookingType = String(req.query.bookingType || 'one_day').trim().toLowerCase();
     const endDate = String(req.query.endDate || date).trim();
+    const requestedDates = String(req.query.dates || '')
+      .split(',')
+      .map((value) => value.trim())
+      .filter(Boolean);
 
-    if (!serviceProfileId || !date) {
+    if (!serviceProfileId || (!date && requestedDates.length === 0)) {
       return res.status(400).json({
         success: false,
-        message: 'Profile and date are required.'
-      });
-    }
-
-    const parsedStart = parseDateOnly(date);
-    const parsedEnd = parseDateOnly(endDate);
-    if (!parsedStart || !parsedEnd || parsedEnd < parsedStart) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid date range'
+        message: 'Profile and at least one date are required.'
       });
     }
 
@@ -1352,60 +1349,39 @@ exports.getAvailableSlots = async (req, res) => {
       });
     }
 
-    const baseSlots = await getAvailableSlotsForDate(connection, {
+    const dates = normalizeBookingDates({
+      bookingType,
+      startDate: date,
+      endDate,
+      dates: requestedDates,
+    });
+
+    if (dates.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: bookingType === 'specific_dates' ? 'Invalid specific dates.' : 'Invalid booking date selection.'
+      });
+    }
+
+    if (dates.length > 90) {
+      return res.status(400).json({ success: false, message: 'Too many booking dates. Maximum 90.' });
+    }
+
+    const slots = await getCommonAvailableSlotsForDates(connection, {
       serviceProfileId,
       providerId: profiles[0].provider_id,
-      date: formatDateOnly(parsedStart),
+      dates,
       durationMinutes: duration,
       slotStepMinutes: 60,
     });
 
-    if (bookingType !== 'multi_day') {
-      return res.json({
-        success: true,
-        data: {
-          date: formatDateOnly(parsedStart),
-          slots: baseSlots,
-        }
-      });
-    }
-
-    const dates = [];
-    for (let cursor = new Date(parsedStart); cursor <= parsedEnd; cursor.setUTCDate(cursor.getUTCDate() + 1)) {
-      dates.push(formatDateOnly(cursor));
-    }
-
-    const multiDaySlots = [];
-
-    for (const slot of baseSlots) {
-      let validAcrossRange = true;
-
-      for (const day of dates) {
-        const daySlots = await getAvailableSlotsForDate(connection, {
-          serviceProfileId,
-          providerId: profiles[0].provider_id,
-          date: day,
-          durationMinutes: duration,
-          slotStepMinutes: 60,
-        });
-
-        if (!daySlots.some((candidate) => candidate.time === slot.time)) {
-          validAcrossRange = false;
-          break;
-        }
-      }
-
-      if (validAcrossRange) {
-        multiDaySlots.push(slot);
-      }
-    }
-
     return res.json({
       success: true,
       data: {
-        date: formatDateOnly(parsedStart),
-        endDate: formatDateOnly(parsedEnd),
-        slots: multiDaySlots,
+        dates,
+        date: dates[0] || null,
+        endDate: dates[dates.length - 1] || null,
+        slots,
       }
     });
   } catch (error) {

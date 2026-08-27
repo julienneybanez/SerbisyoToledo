@@ -9,7 +9,8 @@ import {
   ChevronRightIcon,
 } from './Icons';
 import { isAuthenticated, serviceProfileAPI, serviceRequestAPI } from '../../services/api';
-import { BOOKING_TYPE } from '../../constants/domain';
+import { BOOKING_TYPE, SPECIFIC_DATE_BOOKING_ENABLED } from '../../constants/domain';
+import { useLanguage } from '../../context/LanguageContext';
 import './BookingModal.css';
 
 const weekdayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -19,7 +20,7 @@ const monthNames = [
 ];
 
 const timelineStages = [
-  { label: '1 Schedule', description: 'Pick your date range', icon: CalendarIcon },
+  { label: '1 Schedule', description: 'Choose provider-available dates', icon: CalendarIcon },
   { label: '2 Time', description: 'Choose available time', icon: ClockIcon },
   { label: '3 Details', description: 'Share service details', icon: UserIcon },
 ];
@@ -66,25 +67,26 @@ const generateCalendarDays = (year, month) => {
   return cells;
 };
 
-const getDurationDays = (startDate, endDate) => {
-  if (!startDate || !endDate) return 0;
-
+const getDateRange = (startDate, endDate) => {
+  if (!startDate || !endDate) return [];
   const start = parseDateInput(startDate);
   const end = parseDateInput(endDate);
+  if (!start || !end || end < start) return [];
 
-  if (!start || !end || end < start) {
-    return 0;
+  const dates = [];
+  for (const cursor = new Date(start); cursor <= end; cursor.setDate(cursor.getDate() + 1)) {
+    dates.push(formatDateInput(cursor));
   }
-
-  return Math.floor((end.getTime() - start.getTime()) / (24 * 60 * 60 * 1000)) + 1;
+  return dates;
 };
 
 const formatMoney = (amount) => `P${Number(amount || 0).toLocaleString('en-PH', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
 
 export default function BookingModal({ provider, onClose }) {
-  const today = new Date();
+  const { t } = useLanguage();
+  const [today] = useState(() => new Date());
   const bookingWindowStart = today;
-  const bookingWindowEnd = addDays(today, 60);
+  const bookingWindowEnd = useMemo(() => addDays(today, 60), [today]);
 
   const [currentMonth, setCurrentMonth] = useState(today.getMonth());
   const [currentYear, setCurrentYear] = useState(today.getFullYear());
@@ -93,6 +95,7 @@ export default function BookingModal({ provider, onClose }) {
   const [bookingType, setBookingType] = useState(BOOKING_TYPE.ONE_DAY);
   const [startDate, setStartDate] = useState(formatDateInput(today));
   const [endDate, setEndDate] = useState(formatDateInput(today));
+  const [selectedDates, setSelectedDates] = useState([formatDateInput(today)]);
   const [estimatedDurationMinutes, setEstimatedDurationMinutes] = useState(120);
 
   const [availableDates, setAvailableDates] = useState([]);
@@ -114,10 +117,17 @@ export default function BookingModal({ provider, onClose }) {
   }, [provider?.serviceTypes]);
 
   const dailyRate = Number(provider?.dailyRate ?? provider?.startingPrice ?? 0);
-  const durationDays = useMemo(
-    () => getDurationDays(startDate, bookingType === BOOKING_TYPE.MULTI_DAY ? endDate : startDate),
-    [bookingType, startDate, endDate],
-  );
+  const resolvedBookingDates = useMemo(() => {
+    if (bookingType === BOOKING_TYPE.SPECIFIC_DATES) {
+      return Array.from(new Set(selectedDates)).sort();
+    }
+    if (bookingType === BOOKING_TYPE.DATE_RANGE) {
+      return getDateRange(startDate, endDate);
+    }
+    return startDate ? [startDate] : [];
+  }, [bookingType, endDate, selectedDates, startDate]);
+
+  const durationDays = resolvedBookingDates.length;
   const estimatedTotal = useMemo(() => dailyRate * durationDays, [dailyRate, durationDays]);
 
   const availableDateSet = useMemo(() => new Set(availableDates), [availableDates]);
@@ -140,7 +150,7 @@ export default function BookingModal({ provider, onClose }) {
   }, [availableDateSet]);
 
   const isContinuousMultiDayRange = useMemo(() => {
-    if (bookingType !== BOOKING_TYPE.MULTI_DAY) return true;
+    if (bookingType !== BOOKING_TYPE.DATE_RANGE) return true;
     return isRangeContinuous(startDate, endDate);
   }, [bookingType, endDate, isRangeContinuous, startDate]);
 
@@ -166,6 +176,14 @@ export default function BookingModal({ provider, onClose }) {
   );
 
   const formattedSelectedRange = useMemo(() => {
+    if (bookingType === BOOKING_TYPE.SPECIFIC_DATES) {
+      if (resolvedBookingDates.length === 0) return 'No dates selected';
+      return resolvedBookingDates
+        .map((value) => parseDateInput(value)?.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }))
+        .filter(Boolean)
+        .join(' · ');
+    }
+
     if (!startDate) return 'No date selected';
 
     const start = parseDateInput(startDate);
@@ -177,7 +195,7 @@ export default function BookingModal({ provider, onClose }) {
       day: 'numeric',
     });
 
-    if (bookingType !== BOOKING_TYPE.MULTI_DAY || !endDate || endDate === startDate) {
+    if (bookingType !== BOOKING_TYPE.DATE_RANGE || !endDate || endDate === startDate) {
       return startLabel;
     }
 
@@ -191,7 +209,7 @@ export default function BookingModal({ provider, onClose }) {
     });
 
     return `${startLabel} to ${endLabel}`;
-  }, [bookingType, endDate, startDate]);
+  }, [bookingType, endDate, resolvedBookingDates, startDate]);
 
   const canGoToPrevMonth = useMemo(() => {
     const prevMonth = currentMonth === 0 ? 11 : currentMonth - 1;
@@ -249,6 +267,10 @@ export default function BookingModal({ provider, onClose }) {
 
             setStartDate((prev) => (dates.includes(prev) ? prev : firstDate));
             setEndDate((prev) => (dates.includes(prev) ? prev : firstDate));
+            setSelectedDates((prev) => {
+              const retained = prev.filter((value) => dates.includes(value));
+              return retained.length > 0 ? retained : [firstDate];
+            });
 
             if (parsedFirstDate) {
               setCurrentMonth(parsedFirstDate.getMonth());
@@ -257,6 +279,7 @@ export default function BookingModal({ provider, onClose }) {
           } else {
             setStartDate('');
             setEndDate('');
+            setSelectedDates([]);
           }
         }
       } catch (error) {
@@ -275,6 +298,7 @@ export default function BookingModal({ provider, onClose }) {
   useEffect(() => {
     if (bookingType === BOOKING_TYPE.ONE_DAY) {
       setEndDate(startDate);
+      setSelectedDates(startDate ? [startDate] : []);
     }
   }, [bookingType, startDate]);
 
@@ -298,13 +322,13 @@ export default function BookingModal({ provider, onClose }) {
 
   useEffect(() => {
     const loadSlots = async () => {
-      if (!provider?.id || !startDate) {
+      if (!provider?.id || resolvedBookingDates.length === 0) {
         setAvailableSlots([]);
         setSelectedTime('');
         return;
       }
 
-      if (bookingType === BOOKING_TYPE.MULTI_DAY && !isContinuousMultiDayRange) {
+      if (bookingType === BOOKING_TYPE.DATE_RANGE && !isContinuousMultiDayRange) {
         setAvailableSlots([]);
         setSelectedTime('');
         setSubmitError('Selected date range has unavailable day(s). Please choose a continuous available range.');
@@ -316,8 +340,9 @@ export default function BookingModal({ provider, onClose }) {
 
       try {
         const response = await serviceProfileAPI.getAvailableSlots(provider.id, {
-          date: startDate,
-          endDate: bookingType === BOOKING_TYPE.MULTI_DAY ? endDate : null,
+          date: resolvedBookingDates[0] || startDate,
+          endDate: bookingType === BOOKING_TYPE.DATE_RANGE ? endDate : null,
+          dates: bookingType === BOOKING_TYPE.SPECIFIC_DATES ? resolvedBookingDates : [],
           bookingType,
           duration: estimatedDurationMinutes,
         });
@@ -341,7 +366,7 @@ export default function BookingModal({ provider, onClose }) {
     };
 
     loadSlots();
-  }, [provider?.id, startDate, endDate, bookingType, estimatedDurationMinutes, isContinuousMultiDayRange]);
+  }, [provider?.id, startDate, endDate, bookingType, estimatedDurationMinutes, isContinuousMultiDayRange, resolvedBookingDates]);
 
   const handlePrevMonth = useCallback(() => {
     if (!canGoToPrevMonth) return;
@@ -379,7 +404,11 @@ export default function BookingModal({ provider, onClose }) {
     if (!day || !startDate) return false;
 
     const key = getDateKeyForDay(day);
-    if (bookingType !== BOOKING_TYPE.MULTI_DAY) {
+    if (bookingType === BOOKING_TYPE.SPECIFIC_DATES) {
+      return selectedDates.includes(key);
+    }
+
+    if (bookingType !== BOOKING_TYPE.DATE_RANGE) {
       return key === startDate;
     }
 
@@ -388,7 +417,7 @@ export default function BookingModal({ provider, onClose }) {
     }
 
     return key >= startDate && key <= endDate;
-  }, [bookingType, endDate, getDateKeyForDay, startDate]);
+  }, [bookingType, endDate, getDateKeyForDay, selectedDates, startDate]);
 
   const handleSelectDay = useCallback((day) => {
     if (!day) return;
@@ -403,6 +432,16 @@ export default function BookingModal({ provider, onClose }) {
     if (bookingType === BOOKING_TYPE.ONE_DAY) {
       setStartDate(dateKey);
       setEndDate(dateKey);
+      setSelectedDates([dateKey]);
+      return;
+    }
+
+    if (bookingType === BOOKING_TYPE.SPECIFIC_DATES) {
+      setSelectedDates((prev) => (
+        prev.includes(dateKey)
+          ? prev.filter((value) => value !== dateKey)
+          : [...prev, dateKey].sort()
+      ));
       return;
     }
 
@@ -433,8 +472,9 @@ export default function BookingModal({ provider, onClose }) {
 
   const canProceed = () => {
     if (step === 1) {
+      if (bookingType === BOOKING_TYPE.SPECIFIC_DATES) return resolvedBookingDates.length > 0;
       if (!startDate) return false;
-      if (bookingType !== BOOKING_TYPE.MULTI_DAY) return true;
+      if (bookingType !== BOOKING_TYPE.DATE_RANGE) return true;
       return Boolean(endDate) && isContinuousMultiDayRange;
     }
 
@@ -475,7 +515,7 @@ export default function BookingModal({ provider, onClose }) {
       return;
     }
 
-    if (bookingType === BOOKING_TYPE.MULTI_DAY && !isContinuousMultiDayRange) {
+    if (bookingType === BOOKING_TYPE.DATE_RANGE && !isContinuousMultiDayRange) {
       setSubmitError('Selected date range has unavailable day(s). Please choose a continuous available range.');
       return;
     }
@@ -488,9 +528,9 @@ export default function BookingModal({ provider, onClose }) {
         providerId: provider.userId,
         serviceProfileId: provider.id,
         serviceTypeKey: selectedServiceTypeKey || null,
-        bookingType,
+        bookingType: bookingType === BOOKING_TYPE.DATE_RANGE ? 'multi_day' : bookingType,
         startDate,
-        endDate: bookingType === BOOKING_TYPE.MULTI_DAY ? endDate : startDate,
+        endDate: bookingType === BOOKING_TYPE.DATE_RANGE ? endDate : startDate,
         startTime: selectedTime,
         scheduledDate: startDate,
         scheduledTime: selectedTime,
@@ -561,6 +601,7 @@ export default function BookingModal({ provider, onClose }) {
               onClick={() => handleSelectDay(cell)}
               disabled={!available}
               aria-label={available ? `Select ${monthNames[currentMonth]} ${cell}` : `${monthNames[currentMonth]} ${cell} unavailable`}
+              aria-pressed={available ? selected : undefined}
             >
               {cell}
             </button>
@@ -578,8 +619,8 @@ export default function BookingModal({ provider, onClose }) {
 
           <div className="booking-time-panel">
             <div className="booking-form-group">
-              <label>Booking Type</label>
-              <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+              <label>{t('bookingTypeLabel')}</label>
+              <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }} aria-describedby="booking-provider-availability-help">
                 <label>
                   <input
                     type="radio"
@@ -588,23 +629,35 @@ export default function BookingModal({ provider, onClose }) {
                     checked={bookingType === BOOKING_TYPE.ONE_DAY}
                     onChange={() => setBookingType(BOOKING_TYPE.ONE_DAY)}
                   />{' '}
-                  One day
+                  {t('bookingOneDay')}
                 </label>
                 <label>
                   <input
                     type="radio"
                     name="bookingType"
-                    value="multi_day"
-                    checked={bookingType === BOOKING_TYPE.MULTI_DAY}
-                    onChange={() => setBookingType(BOOKING_TYPE.MULTI_DAY)}
+                    value={BOOKING_TYPE.DATE_RANGE}
+                    checked={bookingType === BOOKING_TYPE.DATE_RANGE}
+                    onChange={() => setBookingType(BOOKING_TYPE.DATE_RANGE)}
                   />{' '}
-                  Multiple days
+                  {t('bookingDateRange')}
                 </label>
+                {SPECIFIC_DATE_BOOKING_ENABLED && (
+                  <label>
+                    <input
+                      type="radio"
+                      name="bookingType"
+                      value={BOOKING_TYPE.SPECIFIC_DATES}
+                      checked={bookingType === BOOKING_TYPE.SPECIFIC_DATES}
+                      onChange={() => setBookingType(BOOKING_TYPE.SPECIFIC_DATES)}
+                    />{' '}
+                    {t('bookingSpecificDates')}
+                  </label>
+                )}
               </div>
             </div>
 
             <div className="booking-form-group">
-              <label>Estimated Duration (minutes)</label>
+              <label>{t('bookingDurationMinutes')}</label>
               <input
                 className="booking-input"
                 type="number"
@@ -617,16 +670,21 @@ export default function BookingModal({ provider, onClose }) {
             </div>
 
             <div className="booking-hint-card" style={{ marginTop: 0 }}>
-              <p><strong>Selected:</strong> {formattedSelectedRange}</p>
-              <p><strong>Duration:</strong> {durationDays} day(s)</p>
-              <p><strong>Daily rate:</strong> {formatMoney(dailyRate)} per day</p>
-              <p><strong>Estimated service cost:</strong> {formatMoney(estimatedTotal)}</p>
-              <p className="hint-subtext">
-                Select available dates only. For multi-day bookings, choose a continuous range.
+              <p><strong>{t('bookingSelectedLabel')}:</strong> {formattedSelectedRange}</p>
+              <p><strong>{t('bookingDurationLabel')}:</strong> {durationDays} day(s)</p>
+              <p><strong>{t('bookingDailyRateLabel')}:</strong> {formatMoney(dailyRate)} per day</p>
+              <p><strong>{t('bookingEstimatedCostLabel')}:</strong> {formatMoney(estimatedTotal)}</p>
+              <p className="hint-subtext" id="booking-provider-availability-help">
+                {t('bookingProviderChoiceHelp')}
+                {SPECIFIC_DATE_BOOKING_ENABLED && bookingType === BOOKING_TYPE.SPECIFIC_DATES
+                  ? ` ${t('bookingSpecificDatesHelp')}`
+                  : bookingType === BOOKING_TYPE.DATE_RANGE
+                    ? ` ${t('bookingRangeHelp')}`
+                    : ''}
               </p>
             </div>
 
-            {dateLoading && <p className="booking-subtitle">Loading provider availability...</p>}
+            {dateLoading && <p className="booking-subtitle">{t('bookingLoadingAvailability')}</p>}
           </div>
         </>
       );
@@ -640,9 +698,9 @@ export default function BookingModal({ provider, onClose }) {
           <div className="booking-time-panel">
             <p className="time-panel-label">{formattedSelectedRange}</p>
             {slotLoading ? (
-              <p className="booking-subtitle">Loading available slots...</p>
+              <p className="booking-subtitle">{t('bookingLoadingSlots')}</p>
             ) : availableSlots.length === 0 ? (
-              <p className="booking-subtitle">No valid slots available for this schedule.</p>
+              <p className="booking-subtitle">{t('bookingNoCommonSlots')}</p>
             ) : (
               <div className="time-slots">
                 {availableSlots.map((slot) => (
@@ -651,6 +709,7 @@ export default function BookingModal({ provider, onClose }) {
                     type="button"
                     className={`time-slot ${selectedTime === slot.time ? 'selected' : ''}`}
                     onClick={() => setSelectedTime(slot.time)}
+                    aria-pressed={selectedTime === slot.time}
                   >
                     {slot.time}
                   </button>

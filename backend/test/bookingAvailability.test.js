@@ -1,4 +1,8 @@
-const { checkScheduleConflict } = require('../utils/bookingAvailability');
+const {
+  checkScheduleConflict,
+  normalizeBookingDates,
+  intersectSlotsByTime,
+} = require('../utils/bookingAvailability');
 
 const createConnection = (rows) => ({
   query: vi.fn(async () => [rows]),
@@ -102,5 +106,52 @@ describe('bookingAvailability.checkScheduleConflict', () => {
 
     expect(result.conflict).toBe(true);
     expect(result.conflictRequestId).toBe(4);
+  });
+});
+
+
+describe('bookingAvailability.normalizeBookingDates', () => {
+  it('normalizes one-day bookings to one date', () => {
+    expect(normalizeBookingDates({
+      bookingType: 'one_day',
+      startDate: '2099-12-31',
+    })).toEqual(['2099-12-31']);
+  });
+
+  it('expands a continuous date range into individual dates', () => {
+    expect(normalizeBookingDates({
+      bookingType: 'date_range',
+      startDate: '2099-12-30',
+      endDate: '2100-01-02',
+    })).toEqual([
+      '2099-12-30',
+      '2099-12-31',
+      '2100-01-01',
+      '2100-01-02',
+    ]);
+  });
+
+  it('deduplicates and sorts specific dates', () => {
+    expect(normalizeBookingDates({
+      bookingType: 'specific_dates',
+      dates: ['2100-01-05', '2100-01-02', '2100-01-05'],
+    })).toEqual(['2100-01-02', '2100-01-05']);
+  });
+});
+
+describe('bookingAvailability.intersectSlotsByTime', () => {
+  it('returns only times available on every selected date', () => {
+    expect(intersectSlotsByTime([
+      [{ time: '08:00:00' }, { time: '09:00:00' }, { time: '10:00:00' }],
+      [{ time: '09:00:00' }, { time: '10:00:00' }, { time: '11:00:00' }],
+      [{ time: '09:00:00' }, { time: '10:00:00' }, { time: '14:00:00' }],
+    ])).toEqual([{ time: '09:00:00' }, { time: '10:00:00' }]);
+  });
+
+  it('returns no slots when any selected date has none', () => {
+    expect(intersectSlotsByTime([
+      [{ time: '09:00:00' }],
+      [],
+    ])).toEqual([]);
   });
 });

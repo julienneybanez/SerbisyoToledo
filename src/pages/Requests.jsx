@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { getUser, serviceRequestAPI } from '../services/api';
+import { getUser, serviceProfileAPI, serviceRequestAPI } from '../services/api';
 import RequestDetailsModal from '../components/common/RequestDetailsModal';
 import ReviewModal from '../components/common/ReviewModal';
 import ReportUserModal from '../components/common/ReportUserModal';
@@ -42,6 +42,32 @@ const saveHiddenRequestIds = (user, ids) => {
   }
 
   localStorage.setItem(key, JSON.stringify(ids));
+};
+
+const addDaysIso = (days) => {
+  const date = new Date();
+  date.setDate(date.getDate() + days);
+  return date.toISOString().slice(0, 10);
+};
+
+const getContiguousDatesFrom = (availableDates, startDate) => {
+  if (!startDate) return [];
+  const sorted = Array.from(new Set(availableDates || [])).sort();
+  const startIndex = sorted.indexOf(startDate);
+  if (startIndex < 0) return [];
+
+  const result = [startDate];
+  let previous = new Date(`${startDate}T00:00:00`);
+
+  for (let index = startIndex + 1; index < sorted.length; index += 1) {
+    const current = new Date(`${sorted[index]}T00:00:00`);
+    const diffDays = Math.round((current.getTime() - previous.getTime()) / 86400000);
+    if (diffDays !== 1) break;
+    result.push(sorted[index]);
+    previous = current;
+  }
+
+  return result;
 };
 
 const CANCELLATION_REASONS = {
@@ -91,6 +117,11 @@ export default function Requests() {
     proposedEndDate: '',
     proposedStartTime: '',
     estimatedDurationMinutes: 60,
+    serviceProfileId: null,
+    bookingType: 'one_day',
+    availableDates: [],
+    availableSlots: [],
+    availabilityLoading: false,
     reason: '',
     error: '',
   });
@@ -260,22 +291,68 @@ export default function Requests() {
     }));
   };
 
-  const openRescheduleDialog = (request) => {
-    const startDate = request.start_date || request.scheduled_date || '';
-    const endDate = request.end_date || request.scheduled_date || '';
+  const openRescheduleDialog = async (request) => {
+    const currentStartDate = String(request.start_date || request.scheduled_date || '').slice(0, 10);
+    const currentEndDate = String(request.end_date || request.scheduled_date || currentStartDate).slice(0, 10);
     const startTime = request.start_time || request.scheduled_time || '09:00';
     const sqlTime = String(startTime).slice(0, 5);
+    const serviceProfileId = Number(request.service_profile_id || request.serviceProfileId || 0);
+    const duration = Number(request.estimated_duration_minutes || 60);
+    const bookingType = request.booking_type === 'multi_day' ? 'date_range' : 'one_day';
 
     setRescheduleDialog({
       open: true,
       requestId: request.id,
-      proposedStartDate: String(startDate).slice(0, 10),
-      proposedEndDate: String(endDate).slice(0, 10),
+      proposedStartDate: currentStartDate,
+      proposedEndDate: currentEndDate,
       proposedStartTime: sqlTime,
-      estimatedDurationMinutes: Number(request.estimated_duration_minutes || 60),
+      estimatedDurationMinutes: duration,
+      serviceProfileId,
+      bookingType,
+      availableDates: [],
+      availableSlots: [],
+      availabilityLoading: true,
       reason: '',
       error: '',
     });
+
+    if (!serviceProfileId) {
+      setRescheduleDialog((prev) => ({
+        ...prev,
+        availabilityLoading: false,
+        error: t('requestsProviderScheduleUnavailable'),
+      }));
+      return;
+    }
+
+    try {
+      const response = await serviceProfileAPI.getAvailableDates(serviceProfileId, {
+        fromDate: addDaysIso(0),
+        toDate: addDaysIso(60),
+        duration,
+      });
+      const dates = Array.isArray(response.data?.dates) ? response.data.dates : [];
+      const nextStart = dates.includes(currentStartDate) ? currentStartDate : (dates[0] || '');
+      const contiguous = getContiguousDatesFrom(dates, nextStart);
+      const nextEnd = bookingType === 'date_range' && contiguous.includes(currentEndDate)
+        ? currentEndDate
+        : nextStart;
+
+      setRescheduleDialog((prev) => ({
+        ...prev,
+        proposedStartDate: nextStart,
+        proposedEndDate: nextEnd,
+        availableDates: dates,
+        availabilityLoading: false,
+        error: dates.length === 0 ? t('requestsNoProviderDates') : '',
+      }));
+    } catch (error) {
+      setRescheduleDialog((prev) => ({
+        ...prev,
+        availabilityLoading: false,
+        error: error.message || t('requestsLoadProviderDatesFailed'),
+      }));
+    }
   };
 
   const closeRescheduleDialog = () => {
@@ -286,6 +363,11 @@ export default function Requests() {
       proposedEndDate: '',
       proposedStartTime: '',
       estimatedDurationMinutes: 60,
+      serviceProfileId: null,
+      bookingType: 'one_day',
+      availableDates: [],
+      availableSlots: [],
+      availabilityLoading: false,
       reason: '',
       error: '',
     });
@@ -338,6 +420,78 @@ export default function Requests() {
       void handleViewDetails(targetRequest);
     }
   }, [handleViewDetails, requests, searchParams, selectedRequest]);
+
+  useEffect(() => {
+    const loadRescheduleSlots = async () => {
+      if (
+        !rescheduleDialog.open
+        || !rescheduleDialog.serviceProfileId
+        || !rescheduleDialog.proposedStartDate
+        || rescheduleDialog.availableDates.length === 0
+      ) {
+        return;
+      }
+
+      const contiguousDates = getContiguousDatesFrom(
+        rescheduleDialog.availableDates,
+        rescheduleDialog.proposedStartDate
+      );
+
+      if (
+        rescheduleDialog.bookingType === 'date_range'
+        && !contiguousDates.includes(rescheduleDialog.proposedEndDate)
+      ) {
+        setRescheduleDialog((prev) => ({
+          ...prev,
+          proposedEndDate: prev.proposedStartDate,
+          availableSlots: [],
+        }));
+        return;
+      }
+
+      setRescheduleDialog((prev) => ({ ...prev, availabilityLoading: true, error: '' }));
+
+      try {
+        const response = await serviceProfileAPI.getAvailableSlots(rescheduleDialog.serviceProfileId, {
+          date: rescheduleDialog.proposedStartDate,
+          endDate: rescheduleDialog.bookingType === 'date_range'
+            ? rescheduleDialog.proposedEndDate
+            : rescheduleDialog.proposedStartDate,
+          bookingType: rescheduleDialog.bookingType,
+          duration: Number(rescheduleDialog.estimatedDurationMinutes || 0),
+        });
+
+        const slots = Array.isArray(response.data?.slots) ? response.data.slots : [];
+        setRescheduleDialog((prev) => ({
+          ...prev,
+          availableSlots: slots,
+          proposedStartTime: slots.some((slot) => String(slot.time).slice(0, 5) === String(prev.proposedStartTime).slice(0, 5))
+            ? prev.proposedStartTime
+            : (slots[0]?.time ? String(slots[0].time).slice(0, 5) : ''),
+          availabilityLoading: false,
+          error: slots.length === 0 ? t('requestsNoCommonProviderTime') : '',
+        }));
+      } catch (error) {
+        setRescheduleDialog((prev) => ({
+          ...prev,
+          availableSlots: [],
+          proposedStartTime: '',
+          availabilityLoading: false,
+          error: error.message || t('requestsLoadProviderTimesFailed'),
+        }));
+      }
+    };
+
+    void loadRescheduleSlots();
+  }, [
+    rescheduleDialog.open,
+    rescheduleDialog.serviceProfileId,
+    rescheduleDialog.proposedStartDate,
+    rescheduleDialog.proposedEndDate,
+    rescheduleDialog.estimatedDurationMinutes,
+    rescheduleDialog.bookingType,
+    rescheduleDialog.availableDates,
+  ]);
 
   const handleSubmitReschedule = async () => {
     const trimmedReason = rescheduleDialog.reason.trim();
@@ -1137,31 +1291,51 @@ export default function Requests() {
             </div>
             <div className="decline-dialog-body">
               <label htmlFor="reschedule-start-date" className="decline-dialog-label">{t('requestsStartDate')}</label>
-              <input
+              <select
                 id="reschedule-start-date"
                 className="decline-dialog-textarea"
-                type="date"
                 value={rescheduleDialog.proposedStartDate}
-                onChange={(event) => setRescheduleDialog((prev) => ({ ...prev, proposedStartDate: event.target.value, error: '' }))}
-              />
+                onChange={(event) => {
+                  const nextStart = event.target.value;
+                  setRescheduleDialog((prev) => ({
+                    ...prev,
+                    proposedStartDate: nextStart,
+                    proposedEndDate: prev.bookingType === 'date_range' ? nextStart : nextStart,
+                    error: '',
+                  }));
+                }}
+                disabled={rescheduleDialog.availabilityLoading || rescheduleDialog.availableDates.length === 0}
+              >
+                {rescheduleDialog.availableDates.map((date) => (
+                  <option key={date} value={date}>{date}</option>
+                ))}
+              </select>
 
               <label htmlFor="reschedule-end-date" className="decline-dialog-label">{t('requestsEndDate')}</label>
-              <input
+              <select
                 id="reschedule-end-date"
                 className="decline-dialog-textarea"
-                type="date"
                 value={rescheduleDialog.proposedEndDate}
                 onChange={(event) => setRescheduleDialog((prev) => ({ ...prev, proposedEndDate: event.target.value, error: '' }))}
-              />
+                disabled={rescheduleDialog.bookingType !== 'date_range' || rescheduleDialog.availabilityLoading}
+              >
+                {getContiguousDatesFrom(rescheduleDialog.availableDates, rescheduleDialog.proposedStartDate).map((date) => (
+                  <option key={date} value={date}>{date}</option>
+                ))}
+              </select>
 
               <label htmlFor="reschedule-start-time" className="decline-dialog-label">{t('requestsStartTime')}</label>
-              <input
+              <select
                 id="reschedule-start-time"
                 className="decline-dialog-textarea"
-                type="time"
-                value={rescheduleDialog.proposedStartTime}
+                value={String(rescheduleDialog.proposedStartTime || '').slice(0, 5)}
                 onChange={(event) => setRescheduleDialog((prev) => ({ ...prev, proposedStartTime: event.target.value, error: '' }))}
-              />
+                disabled={rescheduleDialog.availabilityLoading || rescheduleDialog.availableSlots.length === 0}
+              >
+                {rescheduleDialog.availableSlots.map((slot) => (
+                  <option key={slot.time} value={String(slot.time).slice(0, 5)}>{String(slot.time).slice(0, 5)}</option>
+                ))}
+              </select>
 
               <label htmlFor="reschedule-duration" className="decline-dialog-label">{t('requestsEstimatedDurationMinutes')}</label>
               <input
@@ -1171,7 +1345,8 @@ export default function Requests() {
                 min="1"
                 max="1440"
                 value={rescheduleDialog.estimatedDurationMinutes}
-                onChange={(event) => setRescheduleDialog((prev) => ({ ...prev, estimatedDurationMinutes: event.target.value, error: '' }))}
+                disabled
+                aria-readonly="true"
               />
 
               <label htmlFor="reschedule-reason" className="decline-dialog-label">Reason</label>
@@ -1191,7 +1366,18 @@ export default function Requests() {
               <button type="button" className="decline-btn-cancel" onClick={closeRescheduleDialog} disabled={actionLoading === rescheduleDialog.requestId}>
                 {t('requestsCancelAction')}
               </button>
-              <button type="button" className="decline-btn-confirm" onClick={handleSubmitReschedule} disabled={actionLoading === rescheduleDialog.requestId}>
+              <button
+                type="button"
+                className="decline-btn-confirm"
+                onClick={handleSubmitReschedule}
+                disabled={
+                  actionLoading === rescheduleDialog.requestId
+                  || rescheduleDialog.availabilityLoading
+                  || !rescheduleDialog.proposedStartDate
+                  || !rescheduleDialog.proposedStartTime
+                  || rescheduleDialog.availableSlots.length === 0
+                }
+              >
                 {actionLoading === rescheduleDialog.requestId ? t('requestsSending') : t('requestsSendProposal')}
               </button>
             </div>

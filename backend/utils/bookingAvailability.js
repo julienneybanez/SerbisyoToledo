@@ -560,6 +560,143 @@ const getAvailableSlotsForDate = async (
   return slots;
 };
 
+const normalizeBookingDates = ({ bookingType = 'one_day', startDate, endDate, dates = [] } = {}) => {
+  const normalizedType = String(bookingType || 'one_day').trim().toLowerCase();
+
+  if (normalizedType === 'specific_dates') {
+    return Array.from(new Set(
+      (Array.isArray(dates) ? dates : [])
+        .map((value) => String(value || '').trim())
+        .filter((value) => parseDateOnly(value))
+    )).sort();
+  }
+
+  const parsedStart = parseDateOnly(startDate);
+  if (!parsedStart) return [];
+
+  if (normalizedType !== 'date_range' && normalizedType !== 'multi_day') {
+    return [formatDateOnly(parsedStart)];
+  }
+
+  const parsedEnd = parseDateOnly(endDate || startDate);
+  if (!parsedEnd || parsedEnd < parsedStart) return [];
+
+  const result = [];
+  for (const cursor = new Date(parsedStart); cursor <= parsedEnd; cursor.setUTCDate(cursor.getUTCDate() + 1)) {
+    result.push(formatDateOnly(cursor));
+  }
+  return result;
+};
+
+const intersectSlotsByTime = (slotsByDate = []) => {
+  const normalized = Array.isArray(slotsByDate)
+    ? slotsByDate.filter((slots) => Array.isArray(slots))
+    : [];
+
+  if (normalized.length === 0 || normalized.some((slots) => slots.length === 0)) {
+    return [];
+  }
+
+  const commonTimes = new Set(normalized[0].map((slot) => slot.time));
+  for (const slots of normalized.slice(1)) {
+    const times = new Set(slots.map((slot) => slot.time));
+    for (const time of Array.from(commonTimes)) {
+      if (!times.has(time)) commonTimes.delete(time);
+    }
+  }
+
+  return normalized[0].filter((slot) => commonTimes.has(slot.time));
+};
+
+const getCommonAvailableSlotsForDates = async (
+  connection,
+  {
+    serviceProfileId,
+    providerId,
+    dates,
+    durationMinutes,
+    slotStepMinutes = 60,
+    excludeRequestId = null,
+  }
+) => {
+  const normalizedDates = normalizeBookingDates({
+    bookingType: 'specific_dates',
+    dates,
+  });
+
+  if (normalizedDates.length === 0) {
+    return [];
+  }
+
+  const slotsByDate = [];
+  for (const date of normalizedDates) {
+    const slots = await getAvailableSlotsForDate(connection, {
+      serviceProfileId,
+      providerId,
+      date,
+      durationMinutes,
+      slotStepMinutes,
+      excludeRequestId,
+    });
+    slotsByDate.push(slots);
+    if (slots.length === 0) {
+      return [];
+    }
+  }
+
+  return intersectSlotsByTime(slotsByDate);
+};
+
+const isScheduleAvailableForDates = async (
+  connection,
+  {
+    serviceProfileId,
+    providerId,
+    dates,
+    startTime,
+    durationMinutes,
+    excludeRequestId = null,
+  }
+) => {
+  const normalizedStartTime = parseTimeInputToSql(startTime);
+  const normalizedDuration = Number(durationMinutes || 0);
+  const normalizedDates = Array.from(new Set(
+    (Array.isArray(dates) ? dates : [])
+      .map((value) => String(value || '').trim())
+      .filter((value) => parseDateOnly(value))
+  )).sort();
+
+  if (!normalizedStartTime || normalizedDates.length === 0) {
+    return { available: false, reason: 'invalid_dates', message: 'Invalid booking dates or start time.' };
+  }
+
+  if (!Number.isInteger(normalizedDuration) || normalizedDuration <= 0 || normalizedDuration > 24 * 60) {
+    return { available: false, reason: 'invalid_duration', message: 'Invalid booking duration.' };
+  }
+
+  for (const date of normalizedDates) {
+    const slots = await getAvailableSlotsForDate(connection, {
+      serviceProfileId,
+      providerId,
+      date,
+      durationMinutes: normalizedDuration,
+      slotStepMinutes: 60,
+      excludeRequestId,
+    });
+
+    if (!slots.some((slot) => slot.time === normalizedStartTime)) {
+      return {
+        available: false,
+        reason: 'slot_unavailable',
+        date,
+        message: `The selected time is not available on ${date}.`,
+      };
+    }
+  }
+
+  return { available: true };
+};
+
 const isScheduleAvailableForRange = async (
   connection,
   {
@@ -662,5 +799,9 @@ module.exports = {
   ensureAvailabilitySettings,
   getAvailabilityWindowsForDate,
   getAvailableSlotsForDate,
+  normalizeBookingDates,
+  intersectSlotsByTime,
+  getCommonAvailableSlotsForDates,
+  isScheduleAvailableForDates,
   isScheduleAvailableForRange,
 };
