@@ -458,3 +458,52 @@
     transform: none;
   }
 }
+
+/* Homepage section flow consolidated refinement */
+/* Homepage section transitions: rely on whitespace and background tone instead of full-width divider lines. */
+.home-page .home-hero,
+.home-page .how-it-works-section,
+.home-page .home-faq-section {
+  border-top: 0;
+  border-bottom: 0;
+}
+
+/* Phase 1 compatibility: the older readability pass still contains sizing rules for the
+   previous compact Popular Services cards. Keep the new image-first cards authoritative. */
+.home-page .home-category-card {
+  min-height: 0;
+  display: block;
+  grid-template-columns: none;
+  gap: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.home-page .home-category-image-wrap {
+  width: 100%;
+}
+
+.home-page .home-category-image {
+  width: 100%;
+  height: 100%;
+}
+
+.home-page .home-category-arrow {
+  width: auto;
+  height: auto;
+  border: 0;
+  background: transparent;
+}
+
+@media (max-width: 767.98px) {
+  .home-page .home-category-card {
+    min-height: 0;
+    grid-template-columns: none;
+  }
+
+  .home-page .home-category-image {
+    width: 100%;
+    height: 100%;
+  }
+}
