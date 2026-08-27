@@ -165,10 +165,15 @@
 
 .booking-close {
   position: absolute;
-  top: 1.5rem;
-  right: 1.5rem;
+  top: 1.25rem;
+  right: 1.25rem;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
   background: transparent;
   border: none;
+  border-radius: 50%;
   font-size: 1.2rem;
   color: #94a3b8;
   cursor: pointer;
@@ -247,8 +252,8 @@
 }
 
 .calendar-nav {
-  width: 34px;
-  height: 34px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   border: none;
   background: #e7eefb;
@@ -431,6 +436,30 @@
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
+}
+
+.booking-type-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem 0.9rem;
+}
+
+.booking-type-option {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.1rem;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.booking-type-option input[type='radio'] {
+  width: 18px;
+  height: 18px;
+  min-height: 18px;
+  margin: 0;
+  accent-color: var(--primary);
 }
 
 .booking-form-group label {
@@ -718,8 +747,8 @@
   }
 
   .calendar-day {
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
     font-size: 0.85rem;
   }
 
@@ -793,7 +822,8 @@
   .calendar-day {
     width: 100%;
     min-width: 0;
-    height: 40px;
+    min-height: 44px;
+    height: 44px;
     font-size: 0.8rem;
     border-radius: 999px;
   }
@@ -868,4 +898,33 @@
 .calendar-nav:focus-visible {
   outline: 3px solid color-mix(in srgb, var(--primary) 45%, transparent);
   outline-offset: 2px;
+}
+
+
+@media (max-width: 360px) {
+  .booking-stage-content {
+    padding: 0.75rem;
+  }
+
+  .booking-calendar {
+    padding: 0.65rem;
+  }
+
+  .calendar-grid,
+  .calendar-weekdays {
+    gap: 0.08rem;
+  }
+
+  .booking-type-options {
+    gap: 0.25rem 0.65rem;
+  }
+
+  .booking-content {
+    padding-inline: 0.75rem;
+  }
+
+  .booking-actions {
+    margin-inline: -0.75rem;
+    padding-inline: 0.75rem;
+  }
 }
