@@ -142,6 +142,9 @@ function App() {
   const shouldLiftChatbotButton = isMobileAuthenticated && location.pathname.startsWith('/provider/');
   const isMobileShellLayout = isMobileViewport;
   const hideChatbotOnRoute = location.pathname === '/about';
+  const isPublicProviderRoute = /^\/provider\/[^/]+\/?$/.test(location.pathname);
+  const shouldShowPublicFooter = ['/', '/about', '/feed'].includes(location.pathname)
+    || isPublicProviderRoute;
   const isProviderWorkspace = Boolean(
     currentUser?.userType === 'tradesperson'
     && isAuthenticated()
@@ -240,7 +243,9 @@ function App() {
         />
       )}
 
-      <Footer className={isMobileAuthenticated ? 'mobile-footer-minimized' : ''} />
+      {shouldShowPublicFooter && (
+        <Footer className="public-route-footer" />
+      )}
 
       {!hideChatbotOnRoute && (
         <>

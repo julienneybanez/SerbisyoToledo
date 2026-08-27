@@ -338,7 +338,7 @@
     padding-bottom: calc(var(--mobile-nav-height) + 16px + env(safe-area-inset-bottom));
   }
 
-  .mobile-shell-layout:not(.mobile-auth-layout) .footer {
+  .mobile-shell-layout .public-route-footer {
     padding-bottom: calc(1.5rem + var(--mobile-nav-height) + env(safe-area-inset-bottom)) !important;
   }
 
@@ -351,10 +351,6 @@
 
   .mobile-auth-layout .floating-btn.floating-btn-avoid-sticky {
     bottom: calc(var(--mobile-nav-height) + var(--mobile-sticky-action-height) + 16px + env(safe-area-inset-bottom));
-  }
-
-  .mobile-auth-layout .footer.mobile-footer-minimized {
-    display: none;
   }
 
   .mobile-sheet-overlay {
