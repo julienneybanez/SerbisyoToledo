@@ -320,7 +320,7 @@ export default function Requests() {
       setRescheduleDialog((prev) => ({
         ...prev,
         availabilityLoading: false,
-        error: 'Provider schedule information is unavailable for this request.',
+        error: t('requestsProviderScheduleUnavailable'),
       }));
       return;
     }
@@ -344,13 +344,13 @@ export default function Requests() {
         proposedEndDate: nextEnd,
         availableDates: dates,
         availabilityLoading: false,
-        error: dates.length === 0 ? 'This provider has no available dates in the current booking window.' : '',
+        error: dates.length === 0 ? t('requestsNoProviderDates') : '',
       }));
     } catch (error) {
       setRescheduleDialog((prev) => ({
         ...prev,
         availabilityLoading: false,
-        error: error.message || 'Unable to load the provider\'s available dates.',
+        error: error.message || t('requestsLoadProviderDatesFailed'),
       }));
     }
   };
@@ -469,7 +469,7 @@ export default function Requests() {
             ? prev.proposedStartTime
             : (slots[0]?.time ? String(slots[0].time).slice(0, 5) : ''),
           availabilityLoading: false,
-          error: slots.length === 0 ? 'No common provider time is available for this schedule.' : '',
+          error: slots.length === 0 ? t('requestsNoCommonProviderTime') : '',
         }));
       } catch (error) {
         setRescheduleDialog((prev) => ({
@@ -477,7 +477,7 @@ export default function Requests() {
           availableSlots: [],
           proposedStartTime: '',
           availabilityLoading: false,
-          error: error.message || 'Unable to load the provider\'s available times.',
+          error: error.message || t('requestsLoadProviderTimesFailed'),
         }));
       }
     };
