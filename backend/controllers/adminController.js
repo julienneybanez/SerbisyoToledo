@@ -401,7 +401,11 @@ exports.getUserActivity = async (req, res) => {
     );
 
     const [recentRequests] = await db.query(
-      `SELECT id, job_title, status, scheduled_date, created_at
+      `SELECT id,
+              COALESCE(service_type_label, 'Service Request') AS service_label,
+              status,
+              start_date AS scheduled_date,
+              created_at
        FROM service_requests
        WHERE client_id = ? OR provider_id = ?
        ORDER BY created_at DESC
@@ -443,7 +447,7 @@ exports.getReports = async (req, res) => {
               r.screenshot_data, r.screenshot_mime, r.created_at,
               reporter.full_name as reporter_name, reporter.user_type as reporter_type,
               reported.full_name as reported_user_name, reported.user_type as reported_user_type,
-              sr.job_title
+              COALESCE(sr.service_type_label, 'Service Request') AS service_label
        FROM user_reports r
        JOIN users reporter ON r.reporter_id = reporter.id
        JOIN users reported ON r.reported_user_id = reported.id
@@ -474,7 +478,7 @@ exports.getReports = async (req, res) => {
       resolution: row.resolution_notes,
       moderationNotes: row.moderation_notes,
       date: row.created_at,
-      jobTitle: row.job_title,
+      serviceLabel: row.service_label,
       screenshot: row.screenshot_data
         ? `data:${row.screenshot_mime || 'image/jpeg'};base64,${Buffer.from(row.screenshot_data).toString('base64')}`
         : null,

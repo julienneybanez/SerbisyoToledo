@@ -99,7 +99,7 @@ export default function ReviewModal({ request, onClose, onSubmit, loading }) {
           </div>
           <h2>Leave a Review</h2>
           <p className="review-subtitle">
-            How was your experience with <strong>{request.provider_name}</strong> for "{request.job_title}"?
+            How was your experience with <strong>{request.provider_name}</strong> for "{request.service_display_label || request.service_type_label || 'this service'}"?
           </p>
         </div>
 

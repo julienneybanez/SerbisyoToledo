@@ -1006,7 +1006,7 @@ export default function Requests() {
               <div key={request.id} className="request-card">
                 <div className="request-card-header">
                   <div className="request-title-section">
-                    <h3 className="request-title">{request.job_title}</h3>
+                    <h3 className="request-title">{request.service_display_label || request.service_type_label || 'Service Request'}</h3>
                     <span className={`request-status-badge ${getStatusBadgeClass(request.status)}`}>
                       {formatStatus(request.status)}
                     </span>

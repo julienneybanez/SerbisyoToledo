@@ -277,7 +277,7 @@ const ProviderCard = ({ provider, profile, onBack, hideBackLink = false }) => {
             <div className="portfolio-grid">
               {profile.portfolio.map((item, index) => {
                 const hasImage = Boolean(item.src);
-                const title = item.jobTitle || item.caption || t('providerCompletedJobFallback');
+                const title = item.serviceLabel || item.caption || t('providerCompletedJobFallback');
                 const completedDate = item.completedAt
                   ? new Date(item.completedAt).toLocaleDateString(undefined, {
                       month: 'short',

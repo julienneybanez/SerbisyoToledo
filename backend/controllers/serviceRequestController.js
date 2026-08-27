@@ -20,7 +20,6 @@ const {
   supportsRequestDatesTable,
 } = require('../utils/bookingAvailability');
 
-const MAX_JOB_TITLE_LENGTH = 255;
 const MAX_JOB_DETAILS_LENGTH = 2000;
 const MAX_DECLINE_REASON_LENGTH = 500;
 const MAX_RESCHEDULE_REASON_LENGTH = 1000;
@@ -169,6 +168,16 @@ const getRequestCategoryKeys = (requestRow = {}) => {
     .filter(Boolean);
 };
 
+const getRequestDisplayLabel = (requestRow = {}) => {
+  const storedLabel = String(requestRow.service_type_label || '').trim();
+  if (storedLabel) return storedLabel;
+
+  const serviceType = getServiceTypeByKey(requestRow.service_type_key);
+  if (serviceType?.label) return serviceType.label;
+
+  return 'Service Request';
+};
+
 const getPersistedRequestDates = async (queryable, requestRow = {}) => {
   if (await supportsRequestDatesTable(queryable)) {
     const [rows] = await queryable.query(
@@ -242,8 +251,11 @@ const attachBookingDates = async (queryable, requestRows = []) => {
       ? 'one_day'
       : (isContinuous ? 'date_range' : 'specific_dates');
 
+    const { job_title: _legacyJobTitle, ...requestWithoutLegacyTitle } = row;
+
     return {
-      ...row,
+      ...requestWithoutLegacyTitle,
+      service_display_label: getRequestDisplayLabel(row),
       booking_dates: bookingDates,
       selected_dates: bookingDates,
       booking_mode: bookingMode,
@@ -321,7 +333,6 @@ exports.createRequest = async (req, res) => {
       estimatedDurationMinutes,
     } = req.body;
 
-    const jobTitle = String(req.body.jobTitle || '').trim();
     const jobDetails = String(req.body.jobDetails || '').trim();
 
     if (req.user.userType !== 'client') {
@@ -331,17 +342,17 @@ exports.createRequest = async (req, res) => {
       });
     }
 
-    if (!serviceProfileId || !jobTitle || !jobDetails) {
+    if (!serviceProfileId || !jobDetails) {
       return res.status(400).json({
         success: false,
-        message: 'All fields are required'
+        message: 'Service profile and job details are required'
       });
     }
 
-    if (jobTitle.length > MAX_JOB_TITLE_LENGTH || jobDetails.length > MAX_JOB_DETAILS_LENGTH) {
+    if (jobDetails.length > MAX_JOB_DETAILS_LENGTH) {
       return res.status(400).json({
         success: false,
-        message: 'Request details exceed allowed length limits'
+        message: 'Job details exceed the allowed length limit'
       });
     }
 
@@ -440,6 +451,9 @@ exports.createRequest = async (req, res) => {
     const effectiveServiceType = requestedServiceTypeKey
       ? offeredServiceTypeByKey.get(requestedServiceTypeKey)
       : (offeredServiceTypes[0] || null);
+    const serviceRequestLabel = String(
+      effectiveServiceType?.label || profileCategories[0] || 'Service Request'
+    ).trim() || 'Service Request';
 
     // Serialize booking creation for the client and provider. This prevents
     // simultaneous requests from racing past category and schedule checks.
@@ -583,8 +597,10 @@ exports.createRequest = async (req, res) => {
         profile.provider_id,
         profile.service_profile_id,
         effectiveServiceType?.key || null,
-        effectiveServiceType?.label || null,
-        jobTitle,
+        serviceRequestLabel,
+        // Temporary DB compatibility only: job_title is no longer client input
+        // and should be dropped when the later database migration is applied.
+        serviceRequestLabel,
         jobDetails,
         normalized.storageBookingType,
         normalized.normalizedStartDate,
@@ -618,7 +634,7 @@ exports.createRequest = async (req, res) => {
     await connection.query(
       `INSERT INTO notifications (user_id, type, title, message, related_request_id)
        VALUES (?, 'request_received', ?, ?, ?)`,
-      [profile.provider_id, 'New Service Request', `${clientName} has requested your service: ${jobTitle}`, requestId]
+      [profile.provider_id, 'New Service Request', `${clientName} has requested your service: ${serviceRequestLabel}`, requestId]
     );
 
     await connection.commit();
@@ -629,7 +645,7 @@ exports.createRequest = async (req, res) => {
       data: {
         requestId,
         serviceTypeKey: effectiveServiceType?.key || null,
-        serviceTypeLabel: effectiveServiceType?.label || null,
+        serviceTypeLabel: serviceRequestLabel,
         bookingType: normalized.canonicalBookingType,
         bookingDates: normalized.normalizedDates,
         startDate: normalized.normalizedStartDate,
@@ -872,7 +888,7 @@ exports.updateRequestStatus = async (req, res) => {
         [
           otherUserId,
           'Booking Cancelled',
-          `${actorName} cancelled the booking "${request.job_title}".`,
+          `${actorName} cancelled the booking "${getRequestDisplayLabel(request)}".`,
           requestId,
         ]
       );
@@ -943,12 +959,12 @@ exports.updateRequestStatus = async (req, res) => {
         await connection.query(
           `INSERT INTO notifications (user_id, type, title, message, related_request_id)
            VALUES (?, 'service_completed', ?, ?, ?)`,
-          [request.client_id, 'Service Completed', `Your service request "${request.job_title}" has been completed! You can now leave a review.`, requestId]
+          [request.client_id, 'Service Completed', `Your service request "${getRequestDisplayLabel(request)}" has been completed! You can now leave a review.`, requestId]
         );
         await connection.query(
           `INSERT INTO notifications (user_id, type, title, message, related_request_id)
            VALUES (?, 'service_completed', ?, ?, ?)`,
-          [request.provider_id, 'Service Completed', `The service "${request.job_title}" has been marked as completed by both parties.`, requestId]
+          [request.provider_id, 'Service Completed', `The service "${getRequestDisplayLabel(request)}" has been marked as completed by both parties.`, requestId]
         );
 
         await connection.commit();
@@ -966,7 +982,7 @@ exports.updateRequestStatus = async (req, res) => {
       await connection.query(
         `INSERT INTO notifications (user_id, type, title, message, related_request_id)
          VALUES (?, 'completion_confirmed', ?, ?, ?)`,
-        [otherUserId, 'Completion Pending', `${confirmerName} has confirmed completion for "${request.job_title}". Please confirm on your end.`, requestId]
+        [otherUserId, 'Completion Pending', `${confirmerName} has confirmed completion for "${getRequestDisplayLabel(request)}". Please confirm on your end.`, requestId]
       );
 
       await connection.commit();
@@ -1030,17 +1046,17 @@ exports.updateRequestStatus = async (req, res) => {
       case 'accepted':
         notificationType = 'request_accepted';
         notificationTitle = 'Request Accepted!';
-        notificationMessage = `${request.provider_name} has accepted your service request: ${request.job_title}`;
+        notificationMessage = `${request.provider_name} has accepted your service request: ${getRequestDisplayLabel(request)}`;
         break;
       case 'declined':
         notificationType = 'request_declined';
         notificationTitle = 'Request Declined';
-        notificationMessage = `${request.provider_name} declined your service request "${request.job_title}".\n\nReason: ${trimmedReason}`;
+        notificationMessage = `${request.provider_name} declined your service request "${getRequestDisplayLabel(request)}".\n\nReason: ${trimmedReason}`;
         break;
       case 'on_the_way':
         notificationType = 'provider_on_way';
         notificationTitle = 'Provider On The Way!';
-        notificationMessage = `${request.provider_name} is now on the way for: ${request.job_title}`;
+        notificationMessage = `${request.provider_name} is now on the way for: ${getRequestDisplayLabel(request)}`;
         break;
       default:
         break;
@@ -1291,7 +1307,7 @@ exports.proposeReschedule = async (req, res) => {
       [
         recipientId,
         'Reschedule Proposed',
-        `${actorName} proposed a new schedule for "${request.job_title}".`,
+        `${actorName} proposed a new schedule for "${getRequestDisplayLabel(request)}".`,
         request.id,
       ]
     );
@@ -1503,7 +1519,7 @@ exports.respondToReschedule = async (req, res) => {
         proposerId,
         action === 'accepted' ? 'reschedule_accepted' : 'reschedule_declined',
         `Reschedule ${action}`,
-        `${responderName} ${action} the reschedule proposal for "${request.job_title}".`,
+        `${responderName} ${action} the reschedule proposal for "${getRequestDisplayLabel(request)}".`,
         request.id,
       ]
     );
@@ -1577,7 +1593,7 @@ exports.requestDiscussion = async (req, res) => {
     await db.query(
       `INSERT INTO notifications (user_id, type, title, message, related_request_id)
        VALUES (?, 'discussion_requested', ?, ?, ?)`,
-      [request.provider_id, 'Discussion Request', `${request.client_name} wants to discuss details for: ${request.job_title}`, requestId]
+      [request.provider_id, 'Discussion Request', `${request.client_name} wants to discuss details for: ${getRequestDisplayLabel(request)}`, requestId]
     );
 
     res.json({
@@ -1802,7 +1818,7 @@ exports.createReview = async (req, res) => {
     await db.query(
       `INSERT INTO notifications (user_id, type, title, message, related_request_id)
        VALUES (?, 'review_received', ?, ?, ?)`,
-      [request.provider_id, 'New Review', `${request.client_name} left a ${rating}-star review for "${request.job_title}"`, requestId]
+      [request.provider_id, 'New Review', `${request.client_name} left a ${rating}-star review for "${getRequestDisplayLabel(request)}"`, requestId]
     );
 
     res.status(201).json({
@@ -1834,7 +1850,7 @@ exports.createReport = async (req, res) => {
     }
 
     const [requests] = await db.query(
-      `SELECT id, client_id, provider_id, job_title
+      `SELECT id, client_id, provider_id
        FROM service_requests
        WHERE id = ?
          AND (client_id = ? OR provider_id = ?)

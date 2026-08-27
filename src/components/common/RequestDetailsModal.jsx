@@ -86,7 +86,7 @@ export default function RequestDetailsModal({
           <div className="status-icon-wrapper">
             <i className={`bi ${getStatusIcon(request.status)}`}></i>
           </div>
-          <h2 className="modal-title">{request.job_title}</h2>
+          <h2 className="modal-title">{request.service_display_label || request.service_type_label || 'Service Request'}</h2>
           <span className={`status-badge-large ${getStatusBadgeClass(request.status)}`}>
             {formatStatus(request.status)}
           </span>

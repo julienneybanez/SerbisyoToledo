@@ -41,10 +41,12 @@ function getInitials(name) {
     .toUpperCase();
 }
 
-function formatJobTitle(value) {
-  const title = String(value || 'Service Request').trim();
-  if (!title) return 'Service Request';
-  return title.replace(/\b\w/g, (character) => character.toUpperCase());
+function formatServiceLabel(request) {
+  const label = String(
+    request?.service_display_label || request?.service_type_label || 'Service Request'
+  ).trim();
+  if (!label) return 'Service Request';
+  return label.replace(/\b\w/g, (character) => character.toUpperCase());
 }
 
 function getScheduledDate(request) {
@@ -539,7 +541,7 @@ export default function ServiceProviderDashboard() {
                       <i className="bi bi-tools"></i>
                     </span>
                     <div className="job-heading-copy">
-                      <h3 className="job-title">{formatJobTitle(job.job_title)}</h3>
+                      <h3 className="job-title">{formatServiceLabel(job)}</h3>
                       <p className="job-client">
                         <i className="bi bi-person" aria-hidden="true"></i>
                         {job.client_name || 'Client'}

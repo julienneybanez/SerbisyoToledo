@@ -128,7 +128,6 @@ export default function BookingModal({ provider, onClose }) {
 
   const [selectedTime, setSelectedTime] = useState('');
   const [selectedServiceTypeKey, setSelectedServiceTypeKey] = useState('');
-  const [jobTitle, setJobTitle] = useState('');
   const [jobDetails, setJobDetails] = useState('');
 
   const [submitting, setSubmitting] = useState(false);
@@ -706,7 +705,7 @@ export default function BookingModal({ provider, onClose }) {
 
     if (step === 3) {
       const hasValidServiceTypeSelection = providerServiceTypes.length <= 1 || Boolean(selectedServiceTypeKey);
-      return hasValidServiceTypeSelection && jobTitle.trim().length > 0 && jobDetails.trim().length > 0;
+      return hasValidServiceTypeSelection && jobDetails.trim().length > 0;
     }
 
     return true;
@@ -758,7 +757,6 @@ export default function BookingModal({ provider, onClose }) {
         scheduledDate: startDate,
         scheduledTime: selectedTime,
         estimatedDurationMinutes: Number(estimatedDurationMinutes),
-        jobTitle: jobTitle.trim(),
         jobDetails: jobDetails.trim(),
       };
 
@@ -999,17 +997,6 @@ export default function BookingModal({ provider, onClose }) {
               <input className="booking-input" value={providerServiceTypes[0].label} readOnly aria-readonly="true" />
             </div>
           )}
-
-          <div className="booking-form-group">
-            <label htmlFor="booking-job-title">{t('bookingJobTitle')}</label>
-            <input
-              id="booking-job-title"
-              className="booking-input"
-              value={jobTitle}
-              onChange={(event) => setJobTitle(event.target.value)}
-              placeholder={t('bookingJobTitlePlaceholder')}
-            />
-          </div>
 
           <div className="booking-form-group">
             <label htmlFor="booking-job-details">{t('bookingJobDetailsLocation')}</label>

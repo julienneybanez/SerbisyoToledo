@@ -8,7 +8,7 @@ exports.getNotifications = async (req, res) => {
     const offset = parseInt(req.query.offset) || 0;
 
     const [notifications] = await db.query(
-      `SELECT n.*, sr.job_title as request_title, sr.status as request_status
+      `SELECT n.*, COALESCE(sr.service_type_label, 'Service Request') as request_title, sr.status as request_status
        FROM notifications n
        LEFT JOIN service_requests sr ON n.related_request_id = sr.id
        WHERE n.user_id = ?

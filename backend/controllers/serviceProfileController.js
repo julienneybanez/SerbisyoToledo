@@ -5,6 +5,7 @@ const {
   normalizeCategoryLabels,
   getCategoryFilterLabels,
   getServiceTypesForProfile,
+  getServiceTypeByKey,
   isLegacyCategoryValue,
   validateServiceTypeKeysForCategories,
 } = require('../config/serviceTaxonomy');
@@ -959,7 +960,7 @@ exports.getProfileById = async (req, res) => {
       id: item.id,
       src: item.image_url || null,
       caption: item.caption,
-      jobTitle: item.job_title,
+      serviceLabel: item.job_title,
       jobDescription: item.job_description,
       serviceCategory: item.service_category,
       completedAt: item.completed_at,
@@ -1429,7 +1430,7 @@ exports.getMyPortfolio = async (req, res) => {
       src: item.image_url || null,
       caption: item.caption,
       serviceRequestId: item.service_request_id,
-      jobTitle: item.job_title,
+      serviceLabel: item.job_title,
       jobDescription: item.job_description,
       serviceCategory: item.service_category,
       completedAt: item.completed_at,
@@ -2123,7 +2124,7 @@ exports.listEligibleCompletedRequests = async (req, res) => {
     const serviceProfileId = profiles[0].id;
 
     const [rows] = await db.query(
-      `SELECT sr.id, sr.job_title, sr.job_details, sr.created_at, sr.start_date, sr.end_date
+      `SELECT sr.id, sr.service_type_key, sr.service_type_label, sr.created_at, sr.start_date, sr.end_date
        FROM service_requests sr
        LEFT JOIN portfolio_items pi ON pi.service_request_id = sr.id AND pi.service_profile_id = sr.service_profile_id
        WHERE sr.service_profile_id = ?
@@ -2180,7 +2181,7 @@ exports.createPortfolioFromCompletedRequest = async (req, res) => {
     const serviceProfileId = profiles[0].id;
 
     const [requests] = await connection.query(
-      `SELECT id, job_title, job_details, status, start_date, end_date
+      `SELECT id, service_type_key, service_type_label, status, start_date, end_date
        FROM service_requests
        WHERE id = ? AND service_profile_id = ? AND provider_id = ?
        LIMIT 1 FOR UPDATE`,
@@ -2235,6 +2236,11 @@ exports.createPortfolioFromCompletedRequest = async (req, res) => {
       [serviceProfileId]
     );
 
+    const completedServiceType = getServiceTypeByKey(requests[0].service_type_key);
+    const completedServiceLabel = String(
+      requests[0].service_type_label || completedServiceType?.label || 'Completed Service'
+    ).trim() || 'Completed Service';
+
     // Never auto-publish the client's private request details. Providers may
     // provide a separate public description explicitly.
     const safeDescription = String(description || '').trim();
@@ -2267,7 +2273,7 @@ exports.createPortfolioFromCompletedRequest = async (req, res) => {
         serviceRequestId,
         String(caption || '').trim(),
         orderResult[0].nextOrder,
-        requests[0].job_title,
+        completedServiceLabel,
         safeDescription,
         String(serviceCategory || '').trim() || null,
         publishFlag,

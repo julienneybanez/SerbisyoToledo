@@ -41,7 +41,8 @@
  * @typedef {Object} ServiceRequestDTO
  * @property {number} id
  * @property {string} status
- * @property {string} job_title
+ * @property {string | null} service_type_label
+ * @property {string} service_display_label
  * @property {string} job_details
  * @property {string | null} start_date
  * @property {string | null} end_date

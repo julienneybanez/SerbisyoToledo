@@ -91,7 +91,7 @@ export default function EditPortfolioModal({ onClose }) {
 
       const payload = new FormData();
       payload.append('serviceRequestId', String(Number(selectedCompletedRequestId)));
-      payload.append('caption', selectedRequest.job_title || 'Completed project');
+      payload.append('caption', selectedRequest.service_type_label || 'Completed service');
       payload.append('description', '');
       payload.append('serviceCategory', '');
       payload.append('isPublished', 'true');
@@ -386,7 +386,7 @@ export default function EditPortfolioModal({ onClose }) {
                   </option>
                   {eligibleCompletedRequests.map((request) => (
                     <option key={request.id} value={request.id}>
-                      {request.job_title || `Request #${request.id}`} ({new Date(request.created_at).toLocaleDateString()})
+                      {request.service_type_label || 'Completed service'} ({new Date(request.created_at).toLocaleDateString()})
                     </option>
                   ))}
                 </select>
@@ -444,11 +444,11 @@ export default function EditPortfolioModal({ onClose }) {
                     className={`portfolio-item ${!item.src ? 'portfolio-item-no-photo' : ''}`}
                   >
                     {item.src ? (
-                      <img src={item.src} alt={item.jobTitle || item.caption || 'Portfolio image'} />
+                      <img src={item.src} alt={item.serviceLabel || item.caption || 'Portfolio image'} />
                     ) : (
                       <div className="edit-portfolio-job-placeholder">
                         <i className="bi bi-briefcase-fill" aria-hidden="true"></i>
-                        <strong>{item.jobTitle || item.caption || 'Completed job'}</strong>
+                        <strong>{item.serviceLabel || item.caption || 'Completed job'}</strong>
                         {item.completedThroughPlatform && (
                           <span>Completed through SerbisyoToledo</span>
                         )}

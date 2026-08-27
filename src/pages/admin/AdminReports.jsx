@@ -212,7 +212,7 @@ function AdminReports() {
                 <p className="request-detail">{t('reportedBy')}: {report.reportedBy} ({report.reporterType})</p>
                 <p className="request-detail">{t('reason')}: {report.reason}</p>
                 <p className="report-description">{report.description}</p>
-                <p className="request-detail">{t('requests')}: {report.jobTitle}</p>
+                <p className="request-detail">{t('requests')}: {report.serviceLabel || 'Service Request'}</p>
                 <p className="request-detail">{t('date')}: {new Date(report.date).toLocaleString()}</p>
 
                 {expandedReportId === report.id && (
