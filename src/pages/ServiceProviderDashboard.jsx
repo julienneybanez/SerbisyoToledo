@@ -7,6 +7,7 @@ import EditPortfolioModal from '../components/common/EditPortfolioModal';
 import VerificationRequestModal from '../components/common/VerificationRequestModal';
 import RequestDetailsModal from '../components/common/RequestDetailsModal';
 import NextStepHelp from '../components/common/NextStepHelp';
+import { REQUEST_STATUS } from '../constants/domain';
 import './ServiceProviderDashboard.css';
 
 const PROVIDER_TIPS = [
@@ -115,10 +116,10 @@ export default function ServiceProviderDashboard() {
       if (response.success) {
         const allRequests = response.data.requests || [];
         const now = new Date();
-        const activeStatuses = ['accepted', 'on_the_way', 'in_progress'];
-        const queueStatuses = ['pending', ...activeStatuses];
+        const activeStatuses = [REQUEST_STATUS.ACCEPTED, REQUEST_STATUS.ON_THE_WAY, REQUEST_STATUS.IN_PROGRESS];
+        const queueStatuses = [REQUEST_STATUS.PENDING, ...activeStatuses];
 
-        const pending = allRequests.filter((request) => request.status === 'pending').length;
+        const pending = allRequests.filter((request) => request.status === REQUEST_STATUS.PENDING).length;
         const active = allRequests.filter((request) => activeStatuses.includes(request.status)).length;
 
         const upcomingRequests = allRequests
@@ -387,7 +388,7 @@ export default function ServiceProviderDashboard() {
   };
 
   const formatStatus = (status) => (
-    String(status || 'pending')
+    String(status || REQUEST_STATUS.PENDING)
       .replace(/_/g, ' ')
       .replace(/\b\w/g, (letter) => letter.toUpperCase())
   );
@@ -555,11 +556,11 @@ export default function ServiceProviderDashboard() {
                   </div>
 
                   <div className="job-actions">
-                    {job.status === 'pending' && (
+                    {job.status === REQUEST_STATUS.PENDING && (
                       <>
                         <button
                           className="job-btn job-btn-primary"
-                          onClick={() => handleStatusUpdate(job.id, 'accepted')}
+                          onClick={() => handleStatusUpdate(job.id, REQUEST_STATUS.ACCEPTED)}
                           disabled={actionLoading === job.id}
                         >
                           {actionLoading === job.id ? 'Processing...' : 'Accept Request'}
@@ -581,11 +582,11 @@ export default function ServiceProviderDashboard() {
                       </>
                     )}
 
-                    {job.status === 'accepted' && (
+                    {job.status === REQUEST_STATUS.ACCEPTED && (
                       <>
                         <button
                           className="job-btn job-btn-on-way"
-                          onClick={() => handleStatusUpdate(job.id, 'on_the_way')}
+                          onClick={() => handleStatusUpdate(job.id, REQUEST_STATUS.ON_THE_WAY)}
                           disabled={actionLoading === job.id}
                         >
                           <i className="bi bi-truck"></i> I&apos;m On My Way
@@ -600,11 +601,11 @@ export default function ServiceProviderDashboard() {
                       </>
                     )}
 
-                    {['on_the_way', 'in_progress'].includes(job.status) && (
+                    {[REQUEST_STATUS.ON_THE_WAY, REQUEST_STATUS.IN_PROGRESS].includes(job.status) && (
                       <>
                         <button
                           className="job-btn job-btn-complete"
-                          onClick={() => handleStatusUpdate(job.id, 'completed')}
+                          onClick={() => handleStatusUpdate(job.id, REQUEST_STATUS.COMPLETED)}
                           disabled={actionLoading === job.id}
                         >
                           <i className="bi bi-check-lg"></i> Mark Service Complete

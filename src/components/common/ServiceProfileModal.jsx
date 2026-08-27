@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { serviceProfileAPI } from '../../services/api';
+import { getErrorMessage } from '../../utils/errors';
 import useServiceTaxonomy from '../../hooks/useServiceTaxonomy';
 import './ServiceProfileModal.css';
 
@@ -71,7 +72,12 @@ export default function ServiceProfileModal({ onClose }) {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+    if (!['fullName', 'barangayAddress', 'startingPrice'].includes(name)) return;
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
   const handleCategoryToggle = (category) => {
@@ -104,13 +110,17 @@ export default function ServiceProfileModal({ onClose }) {
   };
 
   const handleImageUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setFormData({ ...formData, bannerImage: file });
-      const reader = new FileReader();
-      reader.onloadend = () => setBannerPreview(reader.result);
-      reader.readAsDataURL(file);
-    }
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setFormData((prev) => ({ ...prev, bannerImage: file }));
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      if (typeof reader.result === 'string') {
+        setBannerPreview(reader.result);
+      }
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleSubmit = async (e) => {
@@ -130,7 +140,7 @@ export default function ServiceProfileModal({ onClose }) {
       const submitData = new FormData();
       submitData.append('fullName', formData.fullName);
       submitData.append('barangayAddress', formData.barangayAddress);
-      submitData.append('startingPrice', parseFloat(formData.startingPrice));
+      submitData.append('startingPrice', String(parseFloat(formData.startingPrice)));
       submitData.append('serviceCategories', JSON.stringify(formData.serviceCategories));
       submitData.append('serviceTypes', JSON.stringify(formData.serviceTypes));
       if (formData.bannerImage) {
@@ -152,7 +162,7 @@ export default function ServiceProfileModal({ onClose }) {
         setError(result.message || 'Failed to save service listing');
       }
     } catch (err) {
-      setError(err.message || 'An error occurred while saving your service listing');
+      setError(getErrorMessage(err, 'An error occurred while saving your service listing'));
       console.error('Error submitting profile:', err);
     } finally {
       setIsLoading(false);

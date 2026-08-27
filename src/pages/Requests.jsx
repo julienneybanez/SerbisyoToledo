@@ -5,6 +5,7 @@ import RequestDetailsModal from '../components/common/RequestDetailsModal';
 import ReviewModal from '../components/common/ReviewModal';
 import ReportUserModal from '../components/common/ReportUserModal';
 import NextStepHelp from '../components/common/NextStepHelp';
+import { REQUEST_STATUS } from '../constants/domain';
 import { useLanguage } from '../context/LanguageContext';
 import './Requests.css';
 
@@ -124,17 +125,17 @@ export default function Requests() {
     try {
       const response = await serviceRequestAPI.updateStatus(requestId, status, reason, cancellation);
       if (response.success) {
-        if (status === 'completed' && response.data) {
+        if (status === REQUEST_STATUS.COMPLETED && response.data) {
           // Two-way completion
           if (response.data.fullyCompleted) {
             // Both confirmed — mark as completed
             setRequests(prev =>
               prev.map(req =>
-                req.id === requestId ? { ...req, status: 'completed', provider_completed: true, client_completed: true } : req
+                req.id === requestId ? { ...req, status: REQUEST_STATUS.COMPLETED, provider_completed: true, client_completed: true } : req
               )
             );
             if (selectedRequest?.id === requestId) {
-              setSelectedRequest(prev => ({ ...prev, status: 'completed', provider_completed: true, client_completed: true }));
+              setSelectedRequest(prev => ({ ...prev, status: REQUEST_STATUS.COMPLETED, provider_completed: true, client_completed: true }));
             }
             if (!suppressAlert) {
               alert(t('requestsServiceCompletedBoth'));
@@ -166,15 +167,15 @@ export default function Requests() {
           // Normal status update
           setRequests(prev =>
             prev.map(req =>
-              req.id === requestId ? { ...req, status, ...(status === 'declined' ? { decline_reason: reason?.trim() || null } : {}) } : req
+              req.id === requestId ? { ...req, status, ...(status === REQUEST_STATUS.DECLINED ? { decline_reason: reason?.trim() || null } : {}) } : req
             )
           );
           if (selectedRequest?.id === requestId) {
-            setSelectedRequest(prev => ({ ...prev, status, ...(status === 'declined' ? { decline_reason: reason?.trim() || null } : {}) }));
+            setSelectedRequest(prev => ({ ...prev, status, ...(status === REQUEST_STATUS.DECLINED ? { decline_reason: reason?.trim() || null } : {}) }));
           }
         }
 
-        if (status === 'cancelled' && cancellation) {
+        if (status === REQUEST_STATUS.CANCELLED && cancellation) {
           setRequests(prev =>
             prev.map(req =>
               req.id === requestId
@@ -240,7 +241,7 @@ export default function Requests() {
       return;
     }
 
-    const result = await handleStatusUpdate(cancelDialog.requestId, 'cancelled', null, {
+    const result = await handleStatusUpdate(cancelDialog.requestId, REQUEST_STATUS.CANCELLED, null, {
       suppressAlert: true,
       cancellation: {
         cancellationReason: cancelDialog.cancellationReason,
@@ -406,7 +407,7 @@ export default function Requests() {
       return;
     }
 
-    const result = await handleStatusUpdate(declineDialog.requestId, 'declined', trimmedReason, { suppressAlert: true });
+    const result = await handleStatusUpdate(declineDialog.requestId, REQUEST_STATUS.DECLINED, trimmedReason, { suppressAlert: true });
     if (result?.success) {
       closeDeclineDialog();
       return;
@@ -543,15 +544,15 @@ export default function Requests() {
   const filteredRequests = requests.filter(req => {
     if (activeFilter === 'all') return true;
     if (activeFilter === 'active') 
-      return ['pending', 'accepted', 'on_the_way', 'in_progress'].includes(req.status);
-    if (activeFilter === 'completed') return req.status === 'completed';
-    if (activeFilter === 'cancelled') return ['declined', 'cancelled'].includes(req.status);
+      return [REQUEST_STATUS.PENDING, REQUEST_STATUS.ACCEPTED, REQUEST_STATUS.ON_THE_WAY, REQUEST_STATUS.IN_PROGRESS].includes(req.status);
+    if (activeFilter === REQUEST_STATUS.COMPLETED) return req.status === REQUEST_STATUS.COMPLETED;
+    if (activeFilter === REQUEST_STATUS.CANCELLED) return [REQUEST_STATUS.DECLINED, REQUEST_STATUS.CANCELLED].includes(req.status);
     return true;
   });
 
-  const pendingRequests = requests.filter((request) => request.status === 'pending');
+  const pendingRequests = requests.filter((request) => request.status === REQUEST_STATUS.PENDING);
   const activeRequests = requests.filter((request) => (
-    ['accepted', 'on_the_way', 'in_progress'].includes(request.status)
+    [REQUEST_STATUS.ACCEPTED, REQUEST_STATUS.ON_THE_WAY, REQUEST_STATUS.IN_PROGRESS].includes(request.status)
   ));
 
   const showAllRequests = () => {
@@ -695,16 +696,16 @@ export default function Requests() {
             {t('active')}
           </button>
           <button 
-            className={`filter-btn ${activeFilter === 'completed' ? 'active' : ''}`}
-            onClick={() => setActiveFilter('completed')}
+            className={`filter-btn ${activeFilter === REQUEST_STATUS.COMPLETED ? 'active' : ''}`}
+            onClick={() => setActiveFilter(REQUEST_STATUS.COMPLETED)}
           >
-            {t('completed')}
+            {t(REQUEST_STATUS.COMPLETED)}
           </button>
           <button 
-            className={`filter-btn ${activeFilter === 'cancelled' ? 'active' : ''}`}
-            onClick={() => setActiveFilter('cancelled')}
+            className={`filter-btn ${activeFilter === REQUEST_STATUS.CANCELLED ? 'active' : ''}`}
+            onClick={() => setActiveFilter(REQUEST_STATUS.CANCELLED)}
           >
-            {t('cancelled')}
+            {t(REQUEST_STATUS.CANCELLED)}
           </button>
         </div>
 
@@ -777,15 +778,15 @@ export default function Requests() {
                   </div>
                 </div>
 
-                {request.status === 'declined' && request.decline_reason && (
+                {request.status === REQUEST_STATUS.DECLINED && request.decline_reason && (
                   <p className="request-decline-reason"><strong>{t('reasonForDeclining')}:</strong> {request.decline_reason}</p>
                 )}
-                {request.status === 'cancelled' && request.cancellation_reason && (
+                {request.status === REQUEST_STATUS.CANCELLED && request.cancellation_reason && (
                   <p className="request-decline-reason"><strong>{t('reasonForCancellation')}:</strong> {request.cancellation_reason_other || request.cancellation_reason.replaceAll('_', ' ')}</p>
                 )}
 
                 {/* Discussion/Phone Section */}
-                {['accepted', 'on_the_way', 'in_progress'].includes(request.status) && (
+                {[REQUEST_STATUS.ACCEPTED, REQUEST_STATUS.ON_THE_WAY, REQUEST_STATUS.IN_PROGRESS].includes(request.status) && (
                   <div className="request-discussion-section">
                     {!isProvider ? (
                       // Client view
@@ -852,11 +853,11 @@ export default function Requests() {
                   {isProvider ? (
                     // Provider actions
                     <>
-                      {request.status === 'pending' && (
+                      {request.status === REQUEST_STATUS.PENDING && (
                         <>
                           <button
                             className="btn-action btn-accept btn-primary-action"
-                            onClick={() => handleStatusUpdate(request.id, 'accepted')}
+                            onClick={() => handleStatusUpdate(request.id, REQUEST_STATUS.ACCEPTED)}
                             disabled={actionLoading === request.id}
                           >
                             {actionLoading === request.id ? t('requestsProcessing') : t('requestsAcceptRequest')}
@@ -876,11 +877,11 @@ export default function Requests() {
                           </button>
                         </>
                       )}
-                      {request.status === 'accepted' && (
+                      {request.status === REQUEST_STATUS.ACCEPTED && (
                         <>
                           <button
                             className="btn-action btn-on-way btn-primary-action"
-                            onClick={() => handleStatusUpdate(request.id, 'on_the_way')}
+                            onClick={() => handleStatusUpdate(request.id, REQUEST_STATUS.ON_THE_WAY)}
                             disabled={actionLoading === request.id}
                           >
                             <i className="bi bi-truck"></i> {t('requestsImOnMyWay')}
@@ -893,11 +894,11 @@ export default function Requests() {
                           </button>
                         </>
                       )}
-                      {['on_the_way', 'in_progress'].includes(request.status) && !request.provider_completed && (
+                      {[REQUEST_STATUS.ON_THE_WAY, REQUEST_STATUS.IN_PROGRESS].includes(request.status) && !request.provider_completed && (
                         <>
                           <button
                             className="btn-action btn-complete btn-primary-action"
-                            onClick={() => handleStatusUpdate(request.id, 'completed')}
+                            onClick={() => handleStatusUpdate(request.id, REQUEST_STATUS.COMPLETED)}
                             disabled={actionLoading === request.id}
                           >
                             <i className="bi bi-check-lg"></i> {t('requestsMarkServiceComplete')}
@@ -910,7 +911,7 @@ export default function Requests() {
                           </button>
                         </>
                       )}
-                      {request.status === 'completed' && (
+                      {request.status === REQUEST_STATUS.COMPLETED && (
                         <>
                           <button
                             className="btn-action btn-view-details-secondary"
@@ -931,7 +932,7 @@ export default function Requests() {
                   ) : (
                     // Client actions
                     <>
-                      {request.status === 'pending' && (
+                      {request.status === REQUEST_STATUS.PENDING && (
                         <>
                           <button
                             className="btn-action btn-view-details-secondary"
@@ -948,7 +949,7 @@ export default function Requests() {
                           </button>
                         </>
                       )}
-                      {['accepted', 'on_the_way', 'in_progress'].includes(request.status) && (
+                      {[REQUEST_STATUS.ACCEPTED, REQUEST_STATUS.ON_THE_WAY, REQUEST_STATUS.IN_PROGRESS].includes(request.status) && (
                         <>
                           <button
                             className="btn-action btn-view-details-secondary"
@@ -965,16 +966,16 @@ export default function Requests() {
                           </button>
                         </>
                       )}
-                      {['on_the_way', 'in_progress'].includes(request.status) && !request.client_completed && (
+                      {[REQUEST_STATUS.ON_THE_WAY, REQUEST_STATUS.IN_PROGRESS].includes(request.status) && !request.client_completed && (
                         <button
                           className="btn-action btn-complete btn-primary-action"
-                          onClick={() => handleStatusUpdate(request.id, 'completed')}
+                          onClick={() => handleStatusUpdate(request.id, REQUEST_STATUS.COMPLETED)}
                           disabled={actionLoading === request.id}
                         >
                           <i className="bi bi-check-lg"></i> {t('requestsMarkServiceComplete')}
                         </button>
                       )}
-                      {request.status === 'completed' && !request.has_review && (
+                      {request.status === REQUEST_STATUS.COMPLETED && !request.has_review && (
                         <>
                           <button
                             className="btn-action btn-review btn-primary-action"
@@ -990,13 +991,13 @@ export default function Requests() {
                           </button>
                         </>
                       )}
-                      {request.status === 'completed' && request.has_review && (
+                      {request.status === REQUEST_STATUS.COMPLETED && request.has_review && (
                         <div className="review-submitted-badge">
                           <i className="bi bi-star-fill"></i>
                           <span>{t('requestsReviewSubmitted')}</span>
                         </div>
                       )}
-                      {request.status === 'completed' && (
+                      {request.status === REQUEST_STATUS.COMPLETED && (
                         <button
                           className="btn-action btn-hide"
                           onClick={() => handleHideRequest(request.id)}

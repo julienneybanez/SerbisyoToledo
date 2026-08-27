@@ -1,3 +1,6 @@
+import { ApiError } from '../utils/errors';
+import { normalizeStoredUser } from '../utils/runtimeGuards';
+
 // API Configuration
 const isLocalHost = typeof window !== 'undefined' && ['localhost', '127.0.0.1'].includes(window.location.hostname);
 export const API_BASE_URL = import.meta.env.VITE_API_URL || (isLocalHost ? 'http://localhost:5000/api' : '/api');
@@ -21,30 +24,25 @@ const handleResponse = async (response) => {
     || /^\s*<html/i.test(rawBody);
 
   if (looksLikeHtml) {
-    throw {
-      status: response.status,
-      code: 'NON_JSON_API_RESPONSE',
-      errors: [],
-      message: 'The app received HTML instead of API data. Check VITE_API_URL or your production API rewrite configuration.',
-    };
+    throw new ApiError(
+      'The app received HTML instead of API data. Check VITE_API_URL or your production API rewrite configuration.',
+      { status: response.status, code: 'NON_JSON_API_RESPONSE' },
+    );
   }
 
   if (!data) {
-    throw {
+    throw new ApiError('The server returned an invalid API response.', {
       status: response.status,
       code: 'INVALID_API_RESPONSE',
-      errors: [],
-      message: 'The server returned an invalid API response.',
-    };
+    });
   }
 
   if (!response.ok) {
-    throw {
+    throw new ApiError(data.message || 'An error occurred', {
       status: response.status,
-      message: data.message || 'An error occurred',
       code: data.code || null,
-      errors: data.errors || []
-    };
+      errors: data.errors || [],
+    });
   }
 
   return data;
@@ -86,13 +84,32 @@ export const clearAuthSession = ({ preserveRedirect = true } = {}) => {
 
 // Get stored user
 export const getUser = () => {
-  const user = localStorage.getItem('user');
-  return user ? JSON.parse(user) : null;
+  const rawUser = localStorage.getItem('user');
+  if (!rawUser) return null;
+
+  try {
+    const normalizedUser = normalizeStoredUser(JSON.parse(rawUser));
+    if (!normalizedUser) {
+      removeToken();
+      return null;
+    }
+    return normalizedUser;
+  } catch {
+    removeToken();
+    return null;
+  }
 };
 
 // Set stored user
 export const setUser = (user) => {
-  localStorage.setItem('user', JSON.stringify(user));
+  const normalizedUser = normalizeStoredUser(user);
+  if (!normalizedUser) {
+    throw new ApiError('The server returned invalid user data.', {
+      code: 'INVALID_USER_DATA',
+    });
+  }
+
+  localStorage.setItem('user', JSON.stringify(normalizedUser));
 };
 
 // Check if user is authenticated
@@ -193,7 +210,7 @@ export const authAPI = {
     const token = getToken();
     
     if (!token) {
-      throw { message: 'No authentication token found' };
+      throw new ApiError('No authentication token found', { code: 'AUTH_TOKEN_MISSING' });
     }
     
     const response = await fetch(`${API_BASE_URL}/auth/me`, {
@@ -250,7 +267,7 @@ export const authAPI = {
     const token = getToken();
     
     if (!token) {
-      throw { message: 'No authentication token found' };
+      throw new ApiError('No authentication token found', { code: 'AUTH_TOKEN_MISSING' });
     }
     
     const response = await fetch(`${API_BASE_URL}/auth/update-profile`, {
@@ -306,7 +323,7 @@ export const adminAPI = {
     const token = getToken();
     
     if (!token) {
-      throw { message: 'No authentication token found' };
+      throw new ApiError('No authentication token found', { code: 'AUTH_TOKEN_MISSING' });
     }
     
     const response = await fetch(`${API_BASE_URL}/admin/dashboard-stats`, {
@@ -325,7 +342,7 @@ export const adminAPI = {
     const token = getToken();
     
     if (!token) {
-      throw { message: 'No authentication token found' };
+      throw new ApiError('No authentication token found', { code: 'AUTH_TOKEN_MISSING' });
     }
     
     const response = await fetch(`${API_BASE_URL}/admin/users`, {
@@ -344,7 +361,7 @@ export const adminAPI = {
     const token = getToken();
     
     if (!token) {
-      throw { message: 'No authentication token found' };
+      throw new ApiError('No authentication token found', { code: 'AUTH_TOKEN_MISSING' });
     }
     
     const response = await fetch(`${API_BASE_URL}/admin/users/${id}`, {
@@ -363,7 +380,7 @@ export const adminAPI = {
     const token = getToken();
     
     if (!token) {
-      throw { message: 'No authentication token found' };
+      throw new ApiError('No authentication token found', { code: 'AUTH_TOKEN_MISSING' });
     }
     
     const response = await fetch(`${API_BASE_URL}/admin/users/${id}/status`, {
@@ -383,7 +400,7 @@ export const adminAPI = {
     const token = getToken();
 
     if (!token) {
-      throw { message: 'No authentication token found' };
+      throw new ApiError('No authentication token found', { code: 'AUTH_TOKEN_MISSING' });
     }
 
     const response = await fetch(`${API_BASE_URL}/admin/users/${id}/activity`, {
@@ -402,7 +419,7 @@ export const adminAPI = {
     const token = getToken();
 
     if (!token) {
-      throw { message: 'No authentication token found' };
+      throw new ApiError('No authentication token found', { code: 'AUTH_TOKEN_MISSING' });
     }
 
     const response = await fetch(`${API_BASE_URL}/admin/verification-requests`, {
@@ -421,7 +438,7 @@ export const adminAPI = {
     const token = getToken();
 
     if (!token) {
-      throw { message: 'No authentication token found' };
+      throw new ApiError('No authentication token found', { code: 'AUTH_TOKEN_MISSING' });
     }
 
     const response = await fetch(`${API_BASE_URL}/admin/verification-requests/${id}`, {
@@ -441,7 +458,7 @@ export const adminAPI = {
     const token = getToken();
 
     if (!token) {
-      throw { message: 'No authentication token found' };
+      throw new ApiError('No authentication token found', { code: 'AUTH_TOKEN_MISSING' });
     }
 
     const response = await fetch(`${API_BASE_URL}/admin/reports`, {
@@ -460,7 +477,7 @@ export const adminAPI = {
     const token = getToken();
 
     if (!token) {
-      throw { message: 'No authentication token found' };
+      throw new ApiError('No authentication token found', { code: 'AUTH_TOKEN_MISSING' });
     }
 
     const response = await fetch(`${API_BASE_URL}/admin/provider-credentials`, {
@@ -479,7 +496,7 @@ export const adminAPI = {
     const token = getToken();
 
     if (!token) {
-      throw { message: 'No authentication token found' };
+      throw new ApiError('No authentication token found', { code: 'AUTH_TOKEN_MISSING' });
     }
 
     const response = await fetch(`${API_BASE_URL}/admin/provider-credentials/${id}`, {
@@ -499,7 +516,7 @@ export const adminAPI = {
     const token = getToken();
 
     if (!token) {
-      throw { message: 'No authentication token found' };
+      throw new ApiError('No authentication token found', { code: 'AUTH_TOKEN_MISSING' });
     }
 
     const response = await fetch(`${API_BASE_URL}/admin/reports/${id}`, {
@@ -519,7 +536,7 @@ export const adminAPI = {
     const token = getToken();
     
     if (!token) {
-      throw { message: 'No authentication token found' };
+      throw new ApiError('No authentication token found', { code: 'AUTH_TOKEN_MISSING' });
     }
     
     const response = await fetch(`${API_BASE_URL}/admin/users/${id}`, {

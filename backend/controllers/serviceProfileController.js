@@ -25,6 +25,17 @@ const SUPPORTED_LANGUAGE_CODES = new Set(['ceb', 'en', 'fil']);
 const SUPPORTED_PRICING_UNITS = new Set(['per_job', 'per_hour', 'per_day']);
 const SUPPORTED_AVAILABILITY_STATUSES = new Set(['available', 'unavailable']);
 const PRESENCE_WINDOW_MINUTES = 5;
+
+const toNullableNumber = (value) => {
+  if (value === null || value === undefined || value === '') return null;
+  const number = Number(value);
+  return Number.isFinite(number) ? number : null;
+};
+
+const toCount = (value) => {
+  const number = Number(value);
+  return Number.isFinite(number) && number >= 0 ? number : 0;
+};
 const REVIEW_STATS_JOIN = `
   LEFT JOIN (
     SELECT
@@ -465,14 +476,14 @@ exports.getAllProfiles = async (req, res) => {
         userId: profile.user_id,
         name: profile.provider_name,
         location: profile.barangay_address,
-        startingPrice: parseFloat(profile.starting_price),
+        startingPrice: toNullableNumber(profile.starting_price),
         pricingUnit: profile.pricing_unit || 'per_day',
         description: profile.description,
         image: profile.banner_image_url || null,
         tags: [...skills, ...serviceTypes.map((item) => item.label), ...categories],
         skills,
-        rating: parseFloat(profile.rating),
-        reviews: profile.reviews_count,
+        rating: toNullableNumber(profile.rating),
+        reviews: toCount(profile.reviews_count),
         online: deriveOnlineFromLastSeen(profile.last_seen_at),
         verified: Boolean(profile.is_verified),
         profession: profile.profession,
@@ -649,14 +660,14 @@ exports.getRecommendedProviders = async (req, res) => {
         userId: profile.user_id,
         name: profile.provider_name,
         location: profile.barangay_address,
-        startingPrice: parseFloat(profile.starting_price),
+        startingPrice: toNullableNumber(profile.starting_price),
         pricingUnit: profile.pricing_unit || 'per_day',
         description: profile.description,
         image: profile.banner_image_url || null,
         tags: [...skills, ...serviceTypes.map((item) => item.label), ...categories],
         skills,
-        rating: parseFloat(profile.rating),
-        reviews: profile.reviews_count,
+        rating: toNullableNumber(profile.rating),
+        reviews: toCount(profile.reviews_count),
         online: deriveOnlineFromLastSeen(profile.last_seen_at),
         verified: Boolean(profile.is_verified),
         profession: profile.profession,
@@ -840,17 +851,17 @@ exports.getProfileById = async (req, res) => {
       userId: profile.user_id,
       name: profile.full_name,
       location: profile.barangay_address,
-      startingPrice: parseFloat(profile.starting_price),
+      startingPrice: toNullableNumber(profile.starting_price),
       pricingUnit: profile.pricing_unit || 'per_day',
       description: profile.description,
       aboutMe: profile.about_me,
       responseTime: profile.response_time || 'Within 24 hours',
-      jobsCompleted: profile.jobs_completed || 0,
+      jobsCompleted: toCount(profile.jobs_completed),
       image: profile.banner_image_url || null,
       tags: [...skills, ...serviceTypes.map((item) => item.label), ...categories],
       skills,
-      rating: parseFloat(profile.rating),
-      reviewsCount: profile.reviews_count,
+      rating: toNullableNumber(profile.rating),
+      reviewsCount: toCount(profile.reviews_count),
       online: deriveOnlineFromLastSeen(profile.last_seen_at),
       verified: Boolean(profile.is_verified),
       profession: profile.profession,
@@ -956,14 +967,14 @@ exports.getMyProfile = async (req, res) => {
       userId: profile.user_id,
       name: profile.full_name,
       location: profile.barangay_address,
-      startingPrice: parseFloat(profile.starting_price),
+      startingPrice: toNullableNumber(profile.starting_price),
       pricingUnit: profile.pricing_unit || 'per_day',
       description: profile.description,
       image: profile.banner_image_url || null,
       tags: [...skills, ...serviceTypes.map((item) => item.label), ...categories],
       skills,
-      rating: parseFloat(profile.rating),
-      reviews: profile.reviews_count,
+      rating: toNullableNumber(profile.rating),
+      reviews: toCount(profile.reviews_count),
       online: deriveOnlineFromLastSeen(profile.last_seen_at),
       verified: Boolean(profile.is_verified),
       profession: profile.profession,
@@ -1284,7 +1295,7 @@ exports.getMyPortfolio = async (req, res) => {
       data: {
         aboutMe: profile.about_me || '',
         responseTime: profile.response_time || 'Within 24 hours',
-        jobsCompleted: profile.jobs_completed || 0,
+        jobsCompleted: toCount(profile.jobs_completed),
         skills: JSON.parse(profile.skills || '[]'),
         portfolio: formattedPortfolio
       }

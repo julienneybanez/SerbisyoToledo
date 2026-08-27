@@ -9,6 +9,7 @@ import {
   ChevronRightIcon,
 } from './Icons';
 import { isAuthenticated, serviceProfileAPI, serviceRequestAPI } from '../../services/api';
+import { BOOKING_TYPE } from '../../constants/domain';
 import './BookingModal.css';
 
 const weekdayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -89,7 +90,7 @@ export default function BookingModal({ provider, onClose }) {
   const [currentYear, setCurrentYear] = useState(today.getFullYear());
   const [step, setStep] = useState(1);
 
-  const [bookingType, setBookingType] = useState('one_day');
+  const [bookingType, setBookingType] = useState(BOOKING_TYPE.ONE_DAY);
   const [startDate, setStartDate] = useState(formatDateInput(today));
   const [endDate, setEndDate] = useState(formatDateInput(today));
   const [estimatedDurationMinutes, setEstimatedDurationMinutes] = useState(120);
@@ -114,7 +115,7 @@ export default function BookingModal({ provider, onClose }) {
 
   const dailyRate = Number(provider?.dailyRate ?? provider?.startingPrice ?? 0);
   const durationDays = useMemo(
-    () => getDurationDays(startDate, bookingType === 'multi_day' ? endDate : startDate),
+    () => getDurationDays(startDate, bookingType === BOOKING_TYPE.MULTI_DAY ? endDate : startDate),
     [bookingType, startDate, endDate],
   );
   const estimatedTotal = useMemo(() => dailyRate * durationDays, [dailyRate, durationDays]);
@@ -139,7 +140,7 @@ export default function BookingModal({ provider, onClose }) {
   }, [availableDateSet]);
 
   const isContinuousMultiDayRange = useMemo(() => {
-    if (bookingType !== 'multi_day') return true;
+    if (bookingType !== BOOKING_TYPE.MULTI_DAY) return true;
     return isRangeContinuous(startDate, endDate);
   }, [bookingType, endDate, isRangeContinuous, startDate]);
 
@@ -176,7 +177,7 @@ export default function BookingModal({ provider, onClose }) {
       day: 'numeric',
     });
 
-    if (bookingType !== 'multi_day' || !endDate || endDate === startDate) {
+    if (bookingType !== BOOKING_TYPE.MULTI_DAY || !endDate || endDate === startDate) {
       return startLabel;
     }
 
@@ -272,7 +273,7 @@ export default function BookingModal({ provider, onClose }) {
   }, [provider?.id, estimatedDurationMinutes, bookingWindowEnd, bookingWindowStart]);
 
   useEffect(() => {
-    if (bookingType === 'one_day') {
+    if (bookingType === BOOKING_TYPE.ONE_DAY) {
       setEndDate(startDate);
     }
   }, [bookingType, startDate]);
@@ -303,7 +304,7 @@ export default function BookingModal({ provider, onClose }) {
         return;
       }
 
-      if (bookingType === 'multi_day' && !isContinuousMultiDayRange) {
+      if (bookingType === BOOKING_TYPE.MULTI_DAY && !isContinuousMultiDayRange) {
         setAvailableSlots([]);
         setSelectedTime('');
         setSubmitError('Selected date range has unavailable day(s). Please choose a continuous available range.');
@@ -316,7 +317,7 @@ export default function BookingModal({ provider, onClose }) {
       try {
         const response = await serviceProfileAPI.getAvailableSlots(provider.id, {
           date: startDate,
-          endDate: bookingType === 'multi_day' ? endDate : null,
+          endDate: bookingType === BOOKING_TYPE.MULTI_DAY ? endDate : null,
           bookingType,
           duration: estimatedDurationMinutes,
         });
@@ -378,7 +379,7 @@ export default function BookingModal({ provider, onClose }) {
     if (!day || !startDate) return false;
 
     const key = getDateKeyForDay(day);
-    if (bookingType !== 'multi_day') {
+    if (bookingType !== BOOKING_TYPE.MULTI_DAY) {
       return key === startDate;
     }
 
@@ -399,7 +400,7 @@ export default function BookingModal({ provider, onClose }) {
 
     setSubmitError('');
 
-    if (bookingType === 'one_day') {
+    if (bookingType === BOOKING_TYPE.ONE_DAY) {
       setStartDate(dateKey);
       setEndDate(dateKey);
       return;
@@ -433,7 +434,7 @@ export default function BookingModal({ provider, onClose }) {
   const canProceed = () => {
     if (step === 1) {
       if (!startDate) return false;
-      if (bookingType !== 'multi_day') return true;
+      if (bookingType !== BOOKING_TYPE.MULTI_DAY) return true;
       return Boolean(endDate) && isContinuousMultiDayRange;
     }
 
@@ -474,7 +475,7 @@ export default function BookingModal({ provider, onClose }) {
       return;
     }
 
-    if (bookingType === 'multi_day' && !isContinuousMultiDayRange) {
+    if (bookingType === BOOKING_TYPE.MULTI_DAY && !isContinuousMultiDayRange) {
       setSubmitError('Selected date range has unavailable day(s). Please choose a continuous available range.');
       return;
     }
@@ -489,7 +490,7 @@ export default function BookingModal({ provider, onClose }) {
         serviceTypeKey: selectedServiceTypeKey || null,
         bookingType,
         startDate,
-        endDate: bookingType === 'multi_day' ? endDate : startDate,
+        endDate: bookingType === BOOKING_TYPE.MULTI_DAY ? endDate : startDate,
         startTime: selectedTime,
         scheduledDate: startDate,
         scheduledTime: selectedTime,
@@ -584,8 +585,8 @@ export default function BookingModal({ provider, onClose }) {
                     type="radio"
                     name="bookingType"
                     value="one_day"
-                    checked={bookingType === 'one_day'}
-                    onChange={() => setBookingType('one_day')}
+                    checked={bookingType === BOOKING_TYPE.ONE_DAY}
+                    onChange={() => setBookingType(BOOKING_TYPE.ONE_DAY)}
                   />{' '}
                   One day
                 </label>
@@ -594,8 +595,8 @@ export default function BookingModal({ provider, onClose }) {
                     type="radio"
                     name="bookingType"
                     value="multi_day"
-                    checked={bookingType === 'multi_day'}
-                    onChange={() => setBookingType('multi_day')}
+                    checked={bookingType === BOOKING_TYPE.MULTI_DAY}
+                    onChange={() => setBookingType(BOOKING_TYPE.MULTI_DAY)}
                   />{' '}
                   Multiple days
                 </label>
