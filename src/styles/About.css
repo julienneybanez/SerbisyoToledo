@@ -114,3 +114,15 @@
     font-size: 1.45rem;
   }
 }
+
+/* Consolidated from ReadabilityRefinement.css: About.css */
+/* Public About page. */
+.about-page-shell .about-hero p,
+.about-page-shell .about-section-block p,
+.about-page-shell .about-section-block ul {
+  font-size: 1rem;
+}
+
+.about-page-shell .about-section-block h2 {
+  font-size: 1.12rem;
+}
