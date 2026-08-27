@@ -2017,3 +2017,30 @@ input:checked + .slider:before {
 [data-theme='dark'] .admin-page .admin-dialog-card.danger .admin-dialog-actions {
   color: var(--admin-text);
 }
+
+/* Consolidated from ReadabilityRefinement.css: AdminPages.css */
+/* Admin: keep the dense data layout but avoid tiny secondary text. */
+.admin-page .admin-page-title {
+  font-weight: 750;
+}
+
+.admin-page .admin-page-subtitle {
+  font-size: 1rem;
+}
+
+.admin-page .stat-label {
+  font-size: 0.9rem;
+}
+
+.admin-page .admin-tab {
+  min-height: 44px;
+  font-size: 0.95rem;
+}
+
+.admin-page .request-detail {
+  font-size: 0.9rem;
+}
+
+.admin-page .document-tag {
+  font-size: 0.85rem;
+}
