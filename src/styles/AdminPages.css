@@ -2044,3 +2044,8 @@ input:checked + .slider:before {
 .admin-page .document-tag {
   font-size: 0.85rem;
 }
+
+/* Consolidated title/subtitle cleanup */
+.admin-page .admin-page-subtitle {
+  display: none;
+}
