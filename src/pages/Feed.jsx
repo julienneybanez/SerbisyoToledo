@@ -1,6 +1,4 @@
 import { useState, useEffect } from "react";
-
-const BROWSE_REQUEST_DEBOUNCE_MS = 300;
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { getUser, isAuthenticated, serviceProfileAPI, serviceRequestAPI } from "../services/api";
 import useServiceTaxonomy from '../hooks/useServiceTaxonomy';
@@ -14,6 +12,8 @@ import {
   CheckIcon,
   LocationIcon,
 } from "../components/common/Icons";
+
+const BROWSE_REQUEST_DEBOUNCE_MS = 300;
 
 export default function Feed() {
   const { t } = useLanguage();
