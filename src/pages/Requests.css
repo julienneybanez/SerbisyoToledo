@@ -1003,3 +1003,8 @@
 .requests-container .request-status-badge {
   font-size: 0.8rem;
 }
+
+/* Consolidated title/subtitle cleanup */
+.requests-container .requests-header > p {
+  display: none;
+}
