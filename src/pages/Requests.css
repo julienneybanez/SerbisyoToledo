@@ -988,3 +988,18 @@
     width: 100%;
   }
 }
+
+/* Consolidated from ReadabilityRefinement.css: Requests.css */
+/* Requests: preserve the card workflow while making filter/status text easier to parse. */
+.requests-container .filter-btn {
+  min-height: 44px;
+  font-size: 0.95rem;
+}
+
+.requests-container .request-title {
+  font-size: 1.12rem;
+}
+
+.requests-container .request-status-badge {
+  font-size: 0.8rem;
+}
