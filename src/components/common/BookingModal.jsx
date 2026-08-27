@@ -68,7 +68,7 @@ const getDateRange = (startDate, endDate) => {
   return dates;
 };
 
-const formatMoney = (amount) => `P${Number(amount || 0).toLocaleString('en-PH', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+const formatMoney = (amount) => `₱${Number(amount || 0).toLocaleString('en-PH', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
 
 export default function BookingModal({ provider, onClose }) {
   const { t, language } = useLanguage();
@@ -297,7 +297,7 @@ export default function BookingModal({ provider, onClose }) {
     };
 
     loadAvailableDates();
-  }, [provider?.id, estimatedDurationMinutes, bookingWindowEnd, bookingWindowStart]);
+  }, [provider?.id, estimatedDurationMinutes, bookingWindowEnd, bookingWindowStart, t]);
 
   useEffect(() => {
     if (bookingType === BOOKING_TYPE.ONE_DAY) {
@@ -370,7 +370,7 @@ export default function BookingModal({ provider, onClose }) {
     };
 
     loadSlots();
-  }, [provider?.id, startDate, endDate, bookingType, estimatedDurationMinutes, isContinuousMultiDayRange, resolvedBookingDates]);
+  }, [provider?.id, startDate, endDate, bookingType, estimatedDurationMinutes, isContinuousMultiDayRange, resolvedBookingDates, t]);
 
   const handlePrevMonth = useCallback(() => {
     if (!canGoToPrevMonth) return;
@@ -464,7 +464,7 @@ export default function BookingModal({ provider, onClose }) {
     }
 
     if (!isRangeContinuous(nextStart, nextEnd)) {
-      setSubmitError('Selected date range has unavailable day(s). Please choose a continuous available range.');
+      setSubmitError(t('bookingRangeUnavailable'));
       setStartDate(dateKey);
       setEndDate(dateKey);
       return;
@@ -472,7 +472,7 @@ export default function BookingModal({ provider, onClose }) {
 
     setStartDate(nextStart);
     setEndDate(nextEnd);
-  }, [availableDateSet, bookingType, endDate, getDateKeyForDay, isRangeContinuous, startDate]);
+  }, [availableDateSet, bookingType, endDate, getDateKeyForDay, isRangeContinuous, startDate, t]);
 
   const canProceed = () => {
     if (step === 1) {
@@ -520,7 +520,7 @@ export default function BookingModal({ provider, onClose }) {
     }
 
     if (bookingType === BOOKING_TYPE.DATE_RANGE && !isContinuousMultiDayRange) {
-      setSubmitError('Selected date range has unavailable day(s). Please choose a continuous available range.');
+      setSubmitError(t('bookingRangeUnavailable'));
       return;
     }
 
