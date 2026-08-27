@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - feature/dashboard-shell-calendar
+  pull_request:
+    branches:
+      - main
 
 permissions:
   contents: write
