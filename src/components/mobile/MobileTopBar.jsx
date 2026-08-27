@@ -6,12 +6,14 @@ import { useLanguage } from '../../context/LanguageContext';
 
 const TITLES = [
   { test: (path) => path === '/', key: 'home' },
+  { test: (path) => path.startsWith('/client-dashboard'), key: 'dashboardShort' },
   { test: (path) => path.startsWith('/feed'), key: 'browseServices' },
   { test: (path) => path.startsWith('/provider/'), key: 'providerProfile' },
   { test: (path) => path.startsWith('/requests'), key: 'requests' },
   { test: (path) => path.startsWith('/notifications'), key: 'notifications' },
   { test: (path) => path.startsWith('/dashboard'), key: 'myDashboard' },
   { test: (path) => path.startsWith('/provider-schedule'), key: 'schedule' },
+  { test: (path) => path.startsWith('/provider-availability'), key: 'availability' },
   { test: (path) => path.startsWith('/provider-credentials'), key: 'providerLanguagesCredentials' },
   { test: (path) => path.startsWith('/provider-settings'), key: 'providerSettings' },
   { test: (path) => path.startsWith('/client-settings'), key: 'settings' },
@@ -223,6 +225,15 @@ export default function MobileTopBar({
                   <i className="bi bi-images"></i>
                   {providerPortfolioLabel}
                 </button>
+                <Link
+                  to="/provider-availability"
+                  className="mobile-profile-menu-item"
+                  role="menuitem"
+                  onClick={onCloseProfileMenu}
+                >
+                  <i className="bi bi-calendar2-check"></i>
+                  {t('availability')}
+                </Link>
                 <Link
                   to="/provider-credentials"
                   className="mobile-profile-menu-item"
