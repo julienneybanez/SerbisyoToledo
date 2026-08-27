@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import SettingsFlash from '../../components/settings/SettingsFlash';
+import { AppButton, PageHeader } from '../../components/ui';
 import { API_BASE_URL } from '../../services/api';
 import { useLanguage } from '../../context/LanguageContext';
 import '../../styles/AdminPages.css';
@@ -76,23 +77,26 @@ function AdminSettings() {
 
   return (
     <div className="admin-page">
-      <div className="admin-page-header">
-        <h1 className="admin-page-title">{pageTitle}</h1>
-        <p className="admin-page-subtitle">{pageSubtitle}</p>
-      </div>
+      <PageHeader
+        title={pageTitle}
+        subtitle={pageSubtitle}
+        className="admin-page-header"
+        titleClassName="admin-page-title"
+        subtitleClassName="admin-page-subtitle"
+      />
 
       <div className="settings-content">
         <SettingsFlash type={flash.type} message={flash.message} />
 
         <div className="settings-section">
           <div className="settings-inline-actions">
-            <button
+            <AppButton
               className="btn-save"
               onClick={() => loadHealth({ silent: true })}
               disabled={isLoading || isRefreshing}
             >
               {isRefreshing ? refreshingLabel : refreshLabel}
-            </button>
+            </AppButton>
           </div>
 
           <div className="settings-card" style={{ marginTop: '1rem' }}>
