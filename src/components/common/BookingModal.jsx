@@ -13,18 +13,6 @@ import { BOOKING_TYPE, SPECIFIC_DATE_BOOKING_ENABLED } from '../../constants/dom
 import { useLanguage } from '../../context/LanguageContext';
 import './BookingModal.css';
 
-const weekdayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-const monthNames = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
-];
-
-const timelineStages = [
-  { label: '1 Schedule', description: 'Choose provider-available dates', icon: CalendarIcon },
-  { label: '2 Time', description: 'Choose available time', icon: ClockIcon },
-  { label: '3 Details', description: 'Share service details', icon: UserIcon },
-];
-
 const formatDateInput = (date) => {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -83,7 +71,23 @@ const getDateRange = (startDate, endDate) => {
 const formatMoney = (amount) => `P${Number(amount || 0).toLocaleString('en-PH', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
 
 export default function BookingModal({ provider, onClose }) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const locale = language === 'ceb' ? 'ceb-PH' : 'en-PH';
+  const weekdayLabels = useMemo(() => (
+    Array.from({ length: 7 }, (_, index) => (
+      new Intl.DateTimeFormat(locale, { weekday: 'short' }).format(new Date(2023, 0, 1 + index))
+    ))
+  ), [locale]);
+  const monthNames = useMemo(() => (
+    Array.from({ length: 12 }, (_, index) => (
+      new Intl.DateTimeFormat(locale, { month: 'long' }).format(new Date(2023, index, 1))
+    ))
+  ), [locale]);
+  const timelineStages = useMemo(() => ([
+    { label: t('bookingTimelineScheduleLabel'), description: t('bookingTimelineScheduleDescription'), icon: CalendarIcon },
+    { label: t('bookingTimelineTimeLabel'), description: t('bookingTimelineTimeDescription'), icon: ClockIcon },
+    { label: t('bookingTimelineDetailsLabel'), description: t('bookingTimelineDetailsDescription'), icon: UserIcon },
+  ]), [t]);
   const [today] = useState(() => new Date());
   const bookingWindowStart = today;
   const bookingWindowEnd = useMemo(() => addDays(today, 60), [today]);
@@ -157,10 +161,10 @@ export default function BookingModal({ provider, onClose }) {
   const statusIndex = step >= 4 ? 2 : Math.max(step - 1, 0);
 
   const safeProvider = {
-    name: provider?.name || 'Service Provider',
-    profession: provider?.profession || provider?.categories?.[0] || provider?.tags?.[0] || 'Community Services',
+    name: provider?.name || t('serviceProvider'),
+    profession: provider?.profession || provider?.categories?.[0] || provider?.tags?.[0] || t('bookingDefaultProfession'),
     location: provider?.location || 'Toledo City',
-    description: provider?.bio || provider?.description || 'Reliable service provider ready to help with your request.',
+    description: provider?.bio || provider?.description || t('bookingDefaultDescription'),
   };
 
   const initials = safeProvider.name
@@ -177,19 +181,19 @@ export default function BookingModal({ provider, onClose }) {
 
   const formattedSelectedRange = useMemo(() => {
     if (bookingType === BOOKING_TYPE.SPECIFIC_DATES) {
-      if (resolvedBookingDates.length === 0) return 'No dates selected';
+      if (resolvedBookingDates.length === 0) return t('bookingNoDatesSelected');
       return resolvedBookingDates
-        .map((value) => parseDateInput(value)?.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }))
+        .map((value) => parseDateInput(value)?.toLocaleDateString(locale, { month: 'short', day: 'numeric' }))
         .filter(Boolean)
         .join(' · ');
     }
 
-    if (!startDate) return 'No date selected';
+    if (!startDate) return t('bookingNoDateSelected');
 
     const start = parseDateInput(startDate);
-    if (!start) return 'No date selected';
+    if (!start) return t('bookingNoDateSelected');
 
-    const startLabel = start.toLocaleDateString('en-US', {
+    const startLabel = start.toLocaleDateString(locale, {
       weekday: 'short',
       month: 'short',
       day: 'numeric',
@@ -202,14 +206,14 @@ export default function BookingModal({ provider, onClose }) {
     const end = parseDateInput(endDate);
     if (!end) return startLabel;
 
-    const endLabel = end.toLocaleDateString('en-US', {
+    const endLabel = end.toLocaleDateString(locale, {
       weekday: 'short',
       month: 'short',
       day: 'numeric',
     });
 
-    return `${startLabel} to ${endLabel}`;
-  }, [bookingType, endDate, resolvedBookingDates, startDate]);
+    return t('bookingDateRangeLabel', { start: startLabel, end: endLabel });
+  }, [bookingType, endDate, locale, resolvedBookingDates, startDate, t]);
 
   const canGoToPrevMonth = useMemo(() => {
     const prevMonth = currentMonth === 0 ? 11 : currentMonth - 1;
@@ -286,7 +290,7 @@ export default function BookingModal({ provider, onClose }) {
         setAvailableDates([]);
         setStartDate('');
         setEndDate('');
-        setSubmitError(error.message || 'Unable to load available dates');
+        setSubmitError(error.message || t('bookingLoadDatesFailed'));
       } finally {
         setDateLoading(false);
       }
@@ -331,7 +335,7 @@ export default function BookingModal({ provider, onClose }) {
       if (bookingType === BOOKING_TYPE.DATE_RANGE && !isContinuousMultiDayRange) {
         setAvailableSlots([]);
         setSelectedTime('');
-        setSubmitError('Selected date range has unavailable day(s). Please choose a continuous available range.');
+        setSubmitError(t('bookingRangeUnavailable'));
         return;
       }
 
@@ -359,7 +363,7 @@ export default function BookingModal({ provider, onClose }) {
       } catch (error) {
         setAvailableSlots([]);
         setSelectedTime('');
-        setSubmitError(error.message || 'Unable to load available time slots');
+        setSubmitError(error.message || t('bookingLoadSlotsFailed'));
       } finally {
         setSlotLoading(false);
       }
@@ -501,17 +505,17 @@ export default function BookingModal({ provider, onClose }) {
     }
 
     if (!isAuthenticated()) {
-      setSubmitError('Please log in to submit a booking request.');
+      setSubmitError(t('bookingLoginRequired'));
       return;
     }
 
     if (!provider?.id || !provider?.userId) {
-      setSubmitError('Provider information is incomplete. Please try another provider.');
+      setSubmitError(t('bookingProviderIncomplete'));
       return;
     }
 
     if (!selectedTime) {
-      setSubmitError('Please choose an available time slot.');
+      setSubmitError(t('bookingChooseTime'));
       return;
     }
 
@@ -544,7 +548,7 @@ export default function BookingModal({ provider, onClose }) {
         setStep(4);
       }
     } catch (error) {
-      setSubmitError(error.message || 'Failed to submit booking request.');
+      setSubmitError(error.message || t('bookingSubmitFailed'));
     } finally {
       setSubmitting(false);
     }
@@ -556,7 +560,7 @@ export default function BookingModal({ provider, onClose }) {
         <button
           className={`calendar-nav ${!canGoToPrevMonth ? 'disabled' : ''}`}
           type="button"
-          aria-label="Previous month"
+          aria-label={t('bookingPreviousMonth')}
           disabled={!canGoToPrevMonth}
           onClick={handlePrevMonth}
         >
@@ -570,7 +574,7 @@ export default function BookingModal({ provider, onClose }) {
         <button
           className={`calendar-nav ${!canGoToNextMonth ? 'disabled' : ''}`}
           type="button"
-          aria-label="Next month"
+          aria-label={t('bookingNextMonth')}
           disabled={!canGoToNextMonth}
           onClick={handleNextMonth}
         >
@@ -600,7 +604,7 @@ export default function BookingModal({ provider, onClose }) {
               className={`calendar-day ${available ? 'available' : 'unavailable'} ${selected ? 'selected' : ''}`}
               onClick={() => handleSelectDay(cell)}
               disabled={!available}
-              aria-label={available ? `Select ${monthNames[currentMonth]} ${cell}` : `${monthNames[currentMonth]} ${cell} unavailable`}
+              aria-label={available ? t('bookingSelectDate', { date: `${monthNames[currentMonth]} ${cell}` }) : t('bookingDateUnavailable', { date: `${monthNames[currentMonth]} ${cell}` })}
               aria-pressed={available ? selected : undefined}
             >
               {cell}
@@ -620,8 +624,8 @@ export default function BookingModal({ provider, onClose }) {
           <div className="booking-time-panel">
             <div className="booking-form-group">
               <label>{t('bookingTypeLabel')}</label>
-              <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }} aria-describedby="booking-provider-availability-help">
-                <label>
+              <div className="booking-type-options" aria-describedby="booking-provider-availability-help">
+                <label className="booking-type-option">
                   <input
                     type="radio"
                     name="bookingType"
@@ -631,7 +635,7 @@ export default function BookingModal({ provider, onClose }) {
                   />{' '}
                   {t('bookingOneDay')}
                 </label>
-                <label>
+                <label className="booking-type-option">
                   <input
                     type="radio"
                     name="bookingType"
@@ -642,7 +646,7 @@ export default function BookingModal({ provider, onClose }) {
                   {t('bookingDateRange')}
                 </label>
                 {SPECIFIC_DATE_BOOKING_ENABLED && (
-                  <label>
+                  <label className="booking-type-option">
                     <input
                       type="radio"
                       name="bookingType"
@@ -657,8 +661,9 @@ export default function BookingModal({ provider, onClose }) {
             </div>
 
             <div className="booking-form-group">
-              <label>{t('bookingDurationMinutes')}</label>
+              <label htmlFor="booking-duration-minutes">{t('bookingDurationMinutes')}</label>
               <input
+                id="booking-duration-minutes"
                 className="booking-input"
                 type="number"
                 min="30"
@@ -671,9 +676,9 @@ export default function BookingModal({ provider, onClose }) {
 
             <div className="booking-hint-card" style={{ marginTop: 0 }}>
               <p><strong>{t('bookingSelectedLabel')}:</strong> {formattedSelectedRange}</p>
-              <p><strong>{t('bookingDurationLabel')}:</strong> {durationDays} day(s)</p>
-              <p><strong>{t('bookingDailyRateLabel')}:</strong> {formatMoney(dailyRate)} per day</p>
-              <p><strong>{t('bookingEstimatedCostLabel')}:</strong> {formatMoney(estimatedTotal)}</p>
+              <p><strong>{t('bookingDurationLabel')}:</strong> {durationDays} {t(durationDays === 1 ? 'bookingDaySingular' : 'bookingDayPlural')}</p>
+              <p><strong>{t('bookingDailyRateLabel')}:</strong> {dailyRate > 0 ? t('bookingRatePerDay', { rate: formatMoney(dailyRate) }) : t('priceOnRequest')}</p>
+              <p><strong>{t('bookingEstimatedCostLabel')}:</strong> {dailyRate > 0 ? formatMoney(estimatedTotal) : t('priceOnRequest')}</p>
               <p className="hint-subtext" id="booking-provider-availability-help">
                 {t('bookingProviderChoiceHelp')}
                 {SPECIFIC_DATE_BOOKING_ENABLED && bookingType === BOOKING_TYPE.SPECIFIC_DATES
@@ -726,7 +731,7 @@ export default function BookingModal({ provider, onClose }) {
         <form className="booking-form" onSubmit={(event) => event.preventDefault()}>
           {providerServiceTypes.length > 1 && (
             <div className="booking-form-group">
-              <label htmlFor="booking-service-type">Service Type</label>
+              <label htmlFor="booking-service-type">{t('bookingServiceType')}</label>
               <select
                 id="booking-service-type"
                 className="booking-input"
@@ -742,41 +747,43 @@ export default function BookingModal({ provider, onClose }) {
 
           {providerServiceTypes.length === 1 && (
             <div className="booking-form-group">
-              <label>Service Type</label>
+              <label>{t('bookingServiceType')}</label>
               <input className="booking-input" value={providerServiceTypes[0].label} readOnly aria-readonly="true" />
             </div>
           )}
 
           <div className="booking-form-group">
-            <label>Job Title</label>
+            <label htmlFor="booking-job-title">{t('bookingJobTitle')}</label>
             <input
+              id="booking-job-title"
               className="booking-input"
               value={jobTitle}
               onChange={(event) => setJobTitle(event.target.value)}
-              placeholder="Example: Pipe leak repair"
+              placeholder={t('bookingJobTitlePlaceholder')}
             />
           </div>
 
           <div className="booking-form-group">
-            <label>Job Details and Service Location</label>
+            <label htmlFor="booking-job-details">{t('bookingJobDetailsLocation')}</label>
             <textarea
+              id="booking-job-details"
               className="booking-textarea"
               rows={5}
               value={jobDetails}
               onChange={(event) => setJobDetails(event.target.value)}
-              placeholder="Describe the work and include service location details."
+              placeholder={t('bookingJobDetailsPlaceholder')}
             />
           </div>
 
           <div className="booking-hint-card">
-            <p><strong>Booking:</strong> {formattedSelectedRange}</p>
-            <p><strong>Time:</strong> {selectedTime || 'Not selected'}</p>
-            <p><strong>Estimated:</strong> {formatMoney(estimatedTotal)}</p>
+            <p><strong>{t('bookingSummaryBooking')}:</strong> {formattedSelectedRange}</p>
+            <p><strong>{t('bookingSummaryTime')}:</strong> {selectedTime || t('bookingNotSelected')}</p>
+            <p><strong>{t('bookingSummaryEstimated')}:</strong> {dailyRate > 0 ? formatMoney(estimatedTotal) : t('priceOnRequest')}</p>
             <p className="hint-subtext">
-              The displayed amount is an estimate based on the provider daily rate. Final price may vary depending on scope.
+              {t('bookingEstimateDisclaimer')}
             </p>
             <p className="hint-subtext">
-              The provider must accept your request before the booking is confirmed.
+              {t('bookingAcceptanceDisclaimer')}
             </p>
           </div>
         </form>
@@ -788,8 +795,8 @@ export default function BookingModal({ provider, onClose }) {
         <div className="success-icon">
           <CheckIcon />
         </div>
-        <h3>Request sent</h3>
-        <p>Your booking request has been submitted successfully.</p>
+        <h3>{t('bookingRequestSent')}</h3>
+        <p>{t('bookingRequestSuccess')}</p>
       </div>
     );
   };
@@ -828,18 +835,18 @@ export default function BookingModal({ provider, onClose }) {
         </aside>
 
         <section className="booking-content">
-          <button className="booking-close" type="button" onClick={onClose} aria-label="Close booking modal">
+          <button className="booking-close" type="button" onClick={onClose} aria-label={t('bookingCloseAria')}>
             X
           </button>
 
           <div className="booking-header">
-            <h2 className="booking-title">Request Service</h2>
+            <h2 className="booking-title">{t('bookingRequestServiceTitle')}</h2>
             <p className="booking-subtitle">
               {step === 4
-                ? 'All set. Feel free to close this window.'
+                ? t('bookingAllSet')
                 : step === 3
-                  ? 'Review the details before sending your request.'
-                  : 'Choose an available schedule to continue.'}
+                  ? t('bookingReviewBeforeSending')
+                  : t('bookingChooseSchedule')}
             </p>
           </div>
 
@@ -856,7 +863,7 @@ export default function BookingModal({ provider, onClose }) {
           <div className="booking-actions">
             {step > 1 && step < 4 && (
               <button className="booking-btn booking-btn-outline" type="button" onClick={handlePrev} disabled={submitting}>
-                Back
+                {t('bookingBack')}
               </button>
             )}
 
@@ -867,13 +874,13 @@ export default function BookingModal({ provider, onClose }) {
                 onClick={handleNext}
                 disabled={!canProceed() || submitting || dateLoading || slotLoading}
               >
-                {submitting ? 'Sending...' : step === 3 ? 'Send Request' : 'Continue'}
+                {submitting ? t('bookingSending') : step === 3 ? t('bookingSendRequest') : t('bookingContinue')}
               </button>
             )}
 
             {step === 4 && (
               <button className="booking-btn booking-btn-primary" type="button" onClick={onClose}>
-                Close
+                {t('bookingClose')}
               </button>
             )}
           </div>
