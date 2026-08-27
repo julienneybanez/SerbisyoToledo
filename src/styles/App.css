@@ -50,3 +50,48 @@
 
 /* Final Browse Services header/discovery cleanup */
 @import './BrowseHeaderCleanup.css';
+
+/* Consolidated from ReadabilityRefinement.css: App.css */
+/* Consolidated cross-page readability defaults */
+/*
+  Readability refinement for SerbisyoToledo.
+  This pass prioritizes comfortable scanning, stronger contrast, and clearer touch targets
+  for adult users without changing page structure or application behavior.
+*/
+
+:root,
+[data-theme='light'] {
+  --color-text-secondary: #52647a;
+  --color-text-muted: #6b7f96;
+  --color-placeholder: #6b7f96;
+  --brand-muted: #52647a;
+}
+
+[data-theme='dark'] {
+  --color-text-secondary: #cbd5e1;
+  --color-text-muted: #a9b8cc;
+  --color-placeholder: #a9b8cc;
+}
+
+html,
+body,
+#root,
+button,
+input,
+select,
+textarea {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+body {
+  line-height: 1.55;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-page .home-category-card,
+  .provider-card,
+  .navbar,
+  .floating-btn {
+    transition: none;
+  }
+}
