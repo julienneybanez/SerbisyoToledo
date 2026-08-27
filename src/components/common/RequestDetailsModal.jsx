@@ -304,7 +304,7 @@ export default function RequestDetailsModal({
                     <i className="bi bi-check-circle-fill"></i>
                     <span>Your contact information has been shared with the client.</span>
                   </div>
-                ) : isProvider && request.discussion_requested ? (
+                ) : isProvider && request.discussion_requested && onAcceptDiscussion ? (
                   <div className="discussion-request-modal">
                     <div className="discussion-request-info">
                       <i className="bi bi-chat-dots-fill"></i>
@@ -327,7 +327,7 @@ export default function RequestDetailsModal({
                     <i className="bi bi-hourglass-split"></i>
                     <span>Waiting for provider to accept discussion request...</span>
                   </div>
-                ) : !isProvider ? (
+                ) : !isProvider && onRequestDiscussion ? (
                   <div className="discussion-request-modal">
                     <div className="contact-pending-notice">
                       <i className="bi bi-info-circle"></i>
@@ -358,12 +358,11 @@ export default function RequestDetailsModal({
 
         {/* Action Buttons */}
         <div className="modal-actions">
-          <button
-            className="action-btn btn-decline"
-            onClick={() => onOpenReport && onOpenReport(request)}
-          >
-            <i className="bi bi-flag"></i> Report User
-          </button>
+          {onOpenReport && (
+            <button className="action-btn btn-decline" onClick={() => onOpenReport(request)}>
+              <i className="bi bi-flag"></i> Report User
+            </button>
+          )}
 
           {/* Provider-only: pending actions */}
           {isProvider && request.status === 'pending' && (
@@ -404,33 +403,21 @@ export default function RequestDetailsModal({
             </button>
           )}
 
-          {/* Two-way completion: Provider confirm */}
-          {isProvider && ['on_the_way', 'in_progress'].includes(request.status) && !request.provider_completed && (
-            <button
-              className="action-btn btn-complete"
-              onClick={() => void onStatusUpdate(request.id, 'completed')}
-              disabled={actionLoading === request.id}
-            >
-              {actionLoading === request.id ? (
-                <><span className="spinner-btn"></span> Confirming...</>
-              ) : (
-                <><i className="bi bi-check-circle"></i> Mark Service Complete</>
-              )}
+          {isProvider && request.status === 'on_the_way' && onStatusUpdate && (
+            <button className="action-btn btn-on-way" onClick={() => void onStatusUpdate(request.id, 'in_progress')} disabled={actionLoading === request.id}>
+              {actionLoading === request.id ? <><span className="spinner-btn"></span> Updating...</> : <><i className="bi bi-play-circle"></i> Start Service</>}
             </button>
           )}
 
-          {/* Two-way completion: Client confirm */}
-          {!isProvider && ['on_the_way', 'in_progress'].includes(request.status) && !request.client_completed && (
-            <button
-              className="action-btn btn-complete"
-              onClick={() => void onStatusUpdate(request.id, 'completed')}
-              disabled={actionLoading === request.id}
-            >
-              {actionLoading === request.id ? (
-                <><span className="spinner-btn"></span> Confirming...</>
-              ) : (
-                <><i className="bi bi-check-circle"></i> Mark Service Complete</>
-              )}
+          {isProvider && request.status === 'in_progress' && !request.provider_completed && onStatusUpdate && (
+            <button className="action-btn btn-complete" onClick={() => void onStatusUpdate(request.id, 'completed')} disabled={actionLoading === request.id}>
+              {actionLoading === request.id ? <><span className="spinner-btn"></span> Confirming...</> : <><i className="bi bi-check-circle"></i> Mark Service Complete</>}
+            </button>
+          )}
+
+          {!isProvider && request.status === 'in_progress' && !request.client_completed && onStatusUpdate && (
+            <button className="action-btn btn-complete" onClick={() => void onStatusUpdate(request.id, 'completed')} disabled={actionLoading === request.id}>
+              {actionLoading === request.id ? <><span className="spinner-btn"></span> Confirming...</> : <><i className="bi bi-check-circle"></i> Mark Service Complete</>}
             </button>
           )}
 
@@ -449,22 +436,20 @@ export default function RequestDetailsModal({
             </span>
           )}
 
-          {!isProvider && request.status === 'pending' && (
-            <button
-              className="action-btn btn-cancel"
-              onClick={() => onOpenCancel && onOpenCancel(request)}
-              disabled={actionLoading === request.id}
-            >
+          {!isProvider && request.status === 'pending' && onOpenCancel && (
+            <button className="action-btn btn-cancel" onClick={() => onOpenCancel(request)} disabled={actionLoading === request.id}>
               Cancel Request
             </button>
           )}
 
-          {['accepted', 'on_the_way', 'in_progress'].includes(request.status) && (
-            <button
-              className="action-btn btn-on-way"
-              onClick={() => onOpenReschedule && onOpenReschedule(request)}
-              disabled={actionLoading === request.id}
-            >
+          {request.status === 'accepted' && onOpenCancel && (
+            <button className="action-btn btn-cancel" onClick={() => onOpenCancel(request)} disabled={actionLoading === request.id}>
+              Cancel Service Request
+            </button>
+          )}
+
+          {request.status === 'accepted' && onOpenReschedule && (
+            <button className="action-btn btn-on-way" onClick={() => onOpenReschedule(request)} disabled={actionLoading === request.id}>
               Propose Reschedule
             </button>
           )}

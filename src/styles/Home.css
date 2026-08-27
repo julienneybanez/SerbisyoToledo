@@ -757,3 +757,32 @@
 .home-page .home-popular-section .section-subtitle {
   display: block;
 }
+
+/* Authoritative popular-service image-first layout */
+.home-page .home-category-card {
+  display: block;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.home-page .home-category-image-wrap {
+  display: block;
+  width: 100%;
+  overflow: hidden;
+}
+
+.home-page .home-category-image {
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  display: block;
+  object-fit: cover;
+}
+
+@media (max-width: 620px) {
+  .home-page .home-category-image-wrap {
+    aspect-ratio: 16 / 10;
+  }
+}

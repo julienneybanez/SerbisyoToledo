@@ -269,12 +269,9 @@ export default function BookingModal({ provider, onClose }) {
             const firstDate = dates[0];
             const parsedFirstDate = parseDateInput(firstDate);
 
-            setStartDate((prev) => (dates.includes(prev) ? prev : firstDate));
-            setEndDate((prev) => (dates.includes(prev) ? prev : firstDate));
-            setSelectedDates((prev) => {
-              const retained = prev.filter((value) => dates.includes(value));
-              return retained.length > 0 ? retained : [firstDate];
-            });
+            setStartDate((prev) => (dates.includes(prev) ? prev : ''));
+            setEndDate((prev) => (dates.includes(prev) ? prev : ''));
+            setSelectedDates((prev) => prev.filter((value) => dates.includes(value)));
 
             if (parsedFirstDate) {
               setCurrentMonth(parsedFirstDate.getMonth());
@@ -320,7 +317,7 @@ export default function BookingModal({ provider, onClose }) {
     setSelectedServiceTypeKey((prev) => (
       providerServiceTypes.some((item) => item.key === prev)
         ? prev
-        : providerServiceTypes[0].key
+        : ''
     ));
   }, [providerServiceTypes]);
 
@@ -355,10 +352,9 @@ export default function BookingModal({ provider, onClose }) {
           const slots = response.data?.slots || [];
           setAvailableSlots(slots);
 
-          setSelectedTime((prevSelected) => {
-            if (slots.length === 0) return '';
-            return slots.some((slot) => slot.time === prevSelected) ? prevSelected : slots[0].time;
-          });
+          setSelectedTime((prevSelected) => (
+            slots.some((slot) => slot.time === prevSelected) ? prevSelected : ''
+          ));
         }
       } catch (error) {
         setAvailableSlots([]);
@@ -698,10 +694,13 @@ export default function BookingModal({ provider, onClose }) {
     if (step === 2) {
       return (
         <>
-          {renderCalendar()}
-
           <div className="booking-time-panel">
-            <p className="time-panel-label">{formattedSelectedRange}</p>
+            <div className="booking-hint-card" style={{ marginTop: 0 }}>
+              <p><strong>{t('bookingSelectedLabel')}:</strong> {formattedSelectedRange}</p>
+              <button type="button" className="btn btn-sm btn-outline-secondary" onClick={() => setStep(1)}>
+                {t('bookingChangeDate')}
+              </button>
+            </div>
             {slotLoading ? (
               <p className="booking-subtitle">{t('bookingLoadingSlots')}</p>
             ) : availableSlots.length === 0 ? (
@@ -738,6 +737,7 @@ export default function BookingModal({ provider, onClose }) {
                 value={selectedServiceTypeKey}
                 onChange={(event) => setSelectedServiceTypeKey(event.target.value)}
               >
+                <option value="" disabled>{t('bookingChooseServiceType')}</option>
                 {providerServiceTypes.map((item) => (
                   <option key={item.key} value={item.key}>{item.label}</option>
                 ))}

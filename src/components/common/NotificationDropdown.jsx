@@ -27,7 +27,7 @@ const resolveNotificationDestination = (notification) => {
   }
 
   if (['verification_approved', 'verification_rejected'].includes(type)) {
-    return '/provider-settings?section=business';
+    return '/dashboard';
   }
 
   return '/notifications';

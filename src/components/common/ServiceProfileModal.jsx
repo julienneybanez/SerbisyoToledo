@@ -72,7 +72,7 @@ export default function ServiceProfileModal({ onClose }) {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    if (!['fullName', 'barangayAddress', 'startingPrice'].includes(name)) return;
+    if (!['barangayAddress', 'startingPrice'].includes(name)) return;
 
     setFormData((prev) => ({
       ...prev,
@@ -138,9 +138,9 @@ export default function ServiceProfileModal({ onClose }) {
 
       // Prepare form data with file
       const submitData = new FormData();
-      submitData.append('fullName', formData.fullName);
       submitData.append('barangayAddress', formData.barangayAddress);
       submitData.append('startingPrice', String(parseFloat(formData.startingPrice)));
+      submitData.append('pricingUnit', 'per_day');
       submitData.append('serviceCategories', JSON.stringify(formData.serviceCategories));
       submitData.append('serviceTypes', JSON.stringify(formData.serviceTypes));
       if (formData.bannerImage) {
@@ -223,19 +223,7 @@ export default function ServiceProfileModal({ onClose }) {
           <section className="form-section">
             <h3 className="section-header">Service Information</h3>
             
-            <div className="form-group">
-              <label htmlFor="fullName" className="form-label">Full Name<span className="required">*</span></label>
-              <input
-                type="text"
-                id="fullName"
-                name="fullName"
-                placeholder="Enter your full name"
-                value={formData.fullName}
-                onChange={handleInputChange}
-                className="form-input"
-                required
-              />
-            </div>
+            <p className="section-description">Your account name is managed separately in Account Settings.</p>
 
             <div className="form-row">
               <div className="form-group">
@@ -252,12 +240,12 @@ export default function ServiceProfileModal({ onClose }) {
                 />
               </div>
               <div className="form-group">
-                <label htmlFor="startingPrice" className="form-label">Starting Price<span className="required">*</span></label>
+                <label htmlFor="startingPrice" className="form-label">Daily Rate<span className="required">*</span></label>
                 <input
                   type="number"
                   id="startingPrice"
                   name="startingPrice"
-                  placeholder="e.g. 500"
+                  placeholder="e.g. 500 per day"
                   value={formData.startingPrice}
                   onChange={handleInputChange}
                   className="form-input"

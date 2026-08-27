@@ -47,7 +47,7 @@ function ClientSettings() {
             phone: profile.phone || '',
             address: profile.address || '',
             createdAt: profile.createdAt || '',
-            emailVerified: Boolean(currentUser.emailVerified),
+            emailVerified: Boolean(profile.emailVerified ?? currentUser.emailVerified),
           };
           setSettings(nextState);
           setInitialProfile(nextState);

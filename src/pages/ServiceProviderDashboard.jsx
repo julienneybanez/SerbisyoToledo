@@ -96,6 +96,7 @@ export default function ServiceProviderDashboard() {
   const [checklistError, setChecklistError] = useState('');
   const [myProfile, setMyProfile] = useState(null);
   const [myPortfolio, setMyPortfolio] = useState(null);
+  const [myAvailability, setMyAvailability] = useState(null);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [declineDialog, setDeclineDialog] = useState({
     open: false,
@@ -154,9 +155,10 @@ export default function ServiceProviderDashboard() {
     setChecklistError('');
 
     try {
-      const [profileResponse, portfolioResponse] = await Promise.allSettled([
+      const [profileResponse, portfolioResponse, availabilityResponse] = await Promise.allSettled([
         serviceProfileAPI.getMyProfile(),
         serviceProfileAPI.getMyPortfolio(),
+        serviceProfileAPI.getMyAvailability(),
       ]);
 
       if (profileResponse.status === 'fulfilled' && profileResponse.value.success) {
@@ -169,6 +171,12 @@ export default function ServiceProviderDashboard() {
         setMyPortfolio(portfolioResponse.value.data);
       } else {
         setMyPortfolio(null);
+      }
+
+      if (availabilityResponse.status === 'fulfilled' && availabilityResponse.value.success) {
+        setMyAvailability(availabilityResponse.value.data || null);
+      } else {
+        setMyAvailability(null);
       }
     } catch {
       setChecklistError('Unable to load some profile progress right now.');
@@ -228,7 +236,10 @@ export default function ServiceProviderDashboard() {
       key: 'availability',
       label: 'Set your availability',
       description: 'Choose when clients can request your services.',
-      completed: Boolean((myPortfolio?.responseTime || '').trim()),
+      completed: Boolean(
+        (Array.isArray(myAvailability?.specificAvailability) && myAvailability.specificAvailability.length > 0)
+        || (Array.isArray(myAvailability?.weeklyBlocks) && myAvailability.weeklyBlocks.length > 0)
+      ),
       actionType: 'link',
       to: '/provider-settings?section=schedule',
       actionLabel: 'Schedule',
@@ -332,6 +343,7 @@ export default function ServiceProviderDashboard() {
             accepted: 'Request accepted.',
             declined: 'Request declined.',
             on_the_way: "You're marked as on the way.",
+            in_progress: 'Service started.',
             completed: 'Service marked complete.',
           };
           alert(messages[status] || 'Status updated successfully.');
@@ -601,20 +613,23 @@ export default function ServiceProviderDashboard() {
                       </>
                     )}
 
-                    {[REQUEST_STATUS.ON_THE_WAY, REQUEST_STATUS.IN_PROGRESS].includes(job.status) && (
+                    {job.status === REQUEST_STATUS.ON_THE_WAY && (
                       <>
-                        <button
-                          className="job-btn job-btn-complete"
-                          onClick={() => handleStatusUpdate(job.id, REQUEST_STATUS.COMPLETED)}
-                          disabled={actionLoading === job.id}
-                        >
+                        <button className="job-btn job-btn-on-way" onClick={() => handleStatusUpdate(job.id, REQUEST_STATUS.IN_PROGRESS)} disabled={actionLoading === job.id}>
+                          <i className="bi bi-play-circle"></i> Start Service
+                        </button>
+                        <button className="job-btn job-btn-secondary" onClick={() => setSelectedRequest(job)} disabled={actionLoading === job.id}>
+                          View Details
+                        </button>
+                      </>
+                    )}
+
+                    {job.status === REQUEST_STATUS.IN_PROGRESS && (
+                      <>
+                        <button className="job-btn job-btn-complete" onClick={() => handleStatusUpdate(job.id, REQUEST_STATUS.COMPLETED)} disabled={actionLoading === job.id}>
                           <i className="bi bi-check-lg"></i> Mark Service Complete
                         </button>
-                        <button
-                          className="job-btn job-btn-secondary"
-                          onClick={() => setSelectedRequest(job)}
-                          disabled={actionLoading === job.id}
-                        >
+                        <button className="job-btn job-btn-secondary" onClick={() => setSelectedRequest(job)} disabled={actionLoading === job.id}>
                           View Details
                         </button>
                       </>
@@ -690,14 +705,7 @@ export default function ServiceProviderDashboard() {
             isProvider
             onClose={() => setSelectedRequest(null)}
             onStatusUpdate={handleStatusUpdate}
-            onOpenCancel={() => {}}
-            onOpenReschedule={() => {}}
-            onRespondReschedule={() => {}}
-            onRequestDiscussion={() => {}}
-            onAcceptDiscussion={() => {}}
-            onOpenReview={() => {}}
             onOpenDecline={(request) => openDeclineDialog(request.id)}
-            onOpenReport={() => {}}
             detailsLoading={false}
             actionLoading={actionLoading}
           />

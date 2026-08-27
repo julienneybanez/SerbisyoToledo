@@ -1033,34 +1033,33 @@ export default function Requests() {
                       )}
                       {request.status === REQUEST_STATUS.ACCEPTED && (
                         <>
-                          <button
-                            className="btn-action btn-on-way btn-primary-action"
-                            onClick={() => handleStatusUpdate(request.id, REQUEST_STATUS.ON_THE_WAY)}
-                            disabled={actionLoading === request.id}
-                          >
+                          <button className="btn-action btn-on-way btn-primary-action" onClick={() => handleStatusUpdate(request.id, REQUEST_STATUS.ON_THE_WAY)} disabled={actionLoading === request.id}>
                             <i className="bi bi-truck"></i> {t('requestsImOnMyWay')}
                           </button>
-                          <button
-                            className="btn-action btn-view-details-secondary"
-                            onClick={() => void handleViewDetails(request)}
-                          >
+                          <button className="btn-action btn-view-details-secondary" onClick={() => void handleViewDetails(request)}>
+                            <i className="bi bi-eye"></i> {t('viewDetails')}
+                          </button>
+                          <button className="btn-action btn-cancel btn-danger-subtle" onClick={() => openCancelDialog(request.id)} disabled={actionLoading === request.id}>
+                            {t('cancelServiceRequest')}
+                          </button>
+                        </>
+                      )}
+                      {request.status === REQUEST_STATUS.ON_THE_WAY && (
+                        <>
+                          <button className="btn-action btn-on-way btn-primary-action" onClick={() => handleStatusUpdate(request.id, REQUEST_STATUS.IN_PROGRESS)} disabled={actionLoading === request.id}>
+                            <i className="bi bi-play-circle"></i> {t('requestsStartService')}
+                          </button>
+                          <button className="btn-action btn-view-details-secondary" onClick={() => void handleViewDetails(request)}>
                             <i className="bi bi-eye"></i> {t('viewDetails')}
                           </button>
                         </>
                       )}
-                      {[REQUEST_STATUS.ON_THE_WAY, REQUEST_STATUS.IN_PROGRESS].includes(request.status) && !request.provider_completed && (
+                      {request.status === REQUEST_STATUS.IN_PROGRESS && !request.provider_completed && (
                         <>
-                          <button
-                            className="btn-action btn-complete btn-primary-action"
-                            onClick={() => handleStatusUpdate(request.id, REQUEST_STATUS.COMPLETED)}
-                            disabled={actionLoading === request.id}
-                          >
+                          <button className="btn-action btn-complete btn-primary-action" onClick={() => handleStatusUpdate(request.id, REQUEST_STATUS.COMPLETED)} disabled={actionLoading === request.id}>
                             <i className="bi bi-check-lg"></i> {t('requestsMarkServiceComplete')}
                           </button>
-                          <button
-                            className="btn-action btn-view-details-secondary"
-                            onClick={() => void handleViewDetails(request)}
-                          >
+                          <button className="btn-action btn-view-details-secondary" onClick={() => void handleViewDetails(request)}>
                             <i className="bi bi-eye"></i> {t('viewDetails')}
                           </button>
                         </>
@@ -1103,29 +1102,26 @@ export default function Requests() {
                           </button>
                         </>
                       )}
-                      {[REQUEST_STATUS.ACCEPTED, REQUEST_STATUS.ON_THE_WAY, REQUEST_STATUS.IN_PROGRESS].includes(request.status) && (
+                      {request.status === REQUEST_STATUS.ACCEPTED && (
                         <>
-                          <button
-                            className="btn-action btn-view-details-secondary"
-                            onClick={() => void handleViewDetails(request)}
-                          >
+                          <button className="btn-action btn-view-details-secondary" onClick={() => void handleViewDetails(request)}>
                             <i className="bi bi-eye"></i> {t('viewDetails')}
                           </button>
-                          <button
-                            className="btn-action btn-on-way"
-                            onClick={() => openRescheduleDialog(request)}
-                            disabled={actionLoading === request.id}
-                          >
+                          <button className="btn-action btn-on-way" onClick={() => openRescheduleDialog(request)} disabled={actionLoading === request.id}>
                             <i className="bi bi-calendar2-week"></i> {t('requestsProposeReschedule')}
+                          </button>
+                          <button className="btn-action btn-cancel btn-danger-subtle" onClick={() => openCancelDialog(request.id)} disabled={actionLoading === request.id}>
+                            {t('cancelServiceRequest')}
                           </button>
                         </>
                       )}
-                      {[REQUEST_STATUS.ON_THE_WAY, REQUEST_STATUS.IN_PROGRESS].includes(request.status) && !request.client_completed && (
-                        <button
-                          className="btn-action btn-complete btn-primary-action"
-                          onClick={() => handleStatusUpdate(request.id, REQUEST_STATUS.COMPLETED)}
-                          disabled={actionLoading === request.id}
-                        >
+                      {[REQUEST_STATUS.ON_THE_WAY, REQUEST_STATUS.IN_PROGRESS].includes(request.status) && (
+                        <button className="btn-action btn-view-details-secondary" onClick={() => void handleViewDetails(request)}>
+                          <i className="bi bi-eye"></i> {t('viewDetails')}
+                        </button>
+                      )}
+                      {request.status === REQUEST_STATUS.IN_PROGRESS && !request.client_completed && (
+                        <button className="btn-action btn-complete btn-primary-action" onClick={() => handleStatusUpdate(request.id, REQUEST_STATUS.COMPLETED)} disabled={actionLoading === request.id}>
                           <i className="bi bi-check-lg"></i> {t('requestsMarkServiceComplete')}
                         </button>
                       )}

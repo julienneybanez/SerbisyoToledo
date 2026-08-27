@@ -166,7 +166,7 @@ exports.createOrUpdateProfile = async (req, res) => {
       });
     }
 
-    const { fullName, barangayAddress, startingPrice, description } = req.body;
+    const { barangayAddress, startingPrice, description } = req.body;
     const pricingUnit = String(req.body.pricingUnit || 'per_day').trim().toLowerCase();
     let serviceCategories = req.body.serviceCategories;
     let serviceTypes = req.body.serviceTypes;
@@ -244,7 +244,7 @@ exports.createOrUpdateProfile = async (req, res) => {
     }
 
     // Validate required fields
-    if (!fullName || !barangayAddress || !startingPrice || normalizedServiceCategories.length === 0) {
+    if (!barangayAddress || !startingPrice || normalizedServiceCategories.length === 0) {
       return res.status(400).json({
         success: false,
         message: 'Missing required fields'
@@ -264,8 +264,6 @@ exports.createOrUpdateProfile = async (req, res) => {
         bannerImagePublicId = uploadResult.public_id;
       }
     }
-
-    await db.query('UPDATE users SET full_name = ? WHERE id = ?', [fullName, userId]);
 
     // Check if profile already exists for this user
     const [existingProfile] = await db.query(

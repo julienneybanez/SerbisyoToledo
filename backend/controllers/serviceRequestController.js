@@ -637,7 +637,7 @@ exports.updateRequestStatus = async (req, res) => {
       const actorName = request.client_id === userId ? request.client_name : request.provider_name;
       await connection.query(
         `INSERT INTO notifications (user_id, type, title, message, related_request_id)
-         VALUES (?, 'request_declined', ?, ?, ?)`,
+         VALUES (?, 'request_cancelled', ?, ?, ?)`,
         [
           otherUserId,
           'Booking Cancelled',
@@ -671,11 +671,11 @@ exports.updateRequestStatus = async (req, res) => {
         });
       }
 
-      if (!['on_the_way', 'in_progress'].includes(currentStatus)) {
+      if (currentStatus !== 'in_progress') {
         await connection.rollback();
         return res.status(409).json({
           success: false,
-          message: 'Request can only be completed after it is on the way or in progress'
+          message: 'Request can only be completed after the provider starts the service'
         });
       }
 
@@ -900,11 +900,11 @@ exports.proposeReschedule = async (req, res) => {
 
     const request = requests[0];
 
-    if (!['accepted', 'on_the_way', 'in_progress'].includes(request.status)) {
+    if (request.status !== 'accepted') {
       await connection.rollback();
       return res.status(409).json({
         success: false,
-        message: `Cannot reschedule request in ${request.status} status`
+        message: 'A booking can only be rescheduled before the provider is on the way.'
       });
     }
 
@@ -957,11 +957,12 @@ exports.proposeReschedule = async (req, res) => {
          proposed_start_date,
          proposed_end_date,
          proposed_start_time,
+         proposed_estimated_duration_minutes,
          proposed_by,
          reschedule_reason,
          reschedule_status
        )
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
       [
         request.id,
         existingSchedule.startDate,
@@ -970,6 +971,7 @@ exports.proposeReschedule = async (req, res) => {
         proposedStartDateIso,
         proposedEndDateIso,
         normalizedProposedTime,
+        normalizedDurationMinutes,
         actorId,
         trimmedReason,
       ]
@@ -980,7 +982,7 @@ exports.proposeReschedule = async (req, res) => {
 
     await connection.query(
       `INSERT INTO notifications (user_id, type, title, message, related_request_id)
-       VALUES (?, 'discussion_requested', ?, ?, ?)`,
+       VALUES (?, 'reschedule_proposed', ?, ?, ?)`,
       [
         recipientId,
         'Reschedule Proposed',
@@ -1020,7 +1022,7 @@ exports.respondToReschedule = async (req, res) => {
     const actorId = req.user.userId;
     const { action } = req.body;
 
-    if (!['accepted', 'declined', 'cancelled'].includes(action)) {
+    if (!['accepted', 'declined'].includes(action)) {
       return res.status(400).json({ success: false, message: 'Invalid reschedule action.' });
     }
 
@@ -1076,7 +1078,7 @@ exports.respondToReschedule = async (req, res) => {
         startDate: proposal.proposed_start_date,
         endDate: proposal.proposed_end_date,
         startTime: proposal.proposed_start_time,
-        durationMinutes: Number(request.estimated_duration_minutes || 0),
+        durationMinutes: Number(proposal.proposed_estimated_duration_minutes || request.estimated_duration_minutes || 0),
         excludeRequestId: request.id,
       });
 
@@ -1093,7 +1095,7 @@ exports.respondToReschedule = async (req, res) => {
         requestedStartDate: proposal.proposed_start_date,
         requestedEndDate: proposal.proposed_end_date,
         requestedStartTime: proposal.proposed_start_time,
-        requestedDurationMinutes: Number(request.estimated_duration_minutes || 0),
+        requestedDurationMinutes: Number(proposal.proposed_estimated_duration_minutes || request.estimated_duration_minutes || 0),
         excludeRequestId: request.id,
       });
 
@@ -1118,6 +1120,7 @@ exports.respondToReschedule = async (req, res) => {
              start_time = ?,
              scheduled_start_at = ?,
              scheduled_end_at = ?,
+             estimated_duration_minutes = ?,
              duration_days = ?,
              estimated_total = ?
          WHERE id = ?`,
@@ -1127,6 +1130,7 @@ exports.respondToReschedule = async (req, res) => {
           proposal.proposed_start_time,
           proposedStartAt,
           proposedEndAt,
+          Number(proposal.proposed_estimated_duration_minutes || request.estimated_duration_minutes || 0),
           durationDays,
           estimatedTotal,
           request.id,
@@ -1146,9 +1150,10 @@ exports.respondToReschedule = async (req, res) => {
 
     await connection.query(
       `INSERT INTO notifications (user_id, type, title, message, related_request_id)
-       VALUES (?, 'discussion_accepted', ?, ?, ?)`,
+       VALUES (?, ?, ?, ?, ?)`,
       [
         proposerId,
+        action === 'accepted' ? 'reschedule_accepted' : 'reschedule_declined',
         `Reschedule ${action}`,
         `${responderName} ${action} the reschedule proposal for "${request.job_title}".`,
         request.id,
