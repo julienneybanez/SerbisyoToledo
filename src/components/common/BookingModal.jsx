@@ -229,8 +229,16 @@ export default function BookingModal({ provider, onClose }) {
   }, [bookingWindowEnd, currentMonth, currentYear]);
 
   useEffect(() => {
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+    const body = document.body;
+    const previousOverflow = body.style.overflow;
+    const previousPaddingRight = body.style.paddingRight;
+    const scrollbarWidth = Math.max(0, window.innerWidth - document.documentElement.clientWidth);
+    const computedPaddingRight = Number.parseFloat(window.getComputedStyle(body).paddingRight) || 0;
+
+    if (scrollbarWidth > 0) {
+      body.style.paddingRight = `${computedPaddingRight + scrollbarWidth}px`;
+    }
+    body.style.overflow = 'hidden';
 
     const handleEscape = (event) => {
       if (event.key === 'Escape') {
@@ -241,7 +249,8 @@ export default function BookingModal({ provider, onClose }) {
     window.addEventListener('keydown', handleEscape);
     return () => {
       window.removeEventListener('keydown', handleEscape);
-      document.body.style.overflow = previousOverflow;
+      body.style.overflow = previousOverflow;
+      body.style.paddingRight = previousPaddingRight;
     };
   }, [onClose]);
 
@@ -807,8 +816,14 @@ export default function BookingModal({ provider, onClose }) {
   }
 
   return createPortal(
-    <div className="booking-overlay" role="dialog" aria-modal="true" onClick={onClose}>
-      <div className="booking-modal" onClick={(event) => event.stopPropagation()}>
+    <div className="booking-overlay" onClick={onClose}>
+      <div
+        className="booking-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="booking-modal-title"
+        onClick={(event) => event.stopPropagation()}
+      >
         <aside className="booking-sidebar">
           <div className="booking-provider-meta">
             <div className="booking-provider-avatar">{initials}</div>
@@ -845,7 +860,7 @@ export default function BookingModal({ provider, onClose }) {
           </button>
 
           <div className="booking-header">
-            <h2 className="booking-title">{t('bookingRequestServiceTitle')}</h2>
+            <h2 id="booking-modal-title" className="booking-title">{t('bookingRequestServiceTitle')}</h2>
             <p className="booking-subtitle">
               {step === 4
                 ? t('bookingAllSet')

@@ -1,22 +1,34 @@
 .booking-overlay {
   position: fixed;
   inset: 0;
+  width: 100vw;
+  height: 100dvh;
+  box-sizing: border-box;
   background: rgba(7, 22, 43, 0.65);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1.5rem;
-  z-index: 1200;
+  padding:
+    max(1rem, env(safe-area-inset-top))
+    max(1rem, env(safe-area-inset-right))
+    max(1rem, env(safe-area-inset-bottom))
+    max(1rem, env(safe-area-inset-left));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  z-index: 10000;
 }
 
 .booking-modal {
   background: var(--surface-elevated, #fff);
-  width: min(1120px, 96vw);
+  width: min(1120px, calc(100vw - 2rem));
+  max-height: calc(100dvh - 2rem);
+  min-height: 0;
+  margin: auto;
+  border: 1px solid var(--border);
   border-radius: 32px;
-  box-shadow: 0 35px 60px rgba(9, 24, 66, 0.15);
+  box-shadow: 0 35px 60px rgba(9, 24, 66, 0.22);
   display: flex;
   overflow: hidden;
-  max-height: 92vh;
 }
 
 .booking-sidebar {
@@ -158,9 +170,12 @@
 
 .booking-content {
   flex: 1;
+  min-width: 0;
+  min-height: 0;
   padding: 2.5rem 3rem;
   position: relative;
   overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .booking-close {
@@ -226,8 +241,8 @@
   border-radius: 20px;
   padding: 1.75rem;
   min-height: 280px;
-  max-height: min(520px, 70vh);
-  overflow-y: auto;
+  max-height: none;
+  overflow: visible;
 }
 
 .booking-stage-content.two-column {
@@ -691,9 +706,9 @@
 @media (max-width: 960px) {
   .booking-modal {
     flex-direction: column;
-    max-height: 95vh;
     width: 100%;
-    border-radius: 20px 20px 0 0;
+    max-height: calc(100dvh - 2rem);
+    border-radius: 20px;
   }
 
   .booking-sidebar {
@@ -769,9 +784,14 @@
   }
 
   .booking-modal {
-    border-radius: 20px 20px 0 0;
+    width: 100%;
     max-height: 100dvh;
     min-height: min(560px, 100dvh);
+    margin: auto 0 0;
+    border-left: 0;
+    border-right: 0;
+    border-bottom: 0;
+    border-radius: 20px 20px 0 0;
   }
 
   .booking-sidebar {
@@ -927,4 +947,10 @@
     margin-inline: -0.75rem;
     padding-inline: 0.75rem;
   }
+}
+
+
+[data-theme='dark'] .booking-modal {
+  border-color: var(--color-border);
+  box-shadow: 0 35px 70px rgba(0, 0, 0, 0.45);
 }
