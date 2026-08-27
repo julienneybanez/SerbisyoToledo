@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { getUser, userProfileAPI, serviceProfileAPI, verificationAPI } from '../services/api';
 import SettingsFlash from '../components/settings/SettingsFlash';
+import { PageHeader } from '../components/ui';
 import { useLanguage } from '../context/LanguageContext';
 import '../styles/UserSettings.css';
 
@@ -467,9 +468,11 @@ function ServiceProviderSettings() {
 
   return (
     <div className={`user-settings-container provider-tool-page provider-tool-${pageMode}`}>
-      <div className="settings-page-heading">
-        <h1 className="settings-page-title">{pageTitle}</h1>
-      </div>
+      <PageHeader
+        title={pageTitle}
+        className="settings-page-heading"
+        titleClassName="settings-page-title"
+      />
 
       <div className="settings-layout settings-layout-single">
         <div className="settings-content">
