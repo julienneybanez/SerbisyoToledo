@@ -126,3 +126,8 @@
 .about-page-shell .about-section-block h2 {
   font-size: 1.12rem;
 }
+
+/* Consolidated title/subtitle cleanup */
+.about-page-shell .about-hero > p {
+  display: none;
+}
