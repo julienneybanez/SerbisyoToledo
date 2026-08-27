@@ -20,7 +20,7 @@ const monthNames = [
 ];
 
 const timelineStages = [
-  { label: '1 Schedule', description: 'Pick your date range', icon: CalendarIcon },
+  { label: '1 Schedule', description: 'Choose provider-available dates', icon: CalendarIcon },
   { label: '2 Time', description: 'Choose available time', icon: ClockIcon },
   { label: '3 Details', description: 'Share service details', icon: UserIcon },
 ];
@@ -80,26 +80,13 @@ const getDateRange = (startDate, endDate) => {
   return dates;
 };
 
-const getDurationDays = (startDate, endDate) => {
-  if (!startDate || !endDate) return 0;
-
-  const start = parseDateInput(startDate);
-  const end = parseDateInput(endDate);
-
-  if (!start || !end || end < start) {
-    return 0;
-  }
-
-  return Math.floor((end.getTime() - start.getTime()) / (24 * 60 * 60 * 1000)) + 1;
-};
-
 const formatMoney = (amount) => `P${Number(amount || 0).toLocaleString('en-PH', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
 
 export default function BookingModal({ provider, onClose }) {
   const { t } = useLanguage();
-  const today = new Date();
+  const [today] = useState(() => new Date());
   const bookingWindowStart = today;
-  const bookingWindowEnd = addDays(today, 60);
+  const bookingWindowEnd = useMemo(() => addDays(today, 60), [today]);
 
   const [currentMonth, setCurrentMonth] = useState(today.getMonth());
   const [currentYear, setCurrentYear] = useState(today.getFullYear());
