@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { adminAPI } from '../../services/api';
 import { useLanguage } from '../../context/LanguageContext';
+import { PageHeader } from '../../components/ui';
 import '../../styles/AdminPages.css';
 
 function AdminUsers() {
@@ -159,10 +160,13 @@ function AdminUsers() {
 
   return (
     <div className="admin-page admin-users-page">
-      <div className="admin-page-header">
-        <h1 className="admin-page-title">{t('userManagement')}</h1>
-        <p className="admin-page-subtitle">{t('userManagementSubtitle')}</p>
-      </div>
+      <PageHeader
+        title={t('userManagement')}
+        subtitle={t('userManagementSubtitle')}
+        className="admin-page-header"
+        titleClassName="admin-page-title"
+        subtitleClassName="admin-page-subtitle"
+      />
 
       <div className="filters-bar">
         <div className="search-box">
