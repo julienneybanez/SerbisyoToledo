@@ -649,6 +649,10 @@
     padding-bottom: calc(var(--mobile-nav-height) + var(--mobile-sticky-action-height) + 24px + env(safe-area-inset-bottom));
   }
 
+  .mobile-auth-layout .provider-section {
+    padding-bottom: calc(var(--mobile-sticky-action-height) + 24px);
+  }
+
   .profile-summary-actions {
     display: none;
   }
@@ -1052,8 +1056,9 @@
 
 @media (max-width: 360px) {
   .provider-mobile-request-btn {
-    min-width: 146px;
-    padding-inline: 0.75rem;
+    min-width: 136px;
+    padding-inline: 0.7rem;
+    font-size: 0.9rem;
   }
 
   .provider-mobile-rate-value {
