@@ -18,8 +18,6 @@ const {
   formatDateOnly,
   parseTimeInputToSql,
   getAvailableSlotsForDate,
-  getCommonAvailableSlotsForDates,
-  normalizeBookingDates,
   ensureAvailabilitySettings,
 } = require('../utils/bookingAvailability');
 
@@ -37,6 +35,20 @@ const toNullableNumber = (value) => {
 const toCount = (value) => {
   const number = Number(value);
   return Number.isFinite(number) && number >= 0 ? number : 0;
+};
+
+const toDateOnlyString = (value) => {
+  if (!value) return '';
+
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    const year = value.getFullYear();
+    const month = String(value.getMonth() + 1).padStart(2, '0');
+    const day = String(value.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  const match = String(value).match(/^(\d{4}-\d{2}-\d{2})/);
+  return match ? match[1] : '';
 };
 const REVIEW_STATS_JOIN = `
   LEFT JOIN (
@@ -1522,12 +1534,35 @@ exports.getMyAvailability = async (req, res) => {
         [serviceProfileId]
       );
 
+      const toledoNow = new Date(Date.now() + (8 * 60 * 60 * 1000));
+      const todayToledo = new Date(Date.UTC(
+        toledoNow.getUTCFullYear(),
+        toledoNow.getUTCMonth(),
+        toledoNow.getUTCDate()
+      ));
+      const todayString = formatDateOnly(todayToledo);
+
+      const specificAvailability = exceptions
+        .filter((item) => (
+          String(item.exception_type || '').toLowerCase() === 'available'
+          && item.start_time
+          && item.end_time
+        ))
+        .map((item) => ({
+          id: item.id,
+          date: toDateOnlyString(item.exception_date),
+          startTime: String(item.start_time).slice(0, 5),
+          endTime: String(item.end_time).slice(0, 5),
+        }))
+        .filter((item) => item.date && item.date >= todayString);
+
       return res.json({
         success: true,
         data: {
           settings,
           weeklyBlocks,
           exceptions,
+          specificAvailability,
         }
       });
     } finally {
@@ -1547,7 +1582,7 @@ exports.saveMyAvailability = async (req, res) => {
 
   try {
     const userId = req.user?.userId;
-    const { settings, weeklyBlocks } = req.body;
+    const { settings, weeklyBlocks, specificAvailability } = req.body;
 
     const [profiles] = await db.query(
       'SELECT id FROM service_profiles WHERE user_id = ? LIMIT 1',
@@ -1597,6 +1632,64 @@ exports.saveMyAvailability = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Invalid maximum advance booking days' });
     }
 
+    const hasSpecificAvailabilityPayload = Array.isArray(specificAvailability);
+    const normalizedSpecificAvailability = [];
+
+    if (hasSpecificAvailabilityPayload) {
+      if (specificAvailability.length > 500) {
+        await connection.rollback();
+        return res.status(400).json({ success: false, message: 'Too many availability slots' });
+      }
+
+      const toledoNow = new Date(Date.now() + (8 * 60 * 60 * 1000));
+      const todayToledo = new Date(Date.UTC(
+        toledoNow.getUTCFullYear(),
+        toledoNow.getUTCMonth(),
+        toledoNow.getUTCDate()
+      ));
+      const latestAllowedDate = new Date(todayToledo);
+      latestAllowedDate.setUTCDate(latestAllowedDate.getUTCDate() + 365);
+
+      const rangesByDate = new Map();
+
+      for (const item of specificAvailability) {
+        const parsedDate = parseDateOnly(item?.date ?? item?.exceptionDate);
+        const start = parseTimeInputToSql(item?.startTime);
+        const end = parseTimeInputToSql(item?.endTime);
+
+        if (!parsedDate || parsedDate < todayToledo || parsedDate > latestAllowedDate) {
+          await connection.rollback();
+          return res.status(400).json({
+            success: false,
+            message: 'Availability dates must be between today and 365 days from today'
+          });
+        }
+
+        if (!start || !end || end <= start) {
+          await connection.rollback();
+          return res.status(400).json({
+            success: false,
+            message: 'Each availability slot must have a valid start and end time'
+          });
+        }
+
+        const date = formatDateOnly(parsedDate);
+        const ranges = rangesByDate.get(date) || [];
+
+        if (ranges.some((range) => start < range.end && end > range.start)) {
+          await connection.rollback();
+          return res.status(400).json({
+            success: false,
+            message: `Availability slots overlap on ${date}`
+          });
+        }
+
+        ranges.push({ start, end });
+        rangesByDate.set(date, ranges);
+        normalizedSpecificAvailability.push({ date, start, end });
+      }
+    }
+
     await connection.query(
       `UPDATE provider_availability_settings
        SET allow_same_day_booking = ?,
@@ -1617,44 +1710,80 @@ exports.saveMyAvailability = async (req, res) => {
 
     await connection.query('DELETE FROM provider_weekly_availability WHERE service_profile_id = ?', [serviceProfileId]);
 
-    const seenKeys = new Set();
+    if (hasSpecificAvailabilityPayload) {
+      const toledoNow = new Date(Date.now() + (8 * 60 * 60 * 1000));
+      const todayToledo = new Date(Date.UTC(
+        toledoNow.getUTCFullYear(),
+        toledoNow.getUTCMonth(),
+        toledoNow.getUTCDate()
+      ));
+      const todayString = formatDateOnly(todayToledo);
 
-    for (const block of Array.isArray(weeklyBlocks) ? weeklyBlocks : []) {
-      const dayOfWeek = Number(block.dayOfWeek);
-      const start = parseTimeInputToSql(block.startTime);
-      const end = parseTimeInputToSql(block.endTime);
-      const isAvailable = block.isAvailable !== false;
-
-      if (!Number.isInteger(dayOfWeek) || dayOfWeek < 0 || dayOfWeek > 6) {
-        await connection.rollback();
-        return res.status(400).json({ success: false, message: 'Invalid day of week in availability block' });
-      }
-
-      if (!start || !end || end <= start) {
-        await connection.rollback();
-        return res.status(400).json({ success: false, message: 'Invalid time range in availability block' });
-      }
-
-      const key = `${dayOfWeek}-${start}-${end}`;
-      if (seenKeys.has(key)) {
-        await connection.rollback();
-        return res.status(400).json({ success: false, message: 'Duplicate weekly availability block detected' });
-      }
-      seenKeys.add(key);
-
+      // The new provider schedule is authoritative for future availability.
+      // Remove legacy future exceptions so hidden "booked"/vacation overrides
+      // cannot contradict the dates and times the provider just selected.
       await connection.query(
-        `INSERT INTO provider_weekly_availability
-         (service_profile_id, day_of_week, start_time, end_time, is_available)
-         VALUES (?, ?, ?, ?, ?)`,
-        [serviceProfileId, dayOfWeek, start, end, isAvailable]
+        `DELETE FROM provider_availability_exceptions
+         WHERE service_profile_id = ? AND exception_date >= ?`,
+        [serviceProfileId, todayString]
       );
+
+      for (const slot of normalizedSpecificAvailability) {
+        await connection.query(
+          `INSERT INTO provider_availability_exceptions
+           (service_profile_id, exception_date, start_time, end_time, exception_type, reason)
+           VALUES (?, ?, ?, ?, 'available', NULL)`,
+          [serviceProfileId, slot.date, slot.start, slot.end]
+        );
+      }
+    } else {
+      const rangesByDay = new Map();
+
+      for (const block of Array.isArray(weeklyBlocks) ? weeklyBlocks : []) {
+        const dayOfWeek = Number(block.dayOfWeek);
+        const start = parseTimeInputToSql(block.startTime);
+        const end = parseTimeInputToSql(block.endTime);
+        const isAvailable = block.isAvailable !== false;
+
+        if (!Number.isInteger(dayOfWeek) || dayOfWeek < 0 || dayOfWeek > 6) {
+          await connection.rollback();
+          return res.status(400).json({ success: false, message: 'Invalid day of week in availability block' });
+        }
+
+        if (!start || !end || end <= start) {
+          await connection.rollback();
+          return res.status(400).json({ success: false, message: 'Invalid time range in availability block' });
+        }
+
+        const ranges = rangesByDay.get(dayOfWeek) || [];
+        if (ranges.some((range) => start < range.end && end > range.start)) {
+          await connection.rollback();
+          return res.status(400).json({
+            success: false,
+            message: 'Overlapping weekly availability blocks are not allowed'
+          });
+        }
+        ranges.push({ start, end });
+        rangesByDay.set(dayOfWeek, ranges);
+
+        await connection.query(
+          `INSERT INTO provider_weekly_availability
+           (service_profile_id, day_of_week, start_time, end_time, is_available)
+           VALUES (?, ?, ?, ?, ?)`,
+          [serviceProfileId, dayOfWeek, start, end, isAvailable]
+        );
+      }
     }
 
     await connection.commit();
 
     return res.json({
       success: true,
-      message: 'Availability updated successfully'
+      message: 'Availability updated successfully',
+      data: {
+        mode: hasSpecificAvailabilityPayload ? 'specific' : 'weekly',
+        specificAvailabilityCount: normalizedSpecificAvailability.length,
+      }
     });
   } catch (error) {
     if (connection) {
@@ -1689,7 +1818,7 @@ exports.addAvailabilityException = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Past dates are not allowed' });
     }
 
-    if (!['available', 'unavailable', 'booked', 'vacation'].includes(exceptionType)) {
+    if (!['available', 'unavailable', 'vacation'].includes(exceptionType)) {
       return res.status(400).json({ success: false, message: 'Invalid exception type' });
     }
 

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { getUser, userProfileAPI, serviceProfileAPI } from '../services/api';
+import { getUser, userProfileAPI, serviceProfileAPI, verificationAPI } from '../services/api';
 import ThemeToggle from '../components/common/ThemeToggle';
 import SettingsFlash from '../components/settings/SettingsFlash';
 import { useLanguage } from '../context/LanguageContext';
@@ -10,16 +10,6 @@ const LANGUAGE_OPTIONS = [
   { value: 'ceb', labelKey: 'languageOptionCebuano' },
   { value: 'en', labelKey: 'languageOptionEnglish' },
   { value: 'fil', labelKey: 'languageOptionFilipino' },
-];
-
-const WEEK_DAYS = [
-  { key: 1, labelKey: 'weekdayMonday' },
-  { key: 2, labelKey: 'weekdayTuesday' },
-  { key: 3, labelKey: 'weekdayWednesday' },
-  { key: 4, labelKey: 'weekdayThursday' },
-  { key: 5, labelKey: 'weekdayFriday' },
-  { key: 6, labelKey: 'weekdaySaturday' },
-  { key: 0, labelKey: 'weekdaySunday' },
 ];
 
 function ServiceProviderSettings() {
@@ -34,6 +24,7 @@ function ServiceProviderSettings() {
   const [availabilityLoading, setAvailabilityLoading] = useState(true);
   const [languageSaving, setLanguageSaving] = useState(false);
   const [credentialLoading, setCredentialLoading] = useState(true);
+  const [isSendingVerification, setIsSendingVerification] = useState(false);
   const [credentials, setCredentials] = useState([]);
   const [selectedLanguages, setSelectedLanguages] = useState([]);
   const [availabilitySettings, setAvailabilitySettings] = useState({
@@ -43,16 +34,13 @@ function ServiceProviderSettings() {
     minAdvanceNoticeMinutes: 720,
     maxAdvanceBookingDays: 60,
   });
-  const [weeklyBlocks, setWeeklyBlocks] = useState([]);
-  const [availabilityExceptions, setAvailabilityExceptions] = useState([]);
-  const [newException, setNewException] = useState({
-    exceptionDate: '',
-    exceptionType: 'unavailable',
-    startTime: '',
-    endTime: '',
-    reason: '',
+  const [specificAvailability, setSpecificAvailability] = useState([]);
+  const [legacyWeeklyBlocksCount, setLegacyWeeklyBlocksCount] = useState(0);
+  const [newAvailabilitySlot, setNewAvailabilitySlot] = useState({
+    date: '',
+    startTime: '09:00',
+    endTime: '10:00',
   });
-  const [exceptionSaving, setExceptionSaving] = useState(false);
   const [newCredential, setNewCredential] = useState({
     credentialName: '',
     credentialType: '',
@@ -70,6 +58,7 @@ function ServiceProviderSettings() {
     fullName: '',
     email: '',
     phone: '',
+    emailVerified: false,
   });
 
   const languagesCredentialsLabel = language === 'ceb'
@@ -115,6 +104,7 @@ function ServiceProviderSettings() {
             fullName: profile.fullName || '',
             email: profile.email || currentUser.email || '',
             phone: profile.phone || '',
+            emailVerified: Boolean(profile.emailVerified ?? currentUser.emailVerified),
           };
           setSettings(nextSettings);
           setInitialSettings(nextSettings);
@@ -124,6 +114,7 @@ function ServiceProviderSettings() {
           fullName: currentUser.fullName || '',
           email: currentUser.email || '',
           phone: currentUser.phone || '',
+          emailVerified: Boolean(currentUser.emailVerified),
         };
         setSettings(fallbackSettings);
         setInitialSettings(fallbackSettings);
@@ -184,24 +175,39 @@ function ServiceProviderSettings() {
           const blocks = Array.isArray(availabilityResponse.data.weeklyBlocks)
             ? availabilityResponse.data.weeklyBlocks
             : [];
-          setWeeklyBlocks(blocks.map((b) => ({
-            dayOfWeek: Number(b.day_of_week ?? b.dayOfWeek),
-            startTime: String(b.start_time ?? b.startTime ?? '').slice(0, 5),
-            endTime: String(b.end_time ?? b.endTime ?? '').slice(0, 5),
-            isAvailable: b.is_available !== false,
-          })));
+          setLegacyWeeklyBlocksCount(blocks.length);
 
-          const exceptions = Array.isArray(availabilityResponse.data.exceptions)
-            ? availabilityResponse.data.exceptions
-            : [];
-          setAvailabilityExceptions(exceptions.map((ex) => ({
-            id: ex.id,
-            exceptionDate: String(ex.exception_date ?? ex.exceptionDate ?? '').slice(0, 10),
-            exceptionType: ex.exception_type ?? ex.exceptionType ?? 'unavailable',
-            startTime: String(ex.start_time ?? ex.startTime ?? '').slice(0, 5),
-            endTime: String(ex.end_time ?? ex.endTime ?? '').slice(0, 5),
-            reason: ex.reason || '',
-          })));
+          const explicitSlots = Array.isArray(availabilityResponse.data.specificAvailability)
+            ? availabilityResponse.data.specificAvailability
+            : (Array.isArray(availabilityResponse.data.exceptions)
+              ? availabilityResponse.data.exceptions
+                .filter((item) => (
+                  String(item.exception_type ?? item.exceptionType ?? '').toLowerCase() === 'available'
+                  && (item.start_time ?? item.startTime)
+                  && (item.end_time ?? item.endTime)
+                ))
+                .map((item) => ({
+                  id: item.id,
+                  date: String(item.exception_date ?? item.exceptionDate ?? '').slice(0, 10),
+                  startTime: String(item.start_time ?? item.startTime ?? '').slice(0, 5),
+                  endTime: String(item.end_time ?? item.endTime ?? '').slice(0, 5),
+                }))
+              : []);
+
+          setSpecificAvailability(
+            explicitSlots
+              .map((item) => ({
+                id: item.id,
+                date: String(item.date || '').slice(0, 10),
+                startTime: String(item.startTime || '').slice(0, 5),
+                endTime: String(item.endTime || '').slice(0, 5),
+              }))
+              .filter((item) => item.date && item.startTime && item.endTime)
+              .sort((a, b) => (
+                a.date.localeCompare(b.date)
+                || a.startTime.localeCompare(b.startTime)
+              ))
+          );
         }
 
         if (languagesResponse?.success) {
@@ -226,9 +232,22 @@ function ServiceProviderSettings() {
     setSettings((prev) => ({ ...prev, [key]: value }));
   };
 
+  const hasAccountChanges = Boolean(
+    initialSettings
+    && (
+      settings.fullName !== initialSettings.fullName
+      || settings.phone !== initialSettings.phone
+    )
+  );
+
   const getFriendlyErrorMessage = (fallbackMessage) => fallbackMessage;
 
   const handleSave = async () => {
+    if (!hasAccountChanges) {
+      setFlash({ type: 'info', message: t('noChangesToSave') });
+      return;
+    }
+
     try {
       setIsSaving(true);
       setFlash({ type: 'info', message: '' });
@@ -260,8 +279,13 @@ function ServiceProviderSettings() {
       setFlash({ type: 'info', message: '' });
       await serviceProfileAPI.saveMyAvailability({
         settings: availabilitySettings,
-        weeklyBlocks,
+        specificAvailability: specificAvailability.map(({ date, startTime, endTime }) => ({
+          date,
+          startTime,
+          endTime,
+        })),
       });
+      setLegacyWeeklyBlocksCount(0);
       setFlash({ type: 'success', message: t('providerAvailabilityUpdatedSuccess') });
     } catch {
       setFlash({ type: 'error', message: getFriendlyErrorMessage(t('providerAvailabilitySaveFailed')) });
@@ -289,88 +313,80 @@ function ServiceProviderSettings() {
     }
   };
 
-  const addWeekDayBlock = (dayOfWeek) => {
-    setWeeklyBlocks((prev) => ([
+  const getTodayInputValue = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const handleAddSpecificAvailability = () => {
+    const { date, startTime, endTime } = newAvailabilitySlot;
+
+    if (!date) {
+      setFlash({ type: 'error', message: t('providerAvailabilityDateRequired') });
+      return;
+    }
+
+    if (date < getTodayInputValue()) {
+      setFlash({ type: 'error', message: t('providerAvailabilityPastDateError') });
+      return;
+    }
+
+    if (!startTime || !endTime || endTime <= startTime) {
+      setFlash({ type: 'error', message: t('providerAvailabilityTimeRangeError') });
+      return;
+    }
+
+    const overlaps = specificAvailability.some((slot) => (
+      slot.date === date
+      && startTime < slot.endTime
+      && endTime > slot.startTime
+    ));
+
+    if (overlaps) {
+      setFlash({ type: 'error', message: t('providerAvailabilityOverlapError') });
+      return;
+    }
+
+    setSpecificAvailability((prev) => ([
       ...prev,
-      { dayOfWeek, startTime: '09:00', endTime: '17:00', isAvailable: true },
-    ]));
+      { date, startTime, endTime },
+    ].sort((a, b) => (
+      a.date.localeCompare(b.date)
+      || a.startTime.localeCompare(b.startTime)
+    ))));
+
+    setNewAvailabilitySlot((prev) => ({
+      ...prev,
+      date: '',
+    }));
+    setFlash({ type: 'info', message: '' });
   };
 
-  const updateWeekDayBlock = (index, key, value) => {
-    setWeeklyBlocks((prev) => prev.map((block, i) => (
-      i === index ? { ...block, [key]: value } : block
-    )));
+  const handleRemoveSpecificAvailability = (index) => {
+    setSpecificAvailability((prev) => prev.filter((_, itemIndex) => itemIndex !== index));
   };
 
-  const removeWeekDayBlock = (index) => {
-    setWeeklyBlocks((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  const handleAddAvailabilityException = async () => {
-    if (!newException.exceptionDate) {
-      setFlash({ type: 'error', message: t('providerExceptionDateRequired') });
-      return;
-    }
-
-    if ((newException.startTime && !newException.endTime) || (!newException.startTime && newException.endTime)) {
-      setFlash({ type: 'error', message: t('providerExceptionTimePairRequired') });
+  const handleResendVerification = async () => {
+    if (!settings.email) {
+      setFlash({ type: 'error', message: t('noEmailForVerification') });
       return;
     }
 
     try {
-      setExceptionSaving(true);
+      setIsSendingVerification(true);
       setFlash({ type: 'info', message: '' });
-      await serviceProfileAPI.addAvailabilityException({
-        exceptionDate: newException.exceptionDate,
-        exceptionType: newException.exceptionType,
-        startTime: newException.startTime || null,
-        endTime: newException.endTime || null,
-        reason: newException.reason.trim() || null,
+      await verificationAPI.resendVerification({ email: settings.email });
+      setFlash({ type: 'success', message: t('verificationEmailSent') });
+    } catch (err) {
+      setFlash({
+        type: 'error',
+        message: err?.message || t('failedSendVerificationEmail'),
       });
-
-      const refreshed = await serviceProfileAPI.getMyAvailability();
-      if (refreshed.success && refreshed.data) {
-        const exceptions = Array.isArray(refreshed.data.exceptions)
-          ? refreshed.data.exceptions
-          : [];
-        setAvailabilityExceptions(exceptions.map((ex) => ({
-          id: ex.id,
-          exceptionDate: String(ex.exception_date ?? ex.exceptionDate ?? '').slice(0, 10),
-          exceptionType: ex.exception_type ?? ex.exceptionType ?? 'unavailable',
-          startTime: String(ex.start_time ?? ex.startTime ?? '').slice(0, 5),
-          endTime: String(ex.end_time ?? ex.endTime ?? '').slice(0, 5),
-          reason: ex.reason || '',
-        })));
-      }
-
-      setNewException({
-        exceptionDate: '',
-        exceptionType: 'unavailable',
-        startTime: '',
-        endTime: '',
-        reason: '',
-      });
-      setFlash({ type: 'success', message: t('providerAvailabilityUpdatedSuccess') });
-    } catch {
-      setFlash({ type: 'error', message: getFriendlyErrorMessage(t('providerAddExceptionFailed')) });
     } finally {
-      setExceptionSaving(false);
-    }
-  };
-
-  const handleDeleteAvailabilityException = async (exceptionId) => {
-    try {
-      setExceptionSaving(true);
-      setFlash({ type: 'info', message: '' });
-      await serviceProfileAPI.deleteAvailabilityException(exceptionId);
-      setAvailabilityExceptions((prev) => (
-        prev.filter((item) => Number(item.id) !== Number(exceptionId))
-      ));
-      setFlash({ type: 'success', message: t('providerAvailabilityUpdatedSuccess') });
-    } catch {
-      setFlash({ type: 'error', message: getFriendlyErrorMessage(t('providerDeleteExceptionFailed')) });
-    } finally {
-      setExceptionSaving(false);
+      setIsSendingVerification(false);
     }
   };
 
@@ -524,6 +540,27 @@ function ServiceProviderSettings() {
                 <small className="settings-help">{t('providerEmailHelpText')}</small>
               </div>
 
+              <div className="settings-card">
+                <div className="settings-card-row">
+                  <div className="settings-card-main">
+                    <p className="settings-card-title">{t('emailVerificationStatus')}</p>
+                    <p className="settings-card-description">
+                      <strong>{settings.emailVerified ? t('verified') : t('notVerified')}</strong>
+                    </p>
+                  </div>
+                  {!settings.emailVerified && (
+                    <button
+                      type="button"
+                      className="btn-change-password"
+                      onClick={handleResendVerification}
+                      disabled={isSendingVerification}
+                    >
+                      {isSendingVerification ? t('sending') : t('resendVerificationEmail')}
+                    </button>
+                  )}
+                </div>
+              </div>
+
               <div className="settings-group">
                 <label className="settings-label">{t('providerPersonalPhoneLabel')}</label>
                 <input
@@ -540,15 +577,15 @@ function ServiceProviderSettings() {
 
               <h3 className="settings-subsection-title">{t('providerPasswordSecurityTitle')}</h3>
               <button className="btn-change-password" type="button" onClick={() => navigate('/forgot-password')}>
-                {t('providerChangePassword')}
+                {t('openPasswordReset')}
               </button>
               <small className="settings-help">{t('providerPasswordSecurityHelp')}</small>
 
               <div className="settings-actions">
-                <button className="btn-save" onClick={handleSave} disabled={isSaving || isLoadingProfile}>
+                <button className="btn-save" onClick={handleSave} disabled={isSaving || isLoadingProfile || !hasAccountChanges}>
                   {isSaving ? t('saving') : t('saveChanges')}
                 </button>
-                <button className="btn-cancel" type="button" onClick={handleResetAccount} disabled={isSaving || isLoadingProfile}>
+                <button className="btn-cancel" type="button" onClick={handleResetAccount} disabled={isSaving || isLoadingProfile || !hasAccountChanges}>
                   {t('reset')}
                 </button>
               </div>
@@ -621,19 +658,29 @@ function ServiceProviderSettings() {
               </div>
 
               <div className="settings-group">
-                <label className="settings-label">{t('providerMinAdvanceNoticeLabel')}</label>
-                <input
-                  type="number"
-                  className="settings-input"
+                <label className="settings-label">{t('providerMinAdvanceNoticeLabelFriendly')}</label>
+                <select
+                  className="settings-select"
                   value={availabilitySettings.minAdvanceNoticeMinutes}
                   onChange={(e) => setAvailabilitySettings((prev) => ({
                     ...prev,
-                    minAdvanceNoticeMinutes: Number(e.target.value || 0),
+                    minAdvanceNoticeMinutes: Number(e.target.value),
                   }))}
-                  min="0"
-                  max="20160"
                   disabled={availabilityLoading || isSaving}
-                />
+                >
+                  <option value={0}>{t('providerAdvanceNoticeNone')}</option>
+                  <option value={60}>{t('providerAdvanceNotice1Hour')}</option>
+                  <option value={180}>{t('providerAdvanceNotice3Hours')}</option>
+                  <option value={360}>{t('providerAdvanceNotice6Hours')}</option>
+                  <option value={720}>{t('providerAdvanceNotice12Hours')}</option>
+                  <option value={1440}>{t('providerAdvanceNotice1Day')}</option>
+                  <option value={2880}>{t('providerAdvanceNotice2Days')}</option>
+                  {![0, 60, 180, 360, 720, 1440, 2880].includes(Number(availabilitySettings.minAdvanceNoticeMinutes)) && (
+                    <option value={availabilitySettings.minAdvanceNoticeMinutes}>
+                      {t('providerAdvanceNoticeCustom', { minutes: availabilitySettings.minAdvanceNoticeMinutes })}
+                    </option>
+                  )}
+                </select>
               </div>
 
               <div className="settings-group">
@@ -653,163 +700,94 @@ function ServiceProviderSettings() {
               </div>
 
               <div className="settings-section-divider"></div>
-              <h3 className="settings-subsection-title">{t('providerWeeklyAvailabilityBlocksTitle')}</h3>
-              <small className="settings-help">{t('providerWeeklyAvailabilityHelp')}</small>
+              <h3 className="settings-subsection-title">{t('providerSpecificAvailabilityTitle')}</h3>
+              <p className="settings-help">{t('providerSpecificAvailabilityHelp')}</p>
 
-              <div className="settings-group settings-inline-tag-list">
-                {WEEK_DAYS.map((day) => (
-                  <button
-                    key={day.key}
-                    type="button"
-                    className="btn-cancel"
-                    onClick={() => addWeekDayBlock(day.key)}
-                    disabled={availabilityLoading || isSaving}
-                  >
-                    {t('providerAddDayBlock', { day: t(day.labelKey) })}
-                  </button>
-                ))}
-              </div>
-
-              {weeklyBlocks.length === 0 && (
-                <small className="settings-help">{t('providerNoWeeklyAvailabilityBlocks')}</small>
+              {legacyWeeklyBlocksCount > 0 && (
+                <div className="settings-flash info" role="status">
+                  {t('providerLegacyAvailabilityNotice')}
+                </div>
               )}
 
-              {weeklyBlocks.map((block, index) => (
-                <div key={`${block.dayOfWeek}-${index}`} className="settings-surface-block">
-                  <label className="settings-label">{t('providerDayLabel')}</label>
-                  <select
-                    className="settings-select"
-                    value={block.dayOfWeek}
-                    onChange={(e) => updateWeekDayBlock(index, 'dayOfWeek', Number(e.target.value))}
-                    disabled={availabilityLoading || isSaving}
-                  >
-                    {WEEK_DAYS.map((day) => (
-                      <option key={day.key} value={day.key}>{t(day.labelKey)}</option>
-                    ))}
-                  </select>
-
-                  <label className="settings-label">{t('requestsStartTime')}</label>
-                  <input
-                    type="time"
-                    className="settings-input"
-                    value={block.startTime}
-                    onChange={(e) => updateWeekDayBlock(index, 'startTime', e.target.value)}
-                    disabled={availabilityLoading || isSaving}
-                  />
-
-                  <label className="settings-label">{t('requestsEndTime')}</label>
-                  <input
-                    type="time"
-                    className="settings-input"
-                    value={block.endTime}
-                    onChange={(e) => updateWeekDayBlock(index, 'endTime', e.target.value)}
-                    disabled={availabilityLoading || isSaving}
-                  />
-
-                  <button
-                    type="button"
-                    className="btn-cancel"
-                    onClick={() => removeWeekDayBlock(index)}
-                    disabled={availabilityLoading || isSaving}
-                  >
-                    {t('providerRemoveBlock')}
-                  </button>
-                </div>
-              ))}
-
-              <div className="settings-actions">
-                <button className="btn-save" onClick={handleAvailabilitySave} disabled={availabilityLoading || isSaving}>
-                  {isSaving ? t('saving') : t('providerSaveAvailability')}
-                </button>
-              </div>
-
-              <div className="settings-section-divider"></div>
-              <h3 className="settings-subsection-title">{t('providerDateExceptionsTitle')}</h3>
-              <small className="settings-help">{t('providerDateExceptionsHelp')}</small>
-
               <div className="settings-surface-block">
-                <label className="settings-label">{t('providerExceptionDateLabel')}</label>
+                <label className="settings-label">{t('providerAvailableDateLabel')}</label>
                 <input
                   type="date"
                   className="settings-input"
-                  value={newException.exceptionDate}
-                  onChange={(e) => setNewException((prev) => ({ ...prev, exceptionDate: e.target.value }))}
-                  disabled={exceptionSaving}
+                  value={newAvailabilitySlot.date}
+                  min={getTodayInputValue()}
+                  onChange={(e) => setNewAvailabilitySlot((prev) => ({
+                    ...prev,
+                    date: e.target.value,
+                  }))}
+                  disabled={availabilityLoading || isSaving}
                 />
 
-                <label className="settings-label">{t('providerExceptionTypeLabel')}</label>
-                <select
-                  className="settings-select"
-                  value={newException.exceptionType}
-                  onChange={(e) => setNewException((prev) => ({ ...prev, exceptionType: e.target.value }))}
-                  disabled={exceptionSaving}
+                <label className="settings-label">{t('requestsStartTime')}</label>
+                <input
+                  type="time"
+                  className="settings-input"
+                  value={newAvailabilitySlot.startTime}
+                  onChange={(e) => setNewAvailabilitySlot((prev) => ({
+                    ...prev,
+                    startTime: e.target.value,
+                  }))}
+                  disabled={availabilityLoading || isSaving}
+                />
+
+                <label className="settings-label">{t('requestsEndTime')}</label>
+                <input
+                  type="time"
+                  className="settings-input"
+                  value={newAvailabilitySlot.endTime}
+                  onChange={(e) => setNewAvailabilitySlot((prev) => ({
+                    ...prev,
+                    endTime: e.target.value,
+                  }))}
+                  disabled={availabilityLoading || isSaving}
+                />
+
+                <button
+                  type="button"
+                  className="btn-save"
+                  onClick={handleAddSpecificAvailability}
+                  disabled={availabilityLoading || isSaving}
                 >
-                  <option value="available">{t('providerExceptionTypeAvailableOverride')}</option>
-                  <option value="unavailable">{t('providerExceptionTypeUnavailable')}</option>
-                  <option value="booked">{t('providerExceptionTypeBooked')}</option>
-                  <option value="vacation">{t('providerExceptionTypeVacation')}</option>
-                </select>
-
-                <label className="settings-label">{t('providerExceptionStartTimeOptional')}</label>
-                <input
-                  type="time"
-                  className="settings-input"
-                  value={newException.startTime}
-                  onChange={(e) => setNewException((prev) => ({ ...prev, startTime: e.target.value }))}
-                  disabled={exceptionSaving}
-                />
-
-                <label className="settings-label">{t('providerExceptionEndTimeOptional')}</label>
-                <input
-                  type="time"
-                  className="settings-input"
-                  value={newException.endTime}
-                  onChange={(e) => setNewException((prev) => ({ ...prev, endTime: e.target.value }))}
-                  disabled={exceptionSaving}
-                />
-
-                <label className="settings-label">{t('providerExceptionReasonOptional')}</label>
-                <input
-                  type="text"
-                  className="settings-input"
-                  value={newException.reason}
-                  onChange={(e) => setNewException((prev) => ({ ...prev, reason: e.target.value }))}
-                  disabled={exceptionSaving}
-                  maxLength={255}
-                />
-
-                <button type="button" className="btn-save" onClick={handleAddAvailabilityException} disabled={exceptionSaving}>
-                  {exceptionSaving ? t('saving') : t('providerAddException')}
+                  {t('providerAddTimeSlot')}
                 </button>
               </div>
 
               <div className="settings-group">
-                {availabilityExceptions.length === 0 && (
-                  <small className="settings-help">{t('providerNoDateExceptionsConfigured')}</small>
+                {specificAvailability.length === 0 && (
+                  <small className="settings-help">{t('providerNoSpecificAvailability')}</small>
                 )}
-                {availabilityExceptions.map((exception) => (
-                  <div key={exception.id} className="settings-surface-block">
+
+                {specificAvailability.map((slot, index) => (
+                  <div key={`${slot.date}-${slot.startTime}-${index}`} className="settings-surface-block">
                     <p className="settings-metadata-row settings-metadata-strong">
-                      {exception.exceptionDate} • {exception.exceptionType}
+                      {slot.date} • {slot.startTime} - {slot.endTime}
                     </p>
                     <small className="settings-help">
-                      {exception.startTime && exception.endTime
-                        ? `${exception.startTime} - ${exception.endTime}`
-                        : t('providerWholeDay')}
-                      {exception.reason ? ` • ${exception.reason}` : ''}
+                      {t('providerClientSeesStartTime', { time: slot.startTime })}
                     </small>
                     <div className="settings-credential-actions">
                       <button
                         type="button"
                         className="btn-cancel"
-                        onClick={() => handleDeleteAvailabilityException(exception.id)}
-                        disabled={exceptionSaving}
+                        onClick={() => handleRemoveSpecificAvailability(index)}
+                        disabled={availabilityLoading || isSaving}
                       >
                         {t('providerRemoveException')}
                       </button>
                     </div>
                   </div>
                 ))}
+              </div>
+
+              <div className="settings-actions">
+                <button className="btn-save" onClick={handleAvailabilitySave} disabled={availabilityLoading || isSaving}>
+                  {isSaving ? t('saving') : t('providerSaveAvailability')}
+                </button>
               </div>
             </div>
           )}

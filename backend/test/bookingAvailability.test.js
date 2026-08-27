@@ -1,5 +1,6 @@
 const {
   checkScheduleConflict,
+  getAvailableSlotsForDate,
   normalizeBookingDates,
   intersectSlotsByTime,
 } = require('../utils/bookingAvailability');
@@ -107,8 +108,63 @@ describe('bookingAvailability.checkScheduleConflict', () => {
     expect(result.conflict).toBe(true);
     expect(result.conflictRequestId).toBe(4);
   });
-});
 
+  it('returns only the exact provider-selected start time for explicit availability', async () => {
+    const connection = {
+      query: vi.fn(async (sql) => {
+        const text = String(sql);
+
+        if (text.includes('FROM provider_availability_settings') && text.includes('LIMIT 1')) {
+          return [[{
+            id: 1,
+            allow_same_day_booking: 1,
+            min_advance_notice_minutes: 0,
+            max_advance_booking_days: 365,
+            availability_status: 'available',
+            show_availability_status: 1,
+          }]];
+        }
+
+        if (text.includes('FROM provider_weekly_availability') && text.includes('day_of_week')) {
+          return [[]];
+        }
+
+        if (text.includes('FROM provider_availability_exceptions') && text.includes('exception_date = ?')) {
+          return [[{
+            start_time: '09:00:00',
+            end_time: '12:00:00',
+            exception_type: 'available',
+          }]];
+        }
+
+        if (text.includes('FROM service_requests')) {
+          return [[]];
+        }
+
+        return [{ affectedRows: 0 }];
+      }),
+    };
+
+    const future = new Date(Date.now() + (30 * 24 * 60 * 60 * 1000));
+    const date = future.toISOString().slice(0, 10);
+
+    const slots = await getAvailableSlotsForDate(connection, {
+      serviceProfileId: 77,
+      providerId: 21,
+      date,
+      durationMinutes: 60,
+      slotStepMinutes: 60,
+    });
+
+    expect(slots).toEqual([
+      {
+        time: '09:00:00',
+        endTime: '10:00:00',
+      },
+    ]);
+  });
+
+});
 
 describe('bookingAvailability.normalizeBookingDates', () => {
   it('normalizes one-day bookings to one date', () => {

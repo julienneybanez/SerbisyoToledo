@@ -133,6 +133,7 @@ describe('Settings pages', () => {
         fullName: 'Provider User',
         email: 'provider@example.com',
         phone: '09120000000',
+        emailVerified: false,
       },
     });
 
@@ -154,6 +155,7 @@ describe('Settings pages', () => {
         },
         weeklyBlocks: [],
         exceptions: [],
+        specificAvailability: [],
       },
     });
 
@@ -167,6 +169,15 @@ describe('Settings pages', () => {
       data: { credentials: [] },
     });
 
+    serviceProfileAPI.saveMyAvailability.mockResolvedValue({
+      success: true,
+      data: { mode: 'specific', specificAvailabilityCount: 0 },
+    });
+
+    verificationAPI.resendVerification.mockResolvedValue({
+      success: true,
+    });
+
     renderWithProviders(<ServiceProviderSettings />);
 
     expect(await screen.findByText('Service Provider Settings')).toBeInTheDocument();
@@ -176,13 +187,32 @@ describe('Settings pages', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Schedule' }));
     expect(await screen.findByText('Schedule & Booking Settings')).toBeInTheDocument();
+    expect(screen.getByText('Available Dates & Time Slots')).toBeInTheDocument();
+    expect(screen.queryByText('Date Exceptions')).not.toBeInTheDocument();
+    expect(screen.queryByText('Booked')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save Availability' }));
+    await waitFor(() => {
+      expect(serviceProfileAPI.saveMyAvailability).toHaveBeenCalledWith(expect.objectContaining({
+        specificAvailability: [],
+      }));
+    });
 
     fireEvent.click(screen.getByRole('button', { name: 'Languages & Credentials' }));
     expect(await screen.findByText('Languages Spoken')).toBeInTheDocument();
     expect(screen.getByText('Credentials and Certificates')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Account' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Change Password' }));
+    expect(screen.getByText('Not Verified')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Resend Verification Email' }));
+    await waitFor(() => {
+      expect(verificationAPI.resendVerification).toHaveBeenCalledWith({
+        email: 'provider@example.com',
+      });
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open Password Reset' }));
     expect(mockNavigate).toHaveBeenCalledWith('/forgot-password');
 
     fireEvent.change(screen.getByDisplayValue('Provider User'), {
