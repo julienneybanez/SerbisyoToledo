@@ -4,7 +4,7 @@ import './styles/App.css';
 import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
 import AuthLayout from './components/layout/AuthLayout';
-import ProviderLayout from './components/layout/ProviderLayout';
+import WorkspaceLayout from './components/layout/WorkspaceLayout';
 import MobileTopBar from './components/mobile/MobileTopBar';
 import MobileBottomNav from './components/mobile/MobileBottomNav';
 import EditProfileModal from './components/common/EditProfileModal';
@@ -30,6 +30,8 @@ const Feed = lazyWithRetry(() => import('./pages/Feed'), 'Feed');
 const Notifications = lazyWithRetry(() => import('./pages/Notifications'), 'Notifications');
 const ServiceProviderPortfolio = lazyWithRetry(() => import('./pages/ServiceProviderPortfolio'), 'ServiceProviderPortfolio');
 const ServiceProviderDashboard = lazyWithRetry(() => import('./pages/ServiceProviderDashboard'), 'ServiceProviderDashboard');
+const ClientDashboard = lazyWithRetry(() => import('./pages/ClientDashboard'), 'ClientDashboard');
+const ProviderSchedule = lazyWithRetry(() => import('./pages/ProviderSchedule'), 'ProviderSchedule');
 const Requests = lazyWithRetry(() => import('./pages/Requests'), 'Requests');
 const ClientSettings = lazyWithRetry(() => import('./pages/ClientSettings'), 'ClientSettings');
 const ServiceProviderSettings = lazyWithRetry(() => import('./pages/ServiceProviderSettings'), 'ServiceProviderSettings');
@@ -144,12 +146,20 @@ function App() {
   const isMobileShellLayout = isMobileViewport;
   const hideChatbotOnRoute = location.pathname === '/about';
   const isPublicProviderRoute = /^\/provider\/[^/]+\/?$/.test(location.pathname);
-  const shouldShowPublicFooter = ['/', '/about', '/feed'].includes(location.pathname)
-    || isPublicProviderRoute;
-  const isProviderWorkspace = Boolean(
-    currentUser?.userType === 'tradesperson'
+  const workspaceRoutes = currentUser?.userType === 'tradesperson'
+    ? ['/dashboard', '/requests', '/provider-settings', '/provider-schedule', '/provider-availability', '/provider-credentials', '/notifications']
+    : currentUser?.userType === 'client'
+      ? ['/client-dashboard', '/feed', '/requests', '/client-settings', '/notifications']
+      : [];
+  const isAuthenticatedWorkspace = Boolean(
+    currentUser
+    && ['client', 'tradesperson'].includes(currentUser.userType)
     && isAuthenticated()
-    && ['/dashboard', '/requests', '/provider-settings', '/provider-schedule', '/provider-credentials'].includes(location.pathname)
+    && workspaceRoutes.includes(location.pathname)
+  );
+  const shouldShowPublicFooter = !isAuthenticatedWorkspace && (
+    ['/', '/about', '/feed'].includes(location.pathname)
+    || isPublicProviderRoute
   );
 
   const mobileRole = currentUser?.userType || 'guest';
@@ -183,7 +193,7 @@ function App() {
   );
 
   const publicShell = (
-    <div className={`app ${isMobileShellLayout ? 'mobile-shell-layout' : ''} ${isMobileAuthenticated ? 'mobile-auth-layout' : ''} ${isProviderWorkspace ? 'provider-workspace-active' : ''}`.trim()}>
+    <div className={`app ${isMobileShellLayout ? 'mobile-shell-layout' : ''} ${isMobileAuthenticated ? 'mobile-auth-layout' : ''} ${isAuthenticatedWorkspace ? 'authenticated-workspace-active' : ''}`.trim()}>
       {isMobileShellLayout && (
         <MobileTopBar
           user={currentUser}
@@ -219,18 +229,19 @@ function App() {
         />
       )}
 
-      <div className={isMobileShellLayout ? 'desktop-navbar-hidden' : ''}>
+      <div className={`desktop-public-navbar ${isMobileShellLayout ? 'desktop-navbar-hidden' : ''}`.trim()}>
         <Navbar />
       </div>
 
       <main className={`main-content ${isMobileShellLayout ? 'mobile-page-content' : ''} ${isMobileAuthenticated ? 'authenticated-page-content' : ''}`}>
-        {isProviderWorkspace ? (
-          <ProviderLayout
+        {isAuthenticatedWorkspace ? (
+          <WorkspaceLayout
+            role={currentUser?.userType}
             hasServiceProfile={hasServiceProfile}
             publicProfileRoute={providerPublicProfileRoute}
           >
             <Outlet />
-          </ProviderLayout>
+          </WorkspaceLayout>
         ) : (
           <Outlet />
         )}
@@ -344,6 +355,14 @@ function App() {
                 </ProtectedRoute>
               )}
             />
+            <Route
+              path="/client-dashboard"
+              element={(
+                <ProtectedRoute allowedRoles={['client']}>
+                  <ClientDashboard />
+                </ProtectedRoute>
+              )}
+            />
             <Route path="/provider/:id" element={<ServiceProviderPortfolio />} />
             <Route
               path="/requests"
@@ -371,6 +390,14 @@ function App() {
             />
             <Route
               path="/provider-schedule"
+              element={(
+                <ProtectedRoute allowedRoles={['tradesperson']}>
+                  <ProviderSchedule />
+                </ProtectedRoute>
+              )}
+            />
+            <Route
+              path="/provider-availability"
               element={(
                 <ProtectedRoute allowedRoles={['tradesperson']}>
                   <ServiceProviderSettings />
