@@ -565,7 +565,7 @@ const DICTIONARY = {
     providerWholeDay: 'Whole day',
     providerRemoveException: 'Remove',
     providerSaveLanguages: 'Save Languages',
-    providerLanguagesCredentials: 'Languages & Credentials',
+    providerLanguagesCredentials: 'Language & Credentials',
     providerCredentialsCertificatesTitle: 'Credentials and Certificates',
     providerCredentialNameLabel: 'Credential name',
     providerCredentialTypeLabel: 'Credential type',
