@@ -92,7 +92,7 @@ const formatPublicAvailabilitySummary = (apiProfile, t) => {
   return apiProfile.acceptingRequests ? t('availabilityAcceptingRequests') : '';
 };
 
-const ProviderCard = ({ provider, profile, onBack, hideBackLink = false }) => {
+const ProviderCard = ({ provider, profile, onBack, hideBackLink = false, isPreviewMode = false }) => {
   const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState('portfolio');
   const [showBooking, setShowBooking] = useState(false);
@@ -197,14 +197,21 @@ const ProviderCard = ({ provider, profile, onBack, hideBackLink = false }) => {
 
         <aside className="profile-summary-actions" aria-label={t('providerPriceActionsAria')}>
           <p className="profile-summary-price">{summaryPrice}</p>
-          <button
-            className="btn-request-service profile-summary-request-btn"
-            onClick={handleRequestService}
-            disabled={!canRequestService}
-            data-tour="provider-request-service"
-          >
-            {canRequestService ? t('requestService') : unavailableActionLabel}
-          </button>
+          {isPreviewMode ? (
+            <span className="provider-preview-badge" role="status">
+              <i className="bi bi-eye" aria-hidden="true"></i>
+              Preview mode
+            </span>
+          ) : (
+            <button
+              className="btn-request-service profile-summary-request-btn"
+              onClick={handleRequestService}
+              disabled={!canRequestService}
+              data-tour="provider-request-service"
+            >
+              {canRequestService ? t('requestService') : unavailableActionLabel}
+            </button>
+          )}
         </aside>
       </div>
 
@@ -423,25 +430,27 @@ const ProviderCard = ({ provider, profile, onBack, hideBackLink = false }) => {
         />
       )}
 
-      <MobileStickyAction
-        className="provider-mobile-request-bar"
-        leftContent={(
-          <div className="provider-mobile-rate">
-            {hasRate && <p className="provider-mobile-rate-label">{t('startingAt')}</p>}
-            <p className="provider-mobile-rate-value">{rateValue}</p>
-          </div>
-        )}
-      >
-        <button
-          type="button"
-          className="btn-request-service provider-mobile-request-btn"
-          onClick={handleRequestService}
-          disabled={!canRequestService}
-          data-tour="provider-request-service"
+      {!isPreviewMode && (
+        <MobileStickyAction
+          className="provider-mobile-request-bar"
+          leftContent={(
+            <div className="provider-mobile-rate">
+              {hasRate && <p className="provider-mobile-rate-label">{t('startingAt')}</p>}
+              <p className="provider-mobile-rate-value">{rateValue}</p>
+            </div>
+          )}
         >
-          {canRequestService ? t('requestService') : unavailableActionLabel}
-        </button>
-      </MobileStickyAction>
+          <button
+            type="button"
+            className="btn-request-service provider-mobile-request-btn"
+            onClick={handleRequestService}
+            disabled={!canRequestService}
+            data-tour="provider-request-service"
+          >
+            {canRequestService ? t('requestService') : unavailableActionLabel}
+          </button>
+        </MobileStickyAction>
+      )}
 
       {expandedImage && (
         <div className="image-lightbox-overlay" onClick={() => setExpandedImage(null)}>
@@ -578,6 +587,7 @@ const ServiceProviderPortfolio = () => {
           profile={profile}
           onBack={() => navigate('/feed')}
           hideBackLink={isPreviewMode}
+          isPreviewMode={isPreviewMode}
         />
       </div>
     </div>
