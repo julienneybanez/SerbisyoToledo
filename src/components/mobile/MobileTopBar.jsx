@@ -42,10 +42,10 @@ export default function MobileTopBar({
 
   const providerListingLabel = language === 'ceb'
     ? (hasServiceProfile ? 'Usba ang Service Listing' : 'I-post ang Service Listing')
-    : (hasServiceProfile ? 'Edit Service Listing' : 'Post Service Listing');
+    : (hasServiceProfile ? 'Service Listing' : 'Post Service Listing');
   const providerPortfolioLabel = language === 'ceb'
-    ? 'Profile ug About Me'
-    : 'Profile & About Me';
+    ? 'Public Profile'
+    : 'Public Profile';
   const adminSystemStatusLabel = language === 'ceb' ? 'Status sa System' : 'System Status';
 
   useEffect(() => {
