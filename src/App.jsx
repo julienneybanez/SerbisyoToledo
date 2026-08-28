@@ -142,6 +142,20 @@ function App() {
     && ['client', 'tradesperson'].includes(currentUser.userType)
     && isAuthenticated()
   );
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+
+    const frame = window.requestAnimationFrame(() => {
+      document.querySelectorAll('.workspace-content, .admin-content, .mobile-page-content').forEach((element) => {
+        element.scrollTop = 0;
+      });
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [location.pathname]);
+
   const shouldLiftChatbotButton = isMobileAuthenticated && location.pathname.startsWith('/provider/');
   const isMobileShellLayout = isMobileViewport;
   const hideChatbotOnRoute = location.pathname === '/about';
@@ -155,7 +169,7 @@ function App() {
     currentUser
     && ['client', 'tradesperson'].includes(currentUser.userType)
     && isAuthenticated()
-    && workspaceRoutes.includes(location.pathname)
+    && (workspaceRoutes.includes(location.pathname) || isPublicProviderRoute)
   );
   const shouldShowPublicFooter = !isAuthenticatedWorkspace && (
     ['/', '/about', '/feed'].includes(location.pathname)
