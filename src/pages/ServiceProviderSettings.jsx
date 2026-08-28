@@ -62,7 +62,7 @@ function ServiceProviderSettings() {
 
   const languagesCredentialsLabel = language === 'ceb'
     ? 'Mga Pinulongan ug Credentials'
-    : 'Languages & Credentials';
+    : 'Language & Credentials';
 
   const pageMode = location.pathname === '/provider-availability'
     ? 'schedule'
