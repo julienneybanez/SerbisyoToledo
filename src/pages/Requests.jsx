@@ -438,7 +438,10 @@ export default function Requests() {
   }, [searchParams, setSearchParams]);
 
   useEffect(() => {
-    const focusRequestId = Number(searchParams.get('request'));
+    const rawRequestId = searchParams.get('request');
+    if (!rawRequestId) return;
+
+    const focusRequestId = Number(rawRequestId);
     if (!Number.isFinite(focusRequestId) || requests.length === 0) {
       return;
     }
@@ -948,12 +951,9 @@ export default function Requests() {
   return (
     <div className="requests-container">
       <div className="requests-wrapper">
-        <div className="requests-header">
-          <div className="requests-title-row">
-            <h1 data-tour={isProvider ? 'incoming-requests' : undefined}>{isProvider ? t('serviceRequests') : t('myBookings')}</h1>
-            <NextStepHelp guidance={requestsHelpGuidance} />
-          </div>
+        <div className="requests-context-row" data-tour={isProvider ? 'incoming-requests' : undefined}>
           <p>{isProvider ? t('requestsProviderSubtitle') : t('requestsClientSubtitle')}</p>
+          <NextStepHelp guidance={requestsHelpGuidance} />
         </div>
 
         <div className="requests-filters">
