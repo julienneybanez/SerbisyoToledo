@@ -104,7 +104,7 @@ function AdminSidebar({ isOpen, onClose }) {
 
       <aside
         id="admin-sidebar"
-        className={`admin-sidebar-coreui admin-sidebar-plain ${isOpen ? 'show' : ''}`}
+        className={`admin-sidebar ${isOpen ? 'show' : ''}`}
         aria-label="Admin sidebar"
       >
         <div className="sidebar-brand-custom">
