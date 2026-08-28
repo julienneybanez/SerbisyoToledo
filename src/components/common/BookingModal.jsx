@@ -1,13 +1,13 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { DayPicker } from 'react-day-picker';
+import 'react-day-picker/style.css';
 import {
   CalendarIcon,
   CheckIcon,
   ClockIcon,
   LocationIcon,
   UserIcon,
-  ChevronLeftIcon,
-  ChevronRightIcon,
 } from './Icons';
 import { isAuthenticated, serviceProfileAPI, serviceRequestAPI } from '../../services/api';
 import { BOOKING_TYPE, SPECIFIC_DATE_BOOKING_ENABLED } from '../../constants/domain';
@@ -22,9 +22,9 @@ const formatDateInput = (date) => {
 };
 
 const parseDateInput = (value) => {
-  if (!value) return null;
+  if (!value) return undefined;
   const parsed = new Date(`${value}T00:00:00`);
-  return Number.isNaN(parsed.getTime()) ? null : parsed;
+  return Number.isNaN(parsed.getTime()) ? undefined : parsed;
 };
 
 const addDays = (date, days) => {
@@ -33,31 +33,7 @@ const addDays = (date, days) => {
   return result;
 };
 
-const getDaysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();
-const getFirstDayOfMonth = (year, month) => new Date(year, month, 1).getDay();
-
-const generateCalendarDays = (year, month) => {
-  const daysInMonth = getDaysInMonth(year, month);
-  const firstDay = getFirstDayOfMonth(year, month);
-
-  const cells = [];
-  for (let i = 0; i < firstDay; i += 1) {
-    cells.push(null);
-  }
-
-  for (let day = 1; day <= daysInMonth; day += 1) {
-    cells.push(day);
-  }
-
-  while (cells.length % 7 !== 0) {
-    cells.push(null);
-  }
-
-  return cells;
-};
-
 const getDateRange = (startDate, endDate) => {
-  if (!startDate || !endDate) return [];
   const start = parseDateInput(startDate);
   const end = parseDateInput(endDate);
   if (!start || !end || end < start) return [];
@@ -69,57 +45,25 @@ const getDateRange = (startDate, endDate) => {
   return dates;
 };
 
-const formatMoney = (amount) => `₱${Number(amount || 0).toLocaleString('en-PH', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+const formatMoney = (amount) => `₱${Number(amount || 0).toLocaleString('en-PH', {
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 2,
+})}`;
 
 export default function BookingModal({ provider, onClose }) {
   const { t, language } = useLanguage();
   const locale = language === 'ceb' ? 'ceb-PH' : 'en-PH';
-  const weekdayLabels = useMemo(() => (
-    Array.from({ length: 7 }, (_, index) => (
-      new Intl.DateTimeFormat(locale, { weekday: 'short' }).format(new Date(2023, 0, 1 + index))
-    ))
-  ), [locale]);
-  const monthNames = useMemo(() => (
-    Array.from({ length: 12 }, (_, index) => (
-      new Intl.DateTimeFormat(locale, { month: 'long' }).format(new Date(2023, index, 1))
-    ))
-  ), [locale]);
-  const timelineStages = useMemo(() => ([
-    { label: t('bookingTimelineScheduleLabel'), description: t('bookingTimelineScheduleDescription'), icon: CalendarIcon },
-    { label: t('bookingTimelineTimeLabel'), description: t('bookingTimelineTimeDescription'), icon: ClockIcon },
-    { label: t('bookingTimelineDetailsLabel'), description: t('bookingTimelineDetailsDescription'), icon: UserIcon },
-  ]), [t]);
   const [today] = useState(() => new Date());
   const bookingWindowStart = today;
   const bookingWindowEnd = useMemo(() => addDays(today, 60), [today]);
 
-  const [currentMonth, setCurrentMonth] = useState(today.getMonth());
-  const [currentYear, setCurrentYear] = useState(today.getFullYear());
   const [step, setStep] = useState(1);
-
   const [bookingType, setBookingType] = useState(BOOKING_TYPE.ONE_DAY);
-  const [startDate, setStartDate] = useState(formatDateInput(today));
-  const [endDate, setEndDate] = useState(formatDateInput(today));
-  const [selectedDates, setSelectedDates] = useState([formatDateInput(today)]);
-  const selectedDatesRef = useRef([formatDateInput(today)]);
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [selectedDates, setSelectedDates] = useState([]);
+  const [calendarMonth, setCalendarMonth] = useState(today);
   const [estimatedDurationMinutes, setEstimatedDurationMinutes] = useState(120);
-  const rangeDragRef = useRef({
-    active: false,
-    pointerId: null,
-    anchorDate: '',
-    lastDate: '',
-    moved: false,
-  });
-  const suppressRangeClickRef = useRef(false);
-  const specificDragRef = useRef({
-    active: false,
-    pointerId: null,
-    anchorDate: '',
-    lastDate: '',
-    action: 'add',
-    moved: false,
-  });
-  const suppressSpecificClickRef = useRef(false);
 
   const [availableDates, setAvailableDates] = useState([]);
   const [dateLoading, setDateLoading] = useState(false);
@@ -129,9 +73,14 @@ export default function BookingModal({ provider, onClose }) {
   const [selectedTime, setSelectedTime] = useState('');
   const [selectedServiceTypeKey, setSelectedServiceTypeKey] = useState('');
   const [jobDetails, setJobDetails] = useState('');
-
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
+
+  const timelineStages = useMemo(() => ([
+    { label: t('bookingTimelineScheduleLabel'), description: t('bookingTimelineScheduleDescription'), icon: CalendarIcon },
+    { label: t('bookingTimelineTimeLabel'), description: t('bookingTimelineTimeDescription'), icon: ClockIcon },
+    { label: t('bookingTimelineDetailsLabel'), description: t('bookingTimelineDetailsDescription'), icon: UserIcon },
+  ]), [t]);
 
   const providerServiceTypes = useMemo(() => {
     const raw = Array.isArray(provider?.serviceTypes) ? provider.serviceTypes : [];
@@ -139,44 +88,28 @@ export default function BookingModal({ provider, onClose }) {
   }, [provider?.serviceTypes]);
 
   const dailyRate = Number(provider?.dailyRate ?? provider?.startingPrice ?? 0);
+  const availableDateSet = useMemo(() => new Set(availableDates), [availableDates]);
+
   const resolvedBookingDates = useMemo(() => {
     if (bookingType === BOOKING_TYPE.SPECIFIC_DATES) {
       return Array.from(new Set(selectedDates)).sort();
     }
+
     if (bookingType === BOOKING_TYPE.DATE_RANGE) {
       return getDateRange(startDate, endDate);
     }
+
     return startDate ? [startDate] : [];
   }, [bookingType, endDate, selectedDates, startDate]);
 
   const durationDays = resolvedBookingDates.length;
-  const estimatedTotal = useMemo(() => dailyRate * durationDays, [dailyRate, durationDays]);
+  const estimatedTotal = dailyRate * durationDays;
 
-  const availableDateSet = useMemo(() => new Set(availableDates), [availableDates]);
-
-  const isRangeContinuous = useCallback((fromDate, toDate) => {
-    const from = parseDateInput(fromDate);
-    const to = parseDateInput(toDate);
-
-    if (!from || !to || to < from) {
-      return false;
-    }
-
-    for (const cursor = new Date(from); cursor <= to; cursor.setDate(cursor.getDate() + 1)) {
-      if (!availableDateSet.has(formatDateInput(cursor))) {
-        return false;
-      }
-    }
-
-    return true;
-  }, [availableDateSet]);
-
-  const isContinuousMultiDayRange = useMemo(() => {
-    if (bookingType !== BOOKING_TYPE.DATE_RANGE) return true;
-    return isRangeContinuous(startDate, endDate);
-  }, [bookingType, endDate, isRangeContinuous, startDate]);
-
-  const statusIndex = step >= 4 ? 2 : Math.max(step - 1, 0);
+  const isRangeContinuous = useMemo(() => {
+    if (bookingType !== BOOKING_TYPE.DATE_RANGE || !startDate || !endDate) return true;
+    const dates = getDateRange(startDate, endDate);
+    return dates.length > 0 && dates.every((value) => availableDateSet.has(value));
+  }, [availableDateSet, bookingType, endDate, startDate]);
 
   const safeProvider = {
     name: provider?.name || t('serviceProvider'),
@@ -192,11 +125,6 @@ export default function BookingModal({ provider, onClose }) {
     .slice(0, 2)
     .toUpperCase();
 
-  const calendarCells = useMemo(
-    () => generateCalendarDays(currentYear, currentMonth),
-    [currentYear, currentMonth],
-  );
-
   const formattedSelectedRange = useMemo(() => {
     if (bookingType === BOOKING_TYPE.SPECIFIC_DATES) {
       if (resolvedBookingDates.length === 0) return t('bookingNoDatesSelected');
@@ -205,8 +133,6 @@ export default function BookingModal({ provider, onClose }) {
         .filter(Boolean)
         .join(' · ');
     }
-
-    if (!startDate) return t('bookingNoDateSelected');
 
     const start = parseDateInput(startDate);
     if (!start) return t('bookingNoDateSelected');
@@ -233,18 +159,6 @@ export default function BookingModal({ provider, onClose }) {
     return t('bookingDateRangeLabel', { start: startLabel, end: endLabel });
   }, [bookingType, endDate, locale, resolvedBookingDates, startDate, t]);
 
-  const canGoToPrevMonth = useMemo(() => {
-    const prevMonth = currentMonth === 0 ? 11 : currentMonth - 1;
-    const prevYear = currentMonth === 0 ? currentYear - 1 : currentYear;
-    return prevYear > bookingWindowStart.getFullYear()
-      || (prevYear === bookingWindowStart.getFullYear() && prevMonth >= bookingWindowStart.getMonth());
-  }, [bookingWindowStart, currentMonth, currentYear]);
-
-  const canGoToNextMonth = useMemo(() => {
-    return currentYear < bookingWindowEnd.getFullYear()
-      || (currentYear === bookingWindowEnd.getFullYear() && currentMonth < bookingWindowEnd.getMonth());
-  }, [bookingWindowEnd, currentMonth, currentYear]);
-
   useEffect(() => {
     const body = document.body;
     const previousOverflow = body.style.overflow;
@@ -258,9 +172,7 @@ export default function BookingModal({ provider, onClose }) {
     body.style.overflow = 'hidden';
 
     const handleEscape = (event) => {
-      if (event.key === 'Escape') {
-        onClose();
-      }
+      if (event.key === 'Escape') onClose();
     };
 
     window.addEventListener('keydown', handleEscape);
@@ -272,6 +184,8 @@ export default function BookingModal({ provider, onClose }) {
   }, [onClose]);
 
   useEffect(() => {
+    let mounted = true;
+
     const loadAvailableDates = async () => {
       if (!provider?.id) {
         setAvailableDates([]);
@@ -288,40 +202,45 @@ export default function BookingModal({ provider, onClose }) {
           duration: estimatedDurationMinutes,
         });
 
+        if (!mounted) return;
+
         if (response.success) {
           const dates = Array.isArray(response.data?.dates) ? response.data.dates : [];
           setAvailableDates(dates);
 
-          if (dates.length > 0) {
-            const firstDate = dates[0];
-            const parsedFirstDate = parseDateInput(firstDate);
-
-            setStartDate((prev) => (dates.includes(prev) ? prev : ''));
-            setEndDate((prev) => (dates.includes(prev) ? prev : ''));
-            setSelectedDates((prev) => prev.filter((value) => dates.includes(value)));
-
-            if (parsedFirstDate) {
-              setCurrentMonth(parsedFirstDate.getMonth());
-              setCurrentYear(parsedFirstDate.getFullYear());
-            }
-          } else {
+          if (dates.length === 0) {
             setStartDate('');
             setEndDate('');
             setSelectedDates([]);
+            return;
           }
+
+          const firstAvailable = dates[0];
+          const firstAvailableDate = parseDateInput(firstAvailable);
+          if (firstAvailableDate) setCalendarMonth(firstAvailableDate);
+
+          setStartDate((current) => (dates.includes(current) ? current : firstAvailable));
+          setEndDate((current) => (dates.includes(current) ? current : firstAvailable));
+          setSelectedDates((current) => {
+            const valid = current.filter((value) => dates.includes(value));
+            return valid.length > 0 ? valid : [firstAvailable];
+          });
         }
       } catch (error) {
+        if (!mounted) return;
         setAvailableDates([]);
         setStartDate('');
         setEndDate('');
+        setSelectedDates([]);
         setSubmitError(error.message || t('bookingLoadDatesFailed'));
       } finally {
-        setDateLoading(false);
+        if (mounted) setDateLoading(false);
       }
     };
 
     loadAvailableDates();
-  }, [provider?.id, estimatedDurationMinutes, bookingWindowEnd, bookingWindowStart, t]);
+    return () => { mounted = false; };
+  }, [bookingWindowEnd, bookingWindowStart, estimatedDurationMinutes, provider?.id, t]);
 
   useEffect(() => {
     if (bookingType === BOOKING_TYPE.ONE_DAY) {
@@ -341,14 +260,14 @@ export default function BookingModal({ provider, onClose }) {
       return;
     }
 
-    setSelectedServiceTypeKey((prev) => (
-      providerServiceTypes.some((item) => item.key === prev)
-        ? prev
-        : ''
+    setSelectedServiceTypeKey((current) => (
+      providerServiceTypes.some((item) => item.key === current) ? current : ''
     ));
   }, [providerServiceTypes]);
 
   useEffect(() => {
+    let mounted = true;
+
     const loadSlots = async () => {
       if (!provider?.id || resolvedBookingDates.length === 0) {
         setAvailableSlots([]);
@@ -356,7 +275,7 @@ export default function BookingModal({ provider, onClose }) {
         return;
       }
 
-      if (bookingType === BOOKING_TYPE.DATE_RANGE && !isContinuousMultiDayRange) {
+      if (bookingType === BOOKING_TYPE.DATE_RANGE && !isRangeContinuous) {
         setAvailableSlots([]);
         setSelectedTime('');
         setSubmitError(t('bookingRangeUnavailable'));
@@ -375,333 +294,88 @@ export default function BookingModal({ provider, onClose }) {
           duration: estimatedDurationMinutes,
         });
 
+        if (!mounted) return;
+
         if (response.success) {
           const slots = response.data?.slots || [];
           setAvailableSlots(slots);
-
-          setSelectedTime((prevSelected) => (
-            slots.some((slot) => slot.time === prevSelected) ? prevSelected : ''
-          ));
+          setSelectedTime((current) => (slots.some((slot) => slot.time === current) ? current : ''));
         }
       } catch (error) {
+        if (!mounted) return;
         setAvailableSlots([]);
         setSelectedTime('');
         setSubmitError(error.message || t('bookingLoadSlotsFailed'));
       } finally {
-        setSlotLoading(false);
+        if (mounted) setSlotLoading(false);
       }
     };
 
     loadSlots();
-  }, [provider?.id, startDate, endDate, bookingType, estimatedDurationMinutes, isContinuousMultiDayRange, resolvedBookingDates, t]);
+    return () => { mounted = false; };
+  }, [bookingType, endDate, estimatedDurationMinutes, isRangeContinuous, provider?.id, resolvedBookingDates, startDate, t]);
 
-  const handlePrevMonth = useCallback(() => {
-    if (!canGoToPrevMonth) return;
-
-    if (currentMonth === 0) {
-      setCurrentMonth(11);
-      setCurrentYear((prev) => prev - 1);
-    } else {
-      setCurrentMonth((prev) => prev - 1);
-    }
-  }, [canGoToPrevMonth, currentMonth]);
-
-  const handleNextMonth = useCallback(() => {
-    if (!canGoToNextMonth) return;
-
-    if (currentMonth === 11) {
-      setCurrentMonth(0);
-      setCurrentYear((prev) => prev + 1);
-    } else {
-      setCurrentMonth((prev) => prev + 1);
-    }
-  }, [canGoToNextMonth, currentMonth]);
-
-  const getDateKeyForDay = useCallback((day) => {
-    const date = new Date(currentYear, currentMonth, day);
-    return formatDateInput(date);
-  }, [currentMonth, currentYear]);
-
-  const isDateAvailable = useCallback((day) => {
-    if (!day) return false;
-    return availableDateSet.has(getDateKeyForDay(day));
-  }, [availableDateSet, getDateKeyForDay]);
-
-  const isSelectedDay = useCallback((day) => {
-    if (!day || !startDate) return false;
-
-    const key = getDateKeyForDay(day);
-    if (bookingType === BOOKING_TYPE.SPECIFIC_DATES) {
-      return selectedDates.includes(key);
-    }
-
-    if (bookingType !== BOOKING_TYPE.DATE_RANGE) {
-      return key === startDate;
-    }
-
-    if (!endDate) {
-      return key === startDate;
-    }
-
-    return key >= startDate && key <= endDate;
-  }, [bookingType, endDate, getDateKeyForDay, selectedDates, startDate]);
-
-  const getRangeDayState = useCallback((day) => {
-    if (!day || bookingType !== BOOKING_TYPE.DATE_RANGE || !startDate) {
-      return '';
-    }
-
-    const key = getDateKeyForDay(day);
-    if (key === startDate && key === endDate) return 'range-single';
-    if (key === startDate) return 'range-start';
-    if (key === endDate) return 'range-end';
-    if (endDate && key > startDate && key < endDate) return 'range-middle';
-    return '';
-  }, [bookingType, endDate, getDateKeyForDay, startDate]);
-
-  const updateDraggedRange = useCallback((dateKey) => {
-    const drag = rangeDragRef.current;
-    if (!drag.active || !dateKey || !availableDateSet.has(dateKey) || dateKey === drag.lastDate) {
-      return;
-    }
-
-    const nextStart = dateKey < drag.anchorDate ? dateKey : drag.anchorDate;
-    const nextEnd = dateKey < drag.anchorDate ? drag.anchorDate : dateKey;
-
-    if (!isRangeContinuous(nextStart, nextEnd)) {
-      setSubmitError(t('bookingRangeUnavailable'));
-      return;
-    }
-
-    drag.lastDate = dateKey;
-    drag.moved = dateKey !== drag.anchorDate;
-    setStartDate(nextStart);
-    setEndDate(nextEnd);
-    setSelectedDates(getDateRange(nextStart, nextEnd));
-    setSubmitError('');
-  }, [availableDateSet, isRangeContinuous, t]);
-
-  const handleRangePointerDown = useCallback((event, day) => {
-    if (bookingType !== BOOKING_TYPE.DATE_RANGE || !day || !isDateAvailable(day)) {
-      return;
-    }
-
-    const dateKey = getDateKeyForDay(day);
-    rangeDragRef.current = {
-      active: true,
-      pointerId: event.pointerId,
-      anchorDate: dateKey,
-      lastDate: dateKey,
-      moved: false,
-    };
-    suppressRangeClickRef.current = false;
-    setSubmitError('');
-
-    // Do not change the selected range until the pointer actually moves.
-    // This keeps normal "tap start, tap end" selection working while still
-    // allowing a drag gesture to start from any available date.
-    event.currentTarget.closest('.calendar-grid')?.setPointerCapture?.(event.pointerId);
-    event.preventDefault();
-  }, [bookingType, getDateKeyForDay, isDateAvailable]);
-
-  const handleRangePointerMove = useCallback((event) => {
-    const drag = rangeDragRef.current;
-    if (!drag.active || drag.pointerId !== event.pointerId) {
-      return;
-    }
-
-    const hoveredButton = document
-      .elementFromPoint(event.clientX, event.clientY)
-      ?.closest?.('[data-booking-date]');
-
-    if (!hoveredButton) {
-      return;
-    }
-
-    updateDraggedRange(hoveredButton.dataset.bookingDate || '');
-    event.preventDefault();
-  }, [updateDraggedRange]);
-
-  const finishRangeDrag = useCallback((event) => {
-    const drag = rangeDragRef.current;
-    if (!drag.active || drag.pointerId !== event.pointerId) {
-      return;
-    }
-
-    suppressRangeClickRef.current = drag.moved;
-    rangeDragRef.current = {
-      active: false,
-      pointerId: null,
-      anchorDate: '',
-      lastDate: '',
-      moved: false,
-    };
-
-    try {
-      event.currentTarget.releasePointerCapture?.(event.pointerId);
-    } catch {
-      // Pointer capture may already be released by the browser.
-    }
-  }, []);
-
-  const commitSpecificDates = useCallback((dates) => {
-    const sorted = Array.from(new Set(dates)).sort();
-    selectedDatesRef.current = sorted;
-    setSelectedDates(sorted);
-    setStartDate(sorted[0] || '');
-    setEndDate(sorted[sorted.length - 1] || '');
-    return sorted;
-  }, []);
-
-  useEffect(() => {
-    selectedDatesRef.current = selectedDates;
-  }, [selectedDates]);
-
-  const updateSpecificDrag = useCallback((dateKey) => {
-    const drag = specificDragRef.current;
-    if (!drag.active || !dateKey || !availableDateSet.has(dateKey) || dateKey === drag.lastDate) {
-      return;
-    }
-
-    drag.moved = true;
-    drag.lastDate = dateKey;
-
-    const next = new Set(selectedDatesRef.current);
-    const apply = (value) => {
-      if (drag.action === 'remove') next.delete(value);
-      else next.add(value);
-    };
-
-    apply(drag.anchorDate);
-    apply(dateKey);
-    commitSpecificDates(Array.from(next));
-  }, [availableDateSet, commitSpecificDates]);
-
-  const handleSpecificPointerDown = useCallback((event, day) => {
-    if (bookingType !== BOOKING_TYPE.SPECIFIC_DATES || !day || !isDateAvailable(day)) {
-      return;
-    }
-
-    const dateKey = getDateKeyForDay(day);
-    specificDragRef.current = {
-      active: true,
-      pointerId: event.pointerId,
-      anchorDate: dateKey,
-      lastDate: dateKey,
-      action: selectedDates.includes(dateKey) ? 'remove' : 'add',
-      moved: false,
-    };
-    suppressSpecificClickRef.current = false;
-    event.currentTarget.closest('.calendar-grid')?.setPointerCapture?.(event.pointerId);
-    event.preventDefault();
-  }, [bookingType, getDateKeyForDay, isDateAvailable, selectedDates]);
-
-  const handleSpecificPointerMove = useCallback((event) => {
-    const drag = specificDragRef.current;
-    if (!drag.active || drag.pointerId !== event.pointerId) return;
-
-    const hoveredButton = document
-      .elementFromPoint(event.clientX, event.clientY)
-      ?.closest?.('[data-booking-date]');
-
-    if (!hoveredButton) return;
-    updateSpecificDrag(hoveredButton.dataset.bookingDate || '');
-    event.preventDefault();
-  }, [updateSpecificDrag]);
-
-  const finishSpecificDrag = useCallback((event) => {
-    const drag = specificDragRef.current;
-    if (!drag.active || drag.pointerId !== event.pointerId) return;
-
-    suppressSpecificClickRef.current = drag.moved;
-    specificDragRef.current = {
-      active: false,
-      pointerId: null,
-      anchorDate: '',
-      lastDate: '',
-      action: 'add',
-      moved: false,
-    };
-
-    try {
-      event.currentTarget.releasePointerCapture?.(event.pointerId);
-    } catch {
-      // Pointer capture may already be released.
-    }
-  }, []);
-
-  const handleSelectDay = useCallback((day) => {
-    if (suppressRangeClickRef.current) {
-      suppressRangeClickRef.current = false;
-      return;
-    }
-
-    if (suppressSpecificClickRef.current) {
-      suppressSpecificClickRef.current = false;
-      return;
-    }
-
-    if (!day) return;
-
-    const dateKey = getDateKeyForDay(day);
-    if (!availableDateSet.has(dateKey)) {
-      return;
-    }
-
+  const handleCalendarSelect = (value) => {
     setSubmitError('');
 
     if (bookingType === BOOKING_TYPE.ONE_DAY) {
-      setStartDate(dateKey);
-      setEndDate(dateKey);
-      setSelectedDates([dateKey]);
+      const key = value ? formatDateInput(value) : '';
+      setStartDate(key);
+      setEndDate(key);
+      setSelectedDates(key ? [key] : []);
       return;
     }
 
     if (bookingType === BOOKING_TYPE.SPECIFIC_DATES) {
-      const current = selectedDatesRef.current;
-      const next = current.includes(dateKey)
-        ? current.filter((value) => value !== dateKey)
-        : [...current, dateKey];
-      commitSpecificDates(next);
+      const keys = Array.isArray(value) ? value.map(formatDateInput).sort() : [];
+      setSelectedDates(keys);
+      setStartDate(keys[0] || '');
+      setEndDate(keys[keys.length - 1] || '');
       return;
     }
 
-    if (!startDate || !endDate || startDate !== endDate) {
-      setStartDate(dateKey);
-      setEndDate(dateKey);
+    const fromKey = value?.from ? formatDateInput(value.from) : '';
+    const toKey = value?.to ? formatDateInput(value.to) : fromKey;
+
+    if (!fromKey) {
+      setStartDate('');
+      setEndDate('');
       return;
     }
 
-    let nextStart = startDate;
-    let nextEnd = dateKey;
-
-    if (dateKey < startDate) {
-      nextStart = dateKey;
-      nextEnd = startDate;
-    }
-
-    if (!isRangeContinuous(nextStart, nextEnd)) {
+    const candidateDates = getDateRange(fromKey, toKey);
+    if (candidateDates.some((dateKey) => !availableDateSet.has(dateKey))) {
+      setStartDate(fromKey);
+      setEndDate(fromKey);
       setSubmitError(t('bookingRangeUnavailable'));
-      setStartDate(dateKey);
-      setEndDate(dateKey);
       return;
     }
 
-    setStartDate(nextStart);
-    setEndDate(nextEnd);
-  }, [availableDateSet, bookingType, commitSpecificDates, endDate, getDateKeyForDay, isRangeContinuous, startDate, t]);
+    setStartDate(fromKey);
+    setEndDate(toKey);
+  };
+
+  const dayPickerMode = bookingType === BOOKING_TYPE.ONE_DAY
+    ? 'single'
+    : bookingType === BOOKING_TYPE.DATE_RANGE
+      ? 'range'
+      : 'multiple';
+
+  const selectedForCalendar = bookingType === BOOKING_TYPE.ONE_DAY
+    ? parseDateInput(startDate)
+    : bookingType === BOOKING_TYPE.DATE_RANGE
+      ? (startDate ? { from: parseDateInput(startDate), to: parseDateInput(endDate || startDate) } : undefined)
+      : selectedDates.map(parseDateInput).filter(Boolean);
 
   const canProceed = () => {
     if (step === 1) {
       if (bookingType === BOOKING_TYPE.SPECIFIC_DATES) return resolvedBookingDates.length > 0;
       if (!startDate) return false;
       if (bookingType !== BOOKING_TYPE.DATE_RANGE) return true;
-      return Boolean(endDate) && isContinuousMultiDayRange;
+      return Boolean(endDate) && isRangeContinuous;
     }
 
-    if (step === 2) {
-      return Boolean(selectedTime);
-    }
+    if (step === 2) return Boolean(selectedTime);
 
     if (step === 3) {
       const hasValidServiceTypeSelection = providerServiceTypes.length <= 1 || Boolean(selectedServiceTypeKey);
@@ -711,13 +385,9 @@ export default function BookingModal({ provider, onClose }) {
     return true;
   };
 
-  const handlePrev = () => {
-    setStep((prev) => Math.max(1, prev - 1));
-  };
-
   const handleNext = async () => {
     if (step < 3) {
-      setStep((prev) => Math.min(prev + 1, 4));
+      setStep((current) => Math.min(current + 1, 4));
       return;
     }
 
@@ -736,7 +406,7 @@ export default function BookingModal({ provider, onClose }) {
       return;
     }
 
-    if (bookingType === BOOKING_TYPE.DATE_RANGE && !isContinuousMultiDayRange) {
+    if (bookingType === BOOKING_TYPE.DATE_RANGE && !isRangeContinuous) {
       setSubmitError(t('bookingRangeUnavailable'));
       return;
     }
@@ -745,7 +415,7 @@ export default function BookingModal({ provider, onClose }) {
     setSubmitError('');
 
     try {
-      const payload = {
+      const response = await serviceRequestAPI.createRequest({
         providerId: provider.userId,
         serviceProfileId: provider.id,
         serviceTypeKey: selectedServiceTypeKey || null,
@@ -758,12 +428,9 @@ export default function BookingModal({ provider, onClose }) {
         scheduledTime: selectedTime,
         estimatedDurationMinutes: Number(estimatedDurationMinutes),
         jobDetails: jobDetails.trim(),
-      };
+      });
 
-      const response = await serviceRequestAPI.createRequest(payload);
-      if (response.success) {
-        setStep(4);
-      }
+      if (response.success) setStep(4);
     } catch (error) {
       setSubmitError(error.message || t('bookingSubmitFailed'));
     } finally {
@@ -772,88 +439,39 @@ export default function BookingModal({ provider, onClose }) {
   };
 
   const renderCalendar = () => (
-    <div className="booking-calendar">
-      <div className="calendar-header">
-        <button
-          className={`calendar-nav ${!canGoToPrevMonth ? 'disabled' : ''}`}
-          type="button"
-          aria-label={t('bookingPreviousMonth')}
-          disabled={!canGoToPrevMonth}
-          onClick={handlePrevMonth}
-        >
-          <ChevronLeftIcon />
-        </button>
-
-        <div className="calendar-month">
-          <span>{monthNames[currentMonth]} {currentYear}</span>
+    <div className="booking-calendar booking-day-picker">
+      <div className="booking-calendar-intro">
+        <div>
+          <span className="booking-calendar-kicker">{t('bookingSelectedLabel')}</span>
+          <strong>{formattedSelectedRange}</strong>
         </div>
-
-        <button
-          className={`calendar-nav ${!canGoToNextMonth ? 'disabled' : ''}`}
-          type="button"
-          aria-label={t('bookingNextMonth')}
-          disabled={!canGoToNextMonth}
-          onClick={handleNextMonth}
-        >
-          <ChevronRightIcon />
-        </button>
+        <div className="booking-calendar-legend" aria-label="Calendar legend">
+          <span><i className="available-dot"></i> Available</span>
+          <span><i className="selected-dot"></i> Selected</span>
+        </div>
       </div>
 
-      <div className="calendar-weekdays">
-        {weekdayLabels.map((day) => (
-          <span key={day} className="weekday">{day}</span>
-        ))}
-      </div>
+      <DayPicker
+        mode={dayPickerMode}
+        selected={selectedForCalendar}
+        onSelect={handleCalendarSelect}
+        month={calendarMonth}
+        onMonthChange={setCalendarMonth}
+        startMonth={bookingWindowStart}
+        endMonth={bookingWindowEnd}
+        disabled={(date) => !availableDateSet.has(formatDateInput(date))}
+        modifiers={{ available: (date) => availableDateSet.has(formatDateInput(date)) }}
+        showOutsideDays
+        fixedWeeks
+        animate
+      />
 
-      <div
-        className={`calendar-grid ${[BOOKING_TYPE.DATE_RANGE, BOOKING_TYPE.SPECIFIC_DATES].includes(bookingType) ? 'range-drag-enabled' : ''}`}
-        onPointerMove={(event) => {
-          handleRangePointerMove(event);
-          handleSpecificPointerMove(event);
-        }}
-        onPointerUp={(event) => {
-          finishRangeDrag(event);
-          finishSpecificDrag(event);
-        }}
-        onPointerCancel={(event) => {
-          finishRangeDrag(event);
-          finishSpecificDrag(event);
-        }}
-        onLostPointerCapture={(event) => {
-          finishRangeDrag(event);
-          finishSpecificDrag(event);
-        }}
-      >
-        {calendarCells.map((cell, index) => {
-          if (!cell) {
-            return <span key={`empty-${index}`} className="calendar-day empty"></span>;
-          }
-
-          const available = isDateAvailable(cell);
-          const selected = isSelectedDay(cell);
-          const rangeState = getRangeDayState(cell);
-          const dateKey = getDateKeyForDay(cell);
-
-          return (
-            <button
-              key={`day-${cell}`}
-              type="button"
-              data-booking-date={dateKey}
-              className={`calendar-day ${available ? 'available' : 'unavailable'} ${selected ? 'selected' : ''} ${rangeState}`.trim()}
-              onPointerDown={(event) => {
-                handleRangePointerDown(event, cell);
-                handleSpecificPointerDown(event, cell);
-              }}
-              onClick={() => handleSelectDay(cell)}
-              disabled={!available}
-              aria-label={available ? t('bookingSelectDate', { date: `${monthNames[currentMonth]} ${cell}` }) : t('bookingDateUnavailable', { date: `${monthNames[currentMonth]} ${cell}` })}
-              aria-pressed={available ? selected : undefined}
-            >
-              {cell}
-            </button>
-          );
-        })}
-      </div>
+      {dateLoading && (
+        <div className="booking-calendar-loading" role="status">
+          <span className="spinner-small"></span>
+          <span>{t('bookingLoadingAvailability')}</span>
+        </div>
+      )}
     </div>
   );
 
@@ -874,8 +492,8 @@ export default function BookingModal({ provider, onClose }) {
                     value="one_day"
                     checked={bookingType === BOOKING_TYPE.ONE_DAY}
                     onChange={() => setBookingType(BOOKING_TYPE.ONE_DAY)}
-                  />{' '}
-                  {t('bookingOneDay')}
+                  />
+                  <span>{t('bookingOneDay')}</span>
                 </label>
                 <label className="booking-type-option">
                   <input
@@ -884,8 +502,8 @@ export default function BookingModal({ provider, onClose }) {
                     value={BOOKING_TYPE.DATE_RANGE}
                     checked={bookingType === BOOKING_TYPE.DATE_RANGE}
                     onChange={() => setBookingType(BOOKING_TYPE.DATE_RANGE)}
-                  />{' '}
-                  {t('bookingDateRange')}
+                  />
+                  <span>{t('bookingDateRange')}</span>
                 </label>
                 {SPECIFIC_DATE_BOOKING_ENABLED && (
                   <label className="booking-type-option">
@@ -895,8 +513,8 @@ export default function BookingModal({ provider, onClose }) {
                       value={BOOKING_TYPE.SPECIFIC_DATES}
                       checked={bookingType === BOOKING_TYPE.SPECIFIC_DATES}
                       onChange={() => setBookingType(BOOKING_TYPE.SPECIFIC_DATES)}
-                    />{' '}
-                    {t('bookingSpecificDates')}
+                    />
+                    <span>{t('bookingSpecificDates')}</span>
                   </label>
                 )}
               </div>
@@ -917,7 +535,6 @@ export default function BookingModal({ provider, onClose }) {
             </div>
 
             <div className="booking-hint-card" style={{ marginTop: 0 }}>
-              <p><strong>{t('bookingSelectedLabel')}:</strong> {formattedSelectedRange}</p>
               <p><strong>{t('bookingDurationLabel')}:</strong> {durationDays} {t(durationDays === 1 ? 'bookingDaySingular' : 'bookingDayPlural')}</p>
               <p><strong>{t('bookingDailyRateLabel')}:</strong> {dailyRate > 0 ? t('bookingRatePerDay', { rate: formatMoney(dailyRate) }) : t('priceOnRequest')}</p>
               <p><strong>{t('bookingEstimatedCostLabel')}:</strong> {dailyRate > 0 ? formatMoney(estimatedTotal) : t('priceOnRequest')}</p>
@@ -930,8 +547,6 @@ export default function BookingModal({ provider, onClose }) {
                     : ''}
               </p>
             </div>
-
-            {dateLoading && <p className="booking-subtitle">{t('bookingLoadingAvailability')}</p>}
           </div>
         </>
       );
@@ -939,35 +554,34 @@ export default function BookingModal({ provider, onClose }) {
 
     if (step === 2) {
       return (
-        <>
-          <div className="booking-time-panel">
-            <div className="booking-hint-card" style={{ marginTop: 0 }}>
-              <p><strong>{t('bookingSelectedLabel')}:</strong> {formattedSelectedRange}</p>
-              <button type="button" className="btn btn-sm btn-outline-secondary" onClick={() => setStep(1)}>
-                {t('bookingChangeDate')}
-              </button>
-            </div>
-            {slotLoading ? (
-              <p className="booking-subtitle">{t('bookingLoadingSlots')}</p>
-            ) : availableSlots.length === 0 ? (
-              <p className="booking-subtitle">{t('bookingNoCommonSlots')}</p>
-            ) : (
-              <div className="time-slots">
-                {availableSlots.map((slot) => (
-                  <button
-                    key={slot.time}
-                    type="button"
-                    className={`time-slot ${selectedTime === slot.time ? 'selected' : ''}`}
-                    onClick={() => setSelectedTime(slot.time)}
-                    aria-pressed={selectedTime === slot.time}
-                  >
-                    {slot.time}
-                  </button>
-                ))}
-              </div>
-            )}
+        <div className="booking-time-panel">
+          <div className="booking-hint-card" style={{ marginTop: 0 }}>
+            <p><strong>{t('bookingSelectedLabel')}:</strong> {formattedSelectedRange}</p>
+            <button type="button" className="btn btn-sm btn-outline-secondary" onClick={() => setStep(1)}>
+              {t('bookingChangeDate')}
+            </button>
           </div>
-        </>
+
+          {slotLoading ? (
+            <p className="booking-subtitle">{t('bookingLoadingSlots')}</p>
+          ) : availableSlots.length === 0 ? (
+            <p className="booking-subtitle">{t('bookingNoCommonSlots')}</p>
+          ) : (
+            <div className="time-slots">
+              {availableSlots.map((slot) => (
+                <button
+                  key={slot.time}
+                  type="button"
+                  className={`time-slot ${selectedTime === slot.time ? 'selected' : ''}`}
+                  onClick={() => setSelectedTime(slot.time)}
+                  aria-pressed={selectedTime === slot.time}
+                >
+                  {slot.time}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       );
     }
 
@@ -1014,12 +628,8 @@ export default function BookingModal({ provider, onClose }) {
             <p><strong>{t('bookingSummaryBooking')}:</strong> {formattedSelectedRange}</p>
             <p><strong>{t('bookingSummaryTime')}:</strong> {selectedTime || t('bookingNotSelected')}</p>
             <p><strong>{t('bookingSummaryEstimated')}:</strong> {dailyRate > 0 ? formatMoney(estimatedTotal) : t('priceOnRequest')}</p>
-            <p className="hint-subtext">
-              {t('bookingEstimateDisclaimer')}
-            </p>
-            <p className="hint-subtext">
-              {t('bookingAcceptanceDisclaimer')}
-            </p>
+            <p className="hint-subtext">{t('bookingEstimateDisclaimer')}</p>
+            <p className="hint-subtext">{t('bookingAcceptanceDisclaimer')}</p>
           </div>
         </form>
       );
@@ -1027,18 +637,16 @@ export default function BookingModal({ provider, onClose }) {
 
     return (
       <div className="booking-success">
-        <div className="success-icon">
-          <CheckIcon />
-        </div>
+        <div className="success-icon"><CheckIcon /></div>
         <h3>{t('bookingRequestSent')}</h3>
         <p>{t('bookingRequestSuccess')}</p>
       </div>
     );
   };
 
-  if (typeof document === 'undefined') {
-    return null;
-  }
+  if (typeof document === 'undefined') return null;
+
+  const statusIndex = step >= 4 ? 2 : Math.max(step - 1, 0);
 
   return createPortal(
     <div className="booking-overlay" onClick={onClose}>
@@ -1054,9 +662,7 @@ export default function BookingModal({ provider, onClose }) {
             <div className="booking-provider-avatar">{initials}</div>
             <p className="booking-provider-profession">{safeProvider.profession}</p>
             <p className="booking-provider-name">{safeProvider.name}</p>
-            <p className="booking-provider-location">
-              <LocationIcon /> {safeProvider.location}
-            </p>
+            <p className="booking-provider-location"><LocationIcon /> {safeProvider.location}</p>
             <p className="booking-provider-bio">{safeProvider.description}</p>
           </div>
 
@@ -1066,9 +672,7 @@ export default function BookingModal({ provider, onClose }) {
               const state = index < statusIndex ? 'completed' : index === statusIndex ? 'active' : '';
               return (
                 <div key={stage.label} className={`booking-stage ${state}`}>
-                  <div className={`stage-indicator ${state}`}>
-                    <Icon />
-                  </div>
+                  <div className={`stage-indicator ${state}`}><Icon /></div>
                   <div>
                     <p className="stage-label">{stage.label}</p>
                     <p className="stage-description">{stage.description}</p>
@@ -1080,9 +684,7 @@ export default function BookingModal({ provider, onClose }) {
         </aside>
 
         <section className="booking-content">
-          <button className="booking-close" type="button" onClick={onClose} aria-label={t('bookingCloseAria')}>
-            X
-          </button>
+          <button className="booking-close" type="button" onClick={onClose} aria-label={t('bookingCloseAria')}>×</button>
 
           <div className="booking-header">
             <h2 id="booking-modal-title" className="booking-title">{t('bookingRequestServiceTitle')}</h2>
@@ -1107,7 +709,7 @@ export default function BookingModal({ provider, onClose }) {
 
           <div className="booking-actions">
             {step > 1 && step < 4 && (
-              <button className="booking-btn booking-btn-outline" type="button" onClick={handlePrev} disabled={submitting}>
+              <button className="booking-btn booking-btn-outline" type="button" onClick={() => setStep((current) => Math.max(1, current - 1))} disabled={submitting}>
                 {t('bookingBack')}
               </button>
             )}
@@ -1132,6 +734,6 @@ export default function BookingModal({ provider, onClose }) {
         </section>
       </div>
     </div>,
-    document.body
+    document.body,
   );
 }

@@ -3,6 +3,7 @@ import '@testing-library/jest-dom/vitest';
 import { MemoryRouter } from 'react-router-dom';
 import Feed from '../Feed';
 import ServiceProviderDashboard from '../ServiceProviderDashboard';
+import ClientDashboard from '../ClientDashboard';
 import AdminUsers from '../admin/AdminUsers';
 import { LanguageProvider } from '../../context/LanguageContext';
 import { adminAPI, getUser, isAuthenticated, serviceProfileAPI, serviceRequestAPI } from '../../services/api';
@@ -117,7 +118,36 @@ describe('Targeted correctness checks', () => {
     );
 
     const activeLabel = await screen.findByText('Active Jobs');
-    expect(activeLabel.nextElementSibling).toHaveTextContent('3');
+    expect(activeLabel.previousElementSibling).toHaveTextContent('3');
+  });
+
+  it('shows the client workspace summary and current request', async () => {
+    getUser.mockReturnValue({ userType: 'client', fullName: 'Client User' });
+    serviceRequestAPI.getClientRequests.mockResolvedValue({
+      success: true,
+      data: {
+        requests: [
+          {
+            id: 44,
+            status: 'accepted',
+            provider_name: 'Juan Provider',
+            service_display_label: 'Plumbing Repair',
+            start_date: '2099-01-02',
+            start_time: '09:00',
+          },
+        ],
+      },
+    });
+
+    render(
+      <MemoryRouter>
+        <ClientDashboard />
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByText('Plumbing Repair')).toBeInTheDocument();
+    expect(screen.getByText('Active Requests').previousElementSibling).toHaveTextContent('1');
+    expect(screen.getByRole('link', { name: /Find a Service/i })).toHaveAttribute('href', '/feed');
   });
 
   it('applies admin user status filters with distinct pending and verified behavior', async () => {

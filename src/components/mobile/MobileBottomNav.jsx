@@ -10,7 +10,7 @@ const ROLE_ITEMS = {
     { to: '/login', labelKey: 'authAccessShort', icon: 'bi-person' },
   ],
   client: [
-    { to: '/', labelKey: 'home', icon: 'bi-house-door' },
+    { to: '/client-dashboard', labelKey: 'home', icon: 'bi-house-door' },
     { to: '/feed', labelKey: 'browseShort', icon: 'bi-search' },
     { to: '/requests', labelKey: 'myBookings', icon: 'bi-inbox' },
     { action: 'edit-profile', labelKey: 'profile', icon: 'bi-person' },

@@ -19,7 +19,11 @@
     "bootstrap-icons": "^1.13.1",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "react-router-dom": "^7.11.0"
+    "react-router-dom": "^7.11.0",
+    "@fullcalendar/bootstrap5": "7.0.2",
+    "@fullcalendar/react": "7.0.2",
+    "react-day-picker": "10.0.1",
+    "temporal-polyfill": "1.0.4"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",

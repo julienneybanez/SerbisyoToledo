@@ -1,0 +1,49 @@
+.provider-schedule-page { min-height: calc(100vh - 74px); padding: 1.5rem; background: var(--color-page-bg); }
+.provider-schedule-inner { width: min(1280px, 100%); margin: 0 auto; }
+.provider-schedule-header { max-width: none; }
+.provider-schedule-summary { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 0.8rem; margin-bottom: 1rem; }
+.provider-schedule-summary > div { display: grid; grid-template-columns: 42px auto 1fr; align-items: center; column-gap: 0.65rem; min-height: 78px; padding: 0.85rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-card); background: var(--color-surface); box-shadow: var(--shadow-sm); }
+.provider-schedule-summary strong { color: var(--color-text-primary); font-size: 1.35rem; }
+.provider-schedule-summary small { color: var(--color-text-secondary); font-weight: 650; }
+.schedule-summary-icon { grid-row: 1 / span 2; width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; border-radius: 12px; }
+.schedule-summary-icon.pending { background: var(--status-pending-bg); color: var(--status-pending-text); }
+.schedule-summary-icon.upcoming { background: var(--status-accepted-bg); color: var(--status-accepted-text); }
+.schedule-summary-icon.active { background: var(--status-progress-bg); color: var(--status-progress-text); }
+.provider-schedule-layout { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 1rem; align-items: start; }
+.provider-calendar-card, .provider-upcoming-card { border: 1px solid var(--color-border); border-radius: var(--radius-card); background: var(--color-surface); box-shadow: var(--shadow-sm); }
+.provider-calendar-card { padding: 1rem; overflow: hidden; }
+.provider-calendar-loading { min-height: 560px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--color-text-secondary); }
+.provider-calendar-card .fc { --fc-border-color: var(--color-border); --fc-page-bg-color: var(--color-surface); --fc-neutral-bg-color: var(--color-surface-secondary); --fc-list-event-hover-bg-color: var(--color-surface-secondary); color: var(--color-text-primary); font-family: var(--font-sans); }
+.provider-calendar-card .fc .fc-toolbar-title { font-size: 1.15rem; font-weight: 750; color: var(--color-text-primary); }
+.provider-calendar-card .fc .btn { min-height: 38px; border-radius: 9px; font-size: 0.8rem; }
+.provider-calendar-card .fc .fc-col-header-cell-cushion, .provider-calendar-card .fc .fc-daygrid-day-number { color: var(--color-text-secondary); text-decoration: none; }
+.provider-calendar-card .fc .fc-day-today { background: color-mix(in srgb, var(--brand-primary) 7%, var(--color-surface)) !important; }
+.provider-calendar-card .fc-event { border: 0; border-radius: 7px; padding: 2px 4px; cursor: pointer; }
+.provider-calendar-event-pending { background: var(--status-pending-bg) !important; color: var(--status-pending-text) !important; }
+.provider-calendar-event-accepted { background: var(--status-accepted-bg) !important; color: var(--status-accepted-text) !important; }
+.provider-calendar-event-on_the_way, .provider-calendar-event-in_progress { background: var(--status-progress-bg) !important; color: var(--status-progress-text) !important; }
+.provider-calendar-event-completed { background: var(--status-completed-bg) !important; color: var(--status-completed-text) !important; }
+.provider-calendar-event-content { min-width: 0; display: grid; line-height: 1.2; }
+.provider-calendar-event-time { font-size: 0.66rem; font-weight: 800; }
+.provider-calendar-event-title { overflow: hidden; font-size: 0.72rem; font-weight: 750; text-overflow: ellipsis; white-space: nowrap; }
+.provider-calendar-event-client { overflow: hidden; font-size: 0.64rem; opacity: 0.82; text-overflow: ellipsis; white-space: nowrap; }
+.provider-upcoming-card { overflow: hidden; }
+.provider-upcoming-heading { padding: 1rem; border-bottom: 1px solid var(--color-border); }
+.provider-upcoming-heading span { color: var(--brand-primary); font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; }
+.provider-upcoming-heading h2 { margin: 0.12rem 0 0; color: var(--color-text-primary); font-size: 1rem; }
+.provider-upcoming-list { display: grid; }
+.provider-upcoming-row { display: grid; grid-template-columns: 44px minmax(0,1fr) 16px; align-items: center; gap: 0.65rem; width: 100%; padding: 0.78rem 0.9rem; border: 0; border-bottom: 1px solid var(--color-border); background: transparent; color: var(--color-text-primary); text-align: left; }
+.provider-upcoming-row:hover { background: var(--color-surface-secondary); }
+.provider-upcoming-date { width: 42px; height: 42px; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 11px; background: color-mix(in srgb, var(--brand-primary) 10%, var(--color-surface)); color: var(--brand-primary); }
+.provider-upcoming-date strong { font-size: 0.9rem; line-height: 1; }
+.provider-upcoming-date small { margin-top: 0.15rem; font-size: 0.62rem; font-weight: 750; text-transform: uppercase; }
+.provider-upcoming-copy { min-width: 0; }
+.provider-upcoming-copy strong, .provider-upcoming-copy small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.provider-upcoming-copy strong { font-size: 0.82rem; }
+.provider-upcoming-copy small { margin-top: 0.18rem; color: var(--color-text-secondary); font-size: 0.7rem; }
+.provider-upcoming-empty { min-height: 220px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.5rem; padding: 1rem; color: var(--color-text-secondary); text-align: center; }
+.provider-upcoming-empty i { color: var(--brand-primary); font-size: 1.4rem; }
+.provider-upcoming-empty p { margin: 0; font-size: 0.8rem; }
+.provider-upcoming-footer { min-height: 48px; display: flex; align-items: center; justify-content: center; gap: 0.4rem; color: var(--brand-primary); font-size: 0.8rem; font-weight: 700; text-decoration: none; }
+@media (max-width: 1100px) { .provider-schedule-layout { grid-template-columns: 1fr; } .provider-upcoming-card { order: -1; } }
+@media (max-width: 768px) { .provider-schedule-page { padding: 1rem 0.6rem 1.5rem; min-height: auto; } .provider-schedule-summary { grid-template-columns: 1fr; } .provider-calendar-card { padding: 0.55rem; } .provider-calendar-card .fc .fc-toolbar { flex-wrap: wrap; gap: 0.55rem; } .provider-calendar-card .fc .fc-toolbar-chunk:nth-child(2) { width: 100%; order: -1; text-align: center; } .provider-calendar-card .fc .fc-toolbar-title { font-size: 1rem; } }
