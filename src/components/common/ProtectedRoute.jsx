@@ -4,7 +4,7 @@ import { getUser, isAuthenticated } from '../../services/api';
 const HOME_BY_ROLE = {
   admin: '/admin/dashboard',
   tradesperson: '/dashboard',
-  client: '/feed',
+  client: '/client-dashboard',
 };
 
 export default function ProtectedRoute({ children, allowedRoles = [] }) {
