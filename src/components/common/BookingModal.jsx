@@ -144,7 +144,7 @@ export default function BookingModal({ provider, onClose }) {
     name: provider?.name || t('serviceProvider'),
     profession: provider?.profession || provider?.categories?.[0] || provider?.tags?.[0] || t('bookingDefaultProfession'),
     location: provider?.location || 'Toledo City',
-    description: provider?.aboutMe || provider?.bio || provider?.description || '',
+    description: provider?.aboutMe || '',
   };
 
   const initials = safeProvider.name
