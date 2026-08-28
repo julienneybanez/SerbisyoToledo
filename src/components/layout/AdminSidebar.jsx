@@ -16,7 +16,7 @@ const NAV_SECTIONS = [
     items: [
       { to: '/admin/users', label: 'Users', icon: 'bi-people' },
       { to: '/admin/verifications', label: 'Verification Requests', icon: 'bi-patch-check' },
-      { to: '/admin/credentials', label: 'Provider Credentials', icon: 'bi-person-badge' },
+      { to: '/admin/credentials', label: 'Provider Credential Reviews', icon: 'bi-person-badge' },
       { to: '/admin/reports', label: 'Reports', icon: 'bi-flag' },
     ],
   },
@@ -56,7 +56,7 @@ function AdminSidebar({ isOpen, onClose }) {
 
         if (credentialResponse.success) {
           setPendingCredentials((credentialResponse.data || []).filter(
-            (credential) => ['pending', 'unverified'].includes(credential.verificationStatus),
+            (credential) => credential.verificationStatus === 'pending',
           ).length);
         }
 
