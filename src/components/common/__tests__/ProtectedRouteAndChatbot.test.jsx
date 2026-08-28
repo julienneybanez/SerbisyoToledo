@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import ProtectedRoute from '../ProtectedRoute';
+import ProtectedRoute, { RoleAwarePublicRoute } from '../ProtectedRoute';
 import Chatbot from '../Chatbot';
 import { getUser, isAuthenticated, serviceProfileAPI } from '../../../services/api';
 
@@ -41,6 +41,30 @@ describe('ProtectedRoute', () => {
 
     expect(await screen.findByText('Login Page')).toBeInTheDocument();
     expect(sessionStorage.getItem('redirectAfterLogin')).toBe('/dashboard?view=week');
+  });
+
+  it('redirects an authenticated provider away from a guest-only public route', async () => {
+    isAuthenticated.mockReturnValue(true);
+    getUser.mockReturnValue({ userType: 'tradesperson' });
+
+    render(
+      <MemoryRouter initialEntries={['/about']}>
+        <Routes>
+          <Route
+            path="/about"
+            element={(
+              <RoleAwarePublicRoute>
+                <div>Public About</div>
+              </RoleAwarePublicRoute>
+            )}
+          />
+          <Route path="/dashboard" element={<div>Provider Dashboard</div>} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByText('Provider Dashboard')).toBeInTheDocument();
+    expect(screen.queryByText('Public About')).not.toBeInTheDocument();
   });
 
   it('redirects authenticated users with wrong role to role home', async () => {
