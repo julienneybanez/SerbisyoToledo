@@ -99,7 +99,7 @@ export default function Notifications() {
   }, [searchParams]);
 
   useEffect(() => {
-    if (!isAuthenticated() || !user) {
+    if (!isAuthenticated() || !userId) {
       navigate('/login', { replace: true });
       return;
     }
