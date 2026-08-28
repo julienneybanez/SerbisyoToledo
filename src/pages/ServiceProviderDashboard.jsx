@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { getUser, serviceProfileAPI, serviceRequestAPI } from '../services/api';
+import { authAPI, getUser, serviceProfileAPI, serviceRequestAPI } from '../services/api';
 import ProfileCompletionChecklist from '../components/common/ProfileCompletionChecklist';
 import ServiceProfileModal from '../components/common/ServiceProfileModal';
 import EditPortfolioModal from '../components/common/EditPortfolioModal';
@@ -71,7 +71,7 @@ function formatSchedule(request, compact = false) {
 
 export default function ServiceProviderDashboard() {
   const navigate = useNavigate();
-  const user = getUser();
+  const [user, setUser] = useState(() => getUser());
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showPortfolioModal, setShowPortfolioModal] = useState(false);
   const [showVerificationRequest, setShowVerificationRequest] = useState(false);
@@ -182,6 +182,34 @@ export default function ServiceProviderDashboard() {
     }
   };
 
+  const handleOpenServiceListing = async () => {
+    if (myProfile?.id) {
+      setShowProfileModal(true);
+      return;
+    }
+
+    let latestUser = user;
+
+    try {
+      const response = await authAPI.getMe();
+      if (response?.success && response.data?.user) {
+        latestUser = response.data.user;
+        setUser(latestUser);
+      }
+    } catch {
+      // The service-profile endpoint remains the authoritative verification gate.
+    }
+
+    if (!latestUser?.isVerified) {
+      setShowVerificationRequest(true);
+      return;
+    }
+
+    setShowProfileModal(true);
+  };
+
+  const serviceListingActionLabel = myProfile?.id ? 'Manage Service Listing' : 'Post Service Listing';
+
   const providerChecklistTasks = [
     {
       key: 'taxonomy-refresh',
@@ -199,8 +227,8 @@ export default function ServiceProviderDashboard() {
       description: 'Select at least one service category in your service listing.',
       completed: Boolean(myProfile?.categories?.length),
       actionType: 'button',
-      actionLabel: 'Manage Listing',
-      onAction: () => setShowProfileModal(true),
+      actionLabel: serviceListingActionLabel,
+      onAction: handleOpenServiceListing,
     },
     {
       key: 'service-description',
@@ -208,7 +236,7 @@ export default function ServiceProviderDashboard() {
       description: 'Tell clients about your background and services.',
       completed: Boolean((myProfile?.description || myPortfolio?.aboutMe || '').trim()),
       actionType: 'button',
-      actionLabel: 'Portfolio & About Me',
+      actionLabel: 'Public Profile',
       onAction: () => setShowPortfolioModal(true),
     },
     {
@@ -217,8 +245,8 @@ export default function ServiceProviderDashboard() {
       description: 'Set a clear base rate for your services.',
       completed: Number(myProfile?.startingPrice) > 0,
       actionType: 'button',
-      actionLabel: 'Manage Listing',
-      onAction: () => setShowProfileModal(true),
+      actionLabel: serviceListingActionLabel,
+      onAction: handleOpenServiceListing,
     },
     {
       key: 'location',
@@ -226,8 +254,8 @@ export default function ServiceProviderDashboard() {
       description: 'Set your service barangay/address.',
       completed: Boolean((myProfile?.location || '').trim()),
       actionType: 'button',
-      actionLabel: 'Manage Listing',
-      onAction: () => setShowProfileModal(true),
+      actionLabel: serviceListingActionLabel,
+      onAction: handleOpenServiceListing,
     },
     {
       key: 'availability',
@@ -423,9 +451,9 @@ export default function ServiceProviderDashboard() {
             <button
               className="btn-post-service"
               data-tour="provider-profile-setup"
-              onClick={() => setShowProfileModal(true)}
+              onClick={handleOpenServiceListing}
             >
-              Manage Service Listing
+              {serviceListingActionLabel}
             </button>
           </div>
         </section>
@@ -692,7 +720,7 @@ export default function ServiceProviderDashboard() {
             <p>
               {user?.isVerified
                 ? 'Your public profile can display your provider verification badge.'
-                : 'Submit a verification request to display a badge after admin approval.'}
+                : 'Verification is required before you can post and publish a Service Listing.'}
             </p>
           </div>
           {!user?.isVerified && (
