@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { DayPicker } from 'react-day-picker';
+import { DayButton, DayPicker } from 'react-day-picker';
 import 'react-day-picker/style.css';
 import {
   CalendarIcon,
@@ -13,6 +13,30 @@ import { isAuthenticated, serviceProfileAPI, serviceRequestAPI } from '../../ser
 import { BOOKING_TYPE, SPECIFIC_DATE_BOOKING_ENABLED } from '../../constants/domain';
 import { useLanguage } from '../../context/LanguageContext';
 import './BookingModal.css';
+
+const BookingRangeInteractionContext = createContext(null);
+
+function BookingRangeDayButton(props) {
+  const interaction = useContext(BookingRangeInteractionContext);
+
+  return (
+    <DayButton
+      {...props}
+      onPointerDown={(event) => {
+        props.onPointerDown?.(event);
+        interaction?.onPointerDown?.(props.day.date, props.modifiers, event);
+      }}
+      onPointerEnter={(event) => {
+        props.onPointerEnter?.(event);
+        interaction?.onPointerEnter?.(props.day.date, props.modifiers, event);
+      }}
+      onPointerUp={(event) => {
+        props.onPointerUp?.(event);
+        interaction?.onPointerUp?.(props.day.date, props.modifiers, event);
+      }}
+    />
+  );
+}
 
 const formatDateInput = (date) => {
   const year = date.getFullYear();
@@ -607,14 +631,19 @@ export default function BookingModal({ provider, onClose }) {
         </div>
       </div>
 
+      <BookingRangeInteractionContext.Provider
+        value={bookingType === BOOKING_TYPE.DATE_RANGE ? {
+          onPointerDown: handleRangePointerDown,
+          onPointerEnter: handleRangePointerEnter,
+          onPointerUp: handleRangePointerUp,
+        } : null}
+      >
       <DayPicker
         mode={dayPickerMode}
         selected={selectedForCalendar}
         onSelect={bookingType === BOOKING_TYPE.DATE_RANGE ? undefined : handleCalendarSelect}
         onDayClick={bookingType === BOOKING_TYPE.DATE_RANGE ? handleRangeDayClick : undefined}
-        onDayPointerDown={bookingType === BOOKING_TYPE.DATE_RANGE ? handleRangePointerDown : undefined}
-        onDayPointerEnter={bookingType === BOOKING_TYPE.DATE_RANGE ? handleRangePointerEnter : undefined}
-        onDayPointerUp={bookingType === BOOKING_TYPE.DATE_RANGE ? handleRangePointerUp : undefined}
+        components={{ DayButton: BookingRangeDayButton }}
         month={calendarMonth}
         onMonthChange={setCalendarMonth}
         startMonth={bookingWindowStart}
@@ -635,6 +664,7 @@ export default function BookingModal({ provider, onClose }) {
         fixedWeeks
         animate
       />
+      </BookingRangeInteractionContext.Provider>
 
       {dateLoading && (
         <div className="booking-calendar-loading" role="status">
