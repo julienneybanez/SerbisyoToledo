@@ -50,6 +50,32 @@ describe('Backend Security Hardening', () => {
     expect(res.status).toBe(403);
   });
 
+  it('2b) prevents an unverified provider from posting a service listing', async () => {
+    vi.spyOn(db, 'query').mockImplementation(async (sql) => {
+      if (sql === authUserSql) {
+        return [[{ id: 2, user_type: 'tradesperson', is_active: 1 }]];
+      }
+      if (String(sql).includes('SELECT user_type, is_verified FROM users WHERE id = ? LIMIT 1')) {
+        return [[{ user_type: 'tradesperson', is_verified: 0 }]];
+      }
+      if (String(sql).includes('SELECT id, banner_image_public_id FROM service_profiles WHERE user_id = ?')) {
+        return [[]];
+      }
+      return [[]];
+    });
+
+    const res = await request(app)
+      .post('/api/service-profiles/create')
+      .set('Authorization', `Bearer ${signToken(2)}`)
+      .field('barangayAddress', 'Poblacion')
+      .field('startingPrice', '500')
+      .field('serviceCategories', JSON.stringify(['Plumbing']))
+      .field('serviceTypes', JSON.stringify([]));
+
+    expect(res.status).toBe(403);
+    expect(res.body.code).toBe('PROVIDER_VERIFICATION_REQUIRED');
+  });
+
   it('3) prevents provider from deleting another provider portfolio image', async () => {
     vi.spyOn(db, 'query').mockImplementation(async (sql) => {
       if (sql === authUserSql) return [[{ id: 2, user_type: 'tradesperson', is_active: 1 }]];
