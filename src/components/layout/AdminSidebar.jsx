@@ -15,7 +15,8 @@ const NAV_SECTIONS = [
     title: 'Management',
     items: [
       { to: '/admin/users', label: 'Users', icon: 'bi-people' },
-      { to: '/admin/verifications', label: 'Verifications', icon: 'bi-patch-check' },
+      { to: '/admin/verifications', label: 'Verification Requests', icon: 'bi-patch-check' },
+      { to: '/admin/credentials', label: 'Provider Credentials', icon: 'bi-person-badge' },
       { to: '/admin/reports', label: 'Reports', icon: 'bi-flag' },
     ],
   },
@@ -31,6 +32,7 @@ function AdminSidebar({ isOpen, onClose }) {
   const location = useLocation();
   const navigate = useNavigate();
   const [pendingVerifications, setPendingVerifications] = useState(0);
+  const [pendingCredentials, setPendingCredentials] = useState(0);
   const [activeReports, setActiveReports] = useState(0);
 
   useEffect(() => {
@@ -38,8 +40,9 @@ function AdminSidebar({ isOpen, onClose }) {
 
     const fetchSidebarCounts = async () => {
       try {
-        const [verificationResponse, reportsResponse] = await Promise.all([
+        const [verificationResponse, credentialResponse, reportsResponse] = await Promise.all([
           adminAPI.getVerificationRequests(),
+          adminAPI.getProviderCredentials(),
           adminAPI.getReports(),
         ]);
 
@@ -51,6 +54,12 @@ function AdminSidebar({ isOpen, onClose }) {
           ).length);
         }
 
+        if (credentialResponse.success) {
+          setPendingCredentials((credentialResponse.data || []).filter(
+            (credential) => ['pending', 'unverified'].includes(credential.verificationStatus),
+          ).length);
+        }
+
         if (reportsResponse.success) {
           setActiveReports((reportsResponse.data || []).filter(
             (report) => ['pending', 'under_review'].includes(report.status),
@@ -59,6 +68,7 @@ function AdminSidebar({ isOpen, onClose }) {
       } catch {
         if (mounted) {
           setPendingVerifications(0);
+          setPendingCredentials(0);
           setActiveReports(0);
         }
       }
@@ -82,6 +92,12 @@ function AdminSidebar({ isOpen, onClose }) {
     if (path === '/admin/verifications') {
       return pendingVerifications > 0
         ? <span className="admin-nav-badge success">{pendingVerifications}</span>
+        : null;
+    }
+
+    if (path === '/admin/credentials') {
+      return pendingCredentials > 0
+        ? <span className="admin-nav-badge success">{pendingCredentials}</span>
         : null;
     }
 
