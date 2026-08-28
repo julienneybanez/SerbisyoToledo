@@ -1,26 +1,31 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import {
-  CSidebar,
-  CSidebarBrand,
-  CSidebarNav,
-  CNavItem,
-  CNavTitle,
-  CBadge
-} from '@coreui/react';
-import CIcon from '@coreui/icons-react';
-import {
-  cilSpeedometer,
-  cilPeople,
-  cilCheckCircle,
-  cilFile,
-  cilSettings,
-  cilAccountLogout
-} from '@coreui/icons';
 import { adminAPI, authAPI } from '../../services/api';
-import '@coreui/coreui/dist/css/coreui.min.css';
 import '../../styles/AdminSidebar.css';
 import logo from '../../assets/logo.png';
+
+const NAV_SECTIONS = [
+  {
+    title: 'Main Navigation',
+    items: [
+      { to: '/admin/dashboard', label: 'Dashboard', icon: 'bi-speedometer2' },
+    ],
+  },
+  {
+    title: 'Management',
+    items: [
+      { to: '/admin/users', label: 'Users', icon: 'bi-people' },
+      { to: '/admin/verifications', label: 'Verifications', icon: 'bi-patch-check' },
+      { to: '/admin/reports', label: 'Reports', icon: 'bi-flag' },
+    ],
+  },
+  {
+    title: 'System',
+    items: [
+      { to: '/admin/settings', label: 'System Status', icon: 'bi-activity' },
+    ],
+  },
+];
 
 function AdminSidebar({ isOpen, onClose }) {
   const location = useLocation();
@@ -28,42 +33,65 @@ function AdminSidebar({ isOpen, onClose }) {
   const [pendingVerifications, setPendingVerifications] = useState(0);
   const [activeReports, setActiveReports] = useState(0);
 
-  const isActive = (path) => location.pathname === path;
-
   useEffect(() => {
+    let mounted = true;
+
     const fetchSidebarCounts = async () => {
       try {
         const [verificationResponse, reportsResponse] = await Promise.all([
           adminAPI.getVerificationRequests(),
-          adminAPI.getReports()
+          adminAPI.getReports(),
         ]);
 
+        if (!mounted) return;
+
         if (verificationResponse.success) {
-          const pending = (verificationResponse.data || []).filter(
-            (request) => request.status === 'pending'
-          ).length;
-          setPendingVerifications(pending);
+          setPendingVerifications((verificationResponse.data || []).filter(
+            (request) => request.status === 'pending',
+          ).length);
         }
 
         if (reportsResponse.success) {
-          const active = (reportsResponse.data || []).filter(
-            (report) => ['pending', 'under_review'].includes(report.status)
-          ).length;
-          setActiveReports(active);
+          setActiveReports((reportsResponse.data || []).filter(
+            (report) => ['pending', 'under_review'].includes(report.status),
+          ).length);
         }
       } catch {
-        setPendingVerifications(0);
-        setActiveReports(0);
+        if (mounted) {
+          setPendingVerifications(0);
+          setActiveReports(0);
+        }
       }
     };
 
     fetchSidebarCounts();
+    return () => { mounted = false; };
   }, [location.pathname]);
+
+  const closeOnMobile = () => {
+    if (window.innerWidth < 992) onClose?.();
+  };
 
   const handleLogout = async () => {
     await authAPI.logout();
     window.dispatchEvent(new Event('authChange'));
     navigate('/login', { replace: true });
+  };
+
+  const badgeFor = (path) => {
+    if (path === '/admin/verifications') {
+      return pendingVerifications > 0
+        ? <span className="admin-nav-badge success">{pendingVerifications}</span>
+        : null;
+    }
+
+    if (path === '/admin/reports') {
+      return activeReports > 0
+        ? <span className="admin-nav-badge danger">{activeReports}</span>
+        : null;
+    }
+
+    return null;
   };
 
   return (
@@ -74,101 +102,52 @@ function AdminSidebar({ isOpen, onClose }) {
         aria-hidden="true"
       />
 
-      <CSidebar
+      <aside
         id="admin-sidebar"
-        className={`admin-sidebar-coreui ${isOpen ? 'show' : ''}`}
-        visible={true}
+        className={`admin-sidebar-coreui admin-sidebar-plain ${isOpen ? 'show' : ''}`}
         aria-label="Admin sidebar"
       >
-        <CSidebarBrand className="sidebar-brand-custom">
-          <div className="brand-logo-wrapper">
-            <img src={logo} alt="SerbisyoToledo" className="brand-logo-img" draggable="false" />
-          </div>
-          <button type="button" className="sidebar-close-btn d-lg-none" onClick={onClose} aria-label="Close sidebar">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <line x1="18" y1="6" x2="6" y2="18"></line>
-              <line x1="6" y1="6" x2="18" y2="18"></line>
-            </svg>
+        <div className="sidebar-brand-custom">
+          <NavLink to="/admin/dashboard" className="admin-sidebar-brand-link" onClick={closeOnMobile}>
+            <img src={logo} alt="" className="brand-logo-img" draggable="false" />
+            <span className="admin-sidebar-wordmark">
+              <span><strong>Serbisyo</strong><strong>Toledo</strong></span>
+              <small>Admin</small>
+            </span>
+          </NavLink>
+
+          <button type="button" className="sidebar-close-btn" onClick={onClose} aria-label="Close sidebar">
+            <i className="bi bi-x-lg" aria-hidden="true"></i>
           </button>
-        </CSidebarBrand>
+        </div>
 
-        <CSidebarNav>
-          <CNavTitle>Main Navigation</CNavTitle>
-
-          <CNavItem>
-            <NavLink
-              to="/admin/dashboard"
-              className={`nav-link ${isActive('/admin/dashboard') ? 'active' : ''}`}
-              onClick={() => window.innerWidth < 992 && onClose()}
-            >
-              <CIcon customClassName="nav-icon" icon={cilSpeedometer} />
-              Dashboard
-            </NavLink>
-          </CNavItem>
-
-          <CNavTitle>Management</CNavTitle>
-
-          <CNavItem>
-            <NavLink
-              to="/admin/users"
-              className={`nav-link ${isActive('/admin/users') ? 'active' : ''}`}
-              onClick={() => window.innerWidth < 992 && onClose()}
-            >
-              <CIcon customClassName="nav-icon" icon={cilPeople} />
-              Users
-            </NavLink>
-          </CNavItem>
-
-          <CNavItem>
-            <NavLink
-              to="/admin/verifications"
-              className={`nav-link ${isActive('/admin/verifications') ? 'active' : ''}`}
-              onClick={() => window.innerWidth < 992 && onClose()}
-            >
-              <CIcon customClassName="nav-icon" icon={cilCheckCircle} />
-              Verifications
-              <CBadge color="success" className="ms-auto">{pendingVerifications}</CBadge>
-            </NavLink>
-          </CNavItem>
-
-          <CNavItem>
-            <NavLink
-              to="/admin/reports"
-              className={`nav-link ${isActive('/admin/reports') ? 'active' : ''}`}
-              onClick={() => window.innerWidth < 992 && onClose()}
-            >
-              <CIcon customClassName="nav-icon" icon={cilFile} />
-              Reports
-              <CBadge color="danger" className="ms-auto">{activeReports}</CBadge>
-            </NavLink>
-          </CNavItem>
-
-          <CNavTitle>System</CNavTitle>
-
-          <CNavItem>
-            <NavLink
-              to="/admin/settings"
-              className={`nav-link ${isActive('/admin/settings') ? 'active' : ''}`}
-              onClick={() => window.innerWidth < 992 && onClose()}
-            >
-              <CIcon customClassName="nav-icon" icon={cilSettings} />
-              System Status
-            </NavLink>
-          </CNavItem>
+        <nav className="sidebar-nav">
+          {NAV_SECTIONS.map((section) => (
+            <div className="admin-nav-section" key={section.title}>
+              <div className="nav-title">{section.title}</div>
+              {section.items.map((item) => (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+                  onClick={closeOnMobile}
+                >
+                  <i className={`bi ${item.icon} nav-icon`} aria-hidden="true"></i>
+                  <span>{item.label}</span>
+                  {badgeFor(item.to)}
+                </NavLink>
+              ))}
+            </div>
+          ))}
 
           <div className="sidebar-footer-section">
-            <CNavItem>
-              <button
-                className="nav-link logout-btn"
-                onClick={handleLogout}
-              >
-                <CIcon customClassName="nav-icon" icon={cilAccountLogout} />
-                Logout
-              </button>
-            </CNavItem>
+            <button type="button" className="nav-link logout-btn" onClick={handleLogout}>
+              <i className="bi bi-box-arrow-right nav-icon" aria-hidden="true"></i>
+              <span>Logout</span>
+            </button>
           </div>
-        </CSidebarNav>
-      </CSidebar>
+        </nav>
+      </aside>
     </>
   );
 }
