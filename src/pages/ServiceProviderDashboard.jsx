@@ -232,7 +232,8 @@ export default function ServiceProviderDashboard() {
     },
     {
       key: 'service-description',
-      label: 'Add your service description or experience',
+      isApplicable: Boolean(myProfile?.id),
+      label: 'Complete your public profile',
       description: 'Tell clients about your background and services.',
       completed: Boolean((myProfile?.description || myPortfolio?.aboutMe || '').trim()),
       actionType: 'button',
@@ -259,6 +260,7 @@ export default function ServiceProviderDashboard() {
     },
     {
       key: 'availability',
+      isApplicable: Boolean(myProfile?.id),
       label: 'Set your availability',
       description: 'Choose when clients can request your services.',
       completed: Boolean(
@@ -271,6 +273,7 @@ export default function ServiceProviderDashboard() {
     },
     {
       key: 'portfolio',
+      isApplicable: Boolean(myProfile?.id),
       label: 'Upload portfolio work',
       description: 'Show previous work samples to build trust.',
       completed: Boolean(myPortfolio?.portfolio?.length),
@@ -281,7 +284,7 @@ export default function ServiceProviderDashboard() {
     {
       key: 'verification',
       label: 'Complete provider verification',
-      description: 'Submit your verification request to increase trust.',
+      description: 'Verification is required before you can post your first Service Listing.',
       completed: Boolean(user?.isVerified),
       actionType: 'button',
       actionLabel: 'Verification',
