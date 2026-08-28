@@ -27,11 +27,6 @@ function AdminNavbar({ onToggleSidebar, isSidebarOpen = false }) {
             <line x1="3" y1="18" x2="21" y2="18"></line>
           </svg>
         </button>
-        <div className="admin-brand">
-          <span className="brand-serbisyo">Serbisyo</span>
-          <span className="brand-toledo">Toledo</span>
-          <span className="brand-admin">Admin</span>
-        </div>
       </div>
 
       <div className="admin-navbar-right">
