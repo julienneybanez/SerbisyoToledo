@@ -7,6 +7,22 @@ const HOME_BY_ROLE = {
   client: '/client-dashboard',
 };
 
+export function RoleAwarePublicRoute({ children, allowedAuthenticatedRoles = [] }) {
+  const authenticated = isAuthenticated();
+  const user = getUser();
+
+  if (!authenticated || !user) {
+    return children;
+  }
+
+  if (allowedAuthenticatedRoles.includes(user.userType)) {
+    return children;
+  }
+
+  const fallback = HOME_BY_ROLE[user.userType] || '/';
+  return <Navigate to={fallback} replace />;
+}
+
 export default function ProtectedRoute({ children, allowedRoles = [] }) {
   const location = useLocation();
   const authenticated = isAuthenticated();
