@@ -212,6 +212,16 @@ export default function ServiceProviderDashboard() {
 
   const providerChecklistTasks = [
     {
+      key: 'verification',
+      label: 'Complete provider verification',
+      description: 'Verification is required before you can post your first Service Listing.',
+      completed: Boolean(user?.isVerified),
+      isApplicable: !myProfile?.id || !user?.isVerified,
+      actionType: 'button',
+      actionLabel: 'Verification',
+      onAction: () => setShowVerificationRequest(true),
+    },
+    {
       key: 'taxonomy-refresh',
       label: 'Review your service taxonomy',
       description: 'Your service listing has legacy or incomplete categories. Select updated categories and service types.',
@@ -223,6 +233,7 @@ export default function ServiceProviderDashboard() {
     },
     {
       key: 'service-category',
+      isApplicable: Boolean(myProfile?.id || user?.isVerified),
       label: 'Add your service category',
       description: 'Select at least one service category in your service listing.',
       completed: Boolean(myProfile?.categories?.length),
@@ -242,6 +253,7 @@ export default function ServiceProviderDashboard() {
     },
     {
       key: 'starting-price',
+      isApplicable: Boolean(myProfile?.id || user?.isVerified),
       label: 'Set your starting price',
       description: 'Set a clear base rate for your services.',
       completed: Number(myProfile?.startingPrice) > 0,
@@ -251,6 +263,7 @@ export default function ServiceProviderDashboard() {
     },
     {
       key: 'location',
+      isApplicable: Boolean(myProfile?.id || user?.isVerified),
       label: 'Add your location',
       description: 'Set your service barangay/address.',
       completed: Boolean((myProfile?.location || '').trim()),
@@ -280,15 +293,6 @@ export default function ServiceProviderDashboard() {
       actionType: 'button',
       actionLabel: 'Add Work',
       onAction: () => setShowPortfolioModal(true),
-    },
-    {
-      key: 'verification',
-      label: 'Complete provider verification',
-      description: 'Verification is required before you can post your first Service Listing.',
-      completed: Boolean(user?.isVerified),
-      actionType: 'button',
-      actionLabel: 'Verification',
-      onAction: () => setShowVerificationRequest(true),
     },
   ];
 
