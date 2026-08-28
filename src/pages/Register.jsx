@@ -89,15 +89,16 @@ const Register = () => {
       }
 
       const response = await authAPI.register(registrationData);
-      setSuccess(t('registrationSuccessRedirecting'));
+      setSuccess(response?.message || 'Account created. Please verify your email before logging in.');
 
       setTimeout(() => {
-        if (response?.data?.token) {
-          navigate(userType === 'tradesperson' ? '/dashboard' : '/feed');
-        } else {
-          navigate('/login');
-        }
-      }, 1500);
+        const params = new URLSearchParams({
+          verification: 'pending',
+          email: formData.email,
+          sent: response?.data?.verificationEmailSent ? '1' : '0',
+        });
+        navigate(`/login?${params.toString()}`, { replace: true });
+      }, 1200);
     } catch (err) {
       console.error('Registration error:', err);
       setError(err.message || t('registrationFailedTryAgain'));
