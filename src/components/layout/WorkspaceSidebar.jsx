@@ -1,5 +1,4 @@
 import { Link, NavLink } from 'react-router-dom';
-import { getUser } from '../../services/api';
 import logo from '../../assets/logo.png';
 
 const ROLE_ITEMS = {
@@ -17,16 +16,16 @@ const ROLE_ITEMS = {
   ],
 };
 
-function initials(name, fallback) {
-  if (!name) return fallback;
-  return name.split(' ').map((part) => part[0]).join('').slice(0, 2).toUpperCase();
-}
-
-export default function WorkspaceSidebar({ role, hasServiceProfile = false, publicProfileRoute = '/dashboard' }) {
-  const user = getUser();
+export default function WorkspaceSidebar({
+  role,
+  hasServiceProfile = false,
+  publicProfileRoute = '/dashboard',
+  onEditClientProfile,
+  onEditProviderProfile,
+  onManageServiceProfile,
+}) {
   const isProvider = role === 'tradesperson';
   const items = ROLE_ITEMS[role] || ROLE_ITEMS.client;
-  const name = user?.fullName || (isProvider ? 'Service Provider' : 'Client');
 
   return (
     <aside className="workspace-sidebar" aria-label={`${isProvider ? 'Service provider' : 'Client'} workspace navigation`}>
@@ -35,22 +34,10 @@ export default function WorkspaceSidebar({ role, hasServiceProfile = false, publ
         <span className="workspace-brand-wordmark"><strong>Serbisyo</strong><strong>Toledo</strong></span>
       </Link>
 
-      {isProvider ? (
-        <div className="workspace-role-card">
-          <i className="bi bi-person-workspace" aria-hidden="true"></i>
-          <strong>Service Provider</strong>
-        </div>
-      ) : (
-        <div className="workspace-account-card">
-          <span className="workspace-account-avatar" aria-hidden="true">
-            {user?.profileImage ? <img src={user.profileImage} alt="" draggable="false" /> : initials(name, 'CL')}
-          </span>
-          <span className="workspace-account-copy">
-            <strong title={name}>{name}</strong>
-            <small>Client</small>
-          </span>
-        </div>
-      )}
+      <div className="workspace-role-card">
+        <i className={`bi ${isProvider ? 'bi-person-workspace' : 'bi-person'}`} aria-hidden="true"></i>
+        <strong>{isProvider ? 'Service Provider' : 'Client'}</strong>
+      </div>
 
       <nav className="workspace-nav">
         {items.map((item) => (
@@ -70,8 +57,20 @@ export default function WorkspaceSidebar({ role, hasServiceProfile = false, publ
       <div className="workspace-sidebar-divider" />
 
       <nav className="workspace-nav workspace-nav-secondary">
+        {!isProvider && (
+          <button type="button" className="workspace-nav-link workspace-nav-action" onClick={onEditClientProfile}>
+            <i className="bi bi-pencil-square" aria-hidden="true"></i><span>Edit Profile</span>
+          </button>
+        )}
         {isProvider && (
           <>
+            <button type="button" className="workspace-nav-link workspace-nav-action" onClick={onManageServiceProfile}>
+              <i className={`bi ${hasServiceProfile ? 'bi-card-list' : 'bi-plus-circle'}`} aria-hidden="true"></i>
+              <span>{hasServiceProfile ? 'Edit Service Listing' : 'Post Service Listing'}</span>
+            </button>
+            <button type="button" className="workspace-nav-link workspace-nav-action" onClick={onEditProviderProfile}>
+              <i className="bi bi-person-lines-fill" aria-hidden="true"></i><span>Profile & About Me</span>
+            </button>
             <NavLink to="/provider-availability" className={({ isActive }) => `workspace-nav-link ${isActive ? 'active' : ''}`}>
               <i className="bi bi-calendar2-check" aria-hidden="true"></i><span>Availability</span>
             </NavLink>
