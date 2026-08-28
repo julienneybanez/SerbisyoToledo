@@ -1,11 +1,13 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { authAPI } from '../services/api';
+import { Link, useLocation } from 'react-router-dom';
+import { authAPI, getUser, isAuthenticated } from '../services/api';
 import { useLanguage } from '../context/LanguageContext';
 
 const ForgotPassword = () => {
   const { t } = useLanguage();
-  const [email, setEmail] = useState('');
+  const location = useLocation();
+  const fromSettings = Boolean(location.state?.fromSettings && isAuthenticated());
+  const [email, setEmail] = useState(() => (fromSettings ? (getUser()?.email || '') : ''));
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -19,7 +21,7 @@ const ForgotPassword = () => {
     try {
       const response = await authAPI.forgotPassword({ email });
       setSuccess(response.message || t('forgotPasswordSuccess'));
-      setEmail('');
+      if (!fromSettings) setEmail('');
     } catch (err) {
       setError(err.message || t('forgotPasswordFailed'));
     } finally {
@@ -32,7 +34,7 @@ const ForgotPassword = () => {
       <div className="auth-card auth-compact-card">
         <div className="auth-heading">
           <p className="auth-eyebrow auth-brand-wordmark">Serbisyo<span className="brand-toledo">Toledo</span></p>
-          <h1 id="forgot-password-title">{t('forgotPasswordQuestion')}</h1>
+          <h1 id="forgot-password-title">{fromSettings ? t('changePassword') : t('forgotPasswordQuestion')}</h1>
           <p>{t('forgotPasswordSubtitle')}</p>
         </div>
 
@@ -60,6 +62,7 @@ const ForgotPassword = () => {
               placeholder={t('registeredEmailPlaceholder')}
               autoComplete="email"
               required
+              readOnly={fromSettings}
             />
           </div>
 
@@ -79,10 +82,12 @@ const ForgotPassword = () => {
           </button>
         </form>
 
-        <p className="auth-switch-copy">
-          {t('rememberedPassword')}{' '}
-          <Link to="/login">{t('backToLogin')}</Link>
-        </p>
+        {!fromSettings && (
+          <p className="auth-switch-copy">
+            {t('rememberedPassword')}{' '}
+            <Link to="/login">{t('backToLogin')}</Link>
+          </p>
+        )}
       </div>
     </section>
   );
