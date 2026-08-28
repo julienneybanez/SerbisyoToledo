@@ -17,7 +17,7 @@ import lazyWithRetry from './utils/lazyWithRetry';
 
 // Admin imports
 import AdminLayout from './components/layout/AdminLayout';
-import { clearAuthSession, getUser, isAuthenticated, serviceProfileAPI } from './services/api';
+import { authAPI, clearAuthSession, getUser, isAuthenticated, serviceProfileAPI } from './services/api';
 
 const Home = lazyWithRetry(() => import('./pages/Home'), 'Home');
 const About = lazyWithRetry(() => import('./pages/About'), 'About');
@@ -97,6 +97,23 @@ function App() {
     mediaQuery.addListener(handleViewportChange);
     return () => mediaQuery.removeListener(handleViewportChange);
   }, []);
+
+  useEffect(() => {
+    const handleProfileCreated = () => {
+      if (currentUser?.userType !== 'tradesperson') return;
+
+      serviceProfileAPI.getMyProfile()
+        .then((response) => {
+          const hasProfile = Boolean(response?.success && response?.data?.id);
+          setHasServiceProfile(hasProfile);
+          setProviderPublicProfileRoute(hasProfile ? `/provider/${response.data.id}` : '/dashboard');
+        })
+        .catch(() => {});
+    };
+
+    window.addEventListener('profileCreated', handleProfileCreated);
+    return () => window.removeEventListener('profileCreated', handleProfileCreated);
+  }, [currentUser]);
 
   useEffect(() => {
     if (!currentUser || currentUser.userType !== 'tradesperson') {
@@ -196,6 +213,34 @@ function App() {
     setMobileProfileMenuOpen(false);
   };
 
+  const handleManageServiceProfile = useCallback(async () => {
+    setMobileProfileMenuOpen(false);
+
+    if (hasServiceProfile) {
+      setShowMobileServiceProfile(true);
+      return;
+    }
+
+    let latestUser = currentUser;
+
+    try {
+      const response = await authAPI.getMe();
+      if (response?.success && response.data?.user) {
+        latestUser = response.data.user;
+        setCurrentUser(latestUser);
+      }
+    } catch {
+      // The backend creation endpoint still enforces verification.
+    }
+
+    if (!latestUser?.isVerified) {
+      setShowMobileVerificationRequest(true);
+      return;
+    }
+
+    setShowMobileServiceProfile(true);
+  }, [currentUser, hasServiceProfile]);
+
   const handleInitialLoadReady = useCallback(() => {
     setHasCompletedInitialLoad(true);
   }, []);
@@ -227,10 +272,7 @@ function App() {
             setMobileProfileMenuOpen(false);
             setShowMobileEditPortfolio(true);
           }}
-          onManageServiceProfile={() => {
-            setMobileProfileMenuOpen(false);
-            setShowMobileServiceProfile(true);
-          }}
+          onManageServiceProfile={handleManageServiceProfile}
           onRequestVerification={() => {
             setMobileProfileMenuOpen(false);
             setShowMobileVerificationRequest(true);
@@ -255,7 +297,7 @@ function App() {
             publicProfileRoute={providerPublicProfileRoute}
             onEditClientProfile={() => setShowMobileEditProfile(true)}
             onEditProviderProfile={() => setShowMobileEditPortfolio(true)}
-            onManageServiceProfile={() => setShowMobileServiceProfile(true)}
+            onManageServiceProfile={handleManageServiceProfile}
           >
             <Outlet />
           </WorkspaceLayout>
