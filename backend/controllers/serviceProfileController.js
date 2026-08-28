@@ -280,6 +280,39 @@ exports.createOrUpdateProfile = async (req, res) => {
       });
     }
 
+    const [providerRows] = await db.query(
+      'SELECT user_type, is_verified FROM users WHERE id = ? LIMIT 1',
+      [userId]
+    );
+
+    if (providerRows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Service provider account not found'
+      });
+    }
+
+    if (providerRows[0].user_type !== 'tradesperson') {
+      return res.status(403).json({
+        success: false,
+        code: 'SERVICE_PROVIDER_REQUIRED',
+        message: 'Only service providers can manage a service listing'
+      });
+    }
+
+    const [existingProfile] = await db.query(
+      'SELECT id, banner_image_public_id FROM service_profiles WHERE user_id = ?',
+      [userId]
+    );
+
+    if (existingProfile.length === 0 && !providerRows[0].is_verified) {
+      return res.status(403).json({
+        success: false,
+        code: 'PROVIDER_VERIFICATION_REQUIRED',
+        message: 'Your service provider account must be verified before you can post a Service Listing.'
+      });
+    }
+
     const { barangayAddress, startingPrice, description } = req.body;
     const pricingUnit = String(req.body.pricingUnit || 'per_day').trim().toLowerCase();
     let serviceCategories = req.body.serviceCategories;
@@ -378,12 +411,6 @@ exports.createOrUpdateProfile = async (req, res) => {
         bannerImagePublicId = uploadResult.public_id;
       }
     }
-
-    // Check if profile already exists for this user
-    const [existingProfile] = await db.query(
-      'SELECT id, banner_image_public_id FROM service_profiles WHERE user_id = ?',
-      [userId]
-    );
 
     if (existingProfile.length > 0) {
       // Update existing profile
@@ -541,6 +568,7 @@ exports.getAllProfiles = async (req, res) => {
       LEFT JOIN provider_availability_settings pas ON pas.service_profile_id = sp.id
       ${REVIEW_STATS_JOIN}
       WHERE sp.is_published = TRUE
+        AND u.is_verified = TRUE
     `;
 
     const params = [];
@@ -712,6 +740,7 @@ exports.getRecommendedProviders = async (req, res) => {
       LEFT JOIN provider_availability_settings pas ON pas.service_profile_id = sp.id
       ${REVIEW_STATS_JOIN}
       WHERE sp.is_published = TRUE
+        AND u.is_verified = TRUE
         AND COALESCE(pas.availability_status, 'available') <> 'unavailable'
     `;
 
@@ -864,7 +893,7 @@ exports.getProfileById = async (req, res) => {
       JOIN users u ON sp.user_id = u.id
       LEFT JOIN provider_availability_settings pas ON pas.service_profile_id = sp.id
       ${REVIEW_STATS_JOIN}
-      WHERE sp.id = ? AND sp.is_published = TRUE`,
+      WHERE sp.id = ? AND sp.is_published = TRUE AND u.is_verified = TRUE`,
       [id]
     );
 
@@ -1163,6 +1192,21 @@ exports.togglePublish = async (req, res) => {
     }
 
     const { isPublished } = req.body;
+
+    if (isPublished) {
+      const [providerRows] = await db.query(
+        'SELECT is_verified FROM users WHERE id = ? LIMIT 1',
+        [userId]
+      );
+
+      if (providerRows.length === 0 || !providerRows[0].is_verified) {
+        return res.status(403).json({
+          success: false,
+          code: 'PROVIDER_VERIFICATION_REQUIRED',
+          message: 'Your service provider account must be verified before you can publish a Service Listing.'
+        });
+      }
+    }
 
     const [result] = await db.query(
       'UPDATE service_profiles SET is_published = ? WHERE user_id = ?',
