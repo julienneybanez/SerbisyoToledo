@@ -13,6 +13,9 @@
   .workspace-brand-wordmark strong:first-child { color: var(--brand-primary); }
   .workspace-brand-wordmark strong:last-child { color: var(--brand-accent); }
   .workspace-account-card { display: flex; align-items: center; gap: 0.7rem; padding: 0.8rem; margin: 0.15rem 0 0.8rem; border: 1px solid var(--color-border); border-radius: var(--radius-card); background: var(--color-surface-secondary); }
+  .workspace-role-card { min-height: 48px; display: flex; align-items: center; gap: 0.65rem; padding: 0.7rem 0.8rem; margin: 0.15rem 0 0.8rem; border: 1px solid var(--color-border); border-radius: var(--radius-card); background: var(--color-surface-secondary); color: var(--color-text-primary); }
+  .workspace-role-card i { width: 20px; color: var(--brand-primary); text-align: center; }
+  .workspace-role-card strong { font-size: 0.86rem; font-weight: 750; }
   .workspace-account-avatar, .workspace-topbar-avatar { display: inline-flex; align-items: center; justify-content: center; overflow: hidden; border-radius: 12px; background: color-mix(in srgb, var(--brand-primary) 12%, var(--color-surface)); color: var(--brand-primary); font-weight: 800; }
   .workspace-account-avatar { width: 38px; height: 38px; flex: 0 0 38px; }
   .workspace-account-avatar img, .workspace-topbar-avatar img { width: 100%; height: 100%; object-fit: cover; }
@@ -28,7 +31,7 @@
   .workspace-sidebar-divider { height: 1px; margin: 0.65rem 0; background: var(--color-border); }
   .workspace-nav-secondary .workspace-nav-link { font-size: 0.88rem; }
   .workspace-stage { min-width: 0; }
-  .workspace-topbar { display: flex; position: sticky; top: 0; z-index: 15; min-height: 74px; align-items: center; justify-content: space-between; gap: 1rem; padding: 0.75rem 1.5rem; border-bottom: 1px solid var(--color-border); background: color-mix(in srgb, var(--color-surface) 94%, transparent); backdrop-filter: blur(14px); }
+  .workspace-topbar { display: flex; position: sticky; top: 0; z-index: 15; min-height: 74px; align-items: center; justify-content: flex-end; gap: 1rem; padding: 0.75rem 1.5rem; border-bottom: 1px solid var(--color-border); background: color-mix(in srgb, var(--color-surface) 94%, transparent); backdrop-filter: blur(14px); }
   .workspace-topbar-title-group { min-width: 0; display: flex; flex-direction: column; gap: 0.05rem; }
   .workspace-topbar-kicker { color: var(--color-text-muted); font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
   .workspace-topbar h1 { margin: 0; color: var(--color-text-primary); font-size: 1.18rem; font-weight: 750; }
@@ -52,3 +55,12 @@
 }
 
 [data-theme='dark'] .workspace-sidebar, [data-theme='dark'] .workspace-topbar { background: var(--color-surface); }
+
+
+/* Authenticated provider profiles use the same workspace canvas as other signed-in pages. */
+@media (min-width: 769px) {
+  .workspace-content > .provider-section {
+    width: min(1120px, calc(100% - 2rem));
+    margin-inline: auto;
+  }
+}
