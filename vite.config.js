@@ -10,7 +10,6 @@ export default defineConfig({
         manualChunks: {
           'vendor-react': ['react', 'react-dom', 'react-router-dom'],
           'vendor-bootstrap': ['bootstrap'],
-          'vendor-coreui': ['@coreui/react', '@coreui/coreui', '@coreui/icons', '@coreui/icons-react'],
           'vendor-calendar': ['@fullcalendar/react', '@fullcalendar/bootstrap5', 'react-day-picker', 'temporal-polyfill'],
         },
       },
