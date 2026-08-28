@@ -94,8 +94,10 @@ export default function Notifications() {
 
   const focusRequestId = useMemo(() => {
     const raw = searchParams.get('request');
+    if (!raw) return null;
+
     const asNumber = Number(raw);
-    return Number.isFinite(asNumber) ? asNumber : null;
+    return Number.isFinite(asNumber) && asNumber > 0 ? asNumber : null;
   }, [searchParams]);
 
   useEffect(() => {
@@ -186,10 +188,9 @@ export default function Notifications() {
     <div className="notifications-page-shell">
       <div className="notifications-page-container">
         <div className="notifications-page-header">
-          <h1 className="notifications-page-title">{t('notifications')}</h1>
           <p className="notifications-page-subtitle">{t('notificationsPageSubtitle')}</p>
 
-          {focusRequestId && (
+          {focusRequestId != null && (
             <div className="notifications-request-focus" role="status">
               <span>{t('notificationsFocusedRequest')}</span>
               <button

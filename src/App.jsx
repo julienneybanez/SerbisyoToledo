@@ -11,7 +11,7 @@ import EditProfileModal from './components/common/EditProfileModal';
 import EditPortfolioModal from './components/common/EditPortfolioModal';
 import ServiceProfileModal from './components/common/ServiceProfileModal';
 import VerificationRequestModal from './components/common/VerificationRequestModal';
-import ProtectedRoute from './components/common/ProtectedRoute';
+import ProtectedRoute, { RoleAwarePublicRoute } from './components/common/ProtectedRoute';
 import InitialLoadingScreen from './components/common/InitialLoadingScreen';
 import lazyWithRetry from './utils/lazyWithRetry';
 
@@ -253,6 +253,9 @@ function App() {
             role={currentUser?.userType}
             hasServiceProfile={hasServiceProfile}
             publicProfileRoute={providerPublicProfileRoute}
+            onEditClientProfile={() => setShowMobileEditProfile(true)}
+            onEditProviderProfile={() => setShowMobileEditPortfolio(true)}
+            onManageServiceProfile={() => setShowMobileServiceProfile(true)}
           >
             <Outlet />
           </WorkspaceLayout>
@@ -334,15 +337,16 @@ function App() {
             <Route index element={<AdminDashboard />} />
             <Route path="dashboard" element={<AdminDashboard />} />
             <Route path="users" element={<AdminUsers />} />
-            <Route path="verifications" element={<AdminVerifications />} />
+            <Route path="verifications" element={<AdminVerifications mode="verifications" />} />
+            <Route path="credentials" element={<AdminVerifications mode="credentials" />} />
             <Route path="reports" element={<AdminReports />} />
             <Route path="settings" element={<AdminSettings />} />
           </Route>
 
           {/* Authentication Routes - Focused layout without public navigation/footer */}
           <Route element={<AuthLayout />}>
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
+            <Route path="/login" element={<RoleAwarePublicRoute><Login /></RoleAwarePublicRoute>} />
+            <Route path="/register" element={<RoleAwarePublicRoute><Register /></RoleAwarePublicRoute>} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password/:token" element={<ResetPassword />} />
             <Route path="/verify-email" element={<VerifyEmail />} />
@@ -350,13 +354,13 @@ function App() {
 
           {/* Public and authenticated user routes - Existing application shell preserved */}
           <Route element={publicShell}>
-            <Route path="/" element={<Home />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/feed" element={<Feed />} />
+            <Route path="/" element={<RoleAwarePublicRoute><Home /></RoleAwarePublicRoute>} />
+            <Route path="/about" element={<RoleAwarePublicRoute><About /></RoleAwarePublicRoute>} />
+            <Route path="/feed" element={<RoleAwarePublicRoute allowedAuthenticatedRoles={['client']}><Feed /></RoleAwarePublicRoute>} />
             <Route
               path="/notifications"
               element={(
-                <ProtectedRoute allowedRoles={['client', 'tradesperson', 'admin']}>
+                <ProtectedRoute allowedRoles={['client', 'tradesperson']}>
                   <Notifications />
                 </ProtectedRoute>
               )}
@@ -377,7 +381,14 @@ function App() {
                 </ProtectedRoute>
               )}
             />
-            <Route path="/provider/:id" element={<ServiceProviderPortfolio />} />
+            <Route
+              path="/provider/:id"
+              element={(
+                <RoleAwarePublicRoute allowedAuthenticatedRoles={['client', 'tradesperson']}>
+                  <ServiceProviderPortfolio />
+                </RoleAwarePublicRoute>
+              )}
+            />
             <Route
               path="/requests"
               element={(

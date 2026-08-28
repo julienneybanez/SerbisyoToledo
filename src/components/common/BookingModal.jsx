@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { DayPicker } from 'react-day-picker';
+import { DayButton, DayPicker } from 'react-day-picker';
 import 'react-day-picker/style.css';
 import {
   CalendarIcon,
@@ -13,6 +13,30 @@ import { isAuthenticated, serviceProfileAPI, serviceRequestAPI } from '../../ser
 import { BOOKING_TYPE, SPECIFIC_DATE_BOOKING_ENABLED } from '../../constants/domain';
 import { useLanguage } from '../../context/LanguageContext';
 import './BookingModal.css';
+
+const BookingRangeInteractionContext = createContext(null);
+
+function BookingRangeDayButton(props) {
+  const interaction = useContext(BookingRangeInteractionContext);
+
+  return (
+    <DayButton
+      {...props}
+      onPointerDown={(event) => {
+        props.onPointerDown?.(event);
+        interaction?.onPointerDown?.(props.day.date, props.modifiers, event);
+      }}
+      onPointerEnter={(event) => {
+        props.onPointerEnter?.(event);
+        interaction?.onPointerEnter?.(props.day.date, props.modifiers, event);
+      }}
+      onPointerUp={(event) => {
+        props.onPointerUp?.(event);
+        interaction?.onPointerUp?.(props.day.date, props.modifiers, event);
+      }}
+    />
+  );
+}
 
 const formatDateInput = (date) => {
   const year = date.getFullYear();
@@ -62,6 +86,11 @@ export default function BookingModal({ provider, onClose }) {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [selectedDates, setSelectedDates] = useState([]);
+  const [rangeAnchor, setRangeAnchor] = useState('');
+  const dragAnchorRef = useRef('');
+  const isRangeDraggingRef = useRef(false);
+  const rangeDragMovedRef = useRef(false);
+  const suppressRangeClickRef = useRef(false);
   const [calendarMonth, setCalendarMonth] = useState(today);
   const [estimatedDurationMinutes, setEstimatedDurationMinutes] = useState(120);
 
@@ -115,7 +144,7 @@ export default function BookingModal({ provider, onClose }) {
     name: provider?.name || t('serviceProvider'),
     profession: provider?.profession || provider?.categories?.[0] || provider?.tags?.[0] || t('bookingDefaultProfession'),
     location: provider?.location || 'Toledo City',
-    description: provider?.bio || provider?.description || t('bookingDefaultDescription'),
+    description: provider?.aboutMe || '',
   };
 
   const initials = safeProvider.name
@@ -182,6 +211,25 @@ export default function BookingModal({ provider, onClose }) {
       body.style.paddingRight = previousPaddingRight;
     };
   }, [onClose]);
+
+  useEffect(() => {
+    const finishPointerInteraction = () => {
+      if (isRangeDraggingRef.current && rangeDragMovedRef.current) {
+        suppressRangeClickRef.current = true;
+        setRangeAnchor('');
+      }
+      isRangeDraggingRef.current = false;
+      dragAnchorRef.current = '';
+      rangeDragMovedRef.current = false;
+    };
+
+    window.addEventListener('pointerup', finishPointerInteraction);
+    window.addEventListener('pointercancel', finishPointerInteraction);
+    return () => {
+      window.removeEventListener('pointerup', finishPointerInteraction);
+      window.removeEventListener('pointercancel', finishPointerInteraction);
+    };
+  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -315,6 +363,123 @@ export default function BookingModal({ provider, onClose }) {
     return () => { mounted = false; };
   }, [bookingType, endDate, estimatedDurationMinutes, isRangeContinuous, provider?.id, resolvedBookingDates, startDate, t]);
 
+  const applyContinuousRange = (anchorKey, targetKey) => {
+    if (!anchorKey || !targetKey) return false;
+
+    const fromKey = anchorKey <= targetKey ? anchorKey : targetKey;
+    const toKey = anchorKey <= targetKey ? targetKey : anchorKey;
+    const candidateDates = getDateRange(fromKey, toKey);
+
+    if (
+      candidateDates.length === 0
+      || candidateDates.some((dateKey) => !availableDateSet.has(dateKey))
+    ) {
+      setSubmitError(t('bookingRangeUnavailable'));
+      return false;
+    }
+
+    setStartDate(fromKey);
+    setEndDate(toKey);
+    setSelectedDates(candidateDates);
+    setSubmitError('');
+    return true;
+  };
+
+  const handleRangeDayClick = (date, modifiers = {}) => {
+    if (bookingType !== BOOKING_TYPE.DATE_RANGE || modifiers.disabled) return;
+
+    if (suppressRangeClickRef.current) {
+      suppressRangeClickRef.current = false;
+      return;
+    }
+
+    const key = formatDateInput(date);
+    setSubmitError('');
+
+    if (!rangeAnchor) {
+      setRangeAnchor(key);
+      setStartDate(key);
+      setEndDate(key);
+      setSelectedDates([key]);
+      return;
+    }
+
+    if (applyContinuousRange(rangeAnchor, key)) {
+      setRangeAnchor('');
+    }
+  };
+
+  const handleRangePointerDown = (date, modifiers = {}, event) => {
+    if (
+      bookingType !== BOOKING_TYPE.DATE_RANGE
+      || modifiers.disabled
+      || (typeof event?.button === 'number' && event.button !== 0)
+    ) {
+      return;
+    }
+
+    dragAnchorRef.current = formatDateInput(date);
+    isRangeDraggingRef.current = true;
+    rangeDragMovedRef.current = false;
+  };
+
+  const handleRangePointerEnter = (date, modifiers = {}) => {
+    if (
+      bookingType !== BOOKING_TYPE.DATE_RANGE
+      || !isRangeDraggingRef.current
+      || modifiers.disabled
+      || !dragAnchorRef.current
+    ) {
+      return;
+    }
+
+    const targetKey = formatDateInput(date);
+    if (targetKey === dragAnchorRef.current) return;
+
+    rangeDragMovedRef.current = true;
+    applyContinuousRange(dragAnchorRef.current, targetKey);
+  };
+
+  const handleRangePointerUp = (date, modifiers = {}) => {
+    if (bookingType !== BOOKING_TYPE.DATE_RANGE || !isRangeDraggingRef.current) return;
+
+    if (!modifiers.disabled && rangeDragMovedRef.current && dragAnchorRef.current) {
+      applyContinuousRange(dragAnchorRef.current, formatDateInput(date));
+      suppressRangeClickRef.current = true;
+      setRangeAnchor('');
+    }
+
+    isRangeDraggingRef.current = false;
+    dragAnchorRef.current = '';
+    rangeDragMovedRef.current = false;
+  };
+
+  const handleBookingTypeChange = (nextType) => {
+    const fallbackDate = availableDates.includes(startDate)
+      ? startDate
+      : (availableDates[0] || '');
+
+    setBookingType(nextType);
+    setSubmitError('');
+    setSelectedTime('');
+    setRangeAnchor('');
+    isRangeDraggingRef.current = false;
+    dragAnchorRef.current = '';
+    rangeDragMovedRef.current = false;
+    suppressRangeClickRef.current = false;
+
+    if (nextType === BOOKING_TYPE.ONE_DAY) {
+      setStartDate(fallbackDate);
+      setEndDate(fallbackDate);
+      setSelectedDates(fallbackDate ? [fallbackDate] : []);
+      return;
+    }
+
+    setStartDate('');
+    setEndDate('');
+    setSelectedDates([]);
+  };
+
   const handleCalendarSelect = (value) => {
     setSubmitError('');
 
@@ -357,15 +522,30 @@ export default function BookingModal({ provider, onClose }) {
 
   const dayPickerMode = bookingType === BOOKING_TYPE.ONE_DAY
     ? 'single'
-    : bookingType === BOOKING_TYPE.DATE_RANGE
-      ? 'range'
-      : 'multiple';
+    : bookingType === BOOKING_TYPE.SPECIFIC_DATES
+      ? 'multiple'
+      : undefined;
 
   const selectedForCalendar = bookingType === BOOKING_TYPE.ONE_DAY
     ? parseDateInput(startDate)
-    : bookingType === BOOKING_TYPE.DATE_RANGE
-      ? (startDate ? { from: parseDateInput(startDate), to: parseDateInput(endDate || startDate) } : undefined)
-      : selectedDates.map(parseDateInput).filter(Boolean);
+    : bookingType === BOOKING_TYPE.SPECIFIC_DATES
+      ? selectedDates.map(parseDateInput).filter(Boolean)
+      : undefined;
+
+  const rangeModifiers = bookingType === BOOKING_TYPE.DATE_RANGE
+    ? {
+        selected: (date) => {
+          const key = formatDateInput(date);
+          return Boolean(startDate && endDate && key >= startDate && key <= endDate);
+        },
+        range_start: (date) => Boolean(startDate && formatDateInput(date) === startDate),
+        range_end: (date) => Boolean(endDate && formatDateInput(date) === endDate),
+        range_middle: (date) => {
+          const key = formatDateInput(date);
+          return Boolean(startDate && endDate && key > startDate && key < endDate);
+        },
+      }
+    : {};
 
   const canProceed = () => {
     if (step === 1) {
@@ -451,20 +631,40 @@ export default function BookingModal({ provider, onClose }) {
         </div>
       </div>
 
+      <BookingRangeInteractionContext.Provider
+        value={bookingType === BOOKING_TYPE.DATE_RANGE ? {
+          onPointerDown: handleRangePointerDown,
+          onPointerEnter: handleRangePointerEnter,
+          onPointerUp: handleRangePointerUp,
+        } : null}
+      >
       <DayPicker
         mode={dayPickerMode}
         selected={selectedForCalendar}
-        onSelect={handleCalendarSelect}
+        onSelect={bookingType === BOOKING_TYPE.DATE_RANGE ? undefined : handleCalendarSelect}
+        onDayClick={bookingType === BOOKING_TYPE.DATE_RANGE ? handleRangeDayClick : undefined}
+        components={{ DayButton: BookingRangeDayButton }}
         month={calendarMonth}
         onMonthChange={setCalendarMonth}
         startMonth={bookingWindowStart}
         endMonth={bookingWindowEnd}
         disabled={(date) => !availableDateSet.has(formatDateInput(date))}
-        modifiers={{ available: (date) => availableDateSet.has(formatDateInput(date)) }}
+        modifiers={{
+          available: (date) => availableDateSet.has(formatDateInput(date)),
+          ...rangeModifiers,
+        }}
+        modifiersClassNames={{
+          available: 'rdp-available',
+          selected: 'rdp-selected',
+          range_start: 'rdp-range_start',
+          range_middle: 'rdp-range_middle',
+          range_end: 'rdp-range_end',
+        }}
         showOutsideDays
         fixedWeeks
         animate
       />
+      </BookingRangeInteractionContext.Provider>
 
       {dateLoading && (
         <div className="booking-calendar-loading" role="status">
@@ -491,7 +691,7 @@ export default function BookingModal({ provider, onClose }) {
                     name="bookingType"
                     value="one_day"
                     checked={bookingType === BOOKING_TYPE.ONE_DAY}
-                    onChange={() => setBookingType(BOOKING_TYPE.ONE_DAY)}
+                    onChange={() => handleBookingTypeChange(BOOKING_TYPE.ONE_DAY)}
                   />
                   <span>{t('bookingOneDay')}</span>
                 </label>
@@ -501,7 +701,7 @@ export default function BookingModal({ provider, onClose }) {
                     name="bookingType"
                     value={BOOKING_TYPE.DATE_RANGE}
                     checked={bookingType === BOOKING_TYPE.DATE_RANGE}
-                    onChange={() => setBookingType(BOOKING_TYPE.DATE_RANGE)}
+                    onChange={() => handleBookingTypeChange(BOOKING_TYPE.DATE_RANGE)}
                   />
                   <span>{t('bookingDateRange')}</span>
                 </label>
@@ -512,7 +712,7 @@ export default function BookingModal({ provider, onClose }) {
                       name="bookingType"
                       value={BOOKING_TYPE.SPECIFIC_DATES}
                       checked={bookingType === BOOKING_TYPE.SPECIFIC_DATES}
-                      onChange={() => setBookingType(BOOKING_TYPE.SPECIFIC_DATES)}
+                      onChange={() => handleBookingTypeChange(BOOKING_TYPE.SPECIFIC_DATES)}
                     />
                     <span>{t('bookingSpecificDates')}</span>
                   </label>
@@ -663,7 +863,9 @@ export default function BookingModal({ provider, onClose }) {
             <p className="booking-provider-profession">{safeProvider.profession}</p>
             <p className="booking-provider-name">{safeProvider.name}</p>
             <p className="booking-provider-location"><LocationIcon /> {safeProvider.location}</p>
-            <p className="booking-provider-bio">{safeProvider.description}</p>
+            {safeProvider.description && (
+              <p className="booking-provider-bio">{safeProvider.description}</p>
+            )}
           </div>
 
           <div className="booking-stepper">

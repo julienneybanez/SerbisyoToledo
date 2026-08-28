@@ -840,3 +840,12 @@
 .auth-page-compact .auth-heading > h1 + p {
   display: none;
 }
+
+
+/* Contextual return button used when password reset is opened from authenticated settings. */
+button.auth-layout-back {
+  border: 0;
+  background: transparent;
+  font-family: inherit;
+  cursor: pointer;
+}

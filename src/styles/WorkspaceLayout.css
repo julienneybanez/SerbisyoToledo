@@ -64,3 +64,13 @@
     margin-inline: auto;
   }
 }
+
+
+@media (min-width: 769px) {
+  .workspace-nav-action {
+    width: 100%;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+}

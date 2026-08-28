@@ -4,7 +4,7 @@ import { useLanguage } from '../../context/LanguageContext';
 import { PageHeader } from '../../components/ui';
 import '../../styles/AdminPages.css';
 
-function AdminVerifications() {
+function AdminVerifications({ mode = 'verifications' }) {
   const { t } = useLanguage();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('pending');
@@ -63,9 +63,13 @@ function AdminVerifications() {
   }, [t]);
 
   useEffect(() => {
+    if (mode === 'credentials') {
+      fetchProviderCredentials();
+      return;
+    }
+
     fetchVerifications();
-    fetchProviderCredentials();
-  }, [fetchProviderCredentials, fetchVerifications]);
+  }, [fetchProviderCredentials, fetchVerifications, mode]);
 
   useEffect(() => {
     if (!documentPreview && !rejectDialog.open && !credentialRejectDialog.open) {
@@ -297,6 +301,8 @@ function AdminVerifications() {
 
   return (
     <div className="admin-page">
+      {mode === 'verifications' && (
+        <>
       <PageHeader
         title={t('verificationRequests')}
         subtitle={t('verificationRequestsSubtitle')}
@@ -443,10 +449,18 @@ function AdminVerifications() {
         </div>
       )}
 
-      <div className="admin-page-header" style={{ marginTop: '2rem' }}>
-        <h2 className="admin-page-title" style={{ fontSize: '1.4rem' }}>{t('adminProviderCredentialReviews')}</h2>
-        <p className="admin-page-subtitle">{t('adminReviewSubmittedCredentials')}</p>
-      </div>
+        </>
+      )}
+
+      {mode === 'credentials' && (
+        <>
+      <PageHeader
+        title={t('adminProviderCredentialReviews')}
+        subtitle={t('adminReviewSubmittedCredentials')}
+        className="admin-page-header"
+        titleClassName="admin-page-title"
+        subtitleClassName="admin-page-subtitle"
+      />
 
       <div className="mini-stats">
         <div className="mini-stat">
@@ -566,6 +580,9 @@ function AdminVerifications() {
           <h3>{t('adminNoProviderCredentialsFound')}</h3>
           <p>{t('adminTryAdjustingSearchFilter')}</p>
         </div>
+      )}
+
+        </>
       )}
 
       {documentPreview && (

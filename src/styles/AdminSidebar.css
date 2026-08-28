@@ -241,3 +241,97 @@
     transition: none;
   }
 }
+
+
+/* Light admin shell: keep contrast equivalent to the authenticated client/provider workspace. */
+[data-theme='light'] .admin-sidebar {
+  background: var(--color-surface);
+  border-right: 1px solid var(--color-border);
+}
+
+[data-theme='light'] .admin-sidebar .sidebar-brand-custom,
+[data-theme='light'] .admin-sidebar .sidebar-footer-section {
+  border-color: var(--color-border);
+}
+
+[data-theme='light'] .admin-sidebar-wordmark small,
+[data-theme='light'] .admin-sidebar .nav-title {
+  color: var(--color-text-muted);
+}
+
+[data-theme='light'] .admin-sidebar .nav-link {
+  color: var(--color-text-secondary);
+}
+
+[data-theme='light'] .admin-sidebar .nav-link:hover {
+  border-color: var(--color-border);
+  background: var(--color-surface-secondary);
+  color: var(--color-text-primary);
+}
+
+[data-theme='light'] .admin-sidebar .nav-link.active {
+  border-color: transparent;
+  background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-primary-dark) 100%);
+  color: #fff;
+}
+
+[data-theme='light'] .admin-sidebar .logout-btn {
+  color: var(--color-danger);
+}
+
+[data-theme='light'] .admin-sidebar .logout-btn:hover {
+  background: color-mix(in srgb, var(--color-danger) 8%, var(--color-surface));
+  color: var(--color-danger);
+}
+
+[data-theme='dark'] .admin-sidebar {
+  background:
+    radial-gradient(circle at top, rgba(93, 169, 221, 0.2), transparent 46%),
+    linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+}
+
+[data-theme='dark'] .admin-sidebar .nav-link {
+  color: rgba(226,232,240,0.9);
+}
+
+
+/* Keep the admin navigation rail dark in light mode; only the workspace canvas changes theme. */
+[data-theme='light'] .admin-sidebar {
+  background:
+    radial-gradient(circle at top, rgba(93, 169, 221, 0.2), transparent 46%),
+    linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+  border-right: 0;
+}
+
+[data-theme='light'] .admin-sidebar .sidebar-brand-custom,
+[data-theme='light'] .admin-sidebar .sidebar-footer-section {
+  border-color: rgba(255,255,255,0.1);
+}
+
+[data-theme='light'] .admin-sidebar-wordmark small,
+[data-theme='light'] .admin-sidebar .nav-title {
+  color: rgba(148,163,184,0.95);
+}
+
+[data-theme='light'] .admin-sidebar .nav-link {
+  color: rgba(226,232,240,0.92) !important;
+}
+
+[data-theme='light'] .admin-sidebar .nav-link:hover {
+  border-color: rgba(148,163,184,0.2);
+  background: rgba(255,255,255,0.08);
+  color: #fff !important;
+}
+
+[data-theme='light'] .admin-sidebar .nav-link.active {
+  color: #fff !important;
+}
+
+[data-theme='light'] .admin-sidebar .logout-btn {
+  color: #fca5a5 !important;
+}
+
+[data-theme='light'] .admin-sidebar .logout-btn:hover {
+  background: rgba(239,68,68,0.1);
+  color: #fecaca !important;
+}

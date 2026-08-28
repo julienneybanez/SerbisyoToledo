@@ -292,8 +292,13 @@ function ClientSettings() {
                   <div className="settings-card-main">
                     <p className="settings-card-title">{t('needChangePassword')}</p>
                   </div>
-                  <AppButton className="btn-change-password" onClick={() => navigate('/forgot-password')}>
-                    {t('openPasswordReset')}
+                  <AppButton
+                    className="btn-change-password"
+                    onClick={() => navigate('/forgot-password', {
+                      state: { fromSettings: true, returnTo: '/client-settings?section=security' },
+                    })}
+                  >
+                    {t('changePassword')}
                   </AppButton>
                 </div>
               </div>

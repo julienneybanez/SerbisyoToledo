@@ -178,8 +178,10 @@ describe('Settings pages', () => {
       });
     });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Open Password Reset' }));
-    expect(mockNavigate).toHaveBeenCalledWith('/forgot-password');
+    fireEvent.click(screen.getByRole('button', { name: 'Change Password' }));
+    expect(mockNavigate).toHaveBeenCalledWith('/forgot-password', {
+      state: { fromSettings: true, returnTo: '/provider-settings' },
+    });
 
     fireEvent.change(screen.getByDisplayValue('Provider User'), {
       target: { value: 'Provider User Updated' },
