@@ -1235,3 +1235,23 @@
     --rdp-day-height: 40px;
   }
 }
+
+
+/* Range selection supports click-click and pointer dragging without selecting browser text. */
+.booking-day-picker .rdp-day_button {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.booking-day-picker .rdp-range_start .rdp-day_button,
+.booking-day-picker .rdp-range_end .rdp-day_button {
+  border-color: var(--brand-primary);
+  background: var(--brand-primary);
+  color: #fff;
+}
+
+.booking-day-picker .rdp-range_middle .rdp-day_button {
+  border-color: transparent;
+  background: color-mix(in srgb, var(--brand-primary) 13%, var(--color-surface));
+  color: var(--color-text-primary);
+}
