@@ -36,15 +36,22 @@ export default function WorkspaceSidebar({ role, hasServiceProfile = false, publ
         <span className="workspace-brand-wordmark"><strong>Serbisyo</strong><strong>Toledo</strong></span>
       </Link>
 
-      <div className="workspace-account-card">
-        <span className="workspace-account-avatar" aria-hidden="true">
-          {user?.profileImage ? <img src={user.profileImage} alt="" draggable="false" /> : initials(name, isProvider ? 'SP' : 'CL')}
-        </span>
-        <span className="workspace-account-copy">
-          <strong title={name}>{name}</strong>
-          <small>{isProvider ? 'Service Provider' : 'Client'}</small>
-        </span>
-      </div>
+      {isProvider ? (
+        <div className="workspace-role-card">
+          <i className="bi bi-person-workspace" aria-hidden="true"></i>
+          <strong>Service Provider</strong>
+        </div>
+      ) : (
+        <div className="workspace-account-card">
+          <span className="workspace-account-avatar" aria-hidden="true">
+            {user?.profileImage ? <img src={user.profileImage} alt="" draggable="false" /> : initials(name, 'CL')}
+          </span>
+          <span className="workspace-account-copy">
+            <strong title={name}>{name}</strong>
+            <small>Client</small>
+          </span>
+        </div>
+      )}
 
       <nav className="workspace-nav">
         {items.map((item) => (
@@ -70,7 +77,7 @@ export default function WorkspaceSidebar({ role, hasServiceProfile = false, publ
               <i className="bi bi-calendar2-check" aria-hidden="true"></i><span>Availability</span>
             </NavLink>
             <NavLink to="/provider-credentials" className={({ isActive }) => `workspace-nav-link ${isActive ? 'active' : ''}`}>
-              <i className="bi bi-person-badge" aria-hidden="true"></i><span>Profile & Credentials</span>
+              <i className="bi bi-translate" aria-hidden="true"></i><span>Language & Credentials</span>
             </NavLink>
           </>
         )}
@@ -78,8 +85,11 @@ export default function WorkspaceSidebar({ role, hasServiceProfile = false, publ
           <i className="bi bi-gear" aria-hidden="true"></i><span>Settings</span>
         </NavLink>
         {isProvider && hasServiceProfile && publicProfileRoute !== '/dashboard' && (
-          <Link to={publicProfileRoute} className="workspace-nav-link">
-            <i className="bi bi-eye" aria-hidden="true"></i><span>View Public Profile</span>
+          <Link
+            to={`${publicProfileRoute}${publicProfileRoute.includes('?') ? '&' : '?'}previewMode=desktop`}
+            className="workspace-nav-link"
+          >
+            <i className="bi bi-eye" aria-hidden="true"></i><span>Preview Provider Page</span>
           </Link>
         )}
       </nav>
