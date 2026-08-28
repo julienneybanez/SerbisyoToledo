@@ -1,4 +1,4 @@
-import { Link, NavLink, useLocation } from 'react-router-dom';
+import { Link, NavLink } from 'react-router-dom';
 import { getUser } from '../../services/api';
 import logo from '../../assets/logo.png';
 
@@ -23,7 +23,6 @@ function initials(name, fallback) {
 }
 
 export default function WorkspaceSidebar({ role, hasServiceProfile = false, publicProfileRoute = '/dashboard' }) {
-  const location = useLocation();
   const user = getUser();
   const isProvider = role === 'tradesperson';
   const items = ROLE_ITEMS[role] || ROLE_ITEMS.client;
