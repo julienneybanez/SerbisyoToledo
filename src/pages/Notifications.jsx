@@ -86,6 +86,7 @@ export default function Notifications() {
   const [searchParams] = useSearchParams();
   const { t } = useLanguage();
   const user = getUser();
+  const userId = user?.id || user?.userId || null;
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -138,7 +139,7 @@ export default function Notifications() {
     return () => {
       isMounted = false;
     };
-  }, [navigate, t, user]);
+  }, [navigate, userId]);
 
   const handleMarkAllRead = async () => {
     try {
