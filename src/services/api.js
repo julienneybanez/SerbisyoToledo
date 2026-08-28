@@ -131,14 +131,14 @@ export const authAPI = {
     
     const data = await handleResponse(response);
     
-    // Store token and user data
-    if (data.success && data.data) {
-      if (data.data.token) {
-        setToken(data.data.token);
-      }
+    // Public registration requires email verification. Only create an
+    // authenticated local session if the backend actually issued a token.
+    if (data.success && data.data?.token) {
+      setToken(data.data.token);
       setUser(data.data.user);
-      // Notify components of auth change
       window.dispatchEvent(new Event('authChange'));
+    } else if (data.success) {
+      removeToken();
     }
     
     return data;
