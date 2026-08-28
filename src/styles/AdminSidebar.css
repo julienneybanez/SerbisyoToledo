@@ -293,3 +293,45 @@
 [data-theme='dark'] .admin-sidebar .nav-link {
   color: rgba(226,232,240,0.9);
 }
+
+
+/* Keep the admin navigation rail dark in light mode; only the workspace canvas changes theme. */
+[data-theme='light'] .admin-sidebar {
+  background:
+    radial-gradient(circle at top, rgba(93, 169, 221, 0.2), transparent 46%),
+    linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+  border-right: 0;
+}
+
+[data-theme='light'] .admin-sidebar .sidebar-brand-custom,
+[data-theme='light'] .admin-sidebar .sidebar-footer-section {
+  border-color: rgba(255,255,255,0.1);
+}
+
+[data-theme='light'] .admin-sidebar-wordmark small,
+[data-theme='light'] .admin-sidebar .nav-title {
+  color: rgba(148,163,184,0.95);
+}
+
+[data-theme='light'] .admin-sidebar .nav-link {
+  color: rgba(226,232,240,0.92) !important;
+}
+
+[data-theme='light'] .admin-sidebar .nav-link:hover {
+  border-color: rgba(148,163,184,0.2);
+  background: rgba(255,255,255,0.08);
+  color: #fff !important;
+}
+
+[data-theme='light'] .admin-sidebar .nav-link.active {
+  color: #fff !important;
+}
+
+[data-theme='light'] .admin-sidebar .logout-btn {
+  color: #fca5a5 !important;
+}
+
+[data-theme='light'] .admin-sidebar .logout-btn:hover {
+  background: rgba(239,68,68,0.1);
+  color: #fecaca !important;
+}
