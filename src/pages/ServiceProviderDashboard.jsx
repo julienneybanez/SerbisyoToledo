@@ -31,16 +31,6 @@ const PROVIDER_TIPS = [
   },
 ];
 
-function getInitials(name) {
-  if (!name) return 'SP';
-  return name
-    .split(' ')
-    .map((part) => part[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase();
-}
-
 function formatServiceLabel(request) {
   const label = String(
     request?.service_display_label || request?.service_type_label || 'Service Request'
