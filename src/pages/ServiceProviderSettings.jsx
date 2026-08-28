@@ -543,8 +543,14 @@ function ServiceProviderSettings() {
               <div className="settings-section-divider"></div>
 
               <h3 className="settings-subsection-title">{t('providerPasswordSecurityTitle')}</h3>
-              <button className="btn-change-password" type="button" onClick={() => navigate('/forgot-password')}>
-                {t('openPasswordReset')}
+              <button
+                className="btn-change-password"
+                type="button"
+                onClick={() => navigate('/forgot-password', {
+                  state: { fromSettings: true, returnTo: '/provider-settings' },
+                })}
+              >
+                {t('changePassword')}
               </button>
               <small className="settings-help">{t('providerPasswordSecurityHelp')}</small>
 
