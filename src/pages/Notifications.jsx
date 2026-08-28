@@ -139,7 +139,7 @@ export default function Notifications() {
     return () => {
       isMounted = false;
     };
-  }, [navigate, userId]);
+  }, [navigate, userId, t]);
 
   const handleMarkAllRead = async () => {
     try {
