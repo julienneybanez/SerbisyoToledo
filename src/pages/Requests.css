@@ -1063,3 +1063,135 @@
     transition: none;
   }
 }
+
+
+/* Compact workspace refinement */
+.requests-container {
+  padding: 1.25rem 0 1.75rem;
+}
+
+.requests-wrapper {
+  max-width: 1080px;
+  padding: 0 1.1rem;
+}
+
+.requests-header {
+  margin-bottom: 1rem;
+}
+
+.requests-header h1 {
+  margin-bottom: 0;
+  font-size: 1.55rem;
+}
+
+.requests-filters {
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.requests-container .filter-btn {
+  min-height: 38px;
+  padding: 0.45rem 0.85rem;
+  font-size: 0.84rem;
+}
+
+.requests-grid {
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 0.9rem;
+}
+
+.request-card-header {
+  padding: 0.9rem 1rem;
+}
+
+.requests-container .request-title {
+  font-size: 1rem;
+}
+
+.requests-container .request-status-badge {
+  padding: 0.28rem 0.6rem;
+  font-size: 0.72rem;
+}
+
+.request-card-body {
+  padding: 0.85rem 1rem;
+  gap: 0.65rem;
+}
+
+.request-counterparty {
+  margin-bottom: 0.3rem;
+  font-size: 0.84rem;
+}
+
+.request-details {
+  font-size: 0.83rem;
+  line-height: 1.45;
+}
+
+.request-meta {
+  gap: 0.35rem 0.7rem;
+}
+
+.meta-row {
+  font-size: 0.8rem;
+}
+
+.request-discussion-section {
+  padding: 0.7rem 1rem;
+}
+
+.request-card-actions {
+  gap: 0.5rem;
+  padding: 0.7rem 1rem;
+}
+
+.btn-action,
+.btn-view-details,
+.btn-review,
+.btn-request-discussion,
+.btn-accept-discussion {
+  min-height: 40px;
+  padding: 0.52rem 0.75rem;
+  font-size: 0.82rem;
+}
+
+.btn-action {
+  flex: 1 1 135px;
+}
+
+.request-decline-reason {
+  margin: 0 1rem 0.75rem;
+  font-size: 0.82rem;
+}
+
+@media (max-width: 767px) {
+  .requests-container {
+    padding: 0.8rem 0 1.2rem;
+  }
+
+  .requests-wrapper {
+    padding: 0 0.7rem;
+  }
+
+  .requests-container .filter-btn {
+    min-height: 38px;
+  }
+
+  .request-card-actions {
+    flex-direction: column;
+    gap: 0.45rem;
+    padding: 0.65rem 0.85rem;
+  }
+
+  .btn-action,
+  .btn-view-details,
+  .btn-review,
+  .btn-request-discussion,
+  .btn-accept-discussion {
+    flex: 0 0 auto;
+    width: 100%;
+    min-height: 42px;
+    padding: 0.55rem 0.7rem;
+    font-size: 0.82rem;
+  }
+}

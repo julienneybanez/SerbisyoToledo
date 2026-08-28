@@ -240,3 +240,15 @@
     display: none;
   }
 }
+
+
+/* Match the authenticated workspace topbar: navigation identity lives in the sidebar. */
+@media (min-width: 992px) {
+  .admin-navbar {
+    justify-content: flex-end;
+  }
+
+  .admin-navbar-left {
+    display: none;
+  }
+}

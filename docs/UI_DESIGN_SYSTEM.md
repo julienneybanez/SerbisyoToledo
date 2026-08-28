@@ -8,7 +8,6 @@ This guide defines the UI rules for new frontend work and gradual refactors.
 - **Bootstrap** remains the layout, grid, form, and utility foundation.
 - **SerbisyoToledo shared UI components** are the preferred layer for repeated product UI.
 - **Bootstrap Icons** are the default icon system for public, client, provider, and mobile UI.
-- **CoreUI + CoreUI Icons** are limited to existing admin-specific layout/navigation where they are already useful.
 - Do not add another UI framework or icon library without a specific need.
 
 ## Design tokens
@@ -122,7 +121,7 @@ Animations should clarify hierarchy or state changes, not delay navigation or in
 
 1. Preserve routes, API calls, state behavior, and authorization logic during UI-only work.
 2. Prefer shared tokens/components over new one-off CSS.
-3. Keep CoreUI contained to admin-specific uses.
-4. Use Bootstrap Icons for normal UI.
-5. Do not introduce Tailwind, MUI, shadcn/ui, or another UI framework into the current capstone version.
+3. Use Bootstrap Icons across public, client, provider, and admin UI.
+4. Keep admin styling within the same SerbisyoToledo token system instead of introducing a separate UI framework.
+5. Do not introduce Tailwind, MUI, shadcn/ui, CoreUI, or another UI framework into the current capstone version.
 6. Migrate incrementally and test each page in desktop/mobile and light/dark modes.

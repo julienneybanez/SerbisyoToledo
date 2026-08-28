@@ -58,12 +58,12 @@ describe('ProtectedRoute', () => {
               </ProtectedRoute>
             )}
           />
-          <Route path="/feed" element={<div>Feed Home</div>} />
+          <Route path="/client-dashboard" element={<div>Client Dashboard</div>} />
         </Routes>
       </MemoryRouter>,
     );
 
-    expect(await screen.findByText('Feed Home')).toBeInTheDocument();
+    expect(await screen.findByText('Client Dashboard')).toBeInTheDocument();
   });
 });
 

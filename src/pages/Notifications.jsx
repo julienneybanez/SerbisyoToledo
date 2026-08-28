@@ -86,6 +86,7 @@ export default function Notifications() {
   const [searchParams] = useSearchParams();
   const { t } = useLanguage();
   const user = getUser();
+  const userType = user?.userType || null;
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -98,7 +99,7 @@ export default function Notifications() {
   }, [searchParams]);
 
   useEffect(() => {
-    if (!isAuthenticated() || !user) {
+    if (!isAuthenticated() || !userType) {
       navigate('/login', { replace: true });
       return;
     }
@@ -138,7 +139,7 @@ export default function Notifications() {
     return () => {
       isMounted = false;
     };
-  }, [navigate, t, user]);
+  }, [navigate, userType, t]);
 
   const handleMarkAllRead = async () => {
     try {

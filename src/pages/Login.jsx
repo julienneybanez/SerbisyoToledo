@@ -5,6 +5,47 @@ import { useLanguage } from '../context/LanguageContext';
 import loginServiceImage from '../assets/man-installs-heating-system-house-checks-pipes-with-wrench.jpg';
 import logo from '../assets/logo.png';
 
+const DEFAULT_ROUTE_BY_ROLE = {
+  admin: '/admin/dashboard',
+  tradesperson: '/dashboard',
+  client: '/client-dashboard',
+};
+
+const isRoleSafeRedirect = (userType, redirectPath) => {
+  if (!redirectPath || !redirectPath.startsWith('/')) return false;
+
+  const pathname = redirectPath.split('?')[0];
+  const isProviderProfile = /^\/provider\/[^/]+\/?$/.test(pathname);
+
+  if (userType === 'admin') {
+    return pathname === '/admin' || pathname.startsWith('/admin/');
+  }
+
+  if (userType === 'tradesperson') {
+    return [
+      '/dashboard',
+      '/requests',
+      '/notifications',
+      '/provider-settings',
+      '/provider-schedule',
+      '/provider-availability',
+      '/provider-credentials',
+    ].includes(pathname) || isProviderProfile;
+  }
+
+  if (userType === 'client') {
+    return [
+      '/client-dashboard',
+      '/feed',
+      '/requests',
+      '/notifications',
+      '/client-settings',
+    ].includes(pathname) || isProviderProfile;
+  }
+
+  return false;
+};
+
 const Login = () => {
   const navigate = useNavigate();
   const { t, language } = useLanguage();
@@ -36,21 +77,16 @@ const Login = () => {
         password: formData.password,
       });
 
+      const userType = response.data.user.userType;
       const redirectPath = sessionStorage.getItem('redirectAfterLogin');
-      if (redirectPath) {
-        sessionStorage.removeItem('redirectAfterLogin');
-        navigate(redirectPath);
+      sessionStorage.removeItem('redirectAfterLogin');
+
+      if (isRoleSafeRedirect(userType, redirectPath)) {
+        navigate(redirectPath, { replace: true });
         return;
       }
 
-      const userType = response.data.user.userType;
-      if (userType === 'admin') {
-        navigate('/admin/dashboard');
-      } else if (userType === 'tradesperson') {
-        navigate('/dashboard');
-      } else {
-        navigate('/client-dashboard');
-      }
+      navigate(DEFAULT_ROUTE_BY_ROLE[userType] || '/', { replace: true });
     } catch (err) {
       console.error('Login error:', err);
       setError(err.message || t('loginFailedCheckCredentials'));

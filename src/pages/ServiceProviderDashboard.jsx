@@ -31,16 +31,6 @@ const PROVIDER_TIPS = [
   },
 ];
 
-function getInitials(name) {
-  if (!name) return 'SP';
-  return name
-    .split(' ')
-    .map((part) => part[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase();
-}
-
 function formatServiceLabel(request) {
   const label = String(
     request?.service_display_label || request?.service_type_label || 'Service Request'
@@ -413,7 +403,6 @@ export default function ServiceProviderDashboard() {
   );
 
   const primaryService = myProfile?.categories?.[0] || 'Local Services';
-  const providerLocation = myProfile?.location || 'Toledo City';
   const providerName = user?.fullName || 'Service Provider';
 
   return (
@@ -421,20 +410,10 @@ export default function ServiceProviderDashboard() {
       <div className="dashboard-wrapper">
         <section className="welcome-section">
           <div className="provider-welcome-identity">
-            <div className="provider-welcome-avatar" aria-hidden={!user?.profileImage}>
-              {user?.profileImage ? (
-                <img src={user.profileImage} alt={`${providerName} profile`} draggable="false" />
-              ) : (
-                getInitials(providerName)
-              )}
-            </div>
-
             <div className="welcome-content">
               <h1>Good day, <span className="user-name">{providerName}</span></h1>
-              <p>Manage your requests, jobs, and service listing.</p>
-              <div className="provider-context-row" aria-label="Provider profile summary">
+              <div className="provider-context-row" aria-label="Primary service">
                 <span><i className="bi bi-tools" aria-hidden="true"></i>{primaryService}</span>
-                <span><i className="bi bi-geo-alt" aria-hidden="true"></i>{providerLocation}</span>
               </div>
             </div>
           </div>
