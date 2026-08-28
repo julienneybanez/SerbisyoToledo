@@ -475,7 +475,7 @@
   min-width: 0;
 }
 
-.job-schedule span {
+.job-schedule > div > span {
   display: block;
   color: var(--color-text-muted);
   font-size: 0.72rem;
@@ -1054,5 +1054,31 @@
   .dashboard-schedule-row .job-status {
     grid-column: 2;
     justify-self: start;
+  }
+}
+
+
+/* Workspace alignment refinements */
+.job-schedule .job-schedule-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  line-height: 1;
+}
+
+@media (max-width: 480px) {
+  .job-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+
+  .job-btn {
+    width: 100%;
+    min-height: 42px;
+    padding: 0.55rem 0.75rem;
+    flex: none;
+    font-size: 0.8rem;
   }
 }
