@@ -4,26 +4,6 @@ import logo from '../../assets/logo.png';
 import { useTheme } from '../../context/ThemeContext';
 import { useLanguage } from '../../context/LanguageContext';
 
-const TITLES = [
-  { test: (path) => path === '/', key: 'home' },
-  { test: (path) => path.startsWith('/client-dashboard'), key: 'dashboardShort' },
-  { test: (path) => path.startsWith('/feed'), key: 'browseServices' },
-  { test: (path) => path.startsWith('/provider/'), key: 'providerProfile' },
-  { test: (path) => path.startsWith('/requests'), key: 'requests' },
-  { test: (path) => path.startsWith('/notifications'), key: 'notifications' },
-  { test: (path) => path.startsWith('/dashboard'), key: 'myDashboard' },
-  { test: (path) => path.startsWith('/provider-schedule'), key: 'schedule' },
-  { test: (path) => path.startsWith('/provider-availability'), key: 'availability' },
-  { test: (path) => path.startsWith('/provider-credentials'), key: 'providerLanguagesCredentials' },
-  { test: (path) => path.startsWith('/provider-settings'), key: 'providerSettings' },
-  { test: (path) => path.startsWith('/client-settings'), key: 'settings' },
-  { test: (path) => path.startsWith('/admin/dashboard'), key: 'adminDashboard' },
-  { test: (path) => path.startsWith('/admin/users'), key: 'manageUsers' },
-  { test: (path) => path.startsWith('/admin/verifications'), key: 'verifications' },
-  { test: (path) => path.startsWith('/admin/reports'), key: 'reports' },
-  { test: (path) => path.startsWith('/admin/settings'), key: 'adminSettings' },
-];
-
 function getInitials(name) {
   if (!name) return 'U';
   return name
@@ -32,15 +12,6 @@ function getInitials(name) {
     .join('')
     .slice(0, 2)
     .toUpperCase();
-}
-
-function getTitle(pathname, role, t) {
-  if (pathname.startsWith('/requests') && role === 'client') {
-    return t('myBookings');
-  }
-
-  const match = TITLES.find((item) => item.test(pathname));
-  return match ? t(match.key) : 'SerbisyoToledo';
 }
 
 export default function MobileTopBar({
@@ -62,7 +33,6 @@ export default function MobileTopBar({
   const menuRef = useRef(null);
   const { isDark, toggleTheme } = useTheme();
   const { language, setLanguage, t } = useLanguage();
-  const title = getTitle(location.pathname, role, t);
   const isLoggedIn = Boolean(user);
   const notificationsRoute = !isLoggedIn
     ? '/login'
@@ -125,12 +95,7 @@ export default function MobileTopBar({
             <img src={logo} alt="" className="mobile-topbar-logo non-draggable-image" draggable="false" />
           </span>
           <div>
-            <p className="mobile-topbar-title">
-              {role === 'admin' && location.pathname.startsWith('/admin/settings')
-                ? adminSystemStatusLabel
-                : title}
-            </p>
-            <p className="mobile-topbar-subtitle mobile-brand-wordmark">
+            <p className="mobile-topbar-title mobile-brand-wordmark">
               Serbisyo<span>Toledo</span>
             </p>
           </div>
