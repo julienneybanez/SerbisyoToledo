@@ -1,10 +1,10 @@
 const request = require('supertest');
 const bcrypt = require('bcryptjs');
 
-const loadAppWithVerificationEnabled = async () => {
+const loadAppWithMandatoryVerification = async () => {
   vi.resetModules();
   process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-jwt-secret';
-  process.env.EMAIL_VERIFICATION_ENABLED = 'true';
+  process.env.EMAIL_VERIFICATION_ENABLED = 'false';
 
   const db = require('../config/database');
   const app = require('../server');
@@ -39,7 +39,7 @@ describe('Auth verification policy', () => {
   });
 
   it('allows verified admin login', async () => {
-    const { db, app } = await loadAppWithVerificationEnabled();
+    const { db, app } = await loadAppWithMandatoryVerification();
     const admin = await buildUser({
       id: 2,
       email: 'serbisyotoledo@gmail.com',
@@ -65,7 +65,7 @@ describe('Auth verification policy', () => {
   });
 
   it('blocks verified-state disclosure for wrong password on unverified client', async () => {
-    const { db, app } = await loadAppWithVerificationEnabled();
+    const { db, app } = await loadAppWithMandatoryVerification();
     const user = await buildUser({
       email: 'client.unverified@example.com',
       user_type: 'client',
@@ -86,8 +86,8 @@ describe('Auth verification policy', () => {
     expect(res.body.code).toBeUndefined();
   });
 
-  it('blocks unverified client after correct password', async () => {
-    const { db, app } = await loadAppWithVerificationEnabled();
+  it('blocks unverified client after correct password even when the legacy verification flag is false', async () => {
+    const { db, app } = await loadAppWithMandatoryVerification();
     const user = await buildUser({
       email: 'client.pending@example.com',
       user_type: 'client',
@@ -108,7 +108,7 @@ describe('Auth verification policy', () => {
   });
 
   it('blocks unverified provider after correct password', async () => {
-    const { db, app } = await loadAppWithVerificationEnabled();
+    const { db, app } = await loadAppWithMandatoryVerification();
     const user = await buildUser({
       email: 'provider.pending@example.com',
       user_type: 'tradesperson',
@@ -130,7 +130,7 @@ describe('Auth verification policy', () => {
   });
 
   it('allows verified legacy client login', async () => {
-    const { db, app } = await loadAppWithVerificationEnabled();
+    const { db, app } = await loadAppWithMandatoryVerification();
     const user = await buildUser({
       email: 'client.verified@example.com',
       user_type: 'client',
@@ -153,7 +153,7 @@ describe('Auth verification policy', () => {
   });
 
   it('allows verified legacy provider login', async () => {
-    const { db, app } = await loadAppWithVerificationEnabled();
+    const { db, app } = await loadAppWithMandatoryVerification();
     const user = await buildUser({
       email: 'provider.verified@example.com',
       user_type: 'tradesperson',
@@ -177,7 +177,7 @@ describe('Auth verification policy', () => {
   });
 
   it('rejects public admin registration', async () => {
-    const { app } = await loadAppWithVerificationEnabled();
+    const { app } = await loadAppWithMandatoryVerification();
 
     const res = await request(app)
       .post('/api/auth/register')
