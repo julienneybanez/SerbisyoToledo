@@ -504,6 +504,7 @@ const ServiceProviderPortfolio = () => {
             location: apiProfile.location,
             online: apiProfile.online,
             description: apiProfile.description,
+            aboutMe: apiProfile.aboutMe || '',
             tags: apiProfile.tags || [],
             categories: apiProfile.categories || [],
             serviceTypes: apiProfile.serviceTypes || [],
