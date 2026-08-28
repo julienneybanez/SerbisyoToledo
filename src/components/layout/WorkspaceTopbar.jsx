@@ -1,27 +1,11 @@
-import { useMemo } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { clearAuthSession, getUser } from '../../services/api';
 import NotificationDropdown from '../common/NotificationDropdown';
 import ThemeToggle from '../common/ThemeToggle';
 
-const TITLES = {
-  '/client-dashboard': 'Dashboard',
-  '/feed': 'Browse Services',
-  '/requests': 'Requests',
-  '/notifications': 'Notifications',
-  '/client-settings': 'Settings',
-  '/dashboard': 'Dashboard',
-  '/provider-schedule': 'Schedule',
-  '/provider-availability': 'Availability',
-  '/provider-credentials': 'Profile & Credentials',
-  '/provider-settings': 'Settings',
-};
-
 export default function WorkspaceTopbar({ role }) {
-  const location = useLocation();
   const navigate = useNavigate();
   const user = getUser();
-  const title = useMemo(() => TITLES[location.pathname] || 'Workspace', [location.pathname]);
   const settingsPath = role === 'tradesperson' ? '/provider-settings' : '/client-settings';
 
   const handleLogout = () => {
@@ -32,10 +16,6 @@ export default function WorkspaceTopbar({ role }) {
 
   return (
     <header className="workspace-topbar">
-      <div className="workspace-topbar-title-group">
-        <span className="workspace-topbar-kicker">{role === 'tradesperson' ? 'Provider workspace' : 'Client workspace'}</span>
-        <h1>{title}</h1>
-      </div>
       <div className="workspace-topbar-actions">
         <NotificationDropdown />
         <ThemeToggle compact className="workspace-theme-toggle" />
