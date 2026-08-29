@@ -205,6 +205,7 @@ function ClientSettings() {
                   autoComplete="name"
                   disabled={isLoadingProfile || isSaving}
                 />
+                <small className="settings-help">{t('phonePrivacyHelp')}</small>
               </div>
 
               <div className="settings-group">
