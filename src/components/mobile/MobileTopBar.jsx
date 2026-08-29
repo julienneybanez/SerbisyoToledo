@@ -40,12 +40,8 @@ export default function MobileTopBar({
       ? '/admin/reports'
       : '/notifications';
 
-  const providerListingLabel = language === 'ceb'
-    ? (hasServiceProfile ? 'Usba ang Service Listing' : 'I-post ang Service Listing')
-    : (hasServiceProfile ? 'Service Listing' : 'Post Service Listing');
-  const providerPortfolioLabel = language === 'ceb'
-    ? 'Public Profile'
-    : 'Public Profile';
+  const providerListingLabel = t(hasServiceProfile ? 'serviceListing' : 'postServiceListing');
+  const providerPortfolioLabel = t('publicProfile');
   const adminSystemStatusLabel = language === 'ceb' ? 'Status sa System' : 'System Status';
 
   useEffect(() => {
@@ -85,7 +81,7 @@ export default function MobileTopBar({
             type="button"
             className="mobile-topbar-icon-btn"
             onClick={onMenu}
-            aria-label="Open menu"
+            aria-label={t('openMenu')}
           >
             <i className="bi bi-list"></i>
           </button>
@@ -118,7 +114,7 @@ export default function MobileTopBar({
               type="button"
               className="mobile-topbar-icon-btn mobile-theme-icon-btn"
               onClick={toggleTheme}
-              aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+              aria-label={t(isDark ? 'switchToLightMode' : 'switchToDarkMode')}
             >
               <i className={`bi ${isDark ? 'bi-sun-fill' : 'bi-moon-stars-fill'}`}></i>
             </button>
@@ -138,7 +134,7 @@ export default function MobileTopBar({
               onClick={onToggleProfileMenu}
             >
               {user?.profileImage ? (
-                <img src={user.profileImage} alt="Profile" className="mobile-topbar-avatar-img non-draggable-image" draggable="false" />
+                <img src={user.profileImage} alt={t('profileImageAlt')} className="mobile-topbar-avatar-img non-draggable-image" draggable="false" />
               ) : (
                 getInitials(user?.fullName)
               )}
@@ -147,7 +143,7 @@ export default function MobileTopBar({
         )}
 
         {profileMenuOpen && (
-          <div ref={menuRef} className="mobile-profile-menu" role="menu" aria-label="Mobile profile menu">
+          <div ref={menuRef} className="mobile-profile-menu" role="menu" aria-label={t('mobileProfileMenuAria')}>
             {!isLoggedIn ? (
               <>
                 <Link to="/login" className="mobile-profile-menu-item" role="menuitem" onClick={onCloseProfileMenu}>
@@ -208,7 +204,7 @@ export default function MobileTopBar({
                       onClick={onCloseProfileMenu}
                     >
                       <i className="bi bi-patch-check"></i>
-                      Credentials
+                      {t('credentials')}
                     </Link>
                   </>
                 )}
@@ -232,7 +228,7 @@ export default function MobileTopBar({
                   {role === 'admin' ? adminSystemStatusLabel : role === 'client' ? t('clientSettings') : t('settings')}
                 </Link>
                 <div className="mobile-profile-menu-divider" role="none"></div>
-                <div className="mobile-profile-preferences" role="group" aria-label="Display preferences">
+                <div className="mobile-profile-preferences" role="group" aria-label={t('displayPreferences')}>
                   <label htmlFor="mobile-language-select" className="mobile-profile-preferences-label">{t('language')}</label>
                   <select
                     id="mobile-language-select"
