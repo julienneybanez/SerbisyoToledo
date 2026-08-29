@@ -5,15 +5,15 @@
 @media (min-width: 769px) {
   .authenticated-workspace-active .desktop-public-navbar { display: none !important; }
   .authenticated-workspace-active .main-content { background: var(--color-page-bg); }
-  .workspace-shell { min-height: 100vh; display: grid; grid-template-columns: 248px minmax(0, 1fr); background: var(--color-page-bg); }
-  .workspace-sidebar { display: flex; position: sticky; top: 0; height: 100vh; flex-direction: column; padding: 1.15rem 0.9rem 1rem; border-right: 1px solid var(--color-border); background: var(--color-surface); z-index: 20; }
+  .workspace-shell { min-height: 100vh; display: grid; grid-template-columns: 260px minmax(0, 1fr); background: var(--color-page-bg); }
+  .workspace-sidebar { display: flex; position: sticky; top: 0; height: 100vh; flex-direction: column; padding: 1.15rem 0.9rem 1rem; border-right: 1px solid var(--color-border-strong); background: var(--color-surface); z-index: 20; }
   .workspace-brand { display: flex; align-items: center; gap: 0.65rem; min-height: 56px; padding: 0.25rem 0.5rem 0.85rem; text-decoration: none; }
   .workspace-brand-logo { width: 38px; height: 38px; object-fit: contain; }
   .workspace-brand-wordmark { display: flex; align-items: baseline; font-size: 1.02rem; letter-spacing: -0.025em; }
   .workspace-brand-wordmark strong:first-child { color: var(--brand-primary); }
   .workspace-brand-wordmark strong:last-child { color: var(--brand-accent); }
   .workspace-account-card { display: flex; align-items: center; gap: 0.7rem; padding: 0.8rem; margin: 0.15rem 0 0.8rem; border: 1px solid var(--color-border); border-radius: var(--radius-card); background: var(--color-surface-secondary); }
-  .workspace-role-card { min-height: 48px; display: flex; align-items: center; gap: 0.65rem; padding: 0.7rem 0.8rem; margin: 0.15rem 0 0.8rem; border: 1px solid var(--color-border); border-radius: var(--radius-card); background: var(--color-surface-secondary); color: var(--color-text-primary); }
+  .workspace-role-card { min-height: 52px; display: flex; align-items: center; gap: 0.65rem; padding: 0.75rem 0.8rem; margin: 0.15rem 0 0.8rem; border: 1px solid var(--color-border-strong); border-radius: var(--radius-card); background: var(--color-surface-secondary); color: var(--color-text-primary); }
   .workspace-role-card i { width: 20px; color: var(--brand-primary); text-align: center; }
   .workspace-role-card strong { font-size: 0.86rem; font-weight: 750; }
   .workspace-account-avatar, .workspace-topbar-avatar { display: inline-flex; align-items: center; justify-content: center; overflow: hidden; border-radius: 12px; background: color-mix(in srgb, var(--brand-primary) 12%, var(--color-surface)); color: var(--brand-primary); font-weight: 800; }
@@ -23,21 +23,26 @@
   .workspace-account-copy strong { overflow: hidden; color: var(--color-text-primary); font-size: 0.88rem; text-overflow: ellipsis; white-space: nowrap; }
   .workspace-account-copy small { color: var(--color-text-muted); font-size: 0.73rem; }
   .workspace-nav { display: flex; flex-direction: column; gap: 0.25rem; }
-  .workspace-nav-link { min-height: 44px; display: flex; align-items: center; gap: 0.75rem; padding: 0.65rem 0.75rem; border: 1px solid transparent; border-radius: 10px; color: var(--color-text-secondary); text-decoration: none; font-size: 0.92rem; font-weight: 650; }
+  .workspace-nav-link { min-height: 48px; display: flex; align-items: center; gap: 0.75rem; padding: 0.7rem 0.8rem; border: 1px solid transparent; border-radius: 10px; color: var(--color-text-secondary); text-decoration: none; font-size: 0.94rem; font-weight: 700; }
   .workspace-nav-link i { width: 20px; text-align: center; }
   .workspace-nav-link:hover { color: var(--color-text-primary); background: var(--color-surface-secondary); }
-  .workspace-nav-link.active { color: var(--brand-primary); background: color-mix(in srgb, var(--brand-primary) 10%, var(--color-surface)); border-color: color-mix(in srgb, var(--brand-primary) 22%, var(--color-border)); }
+  .workspace-nav-link.active {
+    color: #fff;
+    background: var(--brand-primary);
+    border-color: var(--brand-primary);
+    box-shadow: 0 5px 14px color-mix(in srgb, var(--brand-primary) 22%, transparent);
+  }
   .workspace-sidebar-spacer { flex: 1; }
   .workspace-sidebar-divider { height: 1px; margin: 0.65rem 0; background: var(--color-border); }
   .workspace-nav-secondary .workspace-nav-link { font-size: 0.88rem; }
   .workspace-stage { min-width: 0; }
-  .workspace-topbar { display: flex; position: sticky; top: 0; z-index: 15; min-height: 74px; align-items: center; justify-content: flex-end; gap: 1rem; padding: 0.75rem 1.5rem; border-bottom: 1px solid var(--color-border); background: color-mix(in srgb, var(--color-surface) 94%, transparent); backdrop-filter: blur(14px); }
+  .workspace-topbar { display: flex; position: sticky; top: 0; z-index: 15; min-height: 76px; align-items: center; justify-content: flex-end; gap: 1rem; padding: 0.75rem 1.5rem; border-bottom: 1px solid var(--color-border-strong); background: var(--color-surface); }
   .workspace-topbar-title-group { min-width: 0; display: flex; flex-direction: column; gap: 0.05rem; }
   .workspace-topbar-kicker { color: var(--color-text-muted); font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
   .workspace-topbar h1 { margin: 0; color: var(--color-text-primary); font-size: 1.18rem; font-weight: 750; }
   .workspace-topbar-actions { display: flex; align-items: center; gap: 0.45rem; }
   .workspace-topbar .notification-dropdown-container { position: relative; }
-  .workspace-account-button, .workspace-logout-button { min-height: 42px; border: 1px solid var(--color-border); border-radius: var(--radius-control); background: var(--color-surface); color: var(--color-text-primary); }
+  .workspace-account-button, .workspace-logout-button { min-height: 44px; border: 1px solid var(--color-border-strong); border-radius: var(--radius-control); background: var(--color-surface); color: var(--color-text-primary); }
   .workspace-account-button { display: inline-flex; align-items: center; gap: 0.55rem; padding: 0.35rem 0.65rem; font-weight: 650; }
   .workspace-topbar-avatar { width: 30px; height: 30px; border-radius: 9px; font-size: 0.72rem; }
   .workspace-topbar-name { max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.84rem; }
