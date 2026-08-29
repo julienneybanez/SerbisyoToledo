@@ -164,7 +164,7 @@ function Home() {
             <Reveal as="figure" className="home-hero-visual" variant="image" delay={140}>
               <img
                 src={heroCarpentry}
-                alt="Two local carpentry workers measuring and building a wooden frame"
+                alt={t('homeHeroImageAlt')}
                 className="home-hero-image non-draggable-image"
                 draggable="false"
               />
@@ -228,7 +228,7 @@ function Home() {
             <Reveal className="home-editorial-media" variant="image">
               <img
                 src={trustPhoto}
-                alt="Local service professional working on home equipment"
+                alt={t('homeTrustImageAlt')}
                 className="home-editorial-image non-draggable-image"
                 draggable="false"
                 loading="lazy"
@@ -278,7 +278,7 @@ function Home() {
             <Reveal className="home-provider-media" variant="image" delay={120}>
               <img
                 src={providerPhoto}
-                alt="Service provider working with electrical equipment"
+                alt={t('homeProviderImageAlt')}
                 className="home-provider-image non-draggable-image"
                 draggable="false"
                 loading="lazy"

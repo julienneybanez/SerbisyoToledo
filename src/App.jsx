@@ -14,6 +14,8 @@ import VerificationRequestModal from './components/common/VerificationRequestMod
 import ProtectedRoute, { RoleAwarePublicRoute } from './components/common/ProtectedRoute';
 import InitialLoadingScreen from './components/common/InitialLoadingScreen';
 import lazyWithRetry from './utils/lazyWithRetry';
+import { useLanguage } from './context/LanguageContext';
+import { isPublicProviderRoute, shouldShowChatbotForContext } from './utils/chatbotVisibility';
 
 // Admin imports
 import AdminLayout from './components/layout/AdminLayout';
@@ -55,6 +57,7 @@ function InitialLoadReady({ onReady }) {
 
 function App() {
   const location = useLocation();
+  const { t } = useLanguage();
   const [isChatbotOpen, setIsChatbotOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState(getUser());
   const [isMobileViewport, setIsMobileViewport] = useState(() => (
@@ -174,10 +177,13 @@ function App() {
     return () => window.cancelAnimationFrame(frame);
   }, [location.pathname]);
 
-  const shouldLiftChatbotButton = isMobileAuthenticated && location.pathname.startsWith('/provider/');
   const isMobileShellLayout = isMobileViewport;
-  const hideChatbotOnRoute = location.pathname === '/about';
-  const isPublicProviderRoute = /^\/provider\/[^/]+\/?$/.test(location.pathname);
+  const providerPublicRoute = isPublicProviderRoute(location.pathname);
+  const shouldShowChatbot = shouldShowChatbotForContext({
+    pathname: location.pathname,
+    userType: currentUser?.userType || null,
+  });
+  const shouldLiftChatbotButton = isMobileAuthenticated && providerPublicRoute;
   const workspaceRoutes = currentUser?.userType === 'tradesperson'
     ? ['/dashboard', '/requests', '/provider-settings', '/provider-schedule', '/provider-availability', '/provider-credentials', '/notifications']
     : currentUser?.userType === 'client'
@@ -187,11 +193,11 @@ function App() {
     currentUser
     && ['client', 'tradesperson'].includes(currentUser.userType)
     && isAuthenticated()
-    && (workspaceRoutes.includes(location.pathname) || isPublicProviderRoute)
+    && (workspaceRoutes.includes(location.pathname) || providerPublicRoute)
   );
   const shouldShowPublicFooter = !isAuthenticatedWorkspace && (
     ['/', '/about', '/feed'].includes(location.pathname)
-    || isPublicProviderRoute
+    || providerPublicRoute
   );
 
   const mobileRole = currentUser?.userType || 'guest';
@@ -241,6 +247,12 @@ function App() {
 
     setShowMobileServiceProfile(true);
   }, [currentUser, hasServiceProfile]);
+
+  useEffect(() => {
+    if (!shouldShowChatbot && isChatbotOpen) {
+      setIsChatbotOpen(false);
+    }
+  }, [isChatbotOpen, shouldShowChatbot]);
 
   const handleInitialLoadReady = useCallback(() => {
     setHasCompletedInitialLoad(true);
@@ -319,19 +331,24 @@ function App() {
         <Footer className="public-route-footer" />
       )}
 
-      {!hideChatbotOnRoute && (
+      {shouldShowChatbot && (
         <>
           <button
             className={`floating-btn ${shouldLiftChatbotButton ? 'floating-btn-avoid-sticky' : ''}`.trim()}
             onClick={() => setIsChatbotOpen(true)}
-            aria-label="Open chat support"
+            aria-label={t('openAssistant')}
           >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-            </svg>
+            <i className="bi bi-chat-dots-fill" aria-hidden="true"></i>
           </button>
 
-          <Chatbot isOpen={isChatbotOpen} onClose={() => setIsChatbotOpen(false)} />
+          <Chatbot
+            isOpen={isChatbotOpen}
+            onClose={() => setIsChatbotOpen(false)}
+            context={{
+              route: location.pathname,
+              role: currentUser?.userType || 'guest',
+            }}
+          />
         </>
       )}
 

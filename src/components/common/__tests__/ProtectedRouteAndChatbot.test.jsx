@@ -3,11 +3,15 @@ import '@testing-library/jest-dom/vitest';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import ProtectedRoute, { RoleAwarePublicRoute } from '../ProtectedRoute';
 import Chatbot from '../Chatbot';
-import { getUser, isAuthenticated, serviceProfileAPI } from '../../../services/api';
+import { LanguageProvider } from '../../../context/LanguageContext';
+import { assistantAPI, getUser, isAuthenticated, serviceProfileAPI } from '../../../services/api';
 
 vi.mock('../../../services/api', () => ({
   getUser: vi.fn(),
   isAuthenticated: vi.fn(),
+  assistantAPI: {
+    sendMessage: vi.fn(),
+  },
   serviceProfileAPI: {
     getRecommendations: vi.fn(),
   },
@@ -94,9 +98,31 @@ describe('ProtectedRoute', () => {
 describe('Chatbot', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    localStorage.clear();
+    Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', {
+      configurable: true,
+      value: vi.fn(),
+    });
   });
 
-  it('prioritizes recommendation intent and renders provider pricing with unit', async () => {
+  const renderChatbot = () => render(
+    <LanguageProvider>
+      <Chatbot isOpen onClose={() => {}} context={{ route: '/feed', role: 'client' }} />
+    </LanguageProvider>,
+  );
+
+  it('uses the assistant backend intent before loading live provider recommendations', async () => {
+    assistantAPI.sendMessage.mockResolvedValue({
+      success: true,
+      data: {
+        reply: 'I can help.',
+        action: {
+          type: 'recommend_providers',
+          query: 'plumber near Toledo under 1000',
+        },
+      },
+    });
+
     serviceProfileAPI.getRecommendations.mockResolvedValue({
       success: true,
       data: {
@@ -115,45 +141,65 @@ describe('Chatbot', () => {
       },
     });
 
-    render(<Chatbot isOpen onClose={() => {}} />);
+    renderChatbot();
 
-    const input = screen.getByPlaceholderText('Type your message here...');
+    const input = screen.getByLabelText('Message SerbisyoToledo assistant');
     fireEvent.change(input, {
-      target: { value: 'I need a provider recommendation for a plumber near Toledo under 1000' },
+      target: { value: 'I need a plumber near Toledo under 1000' },
     });
-    fireEvent.keyPress(input, { key: 'Enter', code: 'Enter', charCode: 13 });
+    fireEvent.keyDown(input, { key: 'Enter', code: 'Enter' });
 
     await waitFor(() => {
+      expect(assistantAPI.sendMessage).toHaveBeenCalledWith({
+        message: 'I need a plumber near Toledo under 1000',
+        locale: 'en',
+        context: { route: '/feed', role: 'client' },
+        history: [],
+      });
       expect(serviceProfileAPI.getRecommendations).toHaveBeenCalledTimes(1);
     });
 
     expect(await screen.findByText('Mario Helper')).toBeInTheDocument();
-    expect(screen.getByText('P450 per hour')).toBeInTheDocument();
+    expect(screen.getByText('P450 / hour')).toBeInTheDocument();
   });
 
-  it('allows copy/helpful/not-helpful bot actions', async () => {
+  it('automatically scrolls to the latest message after a reply', async () => {
+    assistantAPI.sendMessage.mockResolvedValue({
+      success: true,
+      data: {
+        reply: 'Here is the latest reply.',
+        action: null,
+      },
+    });
+
+    renderChatbot();
+
+    const input = screen.getByLabelText('Message SerbisyoToledo assistant');
+    fireEvent.change(input, { target: { value: 'How does booking work?' } });
+    fireEvent.keyDown(input, { key: 'Enter', code: 'Enter' });
+
+    expect(await screen.findByText('Here is the latest reply.')).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(HTMLElement.prototype.scrollIntoView).toHaveBeenCalled();
+    });
+  });
+
+  it('allows copying a bot response', async () => {
     const writeText = vi.fn().mockResolvedValue(undefined);
     Object.defineProperty(navigator, 'clipboard', {
       configurable: true,
       value: { writeText },
     });
 
-    render(<Chatbot isOpen onClose={() => {}} />);
+    renderChatbot();
 
-    const copyButtons = await screen.findAllByTitle('Copy');
+    const copyButtons = await screen.findAllByTitle('Copy response');
     fireEvent.click(copyButtons[0]);
 
     await waitFor(() => {
       expect(writeText).toHaveBeenCalled();
     });
-    expect(screen.getByText('Copied')).toBeInTheDocument();
-
-    const helpfulButtons = await screen.findAllByTitle('Helpful');
-    fireEvent.click(helpfulButtons[0]);
-    expect(helpfulButtons[0]).toHaveClass('active');
-
-    const notHelpfulButtons = await screen.findAllByTitle('Not helpful');
-    fireEvent.click(notHelpfulButtons[0]);
-    expect(notHelpfulButtons[0]).toHaveClass('active');
+    expect(screen.getByTitle('Copied')).toBeInTheDocument();
   });
 });

@@ -34,6 +34,7 @@ const serviceProfileRoutes = require('./routes/serviceProfiles');
 const serviceRequestRoutes = require('./routes/serviceRequests');
 const notificationRoutes = require('./routes/notifications');
 const userRoutes = require('./routes/user');
+const assistantRoutes = require('./routes/assistant');
 
 // Import database connection
 const db = require('./config/database');
@@ -117,6 +118,7 @@ app.use('/api/service-profiles', serviceProfileRoutes);
 app.use('/api/service-requests', serviceRequestRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/user', userRoutes);
+app.use('/api/assistant', assistantRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

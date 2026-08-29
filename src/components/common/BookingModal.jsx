@@ -625,9 +625,9 @@ export default function BookingModal({ provider, onClose }) {
           <span className="booking-calendar-kicker">{t('bookingSelectedLabel')}</span>
           <strong>{formattedSelectedRange}</strong>
         </div>
-        <div className="booking-calendar-legend" aria-label="Calendar legend">
-          <span><i className="available-dot"></i> Available</span>
-          <span><i className="selected-dot"></i> Selected</span>
+        <div className="booking-calendar-legend" aria-label={t('bookingCalendarLegendAria')}>
+          <span><i className="available-dot"></i> {t('bookingCalendarAvailable')}</span>
+          <span><i className="selected-dot"></i> {t('bookingCalendarSelected')}</span>
         </div>
       </div>
 

@@ -58,8 +58,8 @@ const Login = () => {
   const [verificationNotice, setVerificationNotice] = useState(() => (
     searchParams.get('verification') === 'pending'
       ? (searchParams.get('sent') === '0'
-        ? 'Your account was created, but the verification email could not be sent. You can resend it below.'
-        : 'Account created. Check your email and verify your account before logging in.')
+        ? t('emailVerificationCreatedSendFailed')
+        : t('emailVerificationCreatedPending'))
       : ''
   ));
   const [verificationEmail, setVerificationEmail] = useState(() => searchParams.get('email') || '');
@@ -101,7 +101,7 @@ const Login = () => {
       console.error('Login error:', err);
       if (err?.code === 'EMAIL_NOT_VERIFIED') {
         setVerificationEmail(formData.email);
-        setVerificationNotice('Please verify your email address before logging in.');
+        setVerificationNotice(t('emailVerificationRequiredLogin'));
         setError('');
       } else {
         setError(err.message || t('loginFailedCheckCredentials'));
@@ -147,15 +147,15 @@ const Login = () => {
                   setError('');
                   try {
                     const response = await verificationAPI.resendVerification({ email: verificationEmail });
-                    setVerificationNotice(response.message || 'Verification email sent. Please check your inbox.');
+                    setVerificationNotice(t('emailVerificationSent'));
                   } catch (err) {
-                    setError(err.message || 'Unable to resend verification email right now.');
+                    setError(t('emailVerificationResendFailed'));
                   } finally {
                     setResendingVerification(false);
                   }
                 }}
               >
-                {resendingVerification ? 'Sending...' : 'Resend Verification Email'}
+                {resendingVerification ? t('sending') : t('resendVerificationEmail')}
               </button>
             </div>
           )}
@@ -228,10 +228,10 @@ const Login = () => {
           </form>
         </div>
 
-        <aside className="auth-visual-pane" aria-label="SerbisyoToledo local services">
+        <aside className="auth-visual-pane" aria-label={t('localServicesVisualAria')}>
           <img
             src={loginServiceImage}
-            alt="Service professional in a blue hard hat working on home piping equipment"
+            alt={t('loginVisualAlt')}
             className="auth-visual-image auth-login-visual-image non-draggable-image"
             draggable="false"
           />

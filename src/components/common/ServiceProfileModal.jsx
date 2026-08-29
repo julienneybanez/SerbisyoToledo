@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { serviceProfileAPI } from '../../services/api';
-import { getErrorMessage } from '../../utils/errors';
 import useServiceTaxonomy from '../../hooks/useServiceTaxonomy';
+import { useLanguage } from '../../context/LanguageContext';
 import './ServiceProfileModal.css';
 
 export default function ServiceProfileModal({ onClose }) {
+  const { t } = useLanguage();
   const { categories, getCategory, getServiceTypesForCategory } = useServiceTaxonomy();
   const [formData, setFormData] = useState({
     fullName: '',
@@ -131,7 +132,7 @@ export default function ServiceProfileModal({ onClose }) {
     try {
       // Validate service categories
       if (formData.serviceCategories.length === 0) {
-        setError('Please select at least one service category');
+        setError(t('serviceListingSelectCategoryError'));
         setIsLoading(false);
         return;
       }
@@ -159,10 +160,10 @@ export default function ServiceProfileModal({ onClose }) {
           window.dispatchEvent(new Event('profileCreated'));
         }, 1500);
       } else {
-        setError(result.message || 'Failed to save service listing');
+        setError(t('serviceListingSaveFailed'));
       }
     } catch (err) {
-      setError(getErrorMessage(err, 'An error occurred while saving your service listing'));
+      setError(t('serviceListingSaveFailed'));
       console.error('Error submitting profile:', err);
     } finally {
       setIsLoading(false);
@@ -187,22 +188,22 @@ export default function ServiceProfileModal({ onClose }) {
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         {/* Close Button */}
-        <button className="modal-close" onClick={onClose}>×</button>
+        <button className="modal-close" onClick={onClose} aria-label={t('serviceListingCloseAria')}>×</button>
 
         {isFetchingProfile ? (
           <div className="edit-profile-loading">
             <div className="spinner"></div>
-            <p>Loading service listing...</p>
+            <p>{t('serviceListingLoading')}</p>
           </div>
         ) : (
         <form onSubmit={handleSubmit} className="service-profile-form">
           {/* Modal Header */}
           <div className="modal-header">
-            <h2 className="modal-title">{isEditMode ? 'Edit Service Listing' : 'Post Service Listing'}</h2>
+            <h2 className="modal-title">{t(isEditMode ? 'editServiceListing' : 'postServiceListing')}</h2>
             <p className="modal-subtitle">
               {isEditMode
-                ? 'Update your service listing details below.'
-                : 'Create your service listing to connect with clients. Fill out the information below and showcase your services.'}
+                ? t('serviceListingEditSubtitle')
+                : t('serviceListingPostSubtitle')}
             </p>
           </div>
 
@@ -216,23 +217,23 @@ export default function ServiceProfileModal({ onClose }) {
           {/* Success Message */}
           {success && (
             <div className="alert alert-success">
-              ✓ Service listing saved successfully!
+              ✓ {t('serviceListingSaved')}
             </div>
           )}
           {/* Service Information Section */}
           <section className="form-section">
-            <h3 className="section-header">Service Information</h3>
+            <h3 className="section-header">{t('serviceListingServiceInformation')}</h3>
             
-            <p className="section-description">Your account name is managed separately in Account Settings.</p>
+            <p className="section-description">{t('serviceListingAccountNameNote')}</p>
 
             <div className="form-row">
               <div className="form-group">
-                <label htmlFor="barangayAddress" className="form-label">Barangay Address<span className="required">*</span></label>
+                <label htmlFor="barangayAddress" className="form-label">{t('serviceListingBarangayAddress')}<span className="required">*</span></label>
                 <input
                   type="text"
                   id="barangayAddress"
                   name="barangayAddress"
-                  placeholder="Enter your barangay/area"
+                  placeholder={t('serviceListingBarangayPlaceholder')}
                   value={formData.barangayAddress}
                   onChange={handleInputChange}
                   className="form-input"
@@ -240,12 +241,12 @@ export default function ServiceProfileModal({ onClose }) {
                 />
               </div>
               <div className="form-group">
-                <label htmlFor="startingPrice" className="form-label">Daily Rate<span className="required">*</span></label>
+                <label htmlFor="startingPrice" className="form-label">{t('serviceListingDailyRate')}<span className="required">*</span></label>
                 <input
                   type="number"
                   id="startingPrice"
                   name="startingPrice"
-                  placeholder="e.g. 500 per day"
+                  placeholder={t('serviceListingDailyRatePlaceholder')}
                   value={formData.startingPrice}
                   onChange={handleInputChange}
                   className="form-input"
@@ -257,8 +258,8 @@ export default function ServiceProfileModal({ onClose }) {
 
           {/* Service Categories Section */}
           <section className="form-section">
-            <h3 className="section-header">Service Categories<span className="required">*</span></h3>
-            <p className="section-description">Select all services you provide</p>
+            <h3 className="section-header">{t('serviceListingCategories')}<span className="required">*</span></h3>
+            <p className="section-description">{t('serviceListingSelectServices')}</p>
             
             <div className="categories-grid">
               {categories.map((category) => (
@@ -280,8 +281,8 @@ export default function ServiceProfileModal({ onClose }) {
 
           {dedupedServiceTypes.length > 0 && (
             <section className="form-section">
-              <h3 className="section-header">Services Offered</h3>
-              <p className="section-description">Pick the specific service types clients can request from you.</p>
+              <h3 className="section-header">{t('serviceListingServicesOffered')}</h3>
+              <p className="section-description">{t('serviceListingServicesOfferedDescription')}</p>
 
               <div className="categories-grid">
                 {dedupedServiceTypes.map((serviceType) => (
@@ -315,12 +316,12 @@ export default function ServiceProfileModal({ onClose }) {
               />
               <label htmlFor="bannerImage" className="upload-label">
                 {bannerPreview ? (
-                  <img src={bannerPreview} alt="Banner preview" className="banner-preview" />
+                  <img src={bannerPreview} alt={t('serviceListingBannerPreviewAlt')} className="banner-preview" />
                 ) : (
                   <>
                     <div className="upload-icon">⬆️</div>
-                    <h4>Click to Upload Banner Image</h4>
-                    <p>JPG, PNG (Max 5MB)</p>
+                    <h4>{t('serviceListingUploadBanner')}</h4>
+                    <p>{t('serviceListingUploadHint')}</p>
                   </>
                 )}
               </label>
@@ -329,11 +330,11 @@ export default function ServiceProfileModal({ onClose }) {
 
           {/* Important Notes */}
           <section className="form-section important-notes">
-            <h4>Important Notes:</h4>
+            <h4>{t('importantNotes')}</h4>
             <ul>
-              <li>All fields marked with * are required</li>
-              <li>Banner image should be professional and represent your service</li>
-              <li>Select all applicable service categories to reach more customers</li>
+              <li>{t('serviceListingRequiredFieldsNote')}</li>
+              <li>{t('serviceListingBannerNote')}</li>
+              <li>{t('serviceListingCategoryNote')}</li>
             </ul>
           </section>
 
@@ -343,12 +344,12 @@ export default function ServiceProfileModal({ onClose }) {
             className="btn-submit"
             disabled={isLoading || success}
           >
-            {isLoading ? 'Saving Listing...' : isEditMode ? 'Save Service Listing' : 'Post Service Listing'}
+            {isLoading ? t('serviceListingSaving') : t(isEditMode ? 'serviceListingSave' : 'postServiceListing')}
           </button>
 
           {/* Terms Agreement */}
           <p className="terms-text">
-            By posting this, you agree to our <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.
+            {t('serviceListingTermsPrefix')} <a href="#">{t('termsOfService')}</a> {t('and')} <a href="#">{t('privacyPolicy')}</a>.
           </p>
         </form>
         )}

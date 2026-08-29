@@ -8,6 +8,7 @@ import '@fullcalendar/react/skeleton.css';
 import '@fullcalendar/bootstrap5/theme.css';
 import { serviceRequestAPI } from '../services/api';
 import { PageHeader } from '../components/ui';
+import { useLanguage } from '../context/LanguageContext';
 import './ProviderSchedule.css';
 
 const VISIBLE_STATUSES = new Set(['pending', 'accepted', 'on_the_way', 'in_progress', 'completed']);
@@ -38,12 +39,8 @@ function requestDates(request) {
   return datesBetween(request?.start_date || request?.scheduled_date, request?.end_date || request?.scheduled_date);
 }
 
-function serviceLabel(request) {
-  return request?.service_display_label || request?.service_type_label || request?.service_profile_name || 'Service Request';
-}
-
-function formatStatus(status) {
-  return String(status || 'pending').replaceAll('_', ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
+function serviceLabel(request, fallback) {
+  return request?.service_display_label || request?.service_type_label || request?.service_profile_name || fallback;
 }
 
 function eventStart(request, dateKey) {
@@ -53,6 +50,8 @@ function eventStart(request, dateKey) {
 
 export default function ProviderSchedule() {
   const navigate = useNavigate();
+  const { t, language } = useLanguage();
+  const locale = language === 'ceb' ? 'ceb-PH' : 'en-PH';
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -66,24 +65,24 @@ export default function ProviderSchedule() {
         const response = await serviceRequestAPI.getProviderRequests();
         if (mounted && response?.success) setRequests(response.data?.requests || []);
       } catch (err) {
-        if (mounted) setError(err?.message || 'Unable to load your schedule right now.');
+        if (mounted) setError(t('providerScheduleLoadError'));
       } finally {
         if (mounted) setLoading(false);
       }
     };
     load();
     return () => { mounted = false; };
-  }, []);
+  }, [t]);
 
   const visibleRequests = useMemo(() => requests.filter((item) => VISIBLE_STATUSES.has(item.status)), [requests]);
 
   const events = useMemo(() => visibleRequests.flatMap((request) => requestDates(request).map((dateKey, index) => ({
     id: `${request.id}-${dateKey}-${index}`,
-    title: `${serviceLabel(request)} · ${request.client_name || 'Client'}`,
+    title: `${serviceLabel(request, t('providerServiceRequestFallback'))} · ${request.client_name || t('client')}`,
     start: eventStart(request, dateKey),
-    extendedProps: { requestId: request.id, status: request.status, clientName: request.client_name || 'Client', service: serviceLabel(request) },
+    extendedProps: { requestId: request.id, status: request.status, clientName: request.client_name || t('client'), service: serviceLabel(request, t('providerServiceRequestFallback')) },
     classNames: [`provider-calendar-event`, `provider-calendar-event-${request.status}`],
-  }))), [visibleRequests]);
+  }))), [t, visibleRequests]);
 
   const now = Date.now();
   const upcoming = useMemo(() => events
@@ -101,16 +100,16 @@ export default function ProviderSchedule() {
     <div className="provider-schedule-page">
       <div className="provider-schedule-inner">
         <PageHeader
-          title="Schedule"
-          subtitle="See booked jobs on your calendar. Availability is managed separately so clients only see the dates and times you choose."
+          title={t('schedule')}
+          subtitle={t('providerScheduleSubtitle')}
           className="provider-schedule-header"
-          action={<Link to="/provider-availability" className="st-button st-button--secondary st-button--md"><i className="bi bi-calendar2-check" aria-hidden="true"></i> Manage Availability</Link>}
+          action={<Link to="/provider-availability" className="st-button st-button--secondary st-button--md"><i className="bi bi-calendar2-check" aria-hidden="true"></i> {t('providerScheduleManageAvailability')}</Link>}
         />
 
-        <section className="provider-schedule-summary" aria-label="Schedule summary">
-          <div><span className="schedule-summary-icon pending"><i className="bi bi-hourglass-split"></i></span><strong>{summary.pending}</strong><small>Pending requests</small></div>
-          <div><span className="schedule-summary-icon upcoming"><i className="bi bi-calendar-event"></i></span><strong>{summary.upcoming}</strong><small>Upcoming dates</small></div>
-          <div><span className="schedule-summary-icon active"><i className="bi bi-briefcase"></i></span><strong>{summary.active}</strong><small>Active jobs</small></div>
+        <section className="provider-schedule-summary" aria-label={t('providerScheduleSummaryAria')}>
+          <div><span className="schedule-summary-icon pending"><i className="bi bi-hourglass-split"></i></span><strong>{summary.pending}</strong><small>{t('providerSchedulePendingRequests')}</small></div>
+          <div><span className="schedule-summary-icon upcoming"><i className="bi bi-calendar-event"></i></span><strong>{summary.upcoming}</strong><small>{t('providerScheduleUpcomingDates')}</small></div>
+          <div><span className="schedule-summary-icon active"><i className="bi bi-briefcase"></i></span><strong>{summary.active}</strong><small>{t('providerScheduleActiveJobs')}</small></div>
         </section>
 
         {error && <div className="alert alert-danger" role="alert">{error}</div>}
@@ -118,14 +117,14 @@ export default function ProviderSchedule() {
         <section className="provider-schedule-layout">
           <div className="provider-calendar-card">
             {loading ? (
-              <div className="provider-calendar-loading"><span className="spinner-small"></span><p>Loading schedule...</p></div>
+              <div className="provider-calendar-loading"><span className="spinner-small"></span><p>{t('providerLoadingSchedule')}</p></div>
             ) : (
               <FullCalendar
                 plugins={[bootstrap5Plugin, dayGridPlugin, timeGridPlugin]}
                 themeSystem="bootstrap5"
                 initialView="dayGridMonth"
                 headerToolbar={{ left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,timeGridDay' }}
-                buttonText={{ today: 'Today', month: 'Month', week: 'Week', day: 'Day' }}
+                buttonText={{ today: t('providerScheduleToday'), month: t('providerScheduleMonth'), week: t('providerScheduleWeek'), day: t('providerScheduleDay') }}
                 events={events}
                 eventClick={(info) => navigate(`/requests?request=${info.event.extendedProps.requestId}`)}
                 eventContent={(info) => (
@@ -146,24 +145,24 @@ export default function ProviderSchedule() {
           </div>
 
           <aside className="provider-upcoming-card">
-            <div className="provider-upcoming-heading"><span>Next up</span><h2>Upcoming Jobs</h2></div>
+            <div className="provider-upcoming-heading"><span>{t('providerScheduleNextUp')}</span><h2>{t('providerScheduleUpcomingJobs')}</h2></div>
             {upcoming.length === 0 ? (
-              <div className="provider-upcoming-empty"><i className="bi bi-calendar2-check"></i><p>No accepted jobs are scheduled yet.</p></div>
+              <div className="provider-upcoming-empty"><i className="bi bi-calendar2-check"></i><p>{t('providerScheduleNoAcceptedJobs')}</p></div>
             ) : (
               <div className="provider-upcoming-list">
                 {upcoming.map((event) => {
                   const date = new Date(event.start);
                   return (
                     <button key={event.id} type="button" onClick={() => navigate(`/requests?request=${event.extendedProps.requestId}`)} className="provider-upcoming-row">
-                      <span className="provider-upcoming-date"><strong>{date.toLocaleDateString('en-PH', { day: '2-digit' })}</strong><small>{date.toLocaleDateString('en-PH', { month: 'short' })}</small></span>
-                      <span className="provider-upcoming-copy"><strong>{event.extendedProps.service}</strong><small>{event.extendedProps.clientName} · {date.toLocaleTimeString('en-PH', { hour: 'numeric', minute: '2-digit' })}</small></span>
+                      <span className="provider-upcoming-date"><strong>{date.toLocaleDateString(locale, { day: '2-digit' })}</strong><small>{date.toLocaleDateString(locale, { month: 'short' })}</small></span>
+                      <span className="provider-upcoming-copy"><strong>{event.extendedProps.service}</strong><small>{event.extendedProps.clientName} · {date.toLocaleTimeString(locale, { hour: 'numeric', minute: '2-digit' })}</small></span>
                       <i className="bi bi-chevron-right" aria-hidden="true"></i>
                     </button>
                   );
                 })}
               </div>
             )}
-            <Link to="/requests" className="provider-upcoming-footer">View all requests <i className="bi bi-arrow-right"></i></Link>
+            <Link to="/requests" className="provider-upcoming-footer">{t('providerViewAllRequests')} <i className="bi bi-arrow-right"></i></Link>
           </aside>
         </section>
       </div>

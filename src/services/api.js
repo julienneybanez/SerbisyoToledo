@@ -916,6 +916,26 @@ export const serviceProfileAPI = {
   },
 };
 
+// Assistant API (provider-agnostic preparation)
+export const assistantAPI = {
+  getCapabilities: async () => {
+    const response = await fetch(`${API_BASE_URL}/assistant/capabilities`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    return handleResponse(response);
+  },
+
+  sendMessage: async ({ message, locale = 'en', context = {}, history = [] }) => {
+    const response = await fetch(`${API_BASE_URL}/assistant/message`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message, locale, context, history }),
+    });
+    return handleResponse(response);
+  },
+};
+
 // Service Request API calls
 export const serviceRequestAPI = {
   // Create a new service request

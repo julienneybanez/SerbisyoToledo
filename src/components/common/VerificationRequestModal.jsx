@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { userProfileAPI } from '../../services/api';
+import { useLanguage } from '../../context/LanguageContext';
 import './ServiceProfileModal.css';
 
 export default function VerificationRequestModal({ onClose }) {
+  const { t } = useLanguage();
   const [formData, setFormData] = useState({
     fullName: '',
     phoneNumber: '',
@@ -33,13 +35,13 @@ export default function VerificationRequestModal({ onClose }) {
 
     try {
       if (!formData.fullName.trim() || !formData.phoneNumber.trim() || !formData.address.trim() || !formData.serviceDescription.trim()) {
-        setError('Please fill in all required fields.');
+        setError(t('verificationRequiredFieldsError'));
         setIsLoading(false);
         return;
       }
 
       if (!formData.governmentId || !formData.certifications) {
-        setError('Please upload both required documents.');
+        setError(t('verificationRequiredDocumentsError'));
         setIsLoading(false);
         return;
       }
@@ -56,8 +58,8 @@ export default function VerificationRequestModal({ onClose }) {
 
       setSuccess(true);
       setTimeout(() => onClose(), 1200);
-    } catch (err) {
-      setError(err.message || 'Unable to submit your verification request.');
+    } catch {
+      setError(t('verificationSubmitFailed'));
     } finally {
       setIsLoading(false);
     }
@@ -66,24 +68,24 @@ export default function VerificationRequestModal({ onClose }) {
   return createPortal(
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <button className="modal-close" onClick={onClose} aria-label="Close verification request modal">
+        <button className="modal-close" onClick={onClose} aria-label={t('verificationCloseAria')}>
           ×
         </button>
 
         <form onSubmit={handleSubmit} className="service-profile-form" noValidate>
           <div className="modal-header">
-            <h2 className="modal-title">Request Verification</h2>
+            <h2 className="modal-title">{t('verificationRequestTitle')}</h2>
             <p className="modal-subtitle">
-              Submit a request to be reviewed by the admin team. We will reach out once your account is verified.
+              {t('verificationRequestSubtitle')}
             </p>
           </div>
 
           {error && <div className="alert alert-error">{error}</div>}
-          {success && <div className="alert alert-success">✓ Verification request submitted successfully!</div>}
+          {success && <div className="alert alert-success">✓ {t('verificationRequestSuccess')}</div>}
 
           <section className="form-section">
             <div className="form-group">
-              <label htmlFor="fullName" className="form-label">Full Name<span className="required">*</span></label>
+              <label htmlFor="fullName" className="form-label">{t('verificationFullName')}<span className="required">*</span></label>
               <input
                 id="fullName"
                 name="fullName"
@@ -91,13 +93,13 @@ export default function VerificationRequestModal({ onClose }) {
                 className="form-input"
                 value={formData.fullName}
                 onChange={handleInputChange}
-                placeholder="Enter your full name"
+                placeholder={t('verificationFullNamePlaceholder')}
                 required
               />
             </div>
 
             <div className="form-group">
-              <label htmlFor="phoneNumber" className="form-label">Phone Number<span className="required">*</span></label>
+              <label htmlFor="phoneNumber" className="form-label">{t('verificationPhoneNumber')}<span className="required">*</span></label>
               <input
                 id="phoneNumber"
                 name="phoneNumber"
@@ -105,13 +107,13 @@ export default function VerificationRequestModal({ onClose }) {
                 className="form-input"
                 value={formData.phoneNumber}
                 onChange={handleInputChange}
-                placeholder="e.g. 09123456789"
+                placeholder={t('verificationPhonePlaceholder')}
                 required
               />
             </div>
 
             <div className="form-group">
-              <label htmlFor="address" className="form-label">Address<span className="required">*</span></label>
+              <label htmlFor="address" className="form-label">{t('verificationAddress')}<span className="required">*</span></label>
               <input
                 id="address"
                 name="address"
@@ -119,13 +121,13 @@ export default function VerificationRequestModal({ onClose }) {
                 className="form-input"
                 value={formData.address}
                 onChange={handleInputChange}
-                placeholder="Enter your home or business address"
+                placeholder={t('verificationAddressPlaceholder')}
                 required
               />
             </div>
 
             <div className="form-group">
-              <label htmlFor="serviceDescription" className="form-label">Describe Your Services<span className="required">*</span></label>
+              <label htmlFor="serviceDescription" className="form-label">{t('verificationDescribeServices')}<span className="required">*</span></label>
               <textarea
                 id="serviceDescription"
                 name="serviceDescription"
@@ -133,18 +135,18 @@ export default function VerificationRequestModal({ onClose }) {
                 rows="4"
                 value={formData.serviceDescription}
                 onChange={handleInputChange}
-                placeholder="Tell us what services you offer and your experience"
+                placeholder={t('verificationDescribeServicesPlaceholder')}
                 required
               />
             </div>
           </section>
 
           <section className="form-section important-notes">
-            <h4>Required Documents</h4>
-            <p className="section-description">Please upload the documents below so we can review your application.</p>
+            <h4>{t('verificationRequiredDocuments')}</h4>
+            <p className="section-description">{t('verificationUploadDocumentsDescription')}</p>
 
             <div className="form-group">
-              <label htmlFor="governmentId" className="form-label">Government-issued ID<span className="required">*</span></label>
+              <label htmlFor="governmentId" className="form-label">{t('verificationGovernmentId')}<span className="required">*</span></label>
               <input
                 id="governmentId"
                 name="governmentId"
@@ -157,7 +159,7 @@ export default function VerificationRequestModal({ onClose }) {
             </div>
 
             <div className="form-group">
-              <label htmlFor="certifications" className="form-label">Certifications / License<span className="required">*</span></label>
+              <label htmlFor="certifications" className="form-label">{t('verificationCertificationsLicense')}<span className="required">*</span></label>
               <input
                 id="certifications"
                 name="certifications"
@@ -171,16 +173,16 @@ export default function VerificationRequestModal({ onClose }) {
           </section>
 
           <section className="form-section important-notes">
-            <h4>Important Notes:</h4>
+            <h4>{t('importantNotes')}</h4>
             <ul>
-              <li>Please upload clear and valid documents.</li>
-              <li>Only verified and authentic certifications will be accepted.</li>
-              <li>Incomplete submissions may delay the review process.</li>
+              <li>{t('verificationClearDocumentsNote')}</li>
+              <li>{t('verificationAuthenticDocumentsNote')}</li>
+              <li>{t('verificationIncompleteDelayNote')}</li>
             </ul>
           </section>
 
           <button type="submit" className="btn-submit" disabled={isLoading || success}>
-            {isLoading ? 'Submitting...' : 'Submit Request'}
+            {isLoading ? t('verificationSubmitting') : t('verificationSubmitRequest')}
           </button>
         </form>
       </div>
