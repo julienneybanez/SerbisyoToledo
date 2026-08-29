@@ -8,6 +8,10 @@ const resolveNotificationDestination = (notification) => {
   const requestId = notification?.related_request_id;
   const type = String(notification?.type || '').toLowerCase();
 
+  if (requestId && type === 'message_received') {
+    return `/messages?request=${encodeURIComponent(requestId)}`;
+  }
+
   if (requestId && [
     'request_received',
     'request_accepted',
@@ -17,6 +21,9 @@ const resolveNotificationDestination = (notification) => {
     'service_completed',
     'discussion_requested',
     'discussion_accepted',
+    'phone_share_requested',
+    'phone_shared',
+    'phone_share_declined',
     'reschedule_proposed',
     'reschedule_accepted',
     'reschedule_declined',
@@ -24,6 +31,10 @@ const resolveNotificationDestination = (notification) => {
     'review_received',
   ].includes(type)) {
     return `/requests?request=${encodeURIComponent(requestId)}`;
+  }
+
+  if (['credential_approved', 'credential_rejected', 'credential_expired'].includes(type)) {
+    return '/provider-credentials';
   }
 
   if (['verification_approved', 'verification_rejected'].includes(type)) {
