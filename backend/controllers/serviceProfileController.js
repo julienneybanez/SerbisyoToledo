@@ -23,7 +23,7 @@ const {
 } = require('../utils/bookingAvailability');
 
 const SUPPORTED_LANGUAGE_CODES = new Set(['ceb', 'en', 'fil']);
-const SUPPORTED_PRICING_UNITS = new Set(['per_job', 'per_hour', 'per_day']);
+const SUPPORTED_PRICING_UNITS = new Set(['per_day']);
 const SUPPORTED_AVAILABILITY_STATUSES = new Set(['available', 'unavailable']);
 const PRESENCE_WINDOW_MINUTES = 5;
 
@@ -569,6 +569,7 @@ exports.getAllProfiles = async (req, res) => {
       ${REVIEW_STATS_JOIN}
       WHERE sp.is_published = TRUE
         AND u.is_verified = TRUE
+        AND u.is_active = TRUE
     `;
 
     const params = [];
@@ -741,6 +742,7 @@ exports.getRecommendedProviders = async (req, res) => {
       ${REVIEW_STATS_JOIN}
       WHERE sp.is_published = TRUE
         AND u.is_verified = TRUE
+        AND u.is_active = TRUE
         AND COALESCE(pas.availability_status, 'available') <> 'unavailable'
     `;
 
@@ -893,7 +895,8 @@ exports.getProfileById = async (req, res) => {
       JOIN users u ON sp.user_id = u.id
       LEFT JOIN provider_availability_settings pas ON pas.service_profile_id = sp.id
       ${REVIEW_STATS_JOIN}
-      WHERE sp.id = ? AND sp.is_published = TRUE AND u.is_verified = TRUE`,
+      WHERE sp.id = ? AND sp.is_published = TRUE AND u.is_verified = TRUE
+        AND u.is_active = TRUE`,
       [id]
     );
 
