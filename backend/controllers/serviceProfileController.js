@@ -330,6 +330,60 @@ const getProfileTaxonomyAssignments = async (connection, serviceProfileId) => {
   return { categoryKeys, serviceTypeKeys };
 };
 
+// Canonical: Validate publish requirements for a profile
+// Returns { canPublish: boolean, reason: string | null }
+const validatePublishRequirements = async (connection, userId, profileId) => {
+  // Fetch user verification status
+  const [userRows] = await connection.query(
+    'SELECT is_verified FROM users WHERE id = ? LIMIT 1',
+    [userId]
+  );
+
+  if (userRows.length === 0) {
+    return { canPublish: false, reason: 'User not found' };
+  }
+
+  if (!userRows[0].is_verified) {
+    return { canPublish: false, reason: 'Provider account must be verified before publishing' };
+  }
+
+  // Fetch profile with taxonomy
+  const [profileRows] = await connection.query(
+    'SELECT id, is_active FROM service_profiles WHERE id = ? AND user_id = ? LIMIT 1',
+    [profileId, userId]
+  );
+
+  if (profileRows.length === 0) {
+    return { canPublish: false, reason: 'Service profile not found' };
+  }
+
+  if (!profileRows[0].is_active) {
+    return { canPublish: false, reason: 'Service profile is deactivated' };
+  }
+
+  // Check for at least one category
+  const [categoryRows] = await connection.query(
+    'SELECT COUNT(*) as count FROM service_profile_categories WHERE service_profile_id = ?',
+    [profileId]
+  );
+
+  if (categoryRows[0].count === 0) {
+    return { canPublish: false, reason: 'At least one service category is required' };
+  }
+
+  // Check for at least one service type
+  const [typeRows] = await connection.query(
+    'SELECT COUNT(*) as count FROM service_profile_types WHERE service_profile_id = ?',
+    [profileId]
+  );
+
+  if (typeRows[0].count === 0) {
+    return { canPublish: false, reason: 'At least one service type is required' };
+  }
+
+  return { canPublish: true, reason: null };
+};
+
 // Create or update service profile (CANONICAL V3.1)
 // Persists category/type assignments to relational tables only (NOT JSON columns)
 exports.createOrUpdateProfile = async (req, res) => {
@@ -1232,8 +1286,11 @@ exports.getMyProfile = async (req, res) => {
   }
 };
 
-// Publish/unpublish profile
+// Publish/unpublish profile (CANONICAL V3.1)
+// Publishing now requires: verified provider + active profile + ≥1 category + ≥1 service type
 exports.togglePublish = async (req, res) => {
+  let connection;
+
   try {
     const userId = req.user?.userId;
 
@@ -1246,37 +1303,77 @@ exports.togglePublish = async (req, res) => {
 
     const { isPublished } = req.body;
 
+    // Unpublish is always allowed
+    // Publishing requires validation
     if (isPublished) {
-      const [providerRows] = await db.query(
-        'SELECT is_verified FROM users WHERE id = ? LIMIT 1',
+      connection = await db.getConnection();
+      await connection.beginTransaction();
+
+      try {
+        // Get profile ID and check ownership
+        const [profileRows] = await connection.query(
+          'SELECT id FROM service_profiles WHERE user_id = ? LIMIT 1',
+          [userId]
+        );
+
+        if (profileRows.length === 0) {
+          await connection.rollback();
+          return res.status(404).json({
+            success: false,
+            message: 'Service profile not found'
+          });
+        }
+
+        const profileId = profileRows[0].id;
+
+        // Validate publish requirements
+        const validation = await validatePublishRequirements(connection, userId, profileId);
+
+        if (!validation.canPublish) {
+          await connection.rollback();
+          return res.status(403).json({
+            success: false,
+            code: 'PUBLISH_REQUIREMENTS_NOT_MET',
+            message: validation.reason
+          });
+        }
+
+        // Update published status
+        await connection.query(
+          'UPDATE service_profiles SET is_published = TRUE WHERE id = ? AND user_id = ?',
+          [profileId, userId]
+        );
+
+        await connection.commit();
+
+        return res.json({
+          success: true,
+          message: 'Profile published successfully'
+        });
+
+      } catch (txError) {
+        await connection.rollback();
+        throw txError;
+      }
+    } else {
+      // Unpublish without transaction (simple update)
+      const [result] = await db.query(
+        'UPDATE service_profiles SET is_published = FALSE WHERE user_id = ?',
         [userId]
       );
 
-      if (providerRows.length === 0 || !providerRows[0].is_verified) {
-        return res.status(403).json({
+      if (result.affectedRows === 0) {
+        return res.status(404).json({
           success: false,
-          code: 'PROVIDER_VERIFICATION_REQUIRED',
-          message: 'Your service provider account must be verified before you can publish a Service Listing.'
+          message: 'Service profile not found'
         });
       }
-    }
 
-    const [result] = await db.query(
-      'UPDATE service_profiles SET is_published = ? WHERE user_id = ?',
-      [isPublished, userId]
-    );
-
-    if (result.affectedRows === 0) {
-      return res.status(404).json({
-        success: false,
-        message: 'Service profile not found'
+      return res.json({
+        success: true,
+        message: 'Profile unpublished successfully'
       });
     }
-
-    res.json({
-      success: true,
-      message: `Profile ${isPublished ? 'published' : 'unpublished'} successfully`
-    });
   } catch (error) {
     console.error('Error updating profile publish status:', error);
     res.status(500).json({
@@ -1284,6 +1381,10 @@ exports.togglePublish = async (req, res) => {
       message: 'Error updating profile',
       error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
+  } finally {
+    if (connection) {
+      connection.release();
+    }
   }
 };
 
