@@ -58,7 +58,7 @@ export default function VerificationRequestModal({ onClose }) {
 
       setSuccess(true);
       setTimeout(() => onClose(), 1200);
-    } catch (err) {
+    } catch {
       setError(t('verificationSubmitFailed'));
     } finally {
       setIsLoading(false);
@@ -93,7 +93,7 @@ export default function VerificationRequestModal({ onClose }) {
                 className="form-input"
                 value={formData.fullName}
                 onChange={handleInputChange}
-                placeholder={t('verificationFullNamePlaceholder')}"
+                placeholder={t('verificationFullNamePlaceholder')}
                 required
               />
             </div>
@@ -107,7 +107,7 @@ export default function VerificationRequestModal({ onClose }) {
                 className="form-input"
                 value={formData.phoneNumber}
                 onChange={handleInputChange}
-                placeholder={t('verificationPhonePlaceholder')}"
+                placeholder={t('verificationPhonePlaceholder')}
                 required
               />
             </div>
@@ -121,7 +121,7 @@ export default function VerificationRequestModal({ onClose }) {
                 className="form-input"
                 value={formData.address}
                 onChange={handleInputChange}
-                placeholder={t('verificationAddressPlaceholder')}"
+                placeholder={t('verificationAddressPlaceholder')}
                 required
               />
             </div>
@@ -135,7 +135,7 @@ export default function VerificationRequestModal({ onClose }) {
                 rows="4"
                 value={formData.serviceDescription}
                 onChange={handleInputChange}
-                placeholder={t('verificationDescribeServicesPlaceholder')}"
+                placeholder={t('verificationDescribeServicesPlaceholder')}
                 required
               />
             </div>
