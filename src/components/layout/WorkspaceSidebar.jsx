@@ -53,43 +53,53 @@ export default function WorkspaceSidebar({
         ))}
       </nav>
 
+      {isProvider ? (
+        <>
+          <div className="workspace-nav-section-label">Profile</div>
+          <nav className="workspace-nav workspace-nav-secondary">
+            <button type="button" className="workspace-nav-link workspace-nav-action" onClick={onManageServiceProfile}>
+              <i className={`bi ${hasServiceProfile ? 'bi-card-list' : 'bi-plus-circle'}`} aria-hidden="true"></i>
+              <span>{hasServiceProfile ? 'Service Listing' : 'Post Service Listing'}</span>
+            </button>
+
+            {hasServiceProfile && (
+              <>
+                <button type="button" className="workspace-nav-link workspace-nav-action" onClick={onEditProviderProfile}>
+                  <i className="bi bi-person-lines-fill" aria-hidden="true"></i><span>Public Profile</span>
+                </button>
+                <NavLink to="/provider-availability" className={({ isActive }) => `workspace-nav-link ${isActive ? 'active' : ''}`}>
+                  <i className="bi bi-calendar2-check" aria-hidden="true"></i><span>Availability</span>
+                </NavLink>
+                <NavLink to="/provider-credentials" className={({ isActive }) => `workspace-nav-link ${isActive ? 'active' : ''}`}>
+                  <i className="bi bi-patch-check" aria-hidden="true"></i><span>Credentials</span>
+                </NavLink>
+                {publicProfileRoute !== '/dashboard' && (
+                  <Link
+                    to={`${publicProfileRoute}${publicProfileRoute.includes('?') ? '&' : '?'}previewMode=desktop`}
+                    className="workspace-nav-link"
+                  >
+                    <i className="bi bi-eye" aria-hidden="true"></i><span>Preview Provider Page</span>
+                  </Link>
+                )}
+              </>
+            )}
+          </nav>
+        </>
+      ) : (
+        <nav className="workspace-nav workspace-nav-secondary">
+          <button type="button" className="workspace-nav-link workspace-nav-action" onClick={onEditClientProfile}>
+            <i className="bi bi-pencil-square" aria-hidden="true"></i><span>Edit Profile</span>
+          </button>
+        </nav>
+      )}
+
       <div className="workspace-sidebar-spacer" />
       <div className="workspace-sidebar-divider" />
 
       <nav className="workspace-nav workspace-nav-secondary">
-        {!isProvider && (
-          <button type="button" className="workspace-nav-link workspace-nav-action" onClick={onEditClientProfile}>
-            <i className="bi bi-pencil-square" aria-hidden="true"></i><span>Edit Profile</span>
-          </button>
-        )}
-        {isProvider && (
-          <>
-            <button type="button" className="workspace-nav-link workspace-nav-action" onClick={onManageServiceProfile}>
-              <i className={`bi ${hasServiceProfile ? 'bi-card-list' : 'bi-plus-circle'}`} aria-hidden="true"></i>
-              <span>{hasServiceProfile ? 'Edit Service Listing' : 'Post Service Listing'}</span>
-            </button>
-            <button type="button" className="workspace-nav-link workspace-nav-action" onClick={onEditProviderProfile}>
-              <i className="bi bi-person-lines-fill" aria-hidden="true"></i><span>Profile & About Me</span>
-            </button>
-            <NavLink to="/provider-availability" className={({ isActive }) => `workspace-nav-link ${isActive ? 'active' : ''}`}>
-              <i className="bi bi-calendar2-check" aria-hidden="true"></i><span>Availability</span>
-            </NavLink>
-            <NavLink to="/provider-credentials" className={({ isActive }) => `workspace-nav-link ${isActive ? 'active' : ''}`}>
-              <i className="bi bi-translate" aria-hidden="true"></i><span>Language & Credentials</span>
-            </NavLink>
-          </>
-        )}
         <NavLink to={isProvider ? '/provider-settings' : '/client-settings'} className={({ isActive }) => `workspace-nav-link ${isActive ? 'active' : ''}`}>
           <i className="bi bi-gear" aria-hidden="true"></i><span>Settings</span>
         </NavLink>
-        {isProvider && hasServiceProfile && publicProfileRoute !== '/dashboard' && (
-          <Link
-            to={`${publicProfileRoute}${publicProfileRoute.includes('?') ? '&' : '?'}previewMode=desktop`}
-            className="workspace-nav-link"
-          >
-            <i className="bi bi-eye" aria-hidden="true"></i><span>Preview Provider Page</span>
-          </Link>
-        )}
       </nav>
     </aside>
   );

@@ -13,7 +13,7 @@ const {
 const { getJwtSecret, getJwtSignOptions } = require('../utils/jwt');
 
 const RESET_TOKEN_EXPIRY_MINUTES = Number(process.env.PASSWORD_RESET_TOKEN_EXP_MINUTES || 20);
-const EMAIL_VERIFICATION_ENABLED = boolFromEnv(process.env.EMAIL_VERIFICATION_ENABLED, false);
+const PUBLIC_EMAIL_VERIFICATION_REQUIRED = true;
 const WELCOME_EMAIL_ENABLED = boolFromEnv(process.env.WELCOME_EMAIL_ENABLED, false);
 const VERIFICATION_TOKEN_EXPIRY_HOURS = Number(process.env.EMAIL_VERIFICATION_TOKEN_EXP_HOURS || 24);
 const RESEND_VERIFICATION_MIN_INTERVAL_SECONDS = Number(process.env.RESEND_VERIFICATION_MIN_INTERVAL_SECONDS || 60);
@@ -145,8 +145,8 @@ exports.register = async (req, res) => {
         : null,
     };
 
-    const isEmailVerified = !EMAIL_VERIFICATION_ENABLED;
-    const verificationTokenRaw = EMAIL_VERIFICATION_ENABLED ? generateVerificationToken() : null;
+    const isEmailVerified = false;
+    const verificationTokenRaw = generateVerificationToken();
     const verificationTokenHash = verificationTokenRaw ? hashToken(verificationTokenRaw) : null;
     const verificationTokenExpires = verificationTokenRaw
       ? new Date(Date.now() + VERIFICATION_TOKEN_EXPIRY_HOURS * 60 * 60 * 1000)
@@ -171,17 +171,14 @@ exports.register = async (req, res) => {
       ]
     );
 
-    let verificationEmailResult = { success: true };
-    if (EMAIL_VERIFICATION_ENABLED && verificationTokenRaw) {
-      verificationEmailResult = await sendVerificationEmail(
-        userData.email,
-        userData.full_name,
-        verificationTokenRaw
-      );
+    const verificationEmailResult = await sendVerificationEmail(
+      userData.email,
+      userData.full_name,
+      verificationTokenRaw
+    );
 
-      if (!verificationEmailResult.success) {
-        console.error('Verification email was not sent:', verificationEmailResult.errorCode || verificationEmailResult.error);
-      }
+    if (!verificationEmailResult.success) {
+      console.error('Verification email was not sent:', verificationEmailResult.errorCode || verificationEmailResult.error);
     }
 
     let welcomeEmailResult = { success: true };
@@ -197,18 +194,14 @@ exports.register = async (req, res) => {
       }
     }
 
-    const token = EMAIL_VERIFICATION_ENABLED ? null : generateToken(result.insertId);
+    const token = null;
 
     // Return success response
     res.status(201).json({
       success: true,
-      message: EMAIL_VERIFICATION_ENABLED
-        ? (verificationEmailResult.success
-          ? 'Registration successful! Please check your email to verify your account.'
-          : 'Registration successful, but we could not send verification email right now. Please use resend verification after email service is restored.')
-        : (welcomeEmailResult.success && WELCOME_EMAIL_ENABLED
-          ? 'Registration successful! A confirmation email has been sent.'
-          : 'Registration successful! You can now log in.'),
+      message: verificationEmailResult.success
+        ? 'Registration successful! Please check your email to verify your account before logging in.'
+        : 'Registration successful, but the verification email could not be sent. Please use Resend Verification Email before logging in.',
       data: {
         user: {
           id: result.insertId,
@@ -220,6 +213,8 @@ exports.register = async (req, res) => {
           skills: skills || [],
           emailVerified: isEmailVerified
         },
+        verificationRequired: PUBLIC_EMAIL_VERIFICATION_REQUIRED,
+        verificationEmailSent: Boolean(verificationEmailResult.success),
         ...(token ? { token } : {})
       }
     });
@@ -457,7 +452,7 @@ exports.login = async (req, res) => {
       });
     }
 
-    if (EMAIL_VERIFICATION_ENABLED && !user.email_verified) {
+    if (PUBLIC_EMAIL_VERIFICATION_REQUIRED && user.user_type !== 'admin' && !user.email_verified) {
       return res.status(403).json({
         success: false,
         code: 'EMAIL_NOT_VERIFIED',
@@ -780,13 +775,6 @@ exports.verifyEmail = async (req, res) => {
 // Resend verification email
 exports.resendVerification = async (req, res) => {
   try {
-    if (!EMAIL_VERIFICATION_ENABLED) {
-      return res.status(404).json({
-        success: false,
-        message: 'Email verification is currently disabled.'
-      });
-    }
-
     const { email } = req.body;
 
     if (!email) {

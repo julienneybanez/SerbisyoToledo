@@ -1,0 +1,62 @@
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import '@testing-library/jest-dom/vitest';
+import ProviderAvailability from '../ProviderAvailability';
+import { serviceProfileAPI } from '../../services/api';
+
+vi.mock('../../services/api', () => ({
+  serviceProfileAPI: {
+    getMyAvailability: vi.fn(),
+    saveMyAvailability: vi.fn(),
+  },
+}));
+
+describe('ProviderAvailability', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+
+    serviceProfileAPI.getMyAvailability.mockResolvedValue({
+      success: true,
+      data: {
+        acceptingBookings: true,
+        availability: [],
+        systemRules: {
+          allowSameDayBooking: false,
+          minAdvanceNoticeMinutes: 720,
+          maxAdvanceBookingDays: 60,
+        },
+      },
+    });
+
+    serviceProfileAPI.saveMyAvailability.mockResolvedValue({
+      success: true,
+      message: 'Availability saved successfully',
+    });
+  });
+
+  it('turns a quick preset into explicit dates and saves the simplified payload', async () => {
+    render(<ProviderAvailability />);
+
+    expect(await screen.findByText('Availability')).toBeInTheDocument();
+    expect(screen.getByText('Weekdays')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Whole Day' }));
+    fireEvent.click(screen.getByRole('button', { name: /Apply Preset/i }));
+
+    expect(await screen.findByText(/available dates? selected/i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /Save Availability/i }));
+
+    await waitFor(() => {
+      expect(serviceProfileAPI.saveMyAvailability).toHaveBeenCalledTimes(1);
+    });
+
+    const payload = serviceProfileAPI.saveMyAvailability.mock.calls[0][0];
+    expect(payload.acceptingBookings).toBe(true);
+    expect(Array.isArray(payload.availability)).toBe(true);
+    expect(payload.availability.length).toBeGreaterThan(0);
+    expect(payload.availability[0]).toMatchObject({
+      startTime: '08:00',
+      endTime: '17:00',
+    });
+  });
+});

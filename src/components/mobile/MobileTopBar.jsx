@@ -42,10 +42,10 @@ export default function MobileTopBar({
 
   const providerListingLabel = language === 'ceb'
     ? (hasServiceProfile ? 'Usba ang Service Listing' : 'I-post ang Service Listing')
-    : (hasServiceProfile ? 'Edit Service Listing' : 'Post Service Listing');
+    : (hasServiceProfile ? 'Service Listing' : 'Post Service Listing');
   const providerPortfolioLabel = language === 'ceb'
-    ? 'Profile ug About Me'
-    : 'Profile & About Me';
+    ? 'Public Profile'
+    : 'Public Profile';
   const adminSystemStatusLabel = language === 'ceb' ? 'Status sa System' : 'System Status';
 
   useEffect(() => {
@@ -181,33 +181,37 @@ export default function MobileTopBar({
                   <i className={`bi ${hasServiceProfile ? 'bi-card-list' : 'bi-plus-circle'}`}></i>
                   {providerListingLabel}
                 </button>
-                <button
-                  type="button"
-                  className="mobile-profile-menu-item"
-                  role="menuitem"
-                  onClick={onEditProviderProfile}
-                >
-                  <i className="bi bi-images"></i>
-                  {providerPortfolioLabel}
-                </button>
-                <Link
-                  to="/provider-availability"
-                  className="mobile-profile-menu-item"
-                  role="menuitem"
-                  onClick={onCloseProfileMenu}
-                >
-                  <i className="bi bi-calendar2-check"></i>
-                  {t('providerSettingsNavAvailability')}
-                </Link>
-                <Link
-                  to="/provider-credentials"
-                  className="mobile-profile-menu-item"
-                  role="menuitem"
-                  onClick={onCloseProfileMenu}
-                >
-                  <i className="bi bi-patch-check"></i>
-                  {t('providerLanguagesCredentials')}
-                </Link>
+                {hasServiceProfile && (
+                  <>
+                    <button
+                      type="button"
+                      className="mobile-profile-menu-item"
+                      role="menuitem"
+                      onClick={onEditProviderProfile}
+                    >
+                      <i className="bi bi-person-lines-fill"></i>
+                      {providerPortfolioLabel}
+                    </button>
+                    <Link
+                      to="/provider-availability"
+                      className="mobile-profile-menu-item"
+                      role="menuitem"
+                      onClick={onCloseProfileMenu}
+                    >
+                      <i className="bi bi-calendar2-check"></i>
+                      {t('providerSettingsNavAvailability')}
+                    </Link>
+                    <Link
+                      to="/provider-credentials"
+                      className="mobile-profile-menu-item"
+                      role="menuitem"
+                      onClick={onCloseProfileMenu}
+                    >
+                      <i className="bi bi-patch-check"></i>
+                      Credentials
+                    </Link>
+                  </>
+                )}
               </>
             ) : role === 'client' ? (
               <button

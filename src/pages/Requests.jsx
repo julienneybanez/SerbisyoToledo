@@ -951,36 +951,34 @@ export default function Requests() {
   return (
     <div className="requests-container">
       <div className="requests-wrapper">
-        <div className="requests-context-row" data-tour={isProvider ? 'incoming-requests' : undefined}>
-          <p>{isProvider ? t('requestsProviderSubtitle') : t('requestsClientSubtitle')}</p>
+        <div className="requests-toolbar" data-tour={isProvider ? 'incoming-requests' : undefined}>
+          <div className="requests-filters">
+            <button
+              className={`filter-btn ${activeFilter === 'all' ? 'active' : ''}`}
+              onClick={() => setActiveFilter('all')}
+            >
+              {t('all')}
+            </button>
+            <button
+              className={`filter-btn ${activeFilter === 'active' ? 'active' : ''}`}
+              onClick={() => setActiveFilter('active')}
+            >
+              {t('active')}
+            </button>
+            <button
+              className={`filter-btn ${activeFilter === REQUEST_STATUS.COMPLETED ? 'active' : ''}`}
+              onClick={() => setActiveFilter(REQUEST_STATUS.COMPLETED)}
+            >
+              {t(REQUEST_STATUS.COMPLETED)}
+            </button>
+            <button
+              className={`filter-btn ${activeFilter === REQUEST_STATUS.CANCELLED ? 'active' : ''}`}
+              onClick={() => setActiveFilter(REQUEST_STATUS.CANCELLED)}
+            >
+              {t(REQUEST_STATUS.CANCELLED)}
+            </button>
+          </div>
           <NextStepHelp guidance={requestsHelpGuidance} />
-        </div>
-
-        <div className="requests-filters">
-          <button 
-            className={`filter-btn ${activeFilter === 'all' ? 'active' : ''}`}
-            onClick={() => setActiveFilter('all')}
-          >
-            {t('all')}
-          </button>
-          <button 
-            className={`filter-btn ${activeFilter === 'active' ? 'active' : ''}`}
-            onClick={() => setActiveFilter('active')}
-          >
-            {t('active')}
-          </button>
-          <button 
-            className={`filter-btn ${activeFilter === REQUEST_STATUS.COMPLETED ? 'active' : ''}`}
-            onClick={() => setActiveFilter(REQUEST_STATUS.COMPLETED)}
-          >
-            {t(REQUEST_STATUS.COMPLETED)}
-          </button>
-          <button 
-            className={`filter-btn ${activeFilter === REQUEST_STATUS.CANCELLED ? 'active' : ''}`}
-            onClick={() => setActiveFilter(REQUEST_STATUS.CANCELLED)}
-          >
-            {t(REQUEST_STATUS.CANCELLED)}
-          </button>
         </div>
 
         {error && (

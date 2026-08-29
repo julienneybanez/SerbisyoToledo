@@ -280,6 +280,39 @@ exports.createOrUpdateProfile = async (req, res) => {
       });
     }
 
+    const [providerRows] = await db.query(
+      'SELECT user_type, is_verified FROM users WHERE id = ? LIMIT 1',
+      [userId]
+    );
+
+    if (providerRows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Service provider account not found'
+      });
+    }
+
+    if (providerRows[0].user_type !== 'tradesperson') {
+      return res.status(403).json({
+        success: false,
+        code: 'SERVICE_PROVIDER_REQUIRED',
+        message: 'Only service providers can manage a service listing'
+      });
+    }
+
+    const [existingProfile] = await db.query(
+      'SELECT id, banner_image_public_id FROM service_profiles WHERE user_id = ?',
+      [userId]
+    );
+
+    if (existingProfile.length === 0 && !providerRows[0].is_verified) {
+      return res.status(403).json({
+        success: false,
+        code: 'PROVIDER_VERIFICATION_REQUIRED',
+        message: 'Your service provider account must be verified before you can post a Service Listing.'
+      });
+    }
+
     const { barangayAddress, startingPrice, description } = req.body;
     const pricingUnit = String(req.body.pricingUnit || 'per_day').trim().toLowerCase();
     let serviceCategories = req.body.serviceCategories;
@@ -378,12 +411,6 @@ exports.createOrUpdateProfile = async (req, res) => {
         bannerImagePublicId = uploadResult.public_id;
       }
     }
-
-    // Check if profile already exists for this user
-    const [existingProfile] = await db.query(
-      'SELECT id, banner_image_public_id FROM service_profiles WHERE user_id = ?',
-      [userId]
-    );
 
     if (existingProfile.length > 0) {
       // Update existing profile
@@ -541,6 +568,7 @@ exports.getAllProfiles = async (req, res) => {
       LEFT JOIN provider_availability_settings pas ON pas.service_profile_id = sp.id
       ${REVIEW_STATS_JOIN}
       WHERE sp.is_published = TRUE
+        AND u.is_verified = TRUE
     `;
 
     const params = [];
@@ -712,6 +740,7 @@ exports.getRecommendedProviders = async (req, res) => {
       LEFT JOIN provider_availability_settings pas ON pas.service_profile_id = sp.id
       ${REVIEW_STATS_JOIN}
       WHERE sp.is_published = TRUE
+        AND u.is_verified = TRUE
         AND COALESCE(pas.availability_status, 'available') <> 'unavailable'
     `;
 
@@ -864,7 +893,7 @@ exports.getProfileById = async (req, res) => {
       JOIN users u ON sp.user_id = u.id
       LEFT JOIN provider_availability_settings pas ON pas.service_profile_id = sp.id
       ${REVIEW_STATS_JOIN}
-      WHERE sp.id = ? AND sp.is_published = TRUE`,
+      WHERE sp.id = ? AND sp.is_published = TRUE AND u.is_verified = TRUE`,
       [id]
     );
 
@@ -1163,6 +1192,21 @@ exports.togglePublish = async (req, res) => {
     }
 
     const { isPublished } = req.body;
+
+    if (isPublished) {
+      const [providerRows] = await db.query(
+        'SELECT is_verified FROM users WHERE id = ? LIMIT 1',
+        [userId]
+      );
+
+      if (providerRows.length === 0 || !providerRows[0].is_verified) {
+        return res.status(403).json({
+          success: false,
+          code: 'PROVIDER_VERIFICATION_REQUIRED',
+          message: 'Your service provider account must be verified before you can publish a Service Listing.'
+        });
+      }
+    }
 
     const [result] = await db.query(
       'UPDATE service_profiles SET is_published = ? WHERE user_id = ?',
@@ -1656,11 +1700,13 @@ exports.getMyAvailability = async (req, res) => {
     }
 
     const serviceProfileId = profiles[0].id;
-
     const connection = await db.getConnection();
+
     try {
       const settings = await ensureAvailabilitySettings(connection, serviceProfileId);
 
+      // Weekly rows are returned only for backward compatibility with older
+      // provider data. New availability saves use explicit provider-selected dates.
       const [weeklyBlocks] = await connection.query(
         `SELECT id, day_of_week, start_time, end_time, is_available
          FROM provider_weekly_availability
@@ -1685,7 +1731,7 @@ exports.getMyAvailability = async (req, res) => {
       ));
       const todayString = formatDateOnly(todayToledo);
 
-      const specificAvailability = exceptions
+      const availability = exceptions
         .filter((item) => (
           String(item.exception_type || '').toLowerCase() === 'available'
           && item.start_time
@@ -1702,10 +1748,20 @@ exports.getMyAvailability = async (req, res) => {
       return res.json({
         success: true,
         data: {
+          acceptingBookings: String(settings.availability_status || 'available').toLowerCase() !== 'unavailable',
+          availability,
+          systemRules: {
+            allowSameDayBooking: false,
+            minAdvanceNoticeMinutes: 720,
+            maxAdvanceBookingDays: 60,
+          },
+
+          // Compatibility fields for existing dashboard/tests while the old
+          // weekly availability model is phased out.
           settings,
           weeklyBlocks,
           exceptions,
-          specificAvailability,
+          specificAvailability: availability,
         }
       });
     } finally {
@@ -1725,7 +1781,13 @@ exports.saveMyAvailability = async (req, res) => {
 
   try {
     const userId = req.user?.userId;
-    const { settings, weeklyBlocks, specificAvailability } = req.body;
+    const {
+      acceptingBookings,
+      availability,
+      settings,
+      weeklyBlocks,
+      specificAvailability,
+    } = req.body;
 
     const [profiles] = await db.query(
       'SELECT id FROM service_profiles WHERE user_id = ? LIMIT 1',
@@ -1737,28 +1799,47 @@ exports.saveMyAvailability = async (req, res) => {
     }
 
     const serviceProfileId = profiles[0].id;
+    const usesSimpleContract = (
+      typeof acceptingBookings !== 'undefined'
+      || Array.isArray(availability)
+    );
+    const submittedAvailability = Array.isArray(availability)
+      ? availability
+      : specificAvailability;
 
     connection = await db.getConnection();
     await connection.beginTransaction();
 
     await ensureAvailabilitySettings(connection, serviceProfileId);
 
-    const allowSameDay = Boolean(settings?.allowSameDayBooking);
-    const minAdvanceNotice = Number(settings?.minAdvanceNoticeMinutes ?? 720);
-    const maxAdvanceDays = Number(settings?.maxAdvanceBookingDays ?? 60);
-    const availabilityStatus = String(
-      settings?.availabilityStatus ?? settings?.availability_status ?? 'available'
-    ).trim().toLowerCase();
-
-    const showAvailabilityRaw = settings?.showAvailabilityStatus ?? settings?.show_availability_status;
-    const showAvailabilityStatus = showAvailabilityRaw == null
+    // New provider-facing flow uses system defaults. Legacy payloads are still
+    // accepted temporarily so old clients/tests do not break during rollout.
+    const allowSameDay = usesSimpleContract
+      ? false
+      : Boolean(settings?.allowSameDayBooking);
+    const minAdvanceNotice = usesSimpleContract
+      ? 720
+      : Number(settings?.minAdvanceNoticeMinutes ?? 720);
+    const maxAdvanceDays = usesSimpleContract
+      ? 60
+      : Number(settings?.maxAdvanceBookingDays ?? 60);
+    const availabilityStatus = usesSimpleContract
+      ? (acceptingBookings === false ? 'unavailable' : 'available')
+      : String(
+          settings?.availabilityStatus ?? settings?.availability_status ?? 'available'
+        ).trim().toLowerCase();
+    const showAvailabilityStatus = usesSimpleContract
       ? true
-      : (
-          showAvailabilityRaw === true
-          || showAvailabilityRaw === 1
-          || showAvailabilityRaw === '1'
-          || String(showAvailabilityRaw).trim().toLowerCase() === 'true'
-        );
+      : (() => {
+          const raw = settings?.showAvailabilityStatus ?? settings?.show_availability_status;
+          if (raw == null) return true;
+          return (
+            raw === true
+            || raw === 1
+            || raw === '1'
+            || String(raw).trim().toLowerCase() === 'true'
+          );
+        })();
 
     if (!SUPPORTED_AVAILABILITY_STATUSES.has(availabilityStatus)) {
       await connection.rollback();
@@ -1775,11 +1856,11 @@ exports.saveMyAvailability = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Invalid maximum advance booking days' });
     }
 
-    const hasSpecificAvailabilityPayload = Array.isArray(specificAvailability);
-    const normalizedSpecificAvailability = [];
+    const hasExplicitAvailability = Array.isArray(submittedAvailability);
+    const normalizedAvailability = [];
 
-    if (hasSpecificAvailabilityPayload) {
-      if (specificAvailability.length > 500) {
+    if (hasExplicitAvailability) {
+      if (submittedAvailability.length > 500) {
         await connection.rollback();
         return res.status(400).json({ success: false, message: 'Too many availability slots' });
       }
@@ -1790,25 +1871,37 @@ exports.saveMyAvailability = async (req, res) => {
         toledoNow.getUTCMonth(),
         toledoNow.getUTCDate()
       ));
+      const earliestAllowedDate = new Date(todayToledo);
+      if (usesSimpleContract) {
+        earliestAllowedDate.setUTCDate(earliestAllowedDate.getUTCDate() + 1);
+      }
       const latestAllowedDate = new Date(todayToledo);
-      latestAllowedDate.setUTCDate(latestAllowedDate.getUTCDate() + 365);
+      latestAllowedDate.setUTCDate(
+        latestAllowedDate.getUTCDate() + (usesSimpleContract ? 60 : 365)
+      );
 
       const rangesByDate = new Map();
 
-      for (const item of specificAvailability) {
+      for (const item of submittedAvailability) {
         const parsedDate = parseDateOnly(item?.date ?? item?.exceptionDate);
-        const start = parseTimeInputToSql(item?.startTime);
-        const end = parseTimeInputToSql(item?.endTime);
+        const slotStart = parseTimeInputToSql(item?.startTime);
+        const slotEnd = parseTimeInputToSql(item?.endTime);
 
-        if (!parsedDate || parsedDate < todayToledo || parsedDate > latestAllowedDate) {
+        if (
+          !parsedDate
+          || parsedDate < earliestAllowedDate
+          || parsedDate > latestAllowedDate
+        ) {
           await connection.rollback();
           return res.status(400).json({
             success: false,
-            message: 'Availability dates must be between today and 365 days from today'
+            message: usesSimpleContract
+              ? 'Availability dates must be from tomorrow up to 60 days ahead'
+              : 'Availability dates must be between today and 365 days from today'
           });
         }
 
-        if (!start || !end || end <= start) {
+        if (!slotStart || !slotEnd || slotEnd <= slotStart) {
           await connection.rollback();
           return res.status(400).json({
             success: false,
@@ -1819,7 +1912,7 @@ exports.saveMyAvailability = async (req, res) => {
         const date = formatDateOnly(parsedDate);
         const ranges = rangesByDate.get(date) || [];
 
-        if (ranges.some((range) => start < range.end && end > range.start)) {
+        if (ranges.some((range) => slotStart < range.end && slotEnd > range.start)) {
           await connection.rollback();
           return res.status(400).json({
             success: false,
@@ -1827,9 +1920,9 @@ exports.saveMyAvailability = async (req, res) => {
           });
         }
 
-        ranges.push({ start, end });
+        ranges.push({ start: slotStart, end: slotEnd });
         rangesByDate.set(date, ranges);
-        normalizedSpecificAvailability.push({ date, start, end });
+        normalizedAvailability.push({ date, start: slotStart, end: slotEnd });
       }
     }
 
@@ -1851,9 +1944,15 @@ exports.saveMyAvailability = async (req, res) => {
       ]
     );
 
-    await connection.query('DELETE FROM provider_weekly_availability WHERE service_profile_id = ?', [serviceProfileId]);
+    if (usesSimpleContract || hasExplicitAvailability) {
+      // Explicit provider-selected dates are now authoritative. Clear recurring
+      // weekly rules and future exceptions so no hidden legacy rule can make a
+      // client-facing date appear or disappear unexpectedly.
+      await connection.query(
+        'DELETE FROM provider_weekly_availability WHERE service_profile_id = ?',
+        [serviceProfileId]
+      );
 
-    if (hasSpecificAvailabilityPayload) {
       const toledoNow = new Date(Date.now() + (8 * 60 * 60 * 1000));
       const todayToledo = new Date(Date.UTC(
         toledoNow.getUTCFullYear(),
@@ -1862,16 +1961,13 @@ exports.saveMyAvailability = async (req, res) => {
       ));
       const todayString = formatDateOnly(todayToledo);
 
-      // The new provider schedule is authoritative for future availability.
-      // Remove legacy future exceptions so hidden "booked"/vacation overrides
-      // cannot contradict the dates and times the provider just selected.
       await connection.query(
         `DELETE FROM provider_availability_exceptions
          WHERE service_profile_id = ? AND exception_date >= ?`,
         [serviceProfileId, todayString]
       );
 
-      for (const slot of normalizedSpecificAvailability) {
+      for (const slot of normalizedAvailability) {
         await connection.query(
           `INSERT INTO provider_availability_exceptions
            (service_profile_id, exception_date, start_time, end_time, exception_type, reason)
@@ -1880,12 +1976,18 @@ exports.saveMyAvailability = async (req, res) => {
         );
       }
     } else {
-      const rangesByDay = new Map();
+      // Legacy recurring-week payload support. New frontend code does not send
+      // this shape, but retaining it avoids a breaking API change during rollout.
+      await connection.query(
+        'DELETE FROM provider_weekly_availability WHERE service_profile_id = ?',
+        [serviceProfileId]
+      );
 
+      const rangesByDay = new Map();
       for (const block of Array.isArray(weeklyBlocks) ? weeklyBlocks : []) {
         const dayOfWeek = Number(block.dayOfWeek);
-        const start = parseTimeInputToSql(block.startTime);
-        const end = parseTimeInputToSql(block.endTime);
+        const slotStart = parseTimeInputToSql(block.startTime);
+        const slotEnd = parseTimeInputToSql(block.endTime);
         const isAvailable = block.isAvailable !== false;
 
         if (!Number.isInteger(dayOfWeek) || dayOfWeek < 0 || dayOfWeek > 6) {
@@ -1893,27 +1995,28 @@ exports.saveMyAvailability = async (req, res) => {
           return res.status(400).json({ success: false, message: 'Invalid day of week in availability block' });
         }
 
-        if (!start || !end || end <= start) {
+        if (!slotStart || !slotEnd || slotEnd <= slotStart) {
           await connection.rollback();
           return res.status(400).json({ success: false, message: 'Invalid time range in availability block' });
         }
 
         const ranges = rangesByDay.get(dayOfWeek) || [];
-        if (ranges.some((range) => start < range.end && end > range.start)) {
+        if (ranges.some((range) => slotStart < range.end && slotEnd > range.start)) {
           await connection.rollback();
           return res.status(400).json({
             success: false,
             message: 'Overlapping weekly availability blocks are not allowed'
           });
         }
-        ranges.push({ start, end });
+
+        ranges.push({ start: slotStart, end: slotEnd });
         rangesByDay.set(dayOfWeek, ranges);
 
         await connection.query(
           `INSERT INTO provider_weekly_availability
            (service_profile_id, day_of_week, start_time, end_time, is_available)
            VALUES (?, ?, ?, ?, ?)`,
-          [serviceProfileId, dayOfWeek, start, end, isAvailable]
+          [serviceProfileId, dayOfWeek, slotStart, slotEnd, isAvailable]
         );
       }
     }
@@ -1922,10 +2025,17 @@ exports.saveMyAvailability = async (req, res) => {
 
     return res.json({
       success: true,
-      message: 'Availability updated successfully',
+      message: 'Availability saved successfully',
       data: {
-        mode: hasSpecificAvailabilityPayload ? 'specific' : 'weekly',
-        specificAvailabilityCount: normalizedSpecificAvailability.length,
+        acceptingBookings: availabilityStatus !== 'unavailable',
+        availabilityCount: normalizedAvailability.length,
+        systemRules: usesSimpleContract
+          ? {
+              allowSameDayBooking: false,
+              minAdvanceNoticeMinutes: 720,
+              maxAdvanceBookingDays: 60,
+            }
+          : null,
       }
     });
   } catch (error) {

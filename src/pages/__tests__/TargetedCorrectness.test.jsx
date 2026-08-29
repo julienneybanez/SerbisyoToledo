@@ -24,6 +24,9 @@ vi.mock('react-router-dom', async () => {
 vi.mock('../../services/api', () => ({
   getUser: vi.fn(),
   isAuthenticated: vi.fn(),
+  authAPI: {
+    getMe: vi.fn(),
+  },
   serviceProfileAPI: {
     getAllProfiles: vi.fn(),
     getMyProfile: vi.fn(),

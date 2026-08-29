@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { authAPI } from '../services/api';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { authAPI, verificationAPI } from '../services/api';
 import { useLanguage } from '../context/LanguageContext';
 import loginServiceImage from '../assets/man-installs-heating-system-house-checks-pipes-with-wrench.jpg';
 import logo from '../assets/logo.png';
@@ -48,13 +48,22 @@ const isRoleSafeRedirect = (userType, redirectPath) => {
 
 const Login = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { t, language } = useLanguage();
   const loginHeading = language === 'en' ? 'Welcome back' : t('logIn');
   const loginSubtitle = language === 'en' ? 'Log in to your account' : t('loginSubtitle');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-
+  const [verificationNotice, setVerificationNotice] = useState(() => (
+    searchParams.get('verification') === 'pending'
+      ? (searchParams.get('sent') === '0'
+        ? 'Your account was created, but the verification email could not be sent. You can resend it below.'
+        : 'Account created. Check your email and verify your account before logging in.')
+      : ''
+  ));
+  const [verificationEmail, setVerificationEmail] = useState(() => searchParams.get('email') || '');
+  const [resendingVerification, setResendingVerification] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -69,6 +78,7 @@ const Login = () => {
   const handleSubmit = async (event) => {
     event.preventDefault();
     setError('');
+    setVerificationNotice('');
     setIsLoading(true);
 
     try {
@@ -89,7 +99,13 @@ const Login = () => {
       navigate(DEFAULT_ROUTE_BY_ROLE[userType] || '/', { replace: true });
     } catch (err) {
       console.error('Login error:', err);
-      setError(err.message || t('loginFailedCheckCredentials'));
+      if (err?.code === 'EMAIL_NOT_VERIFIED') {
+        setVerificationEmail(formData.email);
+        setVerificationNotice('Please verify your email address before logging in.');
+        setError('');
+      } else {
+        setError(err.message || t('loginFailedCheckCredentials'));
+      }
     } finally {
       setIsLoading(false);
     }
@@ -116,6 +132,31 @@ const Login = () => {
           {error && (
             <div className="alert alert-danger auth-alert" role="alert">
               {error}
+            </div>
+          )}
+
+          {verificationNotice && (
+            <div className="alert alert-info auth-alert auth-verification-notice" role="status">
+              <p className="mb-2">{verificationNotice}</p>
+              <button
+                type="button"
+                className="btn btn-outline-primary btn-sm"
+                disabled={resendingVerification || !verificationEmail}
+                onClick={async () => {
+                  setResendingVerification(true);
+                  setError('');
+                  try {
+                    const response = await verificationAPI.resendVerification({ email: verificationEmail });
+                    setVerificationNotice(response.message || 'Verification email sent. Please check your inbox.');
+                  } catch (err) {
+                    setError(err.message || 'Unable to resend verification email right now.');
+                  } finally {
+                    setResendingVerification(false);
+                  }
+                }}
+              >
+                {resendingVerification ? 'Sending...' : 'Resend Verification Email'}
+              </button>
             </div>
           )}
 
