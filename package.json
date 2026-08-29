@@ -19,7 +19,8 @@
     "@fullcalendar/bootstrap5": "7.0.2",
     "@fullcalendar/react": "7.0.2",
     "react-day-picker": "10.0.1",
-    "temporal-polyfill": "1.0.4"
+    "temporal-polyfill": "1.0.4",
+    "socket.io-client": "^4.8.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
