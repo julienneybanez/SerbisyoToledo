@@ -101,6 +101,11 @@ const handleResponse = async (response) => {
   }
 
   if (!response.ok) {
+    if (response.status === 401 && typeof window !== 'undefined' && localStorage.getItem('user')) {
+      removeToken();
+      window.dispatchEvent(new Event('authChange'));
+    }
+
     throw new ApiError(data.message || 'An error occurred', {
       status: response.status,
       code: data.code || null,
