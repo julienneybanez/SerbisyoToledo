@@ -207,39 +207,6 @@ export default function EditPortfolioModal({ onClose }) {
     }));
   };
 
-  const handleImageSelect = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    if (file.size > 5 * 1024 * 1024) {
-      setError('Image must be less than 5MB');
-      return;
-    }
-
-    setIsUploadingImage(true);
-    setError(null);
-
-    try {
-      const formDataUpload = new FormData();
-      formDataUpload.append('portfolioImage', file);
-      formDataUpload.append('caption', 'Portfolio image');
-
-      const response = await serviceProfileAPI.addPortfolioImage(formDataUpload);
-      
-      if (response.success) {
-        // Refresh portfolio to get the new image with proper data
-        await fetchPortfolio();
-        if (fileInputRef.current) {
-          fileInputRef.current.value = '';
-        }
-      }
-    } catch (err) {
-      setError(err.message || 'Failed to upload image');
-    } finally {
-      setIsUploadingImage(false);
-    }
-  };
-
   const handleDeleteImage = async (imageId) => {
     if (!confirm('Delete this image from your portfolio?')) return;
 
@@ -480,33 +447,9 @@ export default function EditPortfolioModal({ onClose }) {
                 ))}
               </div>
 
-              <div className="add-image-section">
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  accept="image/*"
-                  onChange={handleImageSelect}
-                  style={{ display: 'none' }}
-                />
-                <button
-                  type="button"
-                  className="btn-upload-image"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={isUploadingImage}
-                >
-                  {isUploadingImage ? (
-                    <>
-                      <span className="spinner-small"></span>
-                      Uploading...
-                    </>
-                  ) : (
-                    <>
-                      <i className="bi bi-cloud-upload"></i>
-                      Upload Image
-                    </>
-                  )}
-                </button>
-              </div>
+              <p className="completed-job-linker-help">
+                Portfolio work must be linked to a completed SerbisyoToledo request. Standalone manual uploads are no longer published.
+              </p>
             </div>
 
             {/* Actions */}
