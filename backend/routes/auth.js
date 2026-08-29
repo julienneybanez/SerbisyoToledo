@@ -3,6 +3,7 @@ const router = express.Router();
 const { body } = require('express-validator');
 const authController = require('../controllers/authController');
 const { authenticateToken } = require('../middleware/auth');
+const { issueCsrfToken } = require('../utils/sessionCookies');
 const {
   loginLimiter,
   registerLimiter,
@@ -25,8 +26,8 @@ const registerValidation = [
     .withMessage('Please provide a valid email')
     .normalizeEmail(),
   body('password')
-    .isLength({ min: 6 })
-    .withMessage('Password must be at least 6 characters long'),
+    .isLength({ min: 10, max: 128 })
+    .withMessage('Password must be between 10 and 128 characters long'),
   body('userType')
     .isIn(['client', 'tradesperson'])
     .withMessage('User type must be client or tradesperson'),
@@ -74,8 +75,8 @@ const forgotPasswordValidation = [
 
 const resetPasswordValidation = [
   body('password')
-    .isLength({ min: 6 })
-    .withMessage('Password must be at least 6 characters long'),
+    .isLength({ min: 10, max: 128 })
+    .withMessage('Password must be between 10 and 128 characters long'),
   body('confirmPassword')
     .notEmpty()
     .withMessage('Please confirm your password')
@@ -113,6 +114,12 @@ router.get('/verify-email', authController.verifyEmail);
 
 // POST /api/auth/resend-verification - Resend verification email
 router.post('/resend-verification', resendVerificationLimiter, resendVerificationValidation, authController.resendVerification);
+
+// GET /api/auth/csrf - Refresh the readable double-submit token used with the HttpOnly session cookie
+router.get('/csrf', (req, res) => {
+  const csrfToken = issueCsrfToken(res);
+  res.json({ success: true, data: { csrfToken } });
+});
 
 // GET /api/auth/me - Get current user profile (protected)
 router.get('/me', authenticateToken, authController.getMe);
