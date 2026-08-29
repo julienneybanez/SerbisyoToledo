@@ -8,6 +8,7 @@ import VerificationRequestModal from '../components/common/VerificationRequestMo
 import RequestDetailsModal from '../components/common/RequestDetailsModal';
 import NextStepHelp from '../components/common/NextStepHelp';
 import { REQUEST_STATUS } from '../constants/domain';
+import { useLanguage } from '../context/LanguageContext';
 import './ServiceProviderDashboard.css';
 
 const PROVIDER_TIPS = [
@@ -71,6 +72,7 @@ function formatSchedule(request, compact = false) {
 
 export default function ServiceProviderDashboard() {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [user, setUser] = useState(() => getUser());
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showPortfolioModal, setShowPortfolioModal] = useState(false);
@@ -176,7 +178,7 @@ export default function ServiceProviderDashboard() {
         setMyAvailability(null);
       }
     } catch {
-      setChecklistError('Unable to load some profile progress right now.');
+      setChecklistError(t('providerChecklistLoadError'));
     } finally {
       setChecklistLoading(false);
     }
@@ -208,34 +210,34 @@ export default function ServiceProviderDashboard() {
     setShowProfileModal(true);
   };
 
-  const serviceListingActionLabel = myProfile?.id ? 'Manage Service Listing' : 'Post Service Listing';
+  const serviceListingActionLabel = t(myProfile?.id ? 'manageServiceListing' : 'postServiceListing');
 
   const providerChecklistTasks = [
     {
       key: 'verification',
-      label: 'Complete provider verification',
-      description: 'Verification is required before you can post your first Service Listing.',
+      label: t('providerChecklistVerificationLabel'),
+      description: t('providerChecklistVerificationDescription'),
       completed: Boolean(user?.isVerified),
       isApplicable: !myProfile?.id || !user?.isVerified,
       actionType: 'button',
-      actionLabel: 'Verification',
+      actionLabel: t('verification'),
       onAction: () => setShowVerificationRequest(true),
     },
     {
       key: 'taxonomy-refresh',
-      label: 'Review your service taxonomy',
-      description: 'Your service listing has legacy or incomplete categories. Select updated categories and service types.',
+      label: t('providerChecklistTaxonomyLabel'),
+      description: t('providerChecklistTaxonomyDescription'),
       completed: !Boolean(myProfile?.taxonomyNeedsReview),
       isApplicable: Boolean(myProfile?.taxonomyNeedsReview),
       actionType: 'button',
-      actionLabel: 'Update Services',
+      actionLabel: t('providerChecklistUpdateServices'),
       onAction: () => setShowProfileModal(true),
     },
     {
       key: 'service-category',
       isApplicable: Boolean(myProfile?.id || user?.isVerified),
-      label: 'Add your service category',
-      description: 'Select at least one service category in your service listing.',
+      label: t('providerChecklistCategoryLabel'),
+      description: t('providerChecklistCategoryDescription'),
       completed: Boolean(myProfile?.categories?.length),
       actionType: 'button',
       actionLabel: serviceListingActionLabel,
@@ -244,18 +246,18 @@ export default function ServiceProviderDashboard() {
     {
       key: 'service-description',
       isApplicable: Boolean(myProfile?.id),
-      label: 'Complete your public profile',
-      description: 'Tell clients about your background and services.',
+      label: t('providerChecklistPublicProfileLabel'),
+      description: t('providerChecklistPublicProfileDescription'),
       completed: Boolean((myProfile?.description || myPortfolio?.aboutMe || '').trim()),
       actionType: 'button',
-      actionLabel: 'Public Profile',
+      actionLabel: t('publicProfile'),
       onAction: () => setShowPortfolioModal(true),
     },
     {
       key: 'starting-price',
       isApplicable: Boolean(myProfile?.id || user?.isVerified),
-      label: 'Set your starting price',
-      description: 'Set a clear base rate for your services.',
+      label: t('providerChecklistPriceLabel'),
+      description: t('providerChecklistPriceDescription'),
       completed: Number(myProfile?.startingPrice) > 0,
       actionType: 'button',
       actionLabel: serviceListingActionLabel,
@@ -264,8 +266,8 @@ export default function ServiceProviderDashboard() {
     {
       key: 'location',
       isApplicable: Boolean(myProfile?.id || user?.isVerified),
-      label: 'Add your location',
-      description: 'Set your service barangay/address.',
+      label: t('providerChecklistLocationLabel'),
+      description: t('providerChecklistLocationDescription'),
       completed: Boolean((myProfile?.location || '').trim()),
       actionType: 'button',
       actionLabel: serviceListingActionLabel,
@@ -274,24 +276,25 @@ export default function ServiceProviderDashboard() {
     {
       key: 'availability',
       isApplicable: Boolean(myProfile?.id),
-      label: 'Set your availability',
-      description: 'Choose when clients can request your services.',
+      label: t('providerChecklistAvailabilityLabel'),
+      description: t('providerChecklistAvailabilityDescription'),
       completed: Boolean(
-        (Array.isArray(myAvailability?.specificAvailability) && myAvailability.specificAvailability.length > 0)
+        (Array.isArray(myAvailability?.availability) && myAvailability.availability.length > 0)
+        || (Array.isArray(myAvailability?.specificAvailability) && myAvailability.specificAvailability.length > 0)
         || (Array.isArray(myAvailability?.weeklyBlocks) && myAvailability.weeklyBlocks.length > 0)
       ),
       actionType: 'link',
       to: '/provider-availability',
-      actionLabel: 'Availability',
+      actionLabel: t('providerSettingsNavAvailability'),
     },
     {
       key: 'portfolio',
       isApplicable: Boolean(myProfile?.id),
-      label: 'Upload portfolio work',
-      description: 'Show previous work samples to build trust.',
+      label: t('providerChecklistPortfolioLabel'),
+      description: t('providerChecklistPortfolioDescription'),
       completed: Boolean(myPortfolio?.portfolio?.length),
       actionType: 'button',
-      actionLabel: 'Add Work',
+      actionLabel: t('providerChecklistAddWork'),
       onAction: () => setShowPortfolioModal(true),
     },
   ];
@@ -306,13 +309,13 @@ export default function ServiceProviderDashboard() {
   const providerHelpGuidance = (() => {
     if (requestSummary.pending > 0) {
       return {
-        title: requestSummary.pending === 1 ? '1 request needs your response' : `${requestSummary.pending} requests need your response`,
-        description: 'Review new booking requests before anything else so clients are not left waiting.',
+        title: requestSummary.pending === 1 ? t('providerHelpOneRequest') : t('providerHelpManyRequests', { count: requestSummary.pending }),
+        description: t('providerHelpRequestsDescription'),
         steps: [
-          'Open Requests and review the service details and requested schedule.',
-          'Accept the request if you can take the job, or decline it with a reason.',
+          t('providerHelpRequestStep1'),
+          t('providerHelpRequestStep2'),
         ],
-        actionLabel: 'Review Requests',
+        actionLabel: t('providerHelpReviewRequests'),
         actionTo: '/requests',
         targetSelector: '.action-banner',
       };
@@ -320,13 +323,13 @@ export default function ServiceProviderDashboard() {
 
     if (incompleteProviderChecklistTasks.length > 0) {
       return {
-        title: 'Continue your profile setup',
-        description: `${incompleteProviderChecklistTasks.length} profile item${incompleteProviderChecklistTasks.length === 1 ? '' : 's'} still need attention.`,
+        title: t('providerHelpContinueSetup'),
+        description: t('providerHelpSetupDescription', { count: incompleteProviderChecklistTasks.length }),
         steps: [
-          'Open Profile Setup to see the remaining items.',
-          'Complete your listing, schedule, portfolio, or verification as needed.',
+          t('providerHelpSetupStep1'),
+          t('providerHelpSetupStep2'),
         ],
-        actionLabel: 'Show Profile Setup',
+        actionLabel: t('providerHelpShowSetup'),
         onAction: () => {
           document.querySelector('.profile-checklist')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
         },
