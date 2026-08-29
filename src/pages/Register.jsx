@@ -74,6 +74,12 @@ const Register = () => {
       return;
     }
 
+    if (formData.password.length < 10 || formData.password.length > 128) {
+      setError(t('passwordLengthRequirement'));
+      setIsLoading(false);
+      return;
+    }
+
     try {
       const registrationData = {
         fullName: formData.fullName,
@@ -144,7 +150,7 @@ const Register = () => {
             <div className="auth-field">
               <label htmlFor="register-password" className="form-label">{t('password')}</label>
               <div className="password-input-wrapper">
-                <input id="register-password" type={showPassword ? 'text' : 'password'} name="password" placeholder={t('createStrongPassword')} value={formData.password} onChange={handleInputChange} className="form-control" autoComplete="new-password" required />
+                <input id="register-password" type={showPassword ? 'text' : 'password'} name="password" placeholder={t('createStrongPassword')} value={formData.password} onChange={handleInputChange} className="form-control" autoComplete="new-password" minLength={10} maxLength={128} required />
                 <button type="button" className="password-toggle" onClick={() => setShowPassword((visible) => !visible)} aria-label={t('togglePasswordVisibility')}>
                   <i className={`bi ${showPassword ? 'bi-eye-slash' : 'bi-eye'}`} aria-hidden="true"></i>
                 </button>
