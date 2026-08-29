@@ -366,9 +366,6 @@ const getAvailabilityWindowsForDate = async (connection, serviceProfileId, dateS
     .map((row) => ({
       startMinutes: timeToMinutes(row.start_time),
       endMinutes: timeToMinutes(row.end_time),
-      // Exact provider-selected availability should surface as one client-facing
-      // start-time option, rather than being expanded into hourly starts.
-      explicitStartOnly: true,
     }))
     .filter((row) => row.startMinutes != null && row.endMinutes != null && row.endMinutes > row.startMinutes);
 
@@ -400,12 +397,6 @@ const getAvailabilityWindowsForDate = async (connection, serviceProfileId, dateS
       for (const segment of segments) {
         if (blocked.endMinutes <= segment.startMinutes || blocked.startMinutes >= segment.endMinutes) {
           nextSegments.push(segment);
-          continue;
-        }
-
-        // A provider-selected exact slot is atomic. If a blocking window overlaps
-        // it, remove the option rather than inventing a new start time.
-        if (segment.explicitStartOnly) {
           continue;
         }
 
@@ -591,15 +582,10 @@ const getAvailableSlotsForDate = async (
   const slots = [];
 
   for (const window of windows) {
-    const candidateStarts = window.explicitStartOnly
-      ? [window.startMinutes]
-      : (() => {
-          const starts = [];
-          for (let start = window.startMinutes; start + duration <= window.endMinutes; start += slotStepMinutes) {
-            starts.push(start);
-          }
-          return starts;
-        })();
+    const candidateStarts = [];
+    for (let start = window.startMinutes; start + duration <= window.endMinutes; start += slotStepMinutes) {
+      candidateStarts.push(start);
+    }
 
     for (const start of candidateStarts) {
       const end = start + duration;
