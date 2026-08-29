@@ -920,6 +920,7 @@ exports.getProfileById = async (req, res) => {
          FROM portfolio_items
          WHERE service_profile_id = ?
            AND is_published = TRUE
+           AND completed_through_platform = TRUE
          ORDER BY is_featured DESC, display_order ASC, created_at DESC`,
         [id]
       );
@@ -929,22 +930,8 @@ exports.getProfileById = async (req, res) => {
         throw portfolioError;
       }
 
-      const [legacyRows] = await db.query(
-        `SELECT id, image_url, caption, display_order,
-                NULL AS service_request_id,
-                NULL AS job_title,
-                NULL AS job_description,
-                NULL AS service_category,
-                NULL AS completed_at,
-                TRUE AS is_published,
-                FALSE AS is_featured,
-                FALSE AS completed_through_platform
-         FROM portfolio_items
-         WHERE service_profile_id = ?
-         ORDER BY display_order ASC, created_at DESC`,
-        [id]
-      );
-      portfolioItems = legacyRows;
+      portfolioItems = [];
+
     }
 
     // Fetch reviews with client names
@@ -1303,87 +1290,15 @@ exports.updatePortfolioDetails = async (req, res) => {
   }
 };
 
-// Add portfolio image
+// Manual portfolio uploads are disabled. Public portfolio work must be linked
+// to a completed SerbisyoToledo service request so it cannot be mistaken for
+// platform-verified work.
 exports.addPortfolioImage = async (req, res) => {
-  try {
-    const userId = req.user?.userId;
-    
-    if (!userId) {
-      return res.status(401).json({
-        success: false,
-        message: 'Authentication required'
-      });
-    }
-
-    const { caption } = req.body;
-    let imageUrl = null;
-    let imagePublicId = null;
-
-    if (req.file) {
-      if (!hasCloudinaryConfig()) {
-        return res.status(503).json({
-          success: false,
-          message: 'Portfolio image storage is temporarily unavailable'
-        });
-      }
-
-      const uploadResult = await uploadImageBuffer({
-        buffer: req.file.buffer,
-        mimeType: req.file.mimetype,
-        folder: 'serbisyo-toledo/portfolio',
-      });
-
-      imageUrl = uploadResult.secure_url;
-      imagePublicId = uploadResult.public_id;
-    } else {
-      return res.status(400).json({
-        success: false,
-        message: 'Image file is required'
-      });
-    }
-
-    // Get service profile id
-    const [profiles] = await db.query(
-      'SELECT id FROM service_profiles WHERE user_id = ?',
-      [userId]
-    );
-
-    if (profiles.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: 'You need to create a service profile first'
-      });
-    }
-
-    const serviceProfileId = profiles[0].id;
-
-    // Get display order for new image
-    const [orderResult] = await db.query(
-      'SELECT COALESCE(MAX(display_order), 0) + 1 as nextOrder FROM portfolio_items WHERE service_profile_id = ?',
-      [serviceProfileId]
-    );
-
-    const [result] = await db.query(
-      `INSERT INTO portfolio_items (service_profile_id, image_url, image_public_id, caption, display_order)
-       VALUES (?, ?, ?, ?, ?)`,
-      [serviceProfileId, imageUrl, imagePublicId, caption || '', orderResult[0].nextOrder]
-    );
-
-    res.status(201).json({
-      success: true,
-      message: 'Portfolio image added successfully',
-      data: {
-        id: result.insertId,
-        caption: caption || ''
-      }
-    });
-  } catch (error) {
-    console.error('Error adding portfolio image:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error adding portfolio image'
-    });
-  }
+  return res.status(409).json({
+    success: false,
+    code: 'PORTFOLIO_PLATFORM_JOBS_ONLY',
+    message: 'Portfolio items must be linked to a completed SerbisyoToledo request.'
+  });
 };
 
 // Delete portfolio image
