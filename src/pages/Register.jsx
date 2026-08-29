@@ -89,7 +89,7 @@ const Register = () => {
       }
 
       const response = await authAPI.register(registrationData);
-      setSuccess(response?.message || 'Account created. Please verify your email before logging in.');
+      setSuccess(response?.message || t('registrationVerifyBeforeLogin'));
 
       setTimeout(() => {
         const params = new URLSearchParams({
