@@ -63,6 +63,14 @@ const publicSearchLimiter = rateLimit({
   handler: defaultHandler('Too many search requests. Please try again shortly.'),
 });
 
+const messageLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: defaultHandler('Too many messages sent. Please slow down and try again shortly.'),
+});
+
 const assistantLimiter = rateLimit({
   windowMs: 60 * 1000,
   limit: 30,
@@ -79,5 +87,6 @@ module.exports = {
   resendVerificationLimiter,
   uploadLimiter,
   publicSearchLimiter,
+  messageLimiter,
   assistantLimiter,
 };
