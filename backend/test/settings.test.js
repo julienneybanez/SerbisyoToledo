@@ -101,7 +101,7 @@ describe('Settings-related backend endpoints', () => {
     expect(res.body.success).toBe(false);
   });
 
-  it('saves provider-selected dates and time slots as authoritative availability', async () => {
+  it('saves simplified provider-selected availability with fixed system booking rules', async () => {
     vi.spyOn(db, 'query').mockImplementation(async (sql) => {
       if (sql === authUserSql) {
         return [[{ id: 21, user_type: 'tradesperson', is_active: 1 }]];
@@ -144,14 +144,8 @@ describe('Settings-related backend endpoints', () => {
       .put('/api/service-profiles/availability/me')
       .set('Authorization', `Bearer ${signToken(21)}`)
       .send({
-        settings: {
-          availabilityStatus: 'available',
-          showAvailabilityStatus: true,
-          allowSameDayBooking: false,
-          minAdvanceNoticeMinutes: 720,
-          maxAdvanceBookingDays: 60,
-        },
-        specificAvailability: [
+        acceptingBookings: true,
+        availability: [
           { date: futureDate, startTime: '09:00', endTime: '11:00' },
           { date: futureDate, startTime: '13:00', endTime: '15:00' },
         ],
@@ -160,8 +154,13 @@ describe('Settings-related backend endpoints', () => {
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
     expect(res.body.data).toMatchObject({
-      mode: 'specific',
-      specificAvailabilityCount: 2,
+      acceptingBookings: true,
+      availabilityCount: 2,
+      systemRules: {
+        allowSameDayBooking: false,
+        minAdvanceNoticeMinutes: 720,
+        maxAdvanceBookingDays: 60,
+      },
     });
     expect(connection.commit).toHaveBeenCalledTimes(1);
 
@@ -213,14 +212,8 @@ describe('Settings-related backend endpoints', () => {
       .put('/api/service-profiles/availability/me')
       .set('Authorization', `Bearer ${signToken(21)}`)
       .send({
-        settings: {
-          availabilityStatus: 'available',
-          showAvailabilityStatus: true,
-          allowSameDayBooking: false,
-          minAdvanceNoticeMinutes: 720,
-          maxAdvanceBookingDays: 60,
-        },
-        specificAvailability: [
+        acceptingBookings: true,
+        availability: [
           { date: futureDate, startTime: '09:00', endTime: '11:00' },
           { date: futureDate, startTime: '10:00', endTime: '12:00' },
         ],
