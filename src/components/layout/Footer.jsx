@@ -10,7 +10,7 @@ function Footer({ className = '' }) {
         <div className="footer-grid">
           <div className="footer-brand-block">
             <div className="d-flex align-items-center mb-2">
-              <img src={logo} alt="SerbisyoToledo Logo" width="40" height="40" className="me-2 footer-logo-static" draggable="false" />
+              <img src={logo} alt={t('footerLogoAlt')} width="40" height="40" className="me-2 footer-logo-static" draggable="false" />
               <span className="footer-wordmark">Serbisyo<span>Toledo</span></span>
             </div>
             <p className="footer-muted-text footer-description mb-0">{t('footerTagline')}</p>
@@ -25,7 +25,7 @@ function Footer({ className = '' }) {
 
           <div className="footer-links-block">
             <h6 className="footer-heading">{t('footerContact')}</h6>
-            <div className="footer-contact-list" aria-label="Contact information">
+            <div className="footer-contact-list" aria-label={t('contactInformationAria')}>
               <a className="footer-link footer-contact-link" href="mailto:toledoserbisyo@gmail.com">toledoserbisyo@gmail.com</a>
               <p className="footer-muted-text footer-contact-line">Toledo City, Cebu</p>
               <p className="footer-muted-text footer-contact-line">{t('footerOfflinePayments')}</p>
