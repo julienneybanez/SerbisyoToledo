@@ -13,6 +13,12 @@ const {
 const { getJwtSecret, getJwtSignOptions } = require('../utils/jwt');
 const { setSessionCookies, clearSessionCookies } = require('../utils/sessionCookies');
 const { normalizePhilippinePhone } = require('../utils/phone');
+const {
+  TERMS_VERSION,
+  PRIVACY_NOTICE_VERSION,
+  LEGAL_ACCEPTANCE_TYPES,
+  LEGAL_CONTEXTS,
+} = require('../constants/legalDocuments');
 
 const RESET_TOKEN_EXPIRY_MINUTES = Number(process.env.PASSWORD_RESET_TOKEN_EXP_MINUTES || 20);
 const PUBLIC_EMAIL_VERIFICATION_REQUIRED = true;
@@ -98,7 +104,23 @@ exports.register = async (req, res) => {
       });
     }
 
-    const { fullName, email, password, userType, profession, skills, languages } = req.body;
+    const { fullName, email, password, userType, profession, skills, languages, acceptedTerms, acknowledgedPrivacy } = req.body;
+
+    if (acceptedTerms !== true) {
+      return res.status(400).json({
+        success: false,
+        code: 'TERMS_ACCEPTANCE_REQUIRED',
+        message: 'You must agree to the Terms and Conditions to register.'
+      });
+    }
+
+    if (acknowledgedPrivacy !== true) {
+      return res.status(400).json({
+        success: false,
+        code: 'PRIVACY_ACKNOWLEDGEMENT_REQUIRED',
+        message: 'You must acknowledge the Privacy Notice to register.'
+      });
+    }
 
     const normalizedLanguages = userType === 'tradesperson'
       ? Array.from(
@@ -197,6 +219,17 @@ exports.register = async (req, res) => {
           [insertId, skillLabel]
         );
       }
+
+      await connection.query(
+        `INSERT INTO legal_acceptances (user_id, acceptance_type, document_version, context)
+         VALUES (?, ?, ?, ?)`,
+        [insertId, LEGAL_ACCEPTANCE_TYPES.TERMS, TERMS_VERSION, LEGAL_CONTEXTS.REGISTRATION]
+      );
+      await connection.query(
+        `INSERT INTO legal_acceptances (user_id, acceptance_type, document_version, context)
+         VALUES (?, ?, ?, ?)`,
+        [insertId, LEGAL_ACCEPTANCE_TYPES.PRIVACY_NOTICE, PRIVACY_NOTICE_VERSION, LEGAL_CONTEXTS.REGISTRATION]
+      );
 
       await connection.commit();
     } catch (transactionError) {

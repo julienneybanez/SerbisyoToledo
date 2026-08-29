@@ -241,7 +241,36 @@ CREATE TABLE verification_requests (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ----------------------------------------------------------------------------
--- 13. service_requests
+-- 13. legal_acceptances
+-- ----------------------------------------------------------------------------
+-- Authoritative evidence of an affirmative consent/acceptance action.
+-- Retention-safe: legal evidence must not disappear because an account is
+-- later suspended/deactivated (suspension never hard-deletes), so this
+-- table uses RESTRICT on user_id (an accidental hard-delete of a user row
+-- fails loudly instead of silently erasing consent evidence) and SET NULL
+-- on verification_request_id (the acceptance record itself still matters
+-- even in the should-never-happen case its verification request is gone).
+-- No IP address / browser fingerprint / device fingerprint columns are
+-- collected — not required for this capstone consent system.
+CREATE TABLE legal_acceptances (
+  id                       BIGINT UNSIGNED  NOT NULL AUTO_INCREMENT,
+  user_id                  BIGINT UNSIGNED  NOT NULL,
+  acceptance_type          VARCHAR(64)      NOT NULL,
+  document_version         VARCHAR(32)      NOT NULL,
+  context                  VARCHAR(64)      NOT NULL,
+  verification_request_id  INT UNSIGNED     NULL,
+  accepted_at              TIMESTAMP        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  created_at               TIMESTAMP        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_legal_acceptance_event (user_id, acceptance_type, document_version, context, verification_request_id),
+  KEY idx_legal_acceptance_user_type (user_id, acceptance_type),
+  KEY idx_legal_acceptance_verification_request (verification_request_id),
+  CONSTRAINT fk_legal_acceptance_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE RESTRICT,
+  CONSTRAINT fk_legal_acceptance_verification FOREIGN KEY (verification_request_id) REFERENCES verification_requests(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ----------------------------------------------------------------------------
+-- 14. service_requests
 -- ----------------------------------------------------------------------------
 CREATE TABLE service_requests (
   id                            INT UNSIGNED   NOT NULL AUTO_INCREMENT,
@@ -285,7 +314,7 @@ CREATE TABLE service_requests (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ----------------------------------------------------------------------------
--- 14. service_request_dates
+-- 15. service_request_dates
 -- ----------------------------------------------------------------------------
 CREATE TABLE service_request_dates (
   id                   BIGINT UNSIGNED  NOT NULL AUTO_INCREMENT,
@@ -298,7 +327,7 @@ CREATE TABLE service_request_dates (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ----------------------------------------------------------------------------
--- 15. service_request_reschedules
+-- 16. service_request_reschedules
 -- ----------------------------------------------------------------------------
 CREATE TABLE service_request_reschedules (
   id                                    BIGINT UNSIGNED  NOT NULL AUTO_INCREMENT,
@@ -327,7 +356,7 @@ CREATE TABLE service_request_reschedules (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ----------------------------------------------------------------------------
--- 16. service_request_reschedule_dates
+-- 17. service_request_reschedule_dates
 -- ----------------------------------------------------------------------------
 CREATE TABLE service_request_reschedule_dates (
   id              BIGINT UNSIGNED  NOT NULL AUTO_INCREMENT,
@@ -339,7 +368,7 @@ CREATE TABLE service_request_reschedule_dates (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ----------------------------------------------------------------------------
--- 17. service_request_status_history
+-- 18. service_request_status_history
 -- ----------------------------------------------------------------------------
 CREATE TABLE service_request_status_history (
   id                    BIGINT UNSIGNED  NOT NULL AUTO_INCREMENT,
@@ -357,7 +386,7 @@ CREATE TABLE service_request_status_history (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ----------------------------------------------------------------------------
--- 18. conversations
+-- 19. conversations
 -- ----------------------------------------------------------------------------
 CREATE TABLE conversations (
   id                    INT UNSIGNED  NOT NULL AUTO_INCREMENT,
@@ -371,7 +400,7 @@ CREATE TABLE conversations (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ----------------------------------------------------------------------------
--- 19. messages
+-- 20. messages
 -- ----------------------------------------------------------------------------
 CREATE TABLE messages (
   id                BIGINT UNSIGNED  NOT NULL AUTO_INCREMENT,
@@ -388,7 +417,7 @@ CREATE TABLE messages (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ----------------------------------------------------------------------------
--- 20. service_request_contact_shares
+-- 21. service_request_contact_shares
 -- ----------------------------------------------------------------------------
 CREATE TABLE service_request_contact_shares (
   id                     INT UNSIGNED  NOT NULL AUTO_INCREMENT,
@@ -410,7 +439,7 @@ CREATE TABLE service_request_contact_shares (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ----------------------------------------------------------------------------
--- 21. service_request_archives
+-- 22. service_request_archives
 -- ----------------------------------------------------------------------------
 CREATE TABLE service_request_archives (
   service_request_id   INT UNSIGNED  NOT NULL,
@@ -422,7 +451,7 @@ CREATE TABLE service_request_archives (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ----------------------------------------------------------------------------
--- 22. portfolio_items
+-- 23. portfolio_items
 -- ----------------------------------------------------------------------------
 CREATE TABLE portfolio_items (
   id                   INT UNSIGNED  NOT NULL AUTO_INCREMENT,
@@ -440,7 +469,7 @@ CREATE TABLE portfolio_items (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ----------------------------------------------------------------------------
--- 23. reviews
+-- 24. reviews
 -- ----------------------------------------------------------------------------
 CREATE TABLE reviews (
   id                   INT UNSIGNED  NOT NULL AUTO_INCREMENT,
@@ -456,7 +485,7 @@ CREATE TABLE reviews (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ----------------------------------------------------------------------------
--- 24. notifications
+-- 25. notifications
 -- ----------------------------------------------------------------------------
 CREATE TABLE notifications (
   id                    BIGINT UNSIGNED  NOT NULL AUTO_INCREMENT,
@@ -475,7 +504,7 @@ CREATE TABLE notifications (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ----------------------------------------------------------------------------
--- 25. user_reports
+-- 26. user_reports
 -- ----------------------------------------------------------------------------
 CREATE TABLE user_reports (
   id                   INT UNSIGNED  NOT NULL AUTO_INCREMENT,
@@ -501,7 +530,7 @@ CREATE TABLE user_reports (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ----------------------------------------------------------------------------
--- 26. schema_migrations
+-- 27. schema_migrations
 -- ----------------------------------------------------------------------------
 CREATE TABLE schema_migrations (
   id            INT UNSIGNED  NOT NULL AUTO_INCREMENT,

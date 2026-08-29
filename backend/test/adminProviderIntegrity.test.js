@@ -104,9 +104,21 @@ describe('Admin/provider integrity', () => {
       if (sql === authUserSql) return [[{ id: PROVIDER_ID, user_type: 'tradesperson', is_active: 1 }]];
       if (sql === 'SELECT id, user_type FROM users WHERE id = ?') return [[{ id: PROVIDER_ID, user_type: 'tradesperson' }]];
       if (String(sql).includes('FROM verification_requests WHERE user_id')) return [[]];
-      if (String(sql).includes('INSERT INTO verification_requests')) return [{ insertId: 1 }];
       return [[]];
     });
+
+    const conn = {
+      beginTransaction: vi.fn(async () => {}),
+      commit: vi.fn(async () => {}),
+      rollback: vi.fn(async () => {}),
+      release: vi.fn(() => {}),
+      query: vi.fn(async (sql) => {
+        if (String(sql).includes('INSERT INTO verification_requests')) return [{ insertId: 1 }];
+        if (String(sql).includes('INSERT INTO legal_acceptances')) return [{ insertId: 1 }];
+        return [[]];
+      }),
+    };
+    vi.spyOn(db, 'getConnection').mockResolvedValue(conn);
 
     const resWithGovIdOnly = await request(app)
       .post('/api/user/verification-request')
@@ -115,6 +127,7 @@ describe('Admin/provider integrity', () => {
       .field('phoneNumber', '09171234567')
       .field('address', 'Poblacion, Toledo City')
       .field('serviceDescription', 'Plumbing services')
+      .field('verificationConsent', 'true')
       .attach('governmentId', PNG_BUFFER, { filename: 'id.png', contentType: 'image/png' });
 
     expect(resWithGovIdOnly.status).toBe(201);

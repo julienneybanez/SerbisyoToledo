@@ -557,6 +557,8 @@ describe('Backend Security Hardening', () => {
         password: 'pass123456',
         userType: 'tradesperson',
         languages: ['ceb', 'xx'],
+        acceptedTerms: true,
+        acknowledgedPrivacy: true,
       });
 
     expect(res.status).toBe(400);
@@ -591,6 +593,8 @@ describe('Backend Security Hardening', () => {
         password: 'pass123456',
         userType: 'tradesperson',
         languages: ['ceb', 'en'],
+        acceptedTerms: true,
+        acknowledgedPrivacy: true,
       });
 
     expect(res.status).toBe(201);
