@@ -14,6 +14,7 @@ import VerificationRequestModal from './components/common/VerificationRequestMod
 import ProtectedRoute, { RoleAwarePublicRoute } from './components/common/ProtectedRoute';
 import InitialLoadingScreen from './components/common/InitialLoadingScreen';
 import lazyWithRetry from './utils/lazyWithRetry';
+import { useLanguage } from './context/LanguageContext';
 
 // Admin imports
 import AdminLayout from './components/layout/AdminLayout';
@@ -55,6 +56,7 @@ function InitialLoadReady({ onReady }) {
 
 function App() {
   const location = useLocation();
+  const { t } = useLanguage();
   const [isChatbotOpen, setIsChatbotOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState(getUser());
   const [isMobileViewport, setIsMobileViewport] = useState(() => (
@@ -335,7 +337,7 @@ function App() {
           <button
             className={`floating-btn ${shouldLiftChatbotButton ? 'floating-btn-avoid-sticky' : ''}`.trim()}
             onClick={() => setIsChatbotOpen(true)}
-            aria-label="Open SerbisyoToledo assistant"
+            aria-label={t('openAssistant')}
           >
             <i className="bi bi-chat-dots-fill" aria-hidden="true"></i>
           </button>
