@@ -89,7 +89,7 @@ const Register = () => {
       }
 
       const response = await authAPI.register(registrationData);
-      setSuccess(response?.message || t('registrationVerifyBeforeLogin'));
+      setSuccess(t('registrationVerifyBeforeLogin'));
 
       setTimeout(() => {
         const params = new URLSearchParams({
