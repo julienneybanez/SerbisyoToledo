@@ -11,6 +11,8 @@ const {
   sendPasswordResetEmail,
 } = require('../utils/emailService');
 const { getJwtSecret, getJwtSignOptions } = require('../utils/jwt');
+const { setSessionCookies, clearSessionCookies } = require('../utils/sessionCookies');
+const { normalizePhilippinePhone } = require('../utils/phone');
 
 const RESET_TOKEN_EXPIRY_MINUTES = Number(process.env.PASSWORD_RESET_TOKEN_EXP_MINUTES || 20);
 const PUBLIC_EMAIL_VERIFICATION_REQUIRED = true;
@@ -468,8 +470,10 @@ exports.login = async (req, res) => {
       });
     }
 
-    // Generate token
+    // Issue the JWT only through an HttpOnly cookie. The token is intentionally
+    // not returned to browser JavaScript.
     const token = generateToken(user.id);
+    setSessionCookies(res, token);
 
     await db.query(
       'UPDATE users SET is_online = TRUE, last_seen_at = NOW() WHERE id = ?',
@@ -505,8 +509,7 @@ exports.login = async (req, res) => {
           bio: user.bio,
           isVerified: user.is_verified,
           emailVerified: Boolean(user.email_verified),
-        },
-        token
+        }
       }
     });
 
@@ -590,6 +593,8 @@ exports.logout = async (req, res) => {
         [userId]
       );
     }
+
+    clearSessionCookies(res);
     
     res.json({
       success: true,
@@ -621,8 +626,16 @@ exports.updateProfile = async (req, res) => {
       values.push(fullName);
     }
     if (phone !== undefined) {
+      const normalizedPhone = normalizePhilippinePhone(phone);
+      if (normalizedPhone === undefined) {
+        return res.status(400).json({
+          success: false,
+          code: 'INVALID_PHONE',
+          message: 'Enter a valid Philippine mobile number (09XXXXXXXXX or +639XXXXXXXXX).'
+        });
+      }
       updates.push('phone = ?');
-      values.push(phone);
+      values.push(normalizedPhone);
     }
     if (address !== undefined) {
       updates.push('address = ?');
