@@ -97,7 +97,7 @@ const getFallbackReply = ({ message, locale }) => {
   };
 };
 
-const generateAssistantReply = async ({ message, locale = 'en', context = {} }) => {
+const generateAssistantReply = async ({ message, locale = 'en', context = {}, history = [] }) => {
   const normalizedLocale = normalizeLocale(locale);
   const config = getAssistantConfiguration();
 
@@ -113,6 +113,7 @@ const generateAssistantReply = async ({ message, locale = 'en', context = {} }) 
       contextAccepted: {
         route: String(context?.route || '').slice(0, 120),
         role: String(context?.role || 'guest').slice(0, 32),
+        historyCount: Array.isArray(history) ? history.length : 0,
       },
       notice: 'AI provider is configured but the provider adapter has not been enabled yet.',
     };
@@ -126,6 +127,7 @@ const generateAssistantReply = async ({ message, locale = 'en', context = {} }) 
     contextAccepted: {
       route: String(context?.route || '').slice(0, 120),
       role: String(context?.role || 'guest').slice(0, 32),
+      historyCount: Array.isArray(history) ? history.length : 0,
     },
   };
 };
