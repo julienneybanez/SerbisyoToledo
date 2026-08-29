@@ -4,30 +4,31 @@ import 'react-day-picker/style.css';
 import { serviceProfileAPI } from '../services/api';
 import SettingsFlash from '../components/settings/SettingsFlash';
 import { PageHeader } from '../components/ui';
+import { useLanguage } from '../context/LanguageContext';
 import './ProviderAvailability.css';
 
 const DATE_PRESETS = [
-  { key: 'weekdays', label: 'Weekdays', description: 'Monday to Friday' },
-  { key: 'weekends', label: 'Weekends', description: 'Saturday and Sunday' },
-  { key: 'every_day', label: 'Every Day', description: 'All days' },
-  { key: 'selected_days', label: 'Selected Days', description: 'Choose weekdays' },
+  { key: 'weekdays', labelKey: 'availabilityPresetWeekdays', descriptionKey: 'availabilityPresetWeekdaysDescription' },
+  { key: 'weekends', labelKey: 'availabilityPresetWeekends', descriptionKey: 'availabilityPresetWeekendsDescription' },
+  { key: 'every_day', labelKey: 'availabilityPresetEveryDay', descriptionKey: 'availabilityPresetEveryDayDescription' },
+  { key: 'selected_days', labelKey: 'availabilityPresetSelectedDays', descriptionKey: 'availabilityPresetSelectedDaysDescription' },
 ];
 
 const TIME_PRESETS = [
-  { key: 'morning', label: 'Morning', startTime: '08:00', endTime: '12:00' },
-  { key: 'afternoon', label: 'Afternoon', startTime: '13:00', endTime: '17:00' },
-  { key: 'whole_day', label: 'Whole Day', startTime: '08:00', endTime: '17:00' },
-  { key: 'custom', label: 'Custom', startTime: null, endTime: null },
+  { key: 'morning', labelKey: 'availabilityTimeMorning', startTime: '08:00', endTime: '12:00' },
+  { key: 'afternoon', labelKey: 'availabilityTimeAfternoon', startTime: '13:00', endTime: '17:00' },
+  { key: 'whole_day', labelKey: 'availabilityTimeWholeDay', startTime: '08:00', endTime: '17:00' },
+  { key: 'custom', labelKey: 'availabilityTimeCustom', startTime: null, endTime: null },
 ];
 
 const WEEKDAYS = [
-  { value: 1, short: 'Mon' },
-  { value: 2, short: 'Tue' },
-  { value: 3, short: 'Wed' },
-  { value: 4, short: 'Thu' },
-  { value: 5, short: 'Fri' },
-  { value: 6, short: 'Sat' },
-  { value: 0, short: 'Sun' },
+  { value: 1, labelKey: 'availabilityDayMon' },
+  { value: 2, labelKey: 'availabilityDayTue' },
+  { value: 3, labelKey: 'availabilityDayWed' },
+  { value: 4, labelKey: 'availabilityDayThu' },
+  { value: 5, labelKey: 'availabilityDayFri' },
+  { value: 6, labelKey: 'availabilityDaySat' },
+  { value: 0, labelKey: 'availabilityDaySun' },
 ];
 
 const pad = (value) => String(value).padStart(2, '0');
@@ -56,10 +57,10 @@ const addDays = (date, amount) => {
   return next;
 };
 
-const formatDateLabel = (key) => {
+const formatDateLabel = (key, locale) => {
   const date = fromDateKey(key);
   if (!date) return key;
-  return new Intl.DateTimeFormat('en-PH', {
+  return new Intl.DateTimeFormat(locale, {
     weekday: 'short',
     month: 'short',
     day: 'numeric',
@@ -115,6 +116,8 @@ function inferHours(entries = []) {
 }
 
 export default function ProviderAvailability() {
+  const { language, t } = useLanguage();
+  const locale = language === 'ceb' ? 'ceb-PH' : 'en-PH';
   const today = useMemo(() => startOfToday(), []);
   const firstBookableDate = useMemo(() => addDays(today, 1), [today]);
   const lastBookableDate = useMemo(() => addDays(today, 60), [today]);
@@ -175,7 +178,7 @@ export default function ProviderAvailability() {
       } catch (error) {
         setFlash({
           type: 'error',
-          message: error?.message || 'Unable to load availability right now.',
+          message: error?.message || t('availabilityLoadFailed'),
         });
       } finally {
         if (mounted) setLoading(false);
@@ -184,7 +187,7 @@ export default function ProviderAvailability() {
 
     loadAvailability();
     return () => { mounted = false; };
-  }, [firstBookableDate, lastBookableDate]);
+  }, [firstBookableDate, lastBookableDate, t]);
 
   const selectedDates = useMemo(
     () => selectedDateKeys.map(fromDateKey).filter(Boolean),
@@ -236,12 +239,12 @@ export default function ProviderAvailability() {
 
   const applyPreset = () => {
     if (datePreset === 'selected_days' && selectedWeekdays.length === 0) {
-      setFlash({ type: 'error', message: 'Choose at least one weekday for this preset.' });
+      setFlash({ type: 'error', message: t('availabilityChooseWeekdayError') });
       return;
     }
 
     if (!defaultStartTime || !defaultEndTime || defaultEndTime <= defaultStartTime) {
-      setFlash({ type: 'error', message: 'Choose a valid start and end time.' });
+      setFlash({ type: 'error', message: t('availabilityInvalidTime') });
       return;
     }
 
@@ -259,7 +262,7 @@ export default function ProviderAvailability() {
     setEditingDate('');
     setFlash({
       type: 'success',
-      message: `${generated.length} available date${generated.length === 1 ? '' : 's'} selected. You can adjust them in the calendar.`,
+      message: t('availabilityPresetApplied', { count: generated.length }),
     });
   };
 
@@ -267,7 +270,7 @@ export default function ProviderAvailability() {
     setSelectedDateKeys([]);
     setHourOverrides({});
     setEditingDate('');
-    setFlash({ type: 'info', message: 'Available dates cleared.' });
+    setFlash({ type: 'info', message: t('availabilityDatesCleared') });
   };
 
   const beginEditHours = (date) => {
@@ -279,7 +282,7 @@ export default function ProviderAvailability() {
   const saveOverride = () => {
     if (!editingDate) return;
     if (!editingHours.startTime || !editingHours.endTime || editingHours.endTime <= editingHours.startTime) {
-      setFlash({ type: 'error', message: 'The end time must be later than the start time.' });
+      setFlash({ type: 'error', message: t('availabilityEndAfterStart') });
       return;
     }
 
@@ -311,13 +314,13 @@ export default function ProviderAvailability() {
     if (acceptingBookings && selectedDateKeys.length === 0) {
       setFlash({
         type: 'error',
-        message: 'Select at least one available date, or turn off Accepting Bookings.',
+        message: t('availabilitySelectDateOrPause'),
       });
       return;
     }
 
     if (!defaultStartTime || !defaultEndTime || defaultEndTime <= defaultStartTime) {
-      setFlash({ type: 'error', message: 'Choose a valid default start and end time.' });
+      setFlash({ type: 'error', message: t('availabilityInvalidDefaultTime') });
       return;
     }
 
@@ -340,12 +343,12 @@ export default function ProviderAvailability() {
 
       setFlash({
         type: 'success',
-        message: response?.message || 'Availability saved successfully.',
+        message: response?.message || t('availabilitySaveSuccess'),
       });
     } catch (error) {
       setFlash({
         type: 'error',
-        message: error?.message || 'Unable to save availability right now.',
+        message: error?.message || t('availabilitySaveFailed'),
       });
     } finally {
       setSaving(false);
@@ -356,8 +359,8 @@ export default function ProviderAvailability() {
     <div className="provider-availability-page">
       <div className="provider-availability-inner">
         <PageHeader
-          title="Availability"
-          subtitle="Choose when clients can request your services. Presets make setup faster, and you can adjust any date afterward."
+          title={t('availabilityPageTitle')}
+          subtitle={t('availabilityPageSubtitle')}
           className="availability-page-header"
         />
 
@@ -369,8 +372,8 @@ export default function ProviderAvailability() {
               <i className="bi bi-calendar2-check"></i>
             </div>
             <div>
-              <h2>Accepting Bookings</h2>
-              <p>{acceptingBookings ? 'Clients can request the dates you make available.' : 'New booking dates are hidden from clients until you turn this back on.'}</p>
+              <h2>{t('availabilityAcceptingBookings')}</h2>
+              <p>{acceptingBookings ? t('availabilityAcceptingOnDescription') : t('availabilityAcceptingOffDescription')}</p>
             </div>
           </div>
 
@@ -382,7 +385,7 @@ export default function ProviderAvailability() {
               disabled={loading || saving}
             />
             <span aria-hidden="true"></span>
-            <strong>{acceptingBookings ? 'On' : 'Off'}</strong>
+            <strong>{acceptingBookings ? t('on') : t('off')}</strong>
           </label>
         </section>
 
@@ -390,13 +393,13 @@ export default function ProviderAvailability() {
           <div className="availability-card-heading">
             <div>
               <span className="availability-step">1</span>
-              <h2>Quick Setup</h2>
+              <h2>{t('availabilityQuickSetup')}</h2>
             </div>
-            <p>Pick a preset, then adjust individual dates in the calendar.</p>
+            <p>{t('availabilityQuickSetupDescription')}</p>
           </div>
 
           <div className="availability-field-group">
-            <label className="availability-label">Available days</label>
+            <label className="availability-label">{t('availabilityAvailableDays')}</label>
             <div className="availability-preset-grid">
               {DATE_PRESETS.map((preset) => (
                 <button
@@ -406,8 +409,8 @@ export default function ProviderAvailability() {
                   onClick={() => setDatePreset(preset.key)}
                   disabled={loading || saving}
                 >
-                  <strong>{preset.label}</strong>
-                  <span>{preset.description}</span>
+                  <strong>{t(preset.labelKey)}</strong>
+                  <span>{t(preset.descriptionKey)}</span>
                 </button>
               ))}
             </div>
@@ -415,7 +418,7 @@ export default function ProviderAvailability() {
 
           {datePreset === 'selected_days' && (
             <div className="availability-field-group">
-              <label className="availability-label">Choose weekdays</label>
+              <label className="availability-label">{t('availabilityChooseWeekdays')}</label>
               <div className="availability-weekday-row">
                 {WEEKDAYS.map((day) => (
                   <button
@@ -428,7 +431,7 @@ export default function ProviderAvailability() {
                         : [...current, day.value]
                     ))}
                   >
-                    {day.short}
+                    {t(day.labelKey)}
                   </button>
                 ))}
               </div>
@@ -436,7 +439,7 @@ export default function ProviderAvailability() {
           )}
 
           <div className="availability-field-group">
-            <label className="availability-label">Usual working hours</label>
+            <label className="availability-label">{t('availabilityUsualHours')}</label>
             <div className="availability-time-presets">
               {TIME_PRESETS.map((preset) => (
                 <button
@@ -446,14 +449,14 @@ export default function ProviderAvailability() {
                   onClick={() => handleTimePreset(preset)}
                   disabled={loading || saving}
                 >
-                  {preset.label}
+                  {t(preset.labelKey)}
                 </button>
               ))}
             </div>
 
             <div className="availability-time-row">
               <label>
-                <span>Start</span>
+                <span>{t('start')}</span>
                 <input
                   type="time"
                   value={defaultStartTime}
@@ -464,9 +467,9 @@ export default function ProviderAvailability() {
                   disabled={loading || saving}
                 />
               </label>
-              <span className="availability-time-separator">to</span>
+              <span className="availability-time-separator">{t('to')}</span>
               <label>
-                <span>End</span>
+                <span>{t('end')}</span>
                 <input
                   type="time"
                   value={defaultEndTime}
@@ -482,7 +485,7 @@ export default function ProviderAvailability() {
 
           <div className="availability-system-rule">
             <i className="bi bi-info-circle" aria-hidden="true"></i>
-            <span>Clients can book starting tomorrow, up to 60 days ahead. The system also prevents conflicting booked times automatically.</span>
+            <span>{t('availabilitySystemRule')}</span>
           </div>
 
           <button
@@ -492,7 +495,7 @@ export default function ProviderAvailability() {
             disabled={loading || saving}
           >
             <i className="bi bi-lightning-charge-fill" aria-hidden="true"></i>
-            Apply Preset
+            {t('availabilityApplyPreset')}
           </button>
         </section>
 
@@ -500,16 +503,16 @@ export default function ProviderAvailability() {
           <div className="availability-card-heading availability-calendar-heading">
             <div>
               <span className="availability-step">2</span>
-              <h2>Your Available Dates</h2>
+              <h2>{t('availabilityYourDates')}</h2>
             </div>
             <div className="availability-selected-count">
               <strong>{selectedDateKeys.length}</strong>
-              <span>selected</span>
+              <span>{t('selected')}</span>
             </div>
           </div>
 
           <p className="availability-calendar-help">
-            Tap a date to add or remove it. Preset dates are already highlighted.
+            {t('availabilityCalendarHelp')}
           </p>
 
           <div className="availability-calendar-shell">
@@ -528,11 +531,11 @@ export default function ProviderAvailability() {
             <div className="availability-list-section">
               <div className="availability-list-heading">
                 <div>
-                  <h3>Selected dates</h3>
-                  <p>{customHoursCount > 0 ? `${customHoursCount} date${customHoursCount === 1 ? '' : 's'} with different hours` : 'All dates use your usual working hours.'}</p>
+                  <h3>{t('availabilitySelectedDates')}</h3>
+                  <p>{customHoursCount > 0 ? t('availabilityCustomHoursCount', { count: customHoursCount }) : t('availabilityAllUsualHours')}</p>
                 </div>
                 <button type="button" className="availability-text-button" onClick={clearDates}>
-                  Clear dates
+                  {t('availabilityClearDates')}
                 </button>
               </div>
 
@@ -545,10 +548,10 @@ export default function ProviderAvailability() {
                   return (
                     <div className="availability-date-row" key={date}>
                       <div className="availability-date-copy">
-                        <strong>{formatDateLabel(date)}</strong>
+                        <strong>{formatDateLabel(date, locale)}</strong>
                         <span>
                           {formatTimeLabel(hours.startTime)} – {formatTimeLabel(hours.endTime)}
-                          {hasOverride && <em>Custom</em>}
+                          {hasOverride && <em>{t('availabilityCustomBadge')}</em>}
                         </span>
                       </div>
 
@@ -562,7 +565,7 @@ export default function ProviderAvailability() {
                               startTime: event.target.value,
                             }))}
                           />
-                          <span>to</span>
+                          <span>{t('to')}</span>
                           <input
                             type="time"
                             value={editingHours.endTime}
@@ -571,17 +574,17 @@ export default function ProviderAvailability() {
                               endTime: event.target.value,
                             }))}
                           />
-                          <button type="button" onClick={saveOverride}>Save</button>
-                          <button type="button" className="subtle" onClick={() => setEditingDate('')}>Cancel</button>
+                          <button type="button" onClick={saveOverride}>{t('save')}</button>
+                          <button type="button" className="subtle" onClick={() => setEditingDate('')}>{t('cancel')}</button>
                         </div>
                       ) : (
                         <div className="availability-date-actions">
                           <button type="button" onClick={() => beginEditHours(date)}>
-                            Change time
+                            {t('availabilityChangeTime')}
                           </button>
                           {hasOverride && (
                             <button type="button" className="subtle" onClick={() => resetOverride(date)}>
-                              Use usual hours
+                              {t('availabilityUseUsualHours')}
                             </button>
                           )}
                         </div>
@@ -596,11 +599,11 @@ export default function ProviderAvailability() {
 
         <div className="availability-save-bar">
           <div>
-            <strong>{acceptingBookings ? 'Ready to accept bookings' : 'Bookings paused'}</strong>
+            <strong>{acceptingBookings ? t('availabilityReady') : t('availabilityPaused')}</strong>
             <span>
               {acceptingBookings
-                ? `${selectedDateKeys.length} date${selectedDateKeys.length === 1 ? '' : 's'} will be visible to clients.`
-                : 'Your dates are saved but hidden while bookings are paused.'}
+                ? t('availabilityVisibleDatesCount', { count: selectedDateKeys.length })
+                : t('availabilityPausedDescription')}
             </span>
           </div>
           <button
@@ -612,12 +615,12 @@ export default function ProviderAvailability() {
             {saving ? (
               <>
                 <span className="availability-spinner" aria-hidden="true"></span>
-                Saving...
+                {t('availabilitySaving')}
               </>
             ) : (
               <>
                 <i className="bi bi-check2-circle" aria-hidden="true"></i>
-                Save Availability
+                {t('availabilitySave')}
               </>
             )}
           </button>
