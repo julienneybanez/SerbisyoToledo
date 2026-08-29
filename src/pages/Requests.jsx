@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { getUser, serviceProfileAPI, serviceRequestAPI } from '../services/api';
 import RequestDetailsModal from '../components/common/RequestDetailsModal';
 import ReviewModal from '../components/common/ReviewModal';
@@ -61,6 +61,7 @@ const CANCELLATION_REASONS = {
 
 export default function Requests() {
   const { t } = useLanguage();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const user = getUser();
   const isProvider = user?.userType === 'tradesperson';
@@ -974,66 +975,19 @@ export default function Requests() {
                   <p className="request-decline-reason"><strong>{t('reasonForCancellation')}:</strong> {request.cancellation_reason_other || request.cancellation_reason.replaceAll('_', ' ')}</p>
                 )}
 
-                {/* Discussion/Phone Section */}
-                {[REQUEST_STATUS.ACCEPTED, REQUEST_STATUS.ON_THE_WAY, REQUEST_STATUS.IN_PROGRESS].includes(request.status) && (
+                {/* Booking communication */}
+                {[REQUEST_STATUS.PENDING, REQUEST_STATUS.ACCEPTED, REQUEST_STATUS.ON_THE_WAY, REQUEST_STATUS.IN_PROGRESS].includes(request.status) && (
                   <div className="request-discussion-section">
-                    {!isProvider ? (
-                      // Client view
-                      <>
-                        {request.discussion_accepted && request.provider_phone ? (
-                          <div className="phone-revealed">
-                            <i className="bi bi-telephone-fill"></i>
-                            <div>
-                              <span className="phone-label">{t('requestsProviderPhoneLabel')}</span>
-                              <a href={`tel:${request.provider_phone}`} className="phone-number">
-                                {request.provider_phone}
-                              </a>
-                            </div>
-                          </div>
-                        ) : request.discussion_requested ? (
-                          <div className="discussion-pending">
-                            <i className="bi bi-hourglass-split"></i>
-                            <span>{t('requestsWaitingProviderDiscussion')}</span>
-                          </div>
-                        ) : (
-                          <button
-                            className="btn-request-discussion"
-                            onClick={() => handleRequestDiscussion(request.id)}
-                            disabled={actionLoading === request.id}
-                          >
-                            {actionLoading === request.id ? (
-                              <><span className="spinner-btn"></span> {t('requestsSending')}</>
-                            ) : (
-                              <><i className="bi bi-chat-dots"></i> {t('requestsRequestDiscussion')}</>
-                            )}
-                          </button>
-                        )}
-                      </>
-                    ) : (
-                      // Provider view
-                      <>
-                        {request.discussion_accepted ? (
-                          <div className="discussion-accepted-badge">
-                            <i className="bi bi-check-circle-fill"></i>
-                            <span>{t('requestsPhoneSharedWithClient')}</span>
-                          </div>
-                        ) : request.discussion_requested ? (
-                          <div className="discussion-request-pending">
-                            <p><i className="bi bi-chat-dots-fill"></i> {t('requestsClientWantsDiscuss')}</p>
-                            <button
-                              className="btn-accept-discussion"
-                              onClick={() => handleAcceptDiscussion(request.id)}
-                              disabled={actionLoading === request.id}
-                            >
-                              {actionLoading === request.id ? (
-                                <><span className="spinner-btn"></span> {t('requestsAccepting')}</>
-                              ) : (
-                                <><i className="bi bi-telephone"></i> {t('requestsAcceptAndSharePhone')}</>
-                              )}
-                            </button>
-                          </div>
-                        ) : null}
-                      </>
+                    <button
+                      type="button"
+                      className="btn-request-discussion"
+                      onClick={() => navigate('/messages?request=' + request.id)}
+                    >
+                      <i className="bi bi-chat-dots-fill"></i>
+                      {isProvider ? t('messageClient') : t('messageProvider')}
+                    </button>
+                    {[REQUEST_STATUS.ACCEPTED, REQUEST_STATUS.ON_THE_WAY, REQUEST_STATUS.IN_PROGRESS].includes(request.status) && (
+                      <span className="request-communication-help">{t('phoneShareOpenDetailsHelp')}</span>
                     )}
                   </div>
                 )}
