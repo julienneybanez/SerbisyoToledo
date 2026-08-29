@@ -569,13 +569,19 @@ describe('Backend Security Hardening', () => {
       if (sql.includes('SELECT id FROM users WHERE email = ?')) {
         return [[]];
       }
-
-      if (sql.includes('INSERT INTO users') && sql.includes('registration_languages')) {
-        return [{ insertId: 333 }];
-      }
-
       return [[]];
     });
+
+    const conn = createConnectionMock(async (sql) => {
+      if (sql.includes('INSERT INTO users')) {
+        return [{ insertId: 333 }];
+      }
+      if (sql.includes('INSERT INTO person_languages')) {
+        return [{ insertId: 1 }];
+      }
+      return [[]];
+    });
+    vi.spyOn(db, 'getConnection').mockResolvedValue(conn);
 
     const res = await request(app)
       .post('/api/auth/register')
@@ -590,11 +596,8 @@ describe('Backend Security Hardening', () => {
     expect(res.status).toBe(201);
     expect(res.body.success).toBe(true);
 
-    const insertCall = db.query.mock.calls.find(([sql]) => sql.includes('INSERT INTO users'));
-    expect(insertCall).toBeTruthy();
-
-    const params = insertCall[1];
-    expect(params[7]).toBe(JSON.stringify(['ceb', 'en']));
+    const languageInserts = conn.query.mock.calls.filter(([sql]) => sql.includes('INSERT INTO person_languages'));
+    expect(languageInserts.map((call) => call[1][1]).sort()).toEqual(['ceb', 'en']);
   });
 
   it('22) rejects profile service type when it does not match selected category', async () => {

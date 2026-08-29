@@ -24,6 +24,14 @@ const SUPPORTED_LANGUAGE_CODES = new Set(['ceb', 'en', 'fil']);
 
 const hashToken = (value) => crypto.createHash('sha256').update(value).digest('hex');
 
+const fetchUserSkills = async (userId) => {
+  const [rows] = await db.query(
+    'SELECT skill_label FROM provider_skills WHERE user_id = ? ORDER BY skill_label',
+    [userId]
+  );
+  return rows.map((row) => row.skill_label);
+};
+
 const isUrlLikeImageValue = (value) => {
   if (!value) {
     return false;
@@ -90,7 +98,7 @@ exports.register = async (req, res) => {
       });
     }
 
-    const { fullName, email, password, userType, preferredServices, profession, skills, languages } = req.body;
+    const { fullName, email, password, userType, profession, skills, languages } = req.body;
 
     const normalizedLanguages = userType === 'tradesperson'
       ? Array.from(
@@ -108,6 +116,10 @@ exports.register = async (req, res) => {
         message: 'Unsupported language code provided'
       });
     }
+
+    const normalizedSkills = userType === 'tradesperson'
+      ? Array.from(new Set((Array.isArray(skills) ? skills : []).map((s) => String(s || '').trim()).filter(Boolean)))
+      : [];
 
     if (!['client', 'tradesperson'].includes(userType)) {
       return res.status(400).json({
@@ -139,12 +151,7 @@ exports.register = async (req, res) => {
       email,
       password: hashedPassword,
       user_type: userType,
-      preferred_services: userType === 'client' ? preferredServices : null,
       profession: userType === 'tradesperson' ? profession : null,
-      skills: userType === 'tradesperson' && skills ? JSON.stringify(skills) : null,
-      registration_languages: userType === 'tradesperson' && normalizedLanguages.length > 0
-        ? JSON.stringify(normalizedLanguages)
-        : null,
     };
 
     const isEmailVerified = false;
@@ -154,24 +161,50 @@ exports.register = async (req, res) => {
       ? new Date(Date.now() + VERIFICATION_TOKEN_EXPIRY_HOURS * 60 * 60 * 1000)
       : null;
 
-    // Insert user into database
-    const [result] = await db.query(
-      `INSERT INTO users (full_name, email, password, user_type, preferred_services, profession, skills, registration_languages, email_verified, verification_token, verification_token_expires) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        userData.full_name,
-        userData.email,
-        userData.password,
-        userData.user_type,
-        userData.preferred_services,
-        userData.profession,
-        userData.skills,
-        userData.registration_languages,
-        isEmailVerified,
-        verificationTokenHash,
-        verificationTokenExpires
-      ]
-    );
+    const connection = await db.getConnection();
+    let insertId;
+    try {
+      await connection.beginTransaction();
+
+      // Insert user into database
+      const [result] = await connection.query(
+        `INSERT INTO users (full_name, email, password, user_type, profession, email_verified, verification_token, verification_token_expires)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          userData.full_name,
+          userData.email,
+          userData.password,
+          userData.user_type,
+          userData.profession,
+          isEmailVerified,
+          verificationTokenHash,
+          verificationTokenExpires
+        ]
+      );
+
+      insertId = result.insertId;
+
+      for (const languageCode of normalizedLanguages) {
+        await connection.query(
+          'INSERT INTO person_languages (user_id, language_code) VALUES (?, ?)',
+          [insertId, languageCode]
+        );
+      }
+
+      for (const skillLabel of normalizedSkills) {
+        await connection.query(
+          'INSERT INTO provider_skills (user_id, skill_label) VALUES (?, ?)',
+          [insertId, skillLabel]
+        );
+      }
+
+      await connection.commit();
+    } catch (transactionError) {
+      await connection.rollback();
+      throw transactionError;
+    } finally {
+      connection.release();
+    }
 
     const verificationEmailResult = await sendVerificationEmail(
       userData.email,
@@ -206,13 +239,12 @@ exports.register = async (req, res) => {
         : 'Registration successful, but the verification email could not be sent. Please use Resend Verification Email before logging in.',
       data: {
         user: {
-          id: result.insertId,
+          id: insertId,
           fullName: userData.full_name,
           email: userData.email,
           userType: userData.user_type,
-          preferredServices: userData.preferred_services,
           profession: userData.profession,
-          skills: skills || [],
+          skills: normalizedSkills,
           emailVerified: isEmailVerified
         },
         verificationRequired: PUBLIC_EMAIL_VERIFICATION_REQUIRED,
@@ -480,15 +512,7 @@ exports.login = async (req, res) => {
       [user.id]
     );
 
-    // Parse skills if JSON string
-    let skills = [];
-    if (user.skills) {
-      try {
-        skills = typeof user.skills === 'string' ? JSON.parse(user.skills) : user.skills;
-      } catch {
-        skills = [];
-      }
-    }
+    const skills = await fetchUserSkills(user.id);
 
     // Return success response
     res.json({
@@ -500,7 +524,6 @@ exports.login = async (req, res) => {
           fullName: user.full_name,
           email: user.email,
           userType: user.user_type,
-          preferredServices: user.preferred_services,
           profession: user.profession,
           skills,
           profileImage: resolveUserProfileImage(user),
@@ -540,15 +563,7 @@ exports.getMe = async (req, res) => {
 
     const user = users[0];
 
-    // Parse skills if JSON string
-    let skills = [];
-    if (user.skills) {
-      try {
-        skills = typeof user.skills === 'string' ? JSON.parse(user.skills) : user.skills;
-      } catch {
-        skills = [];
-      }
-    }
+    const skills = await fetchUserSkills(user.id);
 
     res.json({
       success: true,
@@ -558,7 +573,6 @@ exports.getMe = async (req, res) => {
           fullName: user.full_name,
           email: user.email,
           userType: user.user_type,
-          preferredServices: user.preferred_services,
           profession: user.profession,
           skills,
           profileImage: resolveUserProfileImage(user),
@@ -649,24 +663,29 @@ exports.updateProfile = async (req, res) => {
       updates.push('profession = ?');
       values.push(profession);
     }
-    if (skills !== undefined) {
-      updates.push('skills = ?');
-      values.push(JSON.stringify(skills));
-    }
 
-    if (updates.length === 0) {
+    if (updates.length === 0 && skills === undefined) {
       return res.status(400).json({
         success: false,
         message: 'No fields to update'
       });
     }
 
-    values.push(userId);
+    if (updates.length > 0) {
+      values.push(userId);
+      await db.query(
+        `UPDATE users SET ${updates.join(', ')} WHERE id = ?`,
+        values
+      );
+    }
 
-    await db.query(
-      `UPDATE users SET ${updates.join(', ')} WHERE id = ?`,
-      values
-    );
+    if (skills !== undefined) {
+      const normalizedSkills = Array.from(new Set((Array.isArray(skills) ? skills : []).map((s) => String(s || '').trim()).filter(Boolean)));
+      await db.query('DELETE FROM provider_skills WHERE user_id = ?', [userId]);
+      for (const skillLabel of normalizedSkills) {
+        await db.query('INSERT INTO provider_skills (user_id, skill_label) VALUES (?, ?)', [userId, skillLabel]);
+      }
+    }
 
     // Fetch updated user
     const [users] = await db.query(
@@ -676,15 +695,7 @@ exports.updateProfile = async (req, res) => {
 
     const user = users[0];
 
-    // Parse skills
-    let parsedSkills = [];
-    if (user.skills) {
-      try {
-        parsedSkills = typeof user.skills === 'string' ? JSON.parse(user.skills) : user.skills;
-      } catch {
-        parsedSkills = [];
-      }
-    }
+    const parsedSkills = await fetchUserSkills(userId);
 
     res.json({
       success: true,
@@ -695,7 +706,6 @@ exports.updateProfile = async (req, res) => {
           fullName: user.full_name,
           email: user.email,
           userType: user.user_type,
-          preferredServices: user.preferred_services,
           profession: user.profession,
           skills: parsedSkills,
           profileImage: resolveUserProfileImage(user),
