@@ -20,26 +20,11 @@ function ServiceProviderSettings() {
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const [flash, setFlash] = useState({ type: 'info', message: '' });
   const [initialSettings, setInitialSettings] = useState(null);
-  const [availabilityLoading, setAvailabilityLoading] = useState(true);
   const [languageSaving, setLanguageSaving] = useState(false);
   const [credentialLoading, setCredentialLoading] = useState(true);
   const [isSendingVerification, setIsSendingVerification] = useState(false);
   const [credentials, setCredentials] = useState([]);
   const [selectedLanguages, setSelectedLanguages] = useState([]);
-  const [availabilitySettings, setAvailabilitySettings] = useState({
-    availabilityStatus: 'available',
-    showAvailabilityStatus: true,
-    allowSameDayBooking: false,
-    minAdvanceNoticeMinutes: 720,
-    maxAdvanceBookingDays: 60,
-  });
-  const [specificAvailability, setSpecificAvailability] = useState([]);
-  const [legacyWeeklyBlocksCount, setLegacyWeeklyBlocksCount] = useState(0);
-  const [newAvailabilitySlot, setNewAvailabilitySlot] = useState({
-    date: '',
-    startTime: '09:00',
-    endTime: '10:00',
-  });
   const [newCredential, setNewCredential] = useState({
     credentialName: '',
     credentialType: '',
@@ -64,17 +49,13 @@ function ServiceProviderSettings() {
     ? 'Mga Pinulongan ug Credentials'
     : 'Language & Credentials';
 
-  const pageMode = location.pathname === '/provider-availability'
-    ? 'schedule'
-    : location.pathname === '/provider-credentials'
-      ? 'profile'
-      : 'account';
+  const pageMode = location.pathname === '/provider-credentials'
+    ? 'profile'
+    : 'account';
 
-  const pageTitle = pageMode === 'schedule'
-    ? t('providerSettingsNavAvailability')
-    : pageMode === 'profile'
-      ? languagesCredentialsLabel
-      : t('providerSettingsPageTitle');
+  const pageTitle = pageMode === 'profile'
+    ? languagesCredentialsLabel
+    : t('providerSettingsPageTitle');
 
   useEffect(() => {
     if (location.pathname !== '/provider-settings') {
@@ -130,15 +111,11 @@ function ServiceProviderSettings() {
   }, [navigate]);
 
   useEffect(() => {
-    const loadProviderSettingsData = async () => {
+    const loadProviderToolData = async () => {
       try {
-        setAvailabilityLoading(true);
         setCredentialLoading(true);
 
-        const [availabilityResult, languagesResult, credentialsResult] = await Promise.allSettled([
-          serviceProfileAPI.getMyAvailability
-            ? serviceProfileAPI.getMyAvailability()
-            : Promise.resolve({ success: true, data: { settings: {}, weeklyBlocks: [], exceptions: [] } }),
+        const [languagesResult, credentialsResult] = await Promise.allSettled([
           serviceProfileAPI.getMyLanguages
             ? serviceProfileAPI.getMyLanguages()
             : Promise.resolve({ success: true, data: { languages: [] } }),
@@ -147,13 +124,6 @@ function ServiceProviderSettings() {
             : Promise.resolve({ success: true, data: { credentials: [] } }),
         ]);
 
-        const availabilityResponse = availabilityResult.status === 'fulfilled' ? availabilityResult.value : null;
-        const languagesResponse = languagesResult.status === 'fulfilled' ? languagesResult.value : null;
-        const credentialsResponse = credentialsResult.status === 'fulfilled' ? credentialsResult.value : null;
-
-        if (availabilityResult.status === 'rejected') {
-          console.error('Failed to load provider availability:', availabilityResult.reason);
-        }
         if (languagesResult.status === 'rejected') {
           console.error('Failed to load provider languages:', languagesResult.reason);
         }
@@ -161,74 +131,21 @@ function ServiceProviderSettings() {
           console.error('Failed to load provider credentials:', credentialsResult.reason);
         }
 
-        if (availabilityResponse?.success && availabilityResponse.data) {
-          const s = availabilityResponse.data.settings || {};
-          setAvailabilitySettings({
-            availabilityStatus: String(
-              s.availability_status ?? s.availabilityStatus ?? 'available'
-            ).toLowerCase(),
-            showAvailabilityStatus: Boolean(
-              s.show_availability_status ?? s.showAvailabilityStatus ?? true
-            ),
-            allowSameDayBooking: Boolean(s.allow_same_day_booking ?? s.allowSameDayBooking),
-            minAdvanceNoticeMinutes: Number(s.min_advance_notice_minutes ?? s.minAdvanceNoticeMinutes ?? 720),
-            maxAdvanceBookingDays: Number(s.max_advance_booking_days ?? s.maxAdvanceBookingDays ?? 60),
-          });
-
-          const blocks = Array.isArray(availabilityResponse.data.weeklyBlocks)
-            ? availabilityResponse.data.weeklyBlocks
-            : [];
-          setLegacyWeeklyBlocksCount(blocks.length);
-
-          const explicitSlots = Array.isArray(availabilityResponse.data.specificAvailability)
-            ? availabilityResponse.data.specificAvailability
-            : (Array.isArray(availabilityResponse.data.exceptions)
-              ? availabilityResponse.data.exceptions
-                .filter((item) => (
-                  String(item.exception_type ?? item.exceptionType ?? '').toLowerCase() === 'available'
-                  && (item.start_time ?? item.startTime)
-                  && (item.end_time ?? item.endTime)
-                ))
-                .map((item) => ({
-                  id: item.id,
-                  date: String(item.exception_date ?? item.exceptionDate ?? '').slice(0, 10),
-                  startTime: String(item.start_time ?? item.startTime ?? '').slice(0, 5),
-                  endTime: String(item.end_time ?? item.endTime ?? '').slice(0, 5),
-                }))
-              : []);
-
-          setSpecificAvailability(
-            explicitSlots
-              .map((item) => ({
-                id: item.id,
-                date: String(item.date || '').slice(0, 10),
-                startTime: String(item.startTime || '').slice(0, 5),
-                endTime: String(item.endTime || '').slice(0, 5),
-              }))
-              .filter((item) => item.date && item.startTime && item.endTime)
-              .sort((a, b) => (
-                a.date.localeCompare(b.date)
-                || a.startTime.localeCompare(b.startTime)
-              ))
-          );
+        if (languagesResult.status === 'fulfilled' && languagesResult.value?.success) {
+          setSelectedLanguages(languagesResult.value.data?.languages || []);
         }
 
-        if (languagesResponse?.success) {
-          setSelectedLanguages(languagesResponse.data?.languages || []);
-        }
-
-        if (credentialsResponse?.success) {
-          setCredentials(credentialsResponse.data?.credentials || []);
+        if (credentialsResult.status === 'fulfilled' && credentialsResult.value?.success) {
+          setCredentials(credentialsResult.value.data?.credentials || []);
         }
       } catch (err) {
-        console.error('Failed to load provider settings:', err);
+        console.error('Failed to load provider languages/credentials:', err);
       } finally {
-        setAvailabilityLoading(false);
         setCredentialLoading(false);
       }
     };
 
-    loadProviderSettingsData();
+    loadProviderToolData();
   }, []);
 
   const handleChange = (key, value) => {
@@ -276,27 +193,6 @@ function ServiceProviderSettings() {
     }
   };
 
-  const handleAvailabilitySave = async () => {
-    try {
-      setIsSaving(true);
-      setFlash({ type: 'info', message: '' });
-      await serviceProfileAPI.saveMyAvailability({
-        settings: availabilitySettings,
-        specificAvailability: specificAvailability.map(({ date, startTime, endTime }) => ({
-          date,
-          startTime,
-          endTime,
-        })),
-      });
-      setLegacyWeeklyBlocksCount(0);
-      setFlash({ type: 'success', message: t('providerAvailabilityUpdatedSuccess') });
-    } catch {
-      setFlash({ type: 'error', message: getFriendlyErrorMessage(t('providerAvailabilitySaveFailed')) });
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
   const handleLanguageToggle = (code) => {
     setSelectedLanguages((prev) => (
       prev.includes(code) ? prev.filter((item) => item !== code) : [...prev, code]
@@ -314,62 +210,6 @@ function ServiceProviderSettings() {
     } finally {
       setLanguageSaving(false);
     }
-  };
-
-  const getTodayInputValue = () => {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  };
-
-  const handleAddSpecificAvailability = () => {
-    const { date, startTime, endTime } = newAvailabilitySlot;
-
-    if (!date) {
-      setFlash({ type: 'error', message: t('providerAvailabilityDateRequired') });
-      return;
-    }
-
-    if (date < getTodayInputValue()) {
-      setFlash({ type: 'error', message: t('providerAvailabilityPastDateError') });
-      return;
-    }
-
-    if (!startTime || !endTime || endTime <= startTime) {
-      setFlash({ type: 'error', message: t('providerAvailabilityTimeRangeError') });
-      return;
-    }
-
-    const overlaps = specificAvailability.some((slot) => (
-      slot.date === date
-      && startTime < slot.endTime
-      && endTime > slot.startTime
-    ));
-
-    if (overlaps) {
-      setFlash({ type: 'error', message: t('providerAvailabilityOverlapError') });
-      return;
-    }
-
-    setSpecificAvailability((prev) => ([
-      ...prev,
-      { date, startTime, endTime },
-    ].sort((a, b) => (
-      a.date.localeCompare(b.date)
-      || a.startTime.localeCompare(b.startTime)
-    ))));
-
-    setNewAvailabilitySlot((prev) => ({
-      ...prev,
-      date: '',
-    }));
-    setFlash({ type: 'info', message: '' });
-  };
-
-  const handleRemoveSpecificAvailability = (index) => {
-    setSpecificAvailability((prev) => prev.filter((_, itemIndex) => itemIndex !== index));
   };
 
   const handleResendVerification = async () => {
@@ -560,205 +400,6 @@ function ServiceProviderSettings() {
                 </button>
                 <button className="btn-cancel" type="button" onClick={handleResetAccount} disabled={isSaving || isLoadingProfile || !hasAccountChanges}>
                   {t('reset')}
-                </button>
-              </div>
-            </div>
-          )}
-
-          {pageMode === 'schedule' && (
-            <div className="settings-section">
-              <p className="settings-help provider-tool-intro">{t('providerScheduleClientChoiceHelp')}</p>
-
-              <div className="settings-toggle-group">
-                <div className="settings-toggle">
-                  <label className="toggle-label">
-                    <span>{t('providerAvailabilityStatusLabel')}</span>
-                    <small>{t('providerAvailabilityStatusHelp')}</small>
-                  </label>
-                  <label className="switch">
-                    <input
-                      type="checkbox"
-                      checked={availabilitySettings.availabilityStatus !== 'unavailable'}
-                      onChange={(e) => setAvailabilitySettings((prev) => ({
-                        ...prev,
-                        availabilityStatus: e.target.checked ? 'available' : 'unavailable',
-                      }))}
-                      disabled={availabilityLoading || isSaving}
-                    />
-                    <span className="slider"></span>
-                  </label>
-                </div>
-
-                <div className="settings-toggle">
-                  <label className="toggle-label">
-                    <span>{t('providerShowAvailabilityStatusLabel')}</span>
-                    <small>{t('providerShowAvailabilityStatusHelp')}</small>
-                  </label>
-                  <label className="switch">
-                    <input
-                      type="checkbox"
-                      checked={availabilitySettings.showAvailabilityStatus}
-                      onChange={(e) => setAvailabilitySettings((prev) => ({
-                        ...prev,
-                        showAvailabilityStatus: e.target.checked,
-                      }))}
-                      disabled={availabilityLoading || isSaving}
-                    />
-                    <span className="slider"></span>
-                  </label>
-                </div>
-              </div>
-
-              <div className="settings-section-divider"></div>
-              <h3 className="settings-subsection-title">{t('providerBookingConfigurationTitle')}</h3>
-              <small className="settings-help">{t('providerBookingRulesHelp')}</small>
-
-              <div className="settings-group">
-                <label className="settings-label">{t('providerAllowSameDayBookingLabel')}</label>
-                <label className="switch">
-                  <input
-                    type="checkbox"
-                    checked={availabilitySettings.allowSameDayBooking}
-                    onChange={(e) => setAvailabilitySettings((prev) => ({
-                      ...prev,
-                      allowSameDayBooking: e.target.checked,
-                    }))}
-                    disabled={availabilityLoading || isSaving}
-                  />
-                  <span className="slider"></span>
-                </label>
-              </div>
-
-              <div className="settings-group">
-                <label className="settings-label">{t('providerMinAdvanceNoticeLabelFriendly')}</label>
-                <select
-                  className="settings-select"
-                  value={availabilitySettings.minAdvanceNoticeMinutes}
-                  onChange={(e) => setAvailabilitySettings((prev) => ({
-                    ...prev,
-                    minAdvanceNoticeMinutes: Number(e.target.value),
-                  }))}
-                  disabled={availabilityLoading || isSaving}
-                >
-                  <option value={0}>{t('providerAdvanceNoticeNone')}</option>
-                  <option value={60}>{t('providerAdvanceNotice1Hour')}</option>
-                  <option value={180}>{t('providerAdvanceNotice3Hours')}</option>
-                  <option value={360}>{t('providerAdvanceNotice6Hours')}</option>
-                  <option value={720}>{t('providerAdvanceNotice12Hours')}</option>
-                  <option value={1440}>{t('providerAdvanceNotice1Day')}</option>
-                  <option value={2880}>{t('providerAdvanceNotice2Days')}</option>
-                  {![0, 60, 180, 360, 720, 1440, 2880].includes(Number(availabilitySettings.minAdvanceNoticeMinutes)) && (
-                    <option value={availabilitySettings.minAdvanceNoticeMinutes}>
-                      {t('providerAdvanceNoticeCustom', { minutes: availabilitySettings.minAdvanceNoticeMinutes })}
-                    </option>
-                  )}
-                </select>
-              </div>
-
-              <div className="settings-group">
-                <label className="settings-label">{t('providerMaxAdvanceBookingDaysLabel')}</label>
-                <input
-                  type="number"
-                  className="settings-input"
-                  value={availabilitySettings.maxAdvanceBookingDays}
-                  onChange={(e) => setAvailabilitySettings((prev) => ({
-                    ...prev,
-                    maxAdvanceBookingDays: Number(e.target.value || 1),
-                  }))}
-                  min="1"
-                  max="365"
-                  disabled={availabilityLoading || isSaving}
-                />
-              </div>
-
-              <div className="settings-section-divider"></div>
-              <h3 className="settings-subsection-title">{t('providerSpecificAvailabilityTitle')}</h3>
-              <p className="settings-help">{t('providerSpecificAvailabilityHelp')}</p>
-
-              {legacyWeeklyBlocksCount > 0 && (
-                <div className="settings-flash info" role="status">
-                  {t('providerLegacyAvailabilityNotice')}
-                </div>
-              )}
-
-              <div className="settings-surface-block">
-                <label className="settings-label">{t('providerAvailableDateLabel')}</label>
-                <input
-                  type="date"
-                  className="settings-input"
-                  value={newAvailabilitySlot.date}
-                  min={getTodayInputValue()}
-                  onChange={(e) => setNewAvailabilitySlot((prev) => ({
-                    ...prev,
-                    date: e.target.value,
-                  }))}
-                  disabled={availabilityLoading || isSaving}
-                />
-
-                <label className="settings-label">{t('requestsStartTime')}</label>
-                <input
-                  type="time"
-                  className="settings-input"
-                  value={newAvailabilitySlot.startTime}
-                  onChange={(e) => setNewAvailabilitySlot((prev) => ({
-                    ...prev,
-                    startTime: e.target.value,
-                  }))}
-                  disabled={availabilityLoading || isSaving}
-                />
-
-                <label className="settings-label">{t('requestsEndTime')}</label>
-                <input
-                  type="time"
-                  className="settings-input"
-                  value={newAvailabilitySlot.endTime}
-                  onChange={(e) => setNewAvailabilitySlot((prev) => ({
-                    ...prev,
-                    endTime: e.target.value,
-                  }))}
-                  disabled={availabilityLoading || isSaving}
-                />
-
-                <button
-                  type="button"
-                  className="btn-save"
-                  onClick={handleAddSpecificAvailability}
-                  disabled={availabilityLoading || isSaving}
-                >
-                  {t('providerAddTimeSlot')}
-                </button>
-              </div>
-
-              <div className="settings-group">
-                {specificAvailability.length === 0 && (
-                  <small className="settings-help">{t('providerNoSpecificAvailability')}</small>
-                )}
-
-                {specificAvailability.map((slot, index) => (
-                  <div key={`${slot.date}-${slot.startTime}-${index}`} className="settings-surface-block">
-                    <p className="settings-metadata-row settings-metadata-strong">
-                      {slot.date} • {slot.startTime} - {slot.endTime}
-                    </p>
-                    <small className="settings-help">
-                      {t('providerClientSeesStartTime', { time: slot.startTime })}
-                    </small>
-                    <div className="settings-credential-actions">
-                      <button
-                        type="button"
-                        className="btn-cancel"
-                        onClick={() => handleRemoveSpecificAvailability(index)}
-                        disabled={availabilityLoading || isSaving}
-                      >
-                        {t('providerRemoveException')}
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="settings-actions">
-                <button className="btn-save" onClick={handleAvailabilitySave} disabled={availabilityLoading || isSaving}>
-                  {isSaving ? t('saving') : t('providerSaveAvailability')}
                 </button>
               </div>
             </div>
