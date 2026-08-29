@@ -696,8 +696,12 @@ exports.getClientRequests = async (req, res) => {
        JOIN service_profiles sp ON sr.service_profile_id = sp.id
        JOIN users u ON sr.provider_id = u.id
        WHERE sr.client_id = ?
+         AND NOT EXISTS (
+           SELECT 1 FROM service_request_archives archive
+           WHERE archive.service_request_id = sr.id AND archive.user_id = ?
+         )
        ORDER BY sr.created_at DESC`,
-      [clientId]
+      [clientId, clientId]
     );
 
     const requestsWithDates = await attachBookingDates(db, requests);
@@ -730,8 +734,12 @@ exports.getProviderRequests = async (req, res) => {
        FROM service_requests sr
        JOIN users u ON sr.client_id = u.id
        WHERE sr.provider_id = ?
+         AND NOT EXISTS (
+           SELECT 1 FROM service_request_archives archive
+           WHERE archive.service_request_id = sr.id AND archive.user_id = ?
+         )
        ORDER BY sr.created_at DESC`,
-      [providerId]
+      [providerId, providerId]
     );
 
     const requestsWithDates = await attachBookingDates(db, requests);
