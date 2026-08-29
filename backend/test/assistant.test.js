@@ -42,6 +42,7 @@ describe('Assistant preparation API', () => {
     expect(res.body.data.contextAccepted).toEqual({
       route: '/feed',
       role: 'client',
+      historyCount: 0,
     });
   });
 
