@@ -723,7 +723,7 @@ export default function BookingModal({ provider, onClose }) {
             </div>
 
             <div className="booking-form-group">
-              <label htmlFor="booking-duration-minutes">{t('bookingDurationMinutes')}</label>
+              <label htmlFor="booking-duration-minutes">{t('bookingEstimatedDurationMinutes')}</label>
               <input
                 id="booking-duration-minutes"
                 className="booking-input"
@@ -734,6 +734,7 @@ export default function BookingModal({ provider, onClose }) {
                 value={estimatedDurationMinutes}
                 onChange={(event) => setEstimatedDurationMinutes(Number(event.target.value || 0))}
               />
+              <p className="booking-field-help">{t('bookingEstimatedDurationHelp')}</p>
             </div>
 
             <div className="booking-hint-card" style={{ marginTop: 0 }}>
