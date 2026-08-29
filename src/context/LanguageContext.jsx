@@ -7,6 +7,7 @@ const DEFAULT_LANGUAGE = 'en';
 const DICTIONARY = {
   en: {
     reason: 'Reason',
+    serviceListingCloseAria: 'Close service listing form',
     serviceListingLoading: 'Loading service listing...',
     editServiceListing: 'Edit Service Listing',
     serviceListingEditSubtitle: 'Update your service listing details below.',
@@ -1061,6 +1062,7 @@ const DICTIONARY = {
   },
   ceb: {
     reason: 'Rason',
+    serviceListingCloseAria: 'Sirad-i ang service listing form',
     serviceListingLoading: 'Nag-load sa service listing...',
     editServiceListing: 'Usba ang Service Listing',
     serviceListingEditSubtitle: 'Usba ang detalye sa imong service listing sa ubos.',
