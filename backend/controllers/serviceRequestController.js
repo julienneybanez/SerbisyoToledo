@@ -331,9 +331,11 @@ exports.createRequest = async (req, res) => {
       scheduledDate,
       scheduledTime,
       estimatedDurationMinutes,
+      serviceLocation,
     } = req.body;
 
     const jobDetails = String(req.body.jobDetails || '').trim();
+    const normalizedServiceLocation = String(serviceLocation || '').trim();
 
     if (req.user.userType !== 'client') {
       return res.status(403).json({
@@ -342,10 +344,17 @@ exports.createRequest = async (req, res) => {
       });
     }
 
-    if (!serviceProfileId || !jobDetails) {
+    if (!serviceProfileId || !jobDetails || !normalizedServiceLocation) {
       return res.status(400).json({
         success: false,
-        message: 'Service profile and job details are required'
+        message: 'Service profile, job details, and service location are required'
+      });
+    }
+
+    if (normalizedServiceLocation.length > 500) {
+      return res.status(400).json({
+        success: false,
+        message: 'Service location must not exceed 500 characters'
       });
     }
 
@@ -463,35 +472,32 @@ exports.createRequest = async (req, res) => {
       participantIds
     );
 
-    const targetCategoryKey = effectiveServiceType?.categoryKey
-      || profileCategories.map((label) => toCategoryKey(label)).find(Boolean)
-      || null;
+    const targetServiceTypeKey = effectiveServiceType?.key || null;
 
-    if (targetCategoryKey) {
+    if (targetServiceTypeKey) {
       const activeStatusPlaceholders = ACTIVE_REQUEST_STATUSES.map(() => '?').join(', ');
       const [activeClientRequests] = await connection.query(
-        `SELECT sr.id, sr.provider_id, sr.service_type_key, sr.status, sp.service_categories
+        `SELECT sr.id, sr.provider_id, sr.service_type_key, sr.status
          FROM service_requests sr
-         JOIN service_profiles sp ON sp.id = sr.service_profile_id
          WHERE sr.client_id = ?
+           AND sr.service_type_key = ?
            AND sr.status IN (${activeStatusPlaceholders})`,
-        [clientId, ...ACTIVE_REQUEST_STATUSES]
+        [clientId, targetServiceTypeKey, ...ACTIVE_REQUEST_STATUSES]
       );
 
-      const activeCategoryConflict = activeClientRequests.find((row) => (
+      const activeServiceConflict = activeClientRequests.find((row) => (
         Number(row.provider_id) !== Number(profile.provider_id)
-        && getRequestCategoryKeys(row).includes(targetCategoryKey)
       ));
 
-      if (activeCategoryConflict) {
+      if (activeServiceConflict) {
         await connection.rollback();
         return res.status(409).json({
           success: false,
-          code: 'ACTIVE_SERVICE_CATEGORY_REQUEST_EXISTS',
-          message: `You already have an active ${effectiveServiceType?.categoryLabel || 'service'} request with another provider. Finish, cancel, or wait for that request to close before requesting the same service category from a different provider.`,
+          code: 'ACTIVE_SERVICE_TYPE_REQUEST_EXISTS',
+          message: 'You already have an active request for this same service with another provider. Finish, cancel, or wait for that request to close first.',
           data: {
-            existingRequestId: activeCategoryConflict.id,
-            categoryKey: targetCategoryKey,
+            existingRequestId: activeServiceConflict.id,
+            serviceTypeKey: targetServiceTypeKey,
           },
         });
       }
@@ -580,6 +586,7 @@ exports.createRequest = async (req, res) => {
          service_type_label,
          job_title,
          job_details,
+         service_location,
          booking_type,
          start_date,
          end_date,
@@ -591,7 +598,7 @@ exports.createRequest = async (req, res) => {
          daily_rate_snapshot,
          estimated_total
        )
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         clientId,
         profile.provider_id,
@@ -602,6 +609,7 @@ exports.createRequest = async (req, res) => {
         // and should be dropped when the later database migration is applied.
         serviceRequestLabel,
         jobDetails,
+        normalizedServiceLocation,
         normalized.storageBookingType,
         normalized.normalizedStartDate,
         normalized.normalizedEndDate,
@@ -654,6 +662,7 @@ exports.createRequest = async (req, res) => {
         durationDays: normalized.durationDays,
         dailyRateSnapshot: dailyRate,
         estimatedTotal,
+        serviceLocation: normalizedServiceLocation,
       }
     });
   } catch (error) {
@@ -682,7 +691,6 @@ exports.getClientRequests = async (req, res) => {
       `SELECT sr.*, 
               sp.full_name as provider_name, 
               sp.barangay_address as provider_location,
-              u.phone as provider_phone,
               (SELECT COUNT(*) FROM reviews rv WHERE rv.service_request_id = sr.id AND rv.client_id = sr.client_id) as has_review
        FROM service_requests sr
        JOIN service_profiles sp ON sr.service_profile_id = sp.id
@@ -695,7 +703,6 @@ exports.getClientRequests = async (req, res) => {
     const requestsWithDates = await attachBookingDates(db, requests);
     const processedRequests = requestsWithDates.map((request) => ({
       ...request,
-      provider_phone: request.discussion_accepted ? request.provider_phone : null,
       has_review: request.has_review > 0,
     }));
 
@@ -719,8 +726,7 @@ exports.getProviderRequests = async (req, res) => {
 
     const [requests] = await db.query(
       `SELECT sr.*, 
-              u.full_name as client_name,
-              u.email as client_email
+              u.full_name as client_name
        FROM service_requests sr
        JOIN users u ON sr.client_id = u.id
        WHERE sr.provider_id = ?
@@ -878,6 +884,13 @@ exports.updateRequestStatus = async (req, res) => {
           normalizedCancellationReason === 'Other' ? normalizedCancellationReasonOther : null,
           requestId,
         ]
+      );
+
+      await connection.query(
+        `UPDATE service_request_reschedules
+         SET reschedule_status = 'declined', responded_at = NOW()
+         WHERE service_request_id = ? AND reschedule_status = 'pending'`,
+        [requestId]
       );
 
       const otherUserId = request.client_id === userId ? request.provider_id : request.client_id;
@@ -1038,6 +1051,15 @@ exports.updateRequestStatus = async (req, res) => {
       );
     }
 
+    if (status !== 'accepted') {
+      await connection.query(
+        `UPDATE service_request_reschedules
+         SET reschedule_status = 'declined', responded_at = NOW()
+         WHERE service_request_id = ? AND reschedule_status = 'pending'`,
+        [requestId]
+      );
+    }
+
     let notificationType;
     let notificationTitle;
     let notificationMessage;
@@ -1184,6 +1206,23 @@ exports.proposeReschedule = async (req, res) => {
       return res.status(409).json({
         success: false,
         message: 'A booking can only be rescheduled before the provider is on the way.'
+      });
+    }
+
+    const [pendingReschedules] = await connection.query(
+      `SELECT id
+       FROM service_request_reschedules
+       WHERE service_request_id = ? AND reschedule_status = 'pending'
+       LIMIT 1
+       FOR UPDATE`,
+      [request.id]
+    );
+
+    if (pendingReschedules.length > 0) {
+      await connection.rollback();
+      return res.status(409).json({
+        success: false,
+        message: 'This booking already has a pending reschedule proposal. Resolve it before proposing another.'
       });
     }
 
@@ -1371,6 +1410,14 @@ exports.respondToReschedule = async (req, res) => {
     }
 
     const request = requests[0];
+
+    if (request.status !== 'accepted') {
+      await connection.rollback();
+      return res.status(409).json({
+        success: false,
+        message: 'This reschedule proposal is no longer valid because the booking is not in Accepted status.'
+      });
+    }
 
     const [reschedules] = await connection.query(
       `SELECT *
@@ -1659,7 +1706,7 @@ exports.acceptDiscussion = async (req, res) => {
     await db.query(
       `INSERT INTO notifications (user_id, type, title, message, related_request_id)
        VALUES (?, 'discussion_accepted', ?, ?, ?)`,
-      [request.client_id, 'Discussion Accepted', `${request.provider_name} accepted your discussion request. You can now contact them at: ${providerPhone}`, requestId]
+      [request.client_id, 'Discussion Accepted', `${request.provider_name} shared contact access for this booking. Open the request to view authorized contact details.`, requestId]
     );
 
     res.json({
@@ -1685,9 +1732,7 @@ exports.getRequestById = async (req, res) => {
       `SELECT sr.*, 
               sp.full_name as provider_name,
               sp.barangay_address as provider_location,
-              u.phone as provider_phone,
-              c.full_name as client_name,
-              c.email as client_email
+              c.full_name as client_name
        FROM service_requests sr
        JOIN service_profiles sp ON sr.service_profile_id = sp.id
        JOIN users u ON sr.provider_id = u.id
@@ -1704,10 +1749,6 @@ exports.getRequestById = async (req, res) => {
     }
 
     const [request] = await attachBookingDates(db, requests);
-
-    if (!request.discussion_accepted) {
-      request.provider_phone = null;
-    }
 
     const [reschedules] = await db.query(
       `SELECT *
