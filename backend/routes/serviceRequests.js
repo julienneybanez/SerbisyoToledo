@@ -3,6 +3,8 @@ const multer = require('multer');
 const router = express.Router();
 const { authenticateToken, requireUserType } = require('../middleware/auth');
 const { uploadLimiter } = require('../middleware/rateLimiters');
+const contactSharingController = require('../controllers/contactSharingController');
+const requestArchiveController = require('../controllers/requestArchiveController');
 const { validateSingleUpload } = require('../middleware/uploadValidation');
 const {
   createRequest,
@@ -11,8 +13,6 @@ const {
   updateRequestStatus,
   proposeReschedule,
   respondToReschedule,
-  requestDiscussion,
-  acceptDiscussion,
   getRequestById,
   createReview,
   createReport
@@ -52,11 +52,14 @@ router.patch('/:requestId/status', updateRequestStatus);
 router.post('/:requestId/reschedules', proposeReschedule);
 router.patch('/:requestId/reschedules/:rescheduleId/respond', respondToReschedule);
 
-// Request discussion (client)
-router.post('/:requestId/request-discussion', requireUserType('client'), requestDiscussion);
+// Communication is handled through request-bound Messages.
+// Phone numbers are a separate, reciprocal, consent-based contact channel.
+router.get('/:requestId/phone-share', contactSharingController.getPhoneShareState);
+router.post('/:requestId/phone-share/request', contactSharingController.requestPhoneShare);
+router.patch('/:requestId/phone-share/respond', contactSharingController.respondToPhoneShare);
 
-// Accept discussion (provider)
-router.post('/:requestId/accept-discussion', requireUserType('tradesperson'), acceptDiscussion);
+router.post('/:requestId/archive', requestArchiveController.archiveRequest);
+router.delete('/:requestId/archive', requestArchiveController.unarchiveRequest);
 
 // Create a review for a completed request (client)
 router.post('/:requestId/review', requireUserType('client'), createReview);
