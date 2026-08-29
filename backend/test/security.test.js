@@ -51,18 +51,24 @@ describe('Backend Security Hardening', () => {
   });
 
   it('2b) prevents an unverified provider from posting a service listing', async () => {
+    const mockConnection = createConnectionMock(async (sql) => {
+      return [[]];
+    });
+
     vi.spyOn(db, 'query').mockImplementation(async (sql) => {
       if (sql === authUserSql) {
         return [[{ id: 2, user_type: 'tradesperson', is_active: 1 }]];
       }
-      if (String(sql).includes('SELECT user_type, is_verified FROM users WHERE id = ? LIMIT 1')) {
-        return [[{ user_type: 'tradesperson', is_verified: 0 }]];
+      if (String(sql).includes('SELECT user_type, is_verified, is_active FROM users WHERE id = ? LIMIT 1')) {
+        return [[{ user_type: 'tradesperson', is_verified: 0, is_active: 1 }]];
       }
       if (String(sql).includes('SELECT id, banner_image_public_id FROM service_profiles WHERE user_id = ?')) {
         return [[]];
       }
       return [[]];
     });
+
+    vi.spyOn(db, 'getConnection').mockResolvedValue(mockConnection);
 
     const res = await request(app)
       .post('/api/service-profiles/create')
@@ -98,10 +104,39 @@ describe('Backend Security Hardening', () => {
 
     const conn = createConnectionMock(async (sql) => {
       if (sql.includes('SELECT') && sql.includes('FROM service_profiles sp')) {
-        return [[{ service_profile_id: 7, provider_id: 21, is_published: 1, user_type: 'tradesperson', is_active: 1 }]];
+        return [[{ 
+          service_profile_id: 7, 
+          provider_id: 21, 
+          is_published: 1, 
+          user_type: 'tradesperson', 
+          is_active: 1,
+          service_types: JSON.stringify(['leak_repair']),
+          service_categories: JSON.stringify(['Plumbing'])
+        }]];
+      }
+      if (sql.includes('SELECT sr.id, sr.provider_id, sr.service_type_key')) {
+        return [[]];  // No active conflicts
+      }
+      if (sql.includes('SELECT category_key FROM service_profile_categories')) {
+        return [[{ category_key: 'plumbing' }]];
+      }
+      if (sql.includes('SELECT service_type_key FROM service_profile_types')) {
+        return [[{ service_type_key: 'leak_repair' }]];
+      }
+      if (sql.includes('SELECT availability_status FROM provider_availability_settings')) {
+        return [[{ availability_status: 'available' }]];
+      }
+      if (sql.includes('SELECT id FROM service_requests WHERE client_id')) {
+        return [[]];  // No duplicate requests
+      }
+      if (sql.includes('SELECT COUNT(*) as conflict_count')) {
+        return [[{ conflict_count: 0 }]];  // No schedule conflicts
       }
       if (sql.includes('INSERT INTO service_requests')) {
         return [{ insertId: 501 }];
+      }
+      if (sql.includes('INSERT INTO service_request_status_history')) {
+        return [{ insertId: 1 }];
       }
       if (sql.includes('SELECT full_name FROM users')) {
         return [[{ full_name: 'Client One' }]];
@@ -122,6 +157,7 @@ describe('Backend Security Hardening', () => {
         serviceProfileId: 7,
         jobTitle: 'Fix leaking pipe',
         jobDetails: 'Kitchen sink pipe is leaking heavily.',
+        serviceLocation: '123 Rizal St, Toledo City',
         bookingType: 'one_day',
         startDate: '2099-12-31',
         endDate: '2099-12-31',
@@ -605,10 +641,22 @@ describe('Backend Security Hardening', () => {
   });
 
   it('22) rejects profile service type when it does not match selected category', async () => {
-    vi.spyOn(db, 'query').mockImplementation(async (sql) => {
-      if (sql === authUserSql) return [[{ id: 42, user_type: 'tradesperson', is_active: 1 }]];
+    const mockConnection = createConnectionMock(async (sql) => {
       return [[]];
     });
+
+    vi.spyOn(db, 'query').mockImplementation(async (sql) => {
+      if (sql === authUserSql) return [[{ id: 42, user_type: 'tradesperson', is_active: 1 }]];
+      if (String(sql).includes('SELECT user_type, is_verified, is_active FROM users WHERE id = ? LIMIT 1')) {
+        return [[{ user_type: 'tradesperson', is_verified: 1, is_active: 1 }]];
+      }
+      if (String(sql).includes('SELECT id, banner_image_public_id FROM service_profiles WHERE user_id = ?')) {
+        return [[]];
+      }
+      return [[]];
+    });
+
+    vi.spyOn(db, 'getConnection').mockResolvedValue(mockConnection);
 
     const res = await request(app)
       .post('/api/service-profiles/create')
@@ -671,10 +719,22 @@ describe('Backend Security Hardening', () => {
   });
 
   it('24) rejects creating/updating profile with legacy Repair category', async () => {
-    vi.spyOn(db, 'query').mockImplementation(async (sql) => {
-      if (sql === authUserSql) return [[{ id: 42, user_type: 'tradesperson', is_active: 1 }]];
+    const mockConnection = createConnectionMock(async (sql) => {
       return [[]];
     });
+
+    vi.spyOn(db, 'query').mockImplementation(async (sql) => {
+      if (sql === authUserSql) return [[{ id: 42, user_type: 'tradesperson', is_active: 1 }]];
+      if (String(sql).includes('SELECT user_type, is_verified, is_active FROM users WHERE id = ? LIMIT 1')) {
+        return [[{ user_type: 'tradesperson', is_verified: 1, is_active: 1 }]];
+      }
+      if (String(sql).includes('SELECT id, banner_image_public_id FROM service_profiles WHERE user_id = ?')) {
+        return [[]];
+      }
+      return [[]];
+    });
+
+    vi.spyOn(db, 'getConnection').mockResolvedValue(mockConnection);
 
     const res = await request(app)
       .post('/api/service-profiles/create')

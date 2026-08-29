@@ -1,6 +1,7 @@
 const db = require('../config/database');
 const { parseJsonArray } = require('../utils/jsonHelpers');
 const {
+  SERVICE_TAXONOMY,
   toPublicTaxonomy,
   normalizeCategoryLabels,
   getCategoryFilterLabels,
@@ -268,8 +269,72 @@ const applyProviderLanguages = async (serviceProfileId, languageCodes = []) => {
   }
 };
 
-// Create or update service profile
+// Canonical: Apply category key assignments to relational table
+// Called within a transaction context
+const applyProfileCategories = async (connection, serviceProfileId, categoryKeys = []) => {
+  // Delete old assignments
+  await connection.query(
+    'DELETE FROM service_profile_categories WHERE service_profile_id = ?',
+    [serviceProfileId]
+  );
+
+  // Insert new assignments
+  for (const categoryKey of categoryKeys) {
+    await connection.query(
+      'INSERT INTO service_profile_categories (service_profile_id, category_key) VALUES (?, ?)',
+      [serviceProfileId, categoryKey]
+    );
+  }
+};
+
+// Canonical: Apply service type key assignments to relational table
+// Called within a transaction context
+const applyProfileServiceTypes = async (connection, serviceProfileId, serviceTypeKeys = []) => {
+  // Delete old assignments
+  await connection.query(
+    'DELETE FROM service_profile_types WHERE service_profile_id = ?',
+    [serviceProfileId]
+  );
+
+  // Insert new assignments
+  for (const typeKey of serviceTypeKeys) {
+    await connection.query(
+      'INSERT INTO service_profile_types (service_profile_id, service_type_key) VALUES (?, ?)',
+      [serviceProfileId, typeKey]
+    );
+  }
+};
+
+// Canonical: Read category keys for a profile
+const getProfileCategoryKeys = async (connection, serviceProfileId) => {
+  const [rows] = await connection.query(
+    'SELECT category_key FROM service_profile_categories WHERE service_profile_id = ? ORDER BY category_key',
+    [serviceProfileId]
+  );
+  return rows.map((row) => row.category_key);
+};
+
+// Canonical: Read service type keys for a profile
+const getProfileServiceTypeKeys = async (connection, serviceProfileId) => {
+  const [rows] = await connection.query(
+    'SELECT service_type_key FROM service_profile_types WHERE service_profile_id = ? ORDER BY service_type_key',
+    [serviceProfileId]
+  );
+  return rows.map((row) => row.service_type_key);
+};
+
+// Canonical: Read full taxonomy assignments for a profile
+const getProfileTaxonomyAssignments = async (connection, serviceProfileId) => {
+  const categoryKeys = await getProfileCategoryKeys(connection, serviceProfileId);
+  const serviceTypeKeys = await getProfileServiceTypeKeys(connection, serviceProfileId);
+  return { categoryKeys, serviceTypeKeys };
+};
+
+// Create or update service profile (CANONICAL V3.1)
+// Persists category/type assignments to relational tables only (NOT JSON columns)
 exports.createOrUpdateProfile = async (req, res) => {
+  let connection;
+  
   try {
     const userId = req.user?.userId;
     
@@ -280,8 +345,9 @@ exports.createOrUpdateProfile = async (req, res) => {
       });
     }
 
+    // Check user exists and is tradesperson
     const [providerRows] = await db.query(
-      'SELECT user_type, is_verified FROM users WHERE id = ? LIMIT 1',
+      'SELECT user_type, is_verified, is_active FROM users WHERE id = ? LIMIT 1',
       [userId]
     );
 
@@ -300,6 +366,7 @@ exports.createOrUpdateProfile = async (req, res) => {
       });
     }
 
+    // New profiles require verification
     const [existingProfile] = await db.query(
       'SELECT id, banner_image_public_id FROM service_profiles WHERE user_id = ?',
       [userId]
@@ -309,22 +376,21 @@ exports.createOrUpdateProfile = async (req, res) => {
       return res.status(403).json({
         success: false,
         code: 'PROVIDER_VERIFICATION_REQUIRED',
-        message: 'Your service provider account must be verified before you can post a Service Listing.'
+        message: 'Your service provider account must be verified before you can create a Service Listing.'
       });
     }
 
+    // Extract and normalize input
     const { barangayAddress, startingPrice, description } = req.body;
-    const pricingUnit = String(req.body.pricingUnit || 'per_day').trim().toLowerCase();
-    let serviceCategories = req.body.serviceCategories;
-    let serviceTypes = req.body.serviceTypes;
-    let languages = req.body.languages;
+    let serviceCategories = req.body.serviceCategories || [];
+    let serviceTypes = req.body.serviceTypes || [];
+    let languages = req.body.languages || [];
     let bannerImageUrl = null;
     let bannerImagePublicId = null;
 
-    serviceCategories = parseMaybeJsonArray(serviceCategories);
-    const serviceTypesProvided = typeof req.body.serviceTypes !== 'undefined';
-    serviceTypes = parseMaybeJsonArray(serviceTypes);
-
+    // Normalize input arrays
+    serviceCategories = parseJsonArray(serviceCategories, []);
+    serviceTypes = parseJsonArray(serviceTypes, []);
     if (typeof languages === 'string') {
       try {
         languages = JSON.parse(languages);
@@ -333,68 +399,81 @@ exports.createOrUpdateProfile = async (req, res) => {
       }
     }
 
+    // Validate required fields
+    if (!barangayAddress || !startingPrice) {
+      return res.status(400).json({
+        success: false,
+        message: 'barangayAddress and startingPrice are required'
+      });
+    }
+
+    // Validate and normalize languages
     const normalizedLanguages = normalizeLanguageCodes(languages);
     if (normalizedLanguages.some((code) => !SUPPORTED_LANGUAGE_CODES.has(code))) {
       return res.status(400).json({
         success: false,
-        message: 'Unsupported language code provided',
+        message: 'Unsupported language code provided'
       });
     }
 
-    if (!SUPPORTED_PRICING_UNITS.has(pricingUnit)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Unsupported pricing unit provided',
-      });
-    }
-
-    const normalizedServiceCategories = normalizeCategoryLabels(serviceCategories, { preserveUnknown: false });
-
+    // Check for legacy categories
     const hasLegacyRepair = serviceCategories.some((category) => isLegacyCategoryValue(category));
     if (hasLegacyRepair) {
       return res.status(400).json({
         success: false,
-        message: 'Repair is a legacy category. Please choose a specific service category.',
+        message: 'Repair is a legacy category. Please choose a specific service category.'
       });
     }
 
-    if (normalizedServiceCategories.length !== serviceCategories.filter((value) => String(value || '').trim()).length) {
+    // Convert category labels to keys (for transition compatibility)
+    const normalizedCategoryLabels = normalizeCategoryLabels(serviceCategories, { preserveUnknown: false });
+    
+    if (normalizedCategoryLabels.length === 0) {
       return res.status(400).json({
         success: false,
-        message: 'One or more selected categories are invalid',
-      });
-    }
-    if (normalizedServiceCategories.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'At least one valid service category is required',
+        message: 'At least one valid service category is required'
       });
     }
 
+    // Get category keys from labels
+    const categoryKeys = normalizedCategoryLabels.map((label) => {
+      const category = SERVICE_TAXONOMY.find((c) => c.label === label);
+      return category ? category.key : null;
+    }).filter(Boolean);
+
+    if (categoryKeys.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Unable to resolve service category keys'
+      });
+    }
+
+    // Validate service types belong to selected categories
     const serviceTypeValidation = validateServiceTypeKeysForCategories({
-      categoryLabels: normalizedServiceCategories,
+      categoryLabels: normalizedCategoryLabels,
       serviceTypeKeys: serviceTypes,
     });
 
     if (serviceTypeValidation.invalidKeys.length > 0) {
       return res.status(400).json({
         success: false,
-        message: 'One or more selected service types are invalid',
+        message: 'One or more selected service types are invalid'
       });
     }
 
     if (serviceTypeValidation.categoryMismatchKeys.length > 0) {
       return res.status(400).json({
         success: false,
-        message: 'Selected service type does not belong to the chosen category',
+        message: 'Selected service type does not belong to the chosen category'
       });
     }
 
-    // Validate required fields
-    if (!barangayAddress || !startingPrice || normalizedServiceCategories.length === 0) {
+    const validServiceTypeKeys = serviceTypeValidation.validKeys;
+    
+    if (validServiceTypeKeys.length === 0) {
       return res.status(400).json({
         success: false,
-        message: 'Missing required fields'
+        message: 'At least one service type is required'
       });
     }
 
@@ -406,113 +485,93 @@ exports.createOrUpdateProfile = async (req, res) => {
           mimeType: req.file.mimetype,
           folder: 'serbisyo-toledo/service-banners',
         });
-
         bannerImageUrl = uploadResult.secure_url;
         bannerImagePublicId = uploadResult.public_id;
       }
     }
 
-    if (existingProfile.length > 0) {
-      // Update existing profile
-      const updates = [
-        'barangay_address = ?',
-        'starting_price = ?',
-        'pricing_unit = ?',
-        'service_categories = ?',
-        'taxonomy_needs_review = FALSE',
-        'description = ?',
-      ];
+    // Use transaction for atomic profile + category/type updates
+    connection = await db.getConnection();
+    await connection.beginTransaction();
 
-      const params = [
-        barangayAddress,
-        parseFloat(startingPrice),
-        pricingUnit,
-        JSON.stringify(normalizedServiceCategories),
-        description || null
-      ];
+    try {
+      if (existingProfile.length > 0) {
+        // UPDATE existing profile
+        const updates = ['barangay_address = ?', 'starting_price = ?', 'description = ?'];
+        const params = [barangayAddress, parseFloat(startingPrice), description || null];
 
-      if (serviceTypesProvided) {
-        updates.push('service_types = ?');
-        params.push(JSON.stringify(serviceTypeValidation.validKeys));
+        if (bannerImageUrl) {
+          updates.push('banner_image_url = ?');
+          params.push(bannerImageUrl);
+          updates.push('banner_image_public_id = ?');
+          params.push(bannerImagePublicId);
+        }
+
+        params.push(userId);
+
+        await connection.query(
+          `UPDATE service_profiles SET ${updates.join(', ')} WHERE user_id = ?`,
+          params
+        );
+
+        const profileId = existingProfile[0].id;
+
+        // Update category and type assignments (transactional)
+        await applyProfileCategories(connection, profileId, categoryKeys);
+        await applyProfileServiceTypes(connection, profileId, validServiceTypeKeys);
+
+        // Update languages (non-transactional, called after transaction succeeds)
+        // This is done after commit to keep transaction scope small
+      } else {
+        // CREATE new profile
+        const [result] = await connection.query(
+          `INSERT INTO service_profiles 
+           (user_id, barangay_address, starting_price, description, banner_image_url, banner_image_public_id, is_published, taxonomy_needs_review) 
+           VALUES (?, ?, ?, ?, ?, ?, FALSE, FALSE)`,
+          [
+            userId,
+            barangayAddress,
+            parseFloat(startingPrice),
+            description || null,
+            bannerImageUrl || null,
+            bannerImagePublicId || null,
+          ]
+        );
+
+        const profileId = result.insertId;
+
+        // Create category and type assignments (transactional)
+        await applyProfileCategories(connection, profileId, categoryKeys);
+        await applyProfileServiceTypes(connection, profileId, validServiceTypeKeys);
+
+        // Store profile ID for response
+        existingProfile[0] = { id: profileId };
       }
 
-      if (bannerImageUrl) {
-        updates.push('banner_image_url = ?');
-        params.push(bannerImageUrl);
-        updates.push('banner_image_public_id = ?');
-        params.push(bannerImagePublicId);
-      }
+      await connection.commit();
 
-      params.push(userId);
-
-      await db.query(
-        `UPDATE service_profiles SET ${updates.join(', ')} WHERE user_id = ?`,
-        params
-      );
-
-      if (Array.isArray(languages)) {
-        await applyProviderLanguages(existingProfile[0].id, normalizedLanguages);
-      }
-
-      if (bannerImagePublicId && existingProfile[0].banner_image_public_id) {
-        await deleteImageByPublicId(existingProfile[0].banner_image_public_id);
-      }
-
-      return res.json({
-        success: true,
-        message: 'Service profile updated successfully',
-        profileId: existingProfile[0].id
-      });
-    } else {
-      // Create new profile
-      const [result] = await db.query(
-        `INSERT INTO service_profiles 
-         (user_id, barangay_address, starting_price, pricing_unit, service_categories, service_types, taxonomy_needs_review, description, banner_image_url, banner_image_public_id) 
-         VALUES (?, ?, ?, ?, ?, ?, FALSE, ?, ?, ?)`,
-        [
-          userId,
-          barangayAddress,
-          parseFloat(startingPrice),
-          pricingUnit,
-          JSON.stringify(normalizedServiceCategories),
-          serviceTypesProvided ? JSON.stringify(serviceTypeValidation.validKeys) : null,
-          description || null,
-          bannerImageUrl,
-          bannerImagePublicId,
-        ]
-      );
-
-      let initialLanguages = normalizedLanguages;
-
-      if (!Array.isArray(languages)) {
-        const [rows] = await db.query('SELECT registration_languages FROM users WHERE id = ? LIMIT 1', [userId]);
-        const persisted = rows[0]?.registration_languages;
-
-        if (persisted) {
-          let parsed = [];
-          if (typeof persisted === 'string') {
-            try {
-              parsed = JSON.parse(persisted);
-            } catch {
-              parsed = [];
-            }
-          } else if (Array.isArray(persisted)) {
-            parsed = persisted;
-          }
-
-          initialLanguages = normalizeLanguageCodes(parsed).filter((code) => SUPPORTED_LANGUAGE_CODES.has(code));
+      // Apply languages after transaction succeeds
+      if (normalizedLanguages.length > 0) {
+        if (existingProfile[0]?.id) {
+          await applyProviderLanguages(existingProfile[0].id, normalizedLanguages);
         }
       }
 
-      if (initialLanguages.length > 0) {
-        await applyProviderLanguages(result.insertId, initialLanguages);
+      // Delete old banner if new one uploaded
+      if (bannerImagePublicId && existingProfile.length > 0 && existingProfile[0].banner_image_public_id) {
+        await deleteImageByPublicId(existingProfile[0].banner_image_public_id);
       }
 
-      return res.status(201).json({
+      const isUpdate = existingProfile.length > 0;
+      return res.status(isUpdate ? 200 : 201).json({
         success: true,
-        message: 'Service profile created successfully',
-        profileId: result.insertId
+        message: isUpdate ? 'Service profile updated successfully' : 'Service profile created successfully',
+        profileId: existingProfile[0]?.id
       });
+
+    } catch (txError) {
+      await connection.rollback();
+      throw txError;
     }
   } catch (error) {
     console.error('Error creating/updating service profile:', error);
@@ -521,6 +580,10 @@ exports.createOrUpdateProfile = async (req, res) => {
       message: 'Error creating/updating service profile',
       error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
+  } finally {
+    if (connection) {
+      connection.release();
+    }
   }
 };
 
