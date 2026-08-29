@@ -9,6 +9,10 @@ ALTER TABLE service_requests
 ALTER TABLE reviews
   MODIFY COLUMN rating DECIMAL(2,1) NOT NULL;
 
+ALTER TABLE verification_requests
+  MODIFY COLUMN certifications_data LONGBLOB NULL,
+  MODIFY COLUMN certifications_mime VARCHAR(100) NULL;
+
 CREATE TABLE IF NOT EXISTS conversations (
   id INT PRIMARY KEY AUTO_INCREMENT,
   service_request_id INT NOT NULL UNIQUE,
