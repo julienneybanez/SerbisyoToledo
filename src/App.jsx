@@ -15,6 +15,7 @@ import ProtectedRoute, { RoleAwarePublicRoute } from './components/common/Protec
 import InitialLoadingScreen from './components/common/InitialLoadingScreen';
 import lazyWithRetry from './utils/lazyWithRetry';
 import { useLanguage } from './context/LanguageContext';
+import { isPublicProviderRoute, shouldShowChatbotForContext } from './utils/chatbotVisibility';
 
 // Admin imports
 import AdminLayout from './components/layout/AdminLayout';
@@ -177,14 +178,12 @@ function App() {
   }, [location.pathname]);
 
   const isMobileShellLayout = isMobileViewport;
-  const isPublicProviderRoute = /^\/provider\/[^/]+\/?$/.test(location.pathname);
-  const chatbotAllowedRole = !currentUser || currentUser.userType === 'client';
-  const chatbotRelevantRoute = (
-    ['/', '/feed', '/client-dashboard'].includes(location.pathname)
-    || isPublicProviderRoute
-  );
-  const shouldShowChatbot = chatbotAllowedRole && chatbotRelevantRoute;
-  const shouldLiftChatbotButton = isMobileAuthenticated && isPublicProviderRoute;
+  const providerPublicRoute = isPublicProviderRoute(location.pathname);
+  const shouldShowChatbot = shouldShowChatbotForContext({
+    pathname: location.pathname,
+    userType: currentUser?.userType || null,
+  });
+  const shouldLiftChatbotButton = isMobileAuthenticated && providerPublicRoute;
   const workspaceRoutes = currentUser?.userType === 'tradesperson'
     ? ['/dashboard', '/requests', '/provider-settings', '/provider-schedule', '/provider-availability', '/provider-credentials', '/notifications']
     : currentUser?.userType === 'client'
@@ -194,11 +193,11 @@ function App() {
     currentUser
     && ['client', 'tradesperson'].includes(currentUser.userType)
     && isAuthenticated()
-    && (workspaceRoutes.includes(location.pathname) || isPublicProviderRoute)
+    && (workspaceRoutes.includes(location.pathname) || providerPublicRoute)
   );
   const shouldShowPublicFooter = !isAuthenticatedWorkspace && (
     ['/', '/about', '/feed'].includes(location.pathname)
-    || isPublicProviderRoute
+    || providerPublicRoute
   );
 
   const mobileRole = currentUser?.userType || 'guest';
