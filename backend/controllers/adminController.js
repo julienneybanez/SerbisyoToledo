@@ -759,8 +759,10 @@ exports.reviewProviderCredential = async (req, res) => {
     );
 
     const notificationType = action === 'approve'
-      ? 'verification_approved'
-      : 'verification_rejected';
+      ? 'credential_approved'
+      : action === 'reject'
+        ? 'credential_rejected'
+        : 'credential_expired';
     const notificationTitle = action === 'approve'
       ? 'Credential Approved'
       : action === 'reject'
