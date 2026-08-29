@@ -133,7 +133,8 @@ describe('Chatbot', () => {
             rating: 4.8,
             profession: 'Plumber',
             location: 'Toledo City',
-            dailyRate: 450,
+            startingPrice: 450,
+            pricingUnit: 'per_hour',
             languages: ['en'],
           },
         ],
@@ -159,7 +160,7 @@ describe('Chatbot', () => {
     });
 
     expect(await screen.findByText('Mario Helper')).toBeInTheDocument();
-    expect(screen.getByText(/P450/)).toBeInTheDocument();
+    expect(screen.getByText('P450 / hour')).toBeInTheDocument();
   });
 
   it('automatically scrolls to the latest message after a reply', async () => {
