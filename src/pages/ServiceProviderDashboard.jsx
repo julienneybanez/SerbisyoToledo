@@ -15,28 +15,28 @@ const PROVIDER_TIPS = [
   {
     id: 'service',
     icon: 'bi-chat-heart',
-    title: 'Customer Service',
-    description: 'Confirm the job details and schedule with the client before starting.',
+    titleKey: 'providerTipCustomerServiceTitle',
+    descriptionKey: 'providerTipCustomerServiceDescription',
   },
   {
     id: 'tools',
     icon: 'bi-tools',
-    title: 'Job Readiness',
-    description: 'Prepare the tools and materials you need before going to the client.',
+    titleKey: 'providerTipReadinessTitle',
+    descriptionKey: 'providerTipReadinessDescription',
   },
   {
     id: 'pricing',
     icon: 'bi-cash-coin',
-    title: 'Pricing',
-    description: 'Discuss extra costs with the client before the work begins.',
+    titleKey: 'providerTipPricingTitle',
+    descriptionKey: 'providerTipPricingDescription',
   },
 ];
 
-function formatServiceLabel(request) {
+function formatServiceLabel(request, fallbackLabel) {
   const label = String(
-    request?.service_display_label || request?.service_type_label || 'Service Request'
+    request?.service_display_label || request?.service_type_label || fallbackLabel
   ).trim();
-  if (!label) return 'Service Request';
+  if (!label) return fallbackLabel;
   return label.replace(/\b\w/g, (character) => character.toUpperCase());
 }
 
@@ -52,17 +52,17 @@ function getScheduledDate(request) {
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
-function formatSchedule(request, compact = false) {
+function formatSchedule(request, compact = false, locale = 'en-PH', unsetLabel = 'Schedule not set') {
   const date = getScheduledDate(request);
-  if (!date) return 'Schedule not set';
+  if (!date) return unsetLabel;
 
-  const dateLabel = date.toLocaleDateString('en-PH', {
+  const dateLabel = date.toLocaleDateString(locale, {
     month: 'short',
     day: 'numeric',
     ...(compact ? {} : { year: 'numeric' }),
   });
 
-  const timeLabel = date.toLocaleTimeString('en-PH', {
+  const timeLabel = date.toLocaleTimeString(locale, {
     hour: 'numeric',
     minute: '2-digit',
   });
@@ -72,7 +72,8 @@ function formatSchedule(request, compact = false) {
 
 export default function ServiceProviderDashboard() {
   const navigate = useNavigate();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const locale = language === 'ceb' ? 'ceb-PH' : 'en-PH';
   const [user, setUser] = useState(() => getUser());
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showPortfolioModal, setShowPortfolioModal] = useState(false);
@@ -408,7 +409,7 @@ export default function ServiceProviderDashboard() {
   const handleConfirmDecline = async () => {
     const trimmedReason = declineDialog.reason.trim();
     if (!trimmedReason) {
-      setDeclineDialog((prev) => ({ ...prev, error: 'Reason for declining is required.' }));
+      setDeclineDialog((prev) => ({ ...prev, error: t('requestsDeclineReasonRequired') }));
       return;
     }
 
@@ -418,7 +419,7 @@ export default function ServiceProviderDashboard() {
       return;
     }
 
-    setDeclineDialog((prev) => ({ ...prev, error: result?.message || 'Failed to decline request' }));
+    setDeclineDialog((prev) => ({ ...prev, error: result?.message || t('requestsDeclineFailed') }));
   };
 
   const getStatusClass = (status) => {
@@ -434,14 +435,21 @@ export default function ServiceProviderDashboard() {
     return statusMap[status] || 'status-pending';
   };
 
-  const formatStatus = (status) => (
-    String(status || REQUEST_STATUS.PENDING)
-      .replace(/_/g, ' ')
-      .replace(/\b\w/g, (letter) => letter.toUpperCase())
-  );
+  const formatStatus = (status) => {
+    const keyByStatus = {
+      pending: 'statusPending',
+      accepted: 'statusAccepted',
+      declined: 'statusDeclined',
+      on_the_way: 'statusOnTheWay',
+      in_progress: 'statusInProgress',
+      completed: 'statusCompleted',
+      cancelled: 'statusCancelled',
+    };
+    return t(keyByStatus[status] || 'statusPending');
+  };
 
-  const primaryService = myProfile?.categories?.[0] || 'Local Services';
-  const providerName = user?.fullName || 'Service Provider';
+  const primaryService = myProfile?.categories?.[0] || t('providerLocalServices');
+  const providerName = user?.fullName || t('serviceProvider');
 
   return (
     <div className="dashboard-container">
@@ -449,8 +457,8 @@ export default function ServiceProviderDashboard() {
         <section className="welcome-section">
           <div className="provider-welcome-identity">
             <div className="welcome-content">
-              <h1>Good day, <span className="user-name">{providerName}</span></h1>
-              <div className="provider-context-row" aria-label="Primary service">
+              <h1>{t('providerGoodDay')} <span className="user-name">{providerName}</span></h1>
+              <div className="provider-context-row" aria-label={t('providerPrimaryServiceAria')}>
                 <span><i className="bi bi-tools" aria-hidden="true"></i>{primaryService}</span>
               </div>
             </div>
@@ -475,8 +483,8 @@ export default function ServiceProviderDashboard() {
                 <i className="bi bi-inbox"></i>
               </span>
               <div>
-                <h2>{requestSummary.pending} request{requestSummary.pending > 1 ? 's' : ''} need your response</h2>
-                <p>Clients are waiting for you to accept or decline their booking requests.</p>
+                <h2>{requestSummary.pending === 1 ? t('providerPendingOne') : t('providerPendingMany', { count: requestSummary.pending })}</h2>
+                <p>{t('providerPendingDescription')}</p>
               </div>
             </div>
             <button type="button" className="btn-review-requests" onClick={() => navigate('/requests')}>
@@ -485,15 +493,15 @@ export default function ServiceProviderDashboard() {
           </section>
         )}
 
-        <section className="provider-stats-row" aria-label="Provider quick stats">
+        <section className="provider-stats-row" aria-label={t('providerQuickStatsAria')}>
           <article className="provider-stat-card">
             <span className="provider-stat-icon requests" aria-hidden="true">
               <i className="bi bi-inbox"></i>
             </span>
             <div className="provider-stat-copy">
               <strong>{requestSummary.pending}</strong>
-              <p>New Request{requestSummary.pending === 1 ? '' : 's'}</p>
-              <small>{requestSummary.pending > 0 ? 'Needs your response' : 'No pending requests'}</small>
+              <p>{t(requestSummary.pending === 1 ? 'providerNewRequest' : 'providerNewRequests')}</p>
+              <small>{requestSummary.pending > 0 ? t('providerNeedsResponse') : t('providerNoPendingRequests')}</small>
             </div>
           </article>
 
@@ -503,11 +511,11 @@ export default function ServiceProviderDashboard() {
             </span>
             <div className="provider-stat-copy">
               <strong>{requestSummary.upcoming}</strong>
-              <p>Upcoming Job{requestSummary.upcoming === 1 ? '' : 's'}</p>
+              <p>{t(requestSummary.upcoming === 1 ? 'providerUpcomingJob' : 'providerUpcomingJobs')}</p>
               <small>
                 {requestSummary.nextUpcoming
-                  ? `Next: ${formatSchedule(requestSummary.nextUpcoming, true)}`
-                  : 'No upcoming jobs'}
+                  ? t('providerNext', { schedule: formatSchedule(requestSummary.nextUpcoming, true, locale, t('providerScheduleNotSet')) })
+                  : t('providerNoUpcomingJobs')}
               </small>
             </div>
           </article>
@@ -518,8 +526,8 @@ export default function ServiceProviderDashboard() {
             </span>
             <div className="provider-stat-copy">
               <strong>{requestSummary.active}</strong>
-              <p>Active Job{requestSummary.active === 1 ? '' : 's'}</p>
-              <small>Accepted or in progress</small>
+              <p>{t(requestSummary.active === 1 ? 'providerActiveJob' : 'providerActiveJobs')}</p>
+              <small>{t('providerActiveDescription')}</small>
             </div>
           </article>
 
@@ -529,41 +537,41 @@ export default function ServiceProviderDashboard() {
             </span>
             <div className="provider-stat-copy">
               <strong>{requestSummary.completed}</strong>
-              <p>Completed Job{requestSummary.completed === 1 ? '' : 's'}</p>
-              <small>Finished service requests</small>
+              <p>{t(requestSummary.completed === 1 ? 'providerCompletedJob' : 'providerCompletedJobs')}</p>
+              <small>{t('providerCompletedDescription')}</small>
             </div>
           </article>
         </section>
 
         <ProfileCompletionChecklist
-          title="Profile Setup"
+          title={t('providerProfileSetup')}
           tasks={providerChecklistTasks}
           loading={checklistLoading}
           error={checklistError}
           initiallyCollapsed
           enhancedSummary
-          continueLabel="Continue Setup"
+          continueLabel={t('providerContinueSetup')}
         />
 
         <section className="dashboard-schedule-section">
           <div className="jobs-header">
             <div>
-              <h2 className="section-title">Upcoming Schedule</h2>
-              <p className="jobs-subtitle">Accepted jobs that are coming up next.</p>
+              <h2 className="section-title">{t('providerUpcomingSchedule')}</h2>
+              <p className="jobs-subtitle">{t('providerUpcomingScheduleDescription')}</p>
             </div>
-            <Link to="/provider-schedule" className="view-all-link">Open Calendar</Link>
+            <Link to="/provider-schedule" className="view-all-link">{t('providerOpenCalendar')}</Link>
           </div>
 
           {loadingRequests ? (
             <div className="dashboard-schedule-list">
-              <div className="dashboard-schedule-empty"><div className="spinner-small"></div><p>Loading schedule...</p></div>
+              <div className="dashboard-schedule-empty"><div className="spinner-small"></div><p>{t('providerLoadingSchedule')}</p></div>
             </div>
           ) : upcomingJobs.length === 0 ? (
             <div className="dashboard-schedule-list">
               <div className="dashboard-schedule-empty">
                 <span className="jobs-empty-icon" aria-hidden="true"><i className="bi bi-calendar2-check"></i></span>
-                <h3>No upcoming accepted jobs</h3>
-                <p>Accepted bookings will appear here and on your Schedule calendar.</p>
+                <h3>{t('providerNoUpcomingAcceptedJobs')}</h3>
+                <p>{t('providerUpcomingAcceptedDescription')}</p>
               </div>
             </div>
           ) : (
@@ -579,8 +587,8 @@ export default function ServiceProviderDashboard() {
                     <i className="bi bi-calendar-event"></i>
                   </span>
                   <span className="dashboard-schedule-copy">
-                    <strong>{formatServiceLabel(job)}</strong>
-                    <small>{job.client_name || 'Client'} · {formatSchedule(job)}</small>
+                    <strong>{formatServiceLabel(job, t('providerServiceRequestFallback'))}</strong>
+                    <small>{job.client_name || t('client')} · {formatSchedule(job, false, locale, t('providerScheduleNotSet'))}</small>
                   </span>
                   <span className={`job-status ${getStatusClass(job.status)}`}>{formatStatus(job.status)}</span>
                   <i className="bi bi-chevron-right dashboard-schedule-chevron" aria-hidden="true"></i>
@@ -593,22 +601,22 @@ export default function ServiceProviderDashboard() {
         <section className="jobs-section">
           <div className="jobs-header">
             <div>
-              <h2 className="section-title">Your Work Queue</h2>
-              <p className="jobs-subtitle">Review new requests first, then continue accepted jobs.</p>
+              <h2 className="section-title">{t('providerWorkQueue')}</h2>
+              <p className="jobs-subtitle">{t('providerWorkQueueDescription')}</p>
             </div>
-            <Link to="/requests" className="view-all-link">View All Requests</Link>
+            <Link to="/requests" className="view-all-link">{t('providerViewAllRequests')}</Link>
           </div>
 
           {loadingRequests ? (
             <div className="jobs-loading">
               <div className="spinner-small"></div>
-              <p>Loading requests...</p>
+              <p>{t('providerLoadingRequests')}</p>
             </div>
           ) : requests.length === 0 ? (
             <div className="jobs-empty">
               <span className="jobs-empty-icon" aria-hidden="true"><i className="bi bi-inbox"></i></span>
-              <h3>No jobs in your queue</h3>
-              <p>New requests and accepted jobs will appear here.</p>
+              <h3>{t('providerNoQueueJobs')}</h3>
+              <p>{t('providerQueueEmptyDescription')}</p>
             </div>
           ) : (
             <div className="jobs-grid">
@@ -619,10 +627,10 @@ export default function ServiceProviderDashboard() {
                       <i className="bi bi-tools"></i>
                     </span>
                     <div className="job-heading-copy">
-                      <h3 className="job-title">{formatServiceLabel(job)}</h3>
+                      <h3 className="job-title">{formatServiceLabel(job, t('providerServiceRequestFallback'))}</h3>
                       <p className="job-client">
                         <i className="bi bi-person" aria-hidden="true"></i>
-                        {job.client_name || 'Client'}
+                        {job.client_name || t('client')}
                       </p>
                     </div>
                     <span className={`job-status ${getStatusClass(job.status)}`}>
@@ -642,8 +650,8 @@ export default function ServiceProviderDashboard() {
                       <i className="bi bi-calendar3"></i>
                     </span>
                     <div>
-                      <span>Scheduled</span>
-                      <strong>{formatSchedule(job)}</strong>
+                      <span>{t('providerScheduled')}</span>
+                      <strong>{formatSchedule(job, false, locale, t('providerScheduleNotSet'))}</strong>
                     </div>
                   </div>
 
@@ -655,7 +663,7 @@ export default function ServiceProviderDashboard() {
                           onClick={() => handleStatusUpdate(job.id, REQUEST_STATUS.ACCEPTED)}
                           disabled={actionLoading === job.id}
                         >
-                          {actionLoading === job.id ? 'Processing...' : 'Accept Request'}
+                          {actionLoading === job.id ? t('requestsProcessing') : t('requestsAcceptRequest')}
                         </button>
                         <button
                           className="job-btn job-btn-secondary"
@@ -681,7 +689,7 @@ export default function ServiceProviderDashboard() {
                           onClick={() => handleStatusUpdate(job.id, REQUEST_STATUS.ON_THE_WAY)}
                           disabled={actionLoading === job.id}
                         >
-                          <i className="bi bi-truck"></i> I&apos;m On My Way
+                          <i className="bi bi-truck"></i> {t('requestsImOnMyWay')}
                         </button>
                         <button
                           className="job-btn job-btn-secondary"
@@ -696,7 +704,7 @@ export default function ServiceProviderDashboard() {
                     {job.status === REQUEST_STATUS.ON_THE_WAY && (
                       <>
                         <button className="job-btn job-btn-on-way" onClick={() => handleStatusUpdate(job.id, REQUEST_STATUS.IN_PROGRESS)} disabled={actionLoading === job.id}>
-                          <i className="bi bi-play-circle"></i> Start Service
+                          <i className="bi bi-play-circle"></i> {t('requestsStartService')}
                         </button>
                         <button className="job-btn job-btn-secondary" onClick={() => setSelectedRequest(job)} disabled={actionLoading === job.id}>
                           View Details
@@ -707,7 +715,7 @@ export default function ServiceProviderDashboard() {
                     {job.status === REQUEST_STATUS.IN_PROGRESS && (
                       <>
                         <button className="job-btn job-btn-complete" onClick={() => handleStatusUpdate(job.id, REQUEST_STATUS.COMPLETED)} disabled={actionLoading === job.id}>
-                          <i className="bi bi-check-lg"></i> Mark Service Complete
+                          <i className="bi bi-check-lg"></i> {t('requestsMarkServiceComplete')}
                         </button>
                         <button className="job-btn job-btn-secondary" onClick={() => setSelectedRequest(job)} disabled={actionLoading === job.id}>
                           View Details
@@ -726,11 +734,11 @@ export default function ServiceProviderDashboard() {
             <i className={`bi ${user?.isVerified ? 'bi-patch-check-fill' : 'bi-shield-check'}`}></i>
           </span>
           <div className="level-up-copy">
-            <h2>{user?.isVerified ? 'Verification Approved' : 'Provider Verification'}</h2>
+            <h2>{user?.isVerified ? t('providerVerificationApproved') : t('providerVerificationTitle')}</h2>
             <p>
               {user?.isVerified
-                ? 'Your public profile can display your provider verification badge.'
-                : 'Verification is required before you can post and publish a Service Listing.'}
+                ? t('providerVerificationApprovedDescription')
+                : t('providerVerificationListingRequirement')}
             </p>
           </div>
           {!user?.isVerified && (
@@ -742,7 +750,7 @@ export default function ServiceProviderDashboard() {
 
         <section className="tips-section" aria-labelledby="provider-tips-title">
           <div className="tips-section-heading">
-            <h2 id="provider-tips-title" className="section-title">Tips for Service Providers</h2>
+            <h2 id="provider-tips-title" className="section-title">{t('providerTipsTitle')}</h2>
           </div>
 
           <div className="tips-grid">
@@ -752,8 +760,8 @@ export default function ServiceProviderDashboard() {
                   <i className={`bi ${tip.icon}`}></i>
                 </span>
                 <div>
-                  <h3>{tip.title}</h3>
-                  <p>{tip.description}</p>
+                  <h3>{t(tip.titleKey)}</h3>
+                  <p>{t(tip.descriptionKey)}</p>
                 </div>
               </article>
             ))}
@@ -795,25 +803,25 @@ export default function ServiceProviderDashboard() {
           <div className="decline-dialog-overlay" role="dialog" aria-modal="true" aria-labelledby="dashboard-decline-dialog-title" onClick={closeDeclineDialog}>
             <div className="decline-dialog-card" onClick={(event) => event.stopPropagation()}>
               <div className="decline-dialog-header">
-                <h2 id="dashboard-decline-dialog-title">Decline Request</h2>
-                <button type="button" className="decline-dialog-close" onClick={closeDeclineDialog} aria-label="Close decline dialog">×</button>
+                <h2 id="dashboard-decline-dialog-title">{t('requestsDeclineRequest')}</h2>
+                <button type="button" className="decline-dialog-close" onClick={closeDeclineDialog} aria-label={t('requestsCloseDeclineDialog')}>×</button>
               </div>
               <div className="decline-dialog-body">
-                <label htmlFor="dashboard-decline-reason" className="decline-dialog-label">Reason for declining</label>
+                <label htmlFor="dashboard-decline-reason" className="decline-dialog-label">{t('reasonForDeclining')}</label>
                 <textarea
                   id="dashboard-decline-reason"
                   className="decline-dialog-textarea"
                   rows={4}
                   value={declineDialog.reason}
                   onChange={(event) => setDeclineDialog((prev) => ({ ...prev, reason: event.target.value, error: '' }))}
-                  placeholder="Tell the client why you can't take this request"
+                  placeholder={t('providerDeclinePlaceholder')}
                 />
                 {declineDialog.error ? <p className="decline-dialog-error">{declineDialog.error}</p> : null}
               </div>
               <div className="decline-dialog-actions">
-                <button type="button" className="decline-btn-cancel" onClick={closeDeclineDialog} disabled={actionLoading === declineDialog.requestId}>Cancel</button>
+                <button type="button" className="decline-btn-cancel" onClick={closeDeclineDialog} disabled={actionLoading === declineDialog.requestId}>{t('requestsCancelAction')}</button>
                 <button type="button" className="decline-btn-confirm" onClick={handleConfirmDecline} disabled={actionLoading === declineDialog.requestId}>
-                  {actionLoading === declineDialog.requestId ? 'Declining...' : 'Decline Request'}
+                  {actionLoading === declineDialog.requestId ? t('requestsDeclining') : t('requestsDeclineRequest')}
                 </button>
               </div>
             </div>
