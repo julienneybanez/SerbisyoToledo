@@ -109,6 +109,52 @@ describe('bookingAvailability.checkScheduleConflict', () => {
     expect(result.conflictRequestId).toBe(4);
   });
 
+  it('returns no client slots when the provider has not selected any availability', async () => {
+    const connection = {
+      query: vi.fn(async (sql) => {
+        const text = String(sql);
+
+        if (text.includes('FROM provider_availability_settings') && text.includes('LIMIT 1')) {
+          return [[{
+            id: 1,
+            allow_same_day_booking: 0,
+            min_advance_notice_minutes: 720,
+            max_advance_booking_days: 60,
+            availability_status: 'available',
+            show_availability_status: 1,
+          }]];
+        }
+
+        if (text.includes('FROM provider_weekly_availability') && text.includes('day_of_week')) {
+          return [[]];
+        }
+
+        if (text.includes('FROM provider_availability_exceptions') && text.includes('exception_date = ?')) {
+          return [[]];
+        }
+
+        if (text.includes('FROM service_requests')) {
+          return [[]];
+        }
+
+        return [{ affectedRows: 0 }];
+      }),
+    };
+
+    const future = new Date(Date.now() + (30 * 24 * 60 * 60 * 1000));
+    const date = future.toISOString().slice(0, 10);
+
+    const slots = await getAvailableSlotsForDate(connection, {
+      serviceProfileId: 77,
+      providerId: 21,
+      date,
+      durationMinutes: 60,
+      slotStepMinutes: 60,
+    });
+
+    expect(slots).toEqual([]);
+  });
+
   it('returns only the exact provider-selected start time for explicit availability', async () => {
     const connection = {
       query: vi.fn(async (sql) => {
