@@ -1,37 +1,25 @@
 import { Link } from 'react-router-dom';
 import logo from '../assets/logo.png';
 import Reveal from '../components/common/Reveal';
+import { useLanguage } from '../context/LanguageContext';
 
 const ABOUT_FEATURES = [
-  {
-    icon: 'bi-search',
-    title: 'Find local services',
-    description: 'Browse providers by service category and quickly narrow down the options that fit your needs.',
-  },
-  {
-    icon: 'bi-person-badge',
-    title: 'Compare provider details',
-    description: 'Review service information, rates, availability, location, previous work, and client feedback before choosing.',
-  },
-  {
-    icon: 'bi-calendar2-check',
-    title: 'Book with a clearer process',
-    description: 'Send booking requests using provider availability and keep track of request progress in one place.',
-  },
+  { icon: 'bi-search', titleKey: 'aboutFeatureFindTitle', descriptionKey: 'aboutFeatureFindDescription' },
+  { icon: 'bi-person-badge', titleKey: 'aboutFeatureCompareTitle', descriptionKey: 'aboutFeatureCompareDescription' },
+  { icon: 'bi-calendar2-check', titleKey: 'aboutFeatureBookTitle', descriptionKey: 'aboutFeatureBookDescription' },
 ];
 
 const About = () => {
+  const { t } = useLanguage();
+
   return (
     <div className="about-page">
       <section className="about-hero" aria-labelledby="about-title">
         <div className="container">
           <div className="about-hero-grid">
             <Reveal className="about-hero-copy" delay={40}>
-              <h1 id="about-title">About SerbisyoToledo</h1>
-              <p>
-                SerbisyoToledo brings local clients and service providers into one practical platform,
-                making it easier to discover services, compare providers, and manage booking requests.
-              </p>
+              <h1 id="about-title">{t('aboutPageTitle')}</h1>
+              <p>{t('aboutPageIntro')}</p>
             </Reveal>
 
             <Reveal className="about-brand-visual" variant="image" delay={140}>
@@ -58,19 +46,12 @@ const About = () => {
         <div className="container">
           <div className="about-mission-grid">
             <Reveal className="about-section-heading">
-              <h2 id="about-mission-title">Making local service connections simpler.</h2>
+              <h2 id="about-mission-title">{t('aboutMissionTitle')}</h2>
             </Reveal>
 
             <Reveal className="about-mission-copy" delay={100}>
-              <p>
-                Our mission is to help Toledo City residents find reliable local service providers
-                while giving providers a clear place to present their skills, previous work,
-                availability, and service rates.
-              </p>
-              <p>
-                The platform is designed around a straightforward flow so clients can make informed
-                choices and providers can manage requests without unnecessary complexity.
-              </p>
+              <p>{t('aboutMissionOne')}</p>
+              <p>{t('aboutMissionTwo')}</p>
             </Reveal>
           </div>
         </div>
@@ -79,7 +60,7 @@ const About = () => {
       <section className="about-help-section" aria-labelledby="about-help-title">
         <div className="container">
           <Reveal className="about-section-heading about-help-heading">
-            <h2 id="about-help-title">Useful information before you book.</h2>
+            <h2 id="about-help-title">{t('aboutHelpTitle')}</h2>
           </Reveal>
 
           <div className="about-feature-grid">
@@ -87,13 +68,13 @@ const About = () => {
               <Reveal
                 className="about-feature-card"
                 delay={index * 80}
-                key={feature.title}
+                key={feature.titleKey}
               >
                 <span className="about-feature-icon" aria-hidden="true">
                   <i className={`bi ${feature.icon}`} />
                 </span>
-                <h3>{feature.title}</h3>
-                <p>{feature.description}</p>
+                <h3>{t(feature.titleKey)}</h3>
+                <p>{t(feature.descriptionKey)}</p>
               </Reveal>
             ))}
           </div>
@@ -104,15 +85,12 @@ const About = () => {
         <div className="container">
           <Reveal className="about-local-panel">
             <div className="about-local-copy">
-              <h2 id="about-local-title">Focused on Toledo City.</h2>
-              <p>
-                SerbisyoToledo is centered on local service discovery and booking for homes and
-                communities in Toledo City, Cebu.
-              </p>
+              <h2 id="about-local-title">{t('aboutLocalTitle')}</h2>
+              <p>{t('aboutLocalDescription')}</p>
             </div>
 
             <div className="about-contact">
-              <span className="about-contact-label">Contact</span>
+              <span className="about-contact-label">{t('aboutContact')}</span>
               <a href="mailto:toledoserbisyo@gmail.com">toledoserbisyo@gmail.com</a>
               <span>Toledo City, Cebu</span>
             </div>
@@ -124,11 +102,11 @@ const About = () => {
         <div className="container">
           <Reveal className="about-cta-row">
             <div>
-              <h2>Ready to find a local service?</h2>
-              <p>Browse available providers and compare the details that matter to you.</p>
+              <h2>{t('aboutCtaTitle')}</h2>
+              <p>{t('aboutCtaDescription')}</p>
             </div>
             <Link to="/feed" className="btn btn-primary about-cta-button">
-              Browse Services
+              {t('browseServices')}
               <i className="bi bi-arrow-right" aria-hidden="true" />
             </Link>
           </Reveal>
