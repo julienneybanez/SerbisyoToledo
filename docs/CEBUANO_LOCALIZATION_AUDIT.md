@@ -17,6 +17,12 @@ The current audit covers the major recent additions and high-impact provider/cli
 - Registration/Login email verification states and resend actions
 - Requests rescheduling `Reason` label and missing availability/rescheduling error strings
 - Chatbot launcher, interface, recommendations, fallback states, and Cebuano assistant replies
+- Client Dashboard
+- Provider Schedule, FullCalendar controls, and schedule summaries
+- About page
+- Navbar/Footer accessibility labels
+- Home image alternatives
+- Booking calendar legend
 
 ## Guardrail
 
@@ -24,8 +30,8 @@ The current audit covers the major recent additions and high-impact provider/cli
 
 At the time of this audit:
 
-- English keys: 1,045
-- Cebuano keys: 1,045
+- English keys: 1,110
+- Cebuano keys: 1,110
 - Missing keys: 0
 - Duplicate keys: 0
 
