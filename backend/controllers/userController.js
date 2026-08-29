@@ -4,6 +4,7 @@ const {
   uploadImageBuffer,
   deleteImageByPublicId,
 } = require('../utils/cloudinaryService');
+const { normalizePhilippinePhone } = require('../utils/phone');
 
 const isUrlLikeImageValue = (value) => {
   if (!value) {
@@ -154,8 +155,16 @@ exports.updateProfile = async (req, res) => {
     }
 
     if (phone !== undefined) {
+      const normalizedPhone = normalizePhilippinePhone(phone);
+      if (normalizedPhone === undefined) {
+        return res.status(400).json({
+          success: false,
+          code: 'INVALID_PHONE',
+          message: 'Enter a valid Philippine mobile number (09XXXXXXXXX or +639XXXXXXXXX).'
+        });
+      }
       updates.push('phone = ?');
-      params.push(phone || null);
+      params.push(normalizedPhone);
     }
 
     if (address !== undefined) {
@@ -314,10 +323,11 @@ exports.submitVerificationRequest = async (req, res) => {
     const governmentIdFile = req.files?.governmentId?.[0];
     const certificationsFile = req.files?.certifications?.[0];
 
-    if (!fullName || !phoneNumber || !address || !serviceDescription || !governmentIdFile || !certificationsFile) {
+    const normalizedPhone = normalizePhilippinePhone(phoneNumber, { allowEmpty: false });
+    if (!fullName || !normalizedPhone || !address || !serviceDescription || !governmentIdFile) {
       return res.status(400).json({
         success: false,
-        message: 'All fields and required documents must be provided'
+        message: 'Name, valid phone number, address, service description, and government ID are required.'
       });
     }
 
@@ -341,13 +351,13 @@ exports.submitVerificationRequest = async (req, res) => {
       [
         userId,
         fullName,
-        phoneNumber,
+        normalizedPhone,
         address,
         serviceDescription,
         governmentIdFile.buffer,
         governmentIdFile.mimetype || 'application/octet-stream',
-        certificationsFile.buffer,
-        certificationsFile.mimetype || 'application/octet-stream'
+        certificationsFile ? certificationsFile.buffer : null,
+        certificationsFile ? (certificationsFile.mimetype || 'application/octet-stream') : null
       ]
     );
 
