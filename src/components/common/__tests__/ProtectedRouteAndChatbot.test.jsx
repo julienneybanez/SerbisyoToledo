@@ -153,6 +153,7 @@ describe('Chatbot', () => {
         message: 'I need a plumber near Toledo under 1000',
         locale: 'en',
         context: { route: '/feed', role: 'client' },
+        history: [],
       });
       expect(serviceProfileAPI.getRecommendations).toHaveBeenCalledTimes(1);
     });
