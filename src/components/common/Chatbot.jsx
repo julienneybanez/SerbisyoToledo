@@ -36,6 +36,13 @@ const SendIcon = () => (
 
 const formatMoney = (amount) => `P${Number(amount || 0).toLocaleString('en-PH', { maximumFractionDigits: 0 })}`;
 
+const getPricingUnitLabel = (unit, t) => {
+  const normalized = String(unit || 'per_day').toLowerCase();
+  if (normalized === 'per_hour') return t('pricingPerHour');
+  if (normalized === 'per_job') return t('pricingPerJob');
+  return t('pricingPerDay');
+};
+
 const SERVICE_KEYWORDS = [
   { keyword: 'plumb', category: 'Plumbing' },
   { keyword: 'tubero', category: 'Plumbing' },
@@ -287,7 +294,9 @@ const Chatbot = ({ isOpen, onClose, context = {} }) => {
                               <span>{Number(provider.rating || 0).toFixed(1)}★</span>
                             </div>
                             <p>{provider.profession || t('serviceProvider')} • {provider.location || t('notSpecified')}</p>
-                            <p>{formatMoney(provider.dailyRate)} / {t('pricingPerDay')}</p>
+                            {provider.startingPrice != null && (
+                              <p>{formatMoney(provider.startingPrice)} / {getPricingUnitLabel(provider.pricingUnit, t)}</p>
+                            )}
                             <small>
                               {Array.isArray(provider.languages) && provider.languages.length > 0
                                 ? t('chatbotLanguagesList', { languages: provider.languages.join(', ') })
