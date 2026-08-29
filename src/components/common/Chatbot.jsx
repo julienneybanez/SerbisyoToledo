@@ -132,7 +132,7 @@ const Chatbot = ({ isOpen, onClose, context = {} }) => {
     if (!isOpen) return undefined;
 
     const frame = window.requestAnimationFrame(() => {
-      endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      endRef.current?.scrollIntoView?.({ behavior: 'smooth', block: 'end' });
       if (messagesRef.current) {
         messagesRef.current.scrollTop = messagesRef.current.scrollHeight;
       }
