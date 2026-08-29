@@ -1799,11 +1799,19 @@ exports.createReview = async (req, res) => {
     const { requestId } = req.params;
     const clientId = req.user.userId;
     const { rating, comment } = req.body;
+    const trimmedComment = String(comment || '').trim();
 
     if (!rating || rating < 0.5 || rating > 5 || (rating * 2) % 1 !== 0) {
       return res.status(400).json({
         success: false,
         message: 'Rating must be between 0.5 and 5, in half-star increments'
+      });
+    }
+
+    if (trimmedComment.length > 2000) {
+      return res.status(400).json({
+        success: false,
+        message: 'Review comment must not exceed 2000 characters'
       });
     }
 
@@ -1847,7 +1855,7 @@ exports.createReview = async (req, res) => {
     await db.query(
       `INSERT INTO reviews (service_profile_id, client_id, service_request_id, rating, comment)
        VALUES (?, ?, ?, ?, ?)`,
-      [request.profile_id, clientId, requestId, rating, comment || null]
+      [request.profile_id, clientId, requestId, rating, trimmedComment || null]
     );
 
     const [ratingResult] = await db.query(
