@@ -26,6 +26,14 @@ exports.sendMessage = async (req, res) => {
   const context = req.body?.context && typeof req.body.context === 'object'
     ? req.body.context
     : {};
+  const rawHistory = Array.isArray(req.body?.history) ? req.body.history : [];
+  const history = rawHistory
+    .slice(-8)
+    .map((item) => ({
+      role: item?.role === 'assistant' ? 'assistant' : 'user',
+      content: String(item?.content || '').trim().slice(0, 1200),
+    }))
+    .filter((item) => item.content);
 
   if (!message) {
     return res.status(400).json({
@@ -44,7 +52,7 @@ exports.sendMessage = async (req, res) => {
   }
 
   try {
-    const result = await generateAssistantReply({ message, locale, context });
+    const result = await generateAssistantReply({ message, locale, context, history });
     return res.json({
       success: true,
       data: result,
