@@ -9,41 +9,6 @@ import { BOOKING_TYPE, REQUEST_STATUS, SPECIFIC_DATE_BOOKING_ENABLED } from '../
 import { useLanguage } from '../context/LanguageContext';
 import './Requests.css';
 
-const getHiddenRequestsStorageKey = (user) => {
-  if (!user?.id || !user?.userType) {
-    return null;
-  }
-
-  return `hiddenRequests_${user.id}_${user.userType}`;
-};
-
-const getHiddenRequestIds = (user) => {
-  const key = getHiddenRequestsStorageKey(user);
-  if (!key) {
-    return [];
-  }
-
-  try {
-    const parsed = JSON.parse(localStorage.getItem(key) || '[]');
-    if (!Array.isArray(parsed)) {
-      return [];
-    }
-
-    return parsed.map((id) => Number(id)).filter((id) => Number.isFinite(id));
-  } catch {
-    return [];
-  }
-};
-
-const saveHiddenRequestIds = (user, ids) => {
-  const key = getHiddenRequestsStorageKey(user);
-  if (!key) {
-    return;
-  }
-
-  localStorage.setItem(key, JSON.stringify(ids));
-};
-
 const addDaysIso = (days) => {
   const date = new Date();
   date.setDate(date.getDate() + days);
@@ -148,9 +113,7 @@ export default function Requests() {
         : await serviceRequestAPI.getClientRequests();
       
       if (response.success) {
-        const hiddenIds = new Set(getHiddenRequestIds({ id: user?.id, userType: user?.userType }));
-        const visibleRequests = (response.data.requests || []).filter((req) => !hiddenIds.has(Number(req.id)));
-        setRequests(visibleRequests);
+        setRequests(response.data.requests || []);
       }
     } catch (err) {
       setError(t('requestsLoadFailed'));
@@ -676,65 +639,25 @@ export default function Requests() {
     }));
   };
 
-  const handleRequestDiscussion = async (requestId) => {
-    setActionLoading(requestId);
-    try {
-      const response = await serviceRequestAPI.requestDiscussion(requestId);
-      if (response.success) {
-        setRequests(prev =>
-          prev.map(req =>
-            req.id === requestId ? { ...req, discussion_requested: true } : req
-          )
-        );
-        alert(t('requestsDiscussionRequestedSuccess'));
-      }
-    } catch (err) {
-      console.error('Request discussion error:', err);
-      alert(err.message || t('requestsDiscussionRequestFailed'));
-    } finally {
-      setActionLoading(null);
-    }
-  };
-
-  const handleAcceptDiscussion = async (requestId) => {
-    setActionLoading(requestId);
-    try {
-      const response = await serviceRequestAPI.acceptDiscussion(requestId);
-      if (response.success) {
-        setRequests(prev =>
-          prev.map(req =>
-            req.id === requestId 
-              ? { ...req, discussion_accepted: true, provider_phone_revealed: true } 
-              : req
-          )
-        );
-        alert(t('requestsDiscussionAcceptedSuccess'));
-      }
-    } catch (err) {
-      console.error('Accept discussion error:', err);
-      if (err.code === 'NO_PHONE') {
-        alert(t('requestsNoPhoneWarning'));
-      } else {
-        alert(err.message || t('requestsDiscussionAcceptFailed'));
-      }
-    } finally {
-      setActionLoading(null);
-    }
-  };
-
-  const handleHideRequest = (requestId) => {
-    const shouldHide = window.confirm(t('requestsHideConfirm'));
-    if (!shouldHide) {
+  const handleHideRequest = async (requestId) => {
+    const shouldArchive = window.confirm(t('requestsHideConfirm'));
+    if (!shouldArchive) {
       return;
     }
 
     const numericRequestId = Number(requestId);
-    const currentIds = getHiddenRequestIds(user);
-    const nextIds = Array.from(new Set([...currentIds, numericRequestId]));
-    saveHiddenRequestIds(user, nextIds);
-
-    setRequests((prev) => prev.filter((req) => Number(req.id) !== numericRequestId));
-    setSelectedRequest((prev) => (prev && Number(prev.id) === numericRequestId ? null : prev));
+    setActionLoading(numericRequestId);
+    try {
+      const response = await serviceRequestAPI.archiveRequest(numericRequestId);
+      if (response?.success) {
+        setRequests((prev) => prev.filter((req) => Number(req.id) !== numericRequestId));
+        setSelectedRequest((prev) => (prev && Number(prev.id) === numericRequestId ? null : prev));
+      }
+    } catch (err) {
+      alert(err.message || t('requestsArchiveFailed'));
+    } finally {
+      setActionLoading(null);
+    }
   };
 
   const handleSubmitReview = async ({ rating, comment }) => {
@@ -1288,14 +1211,6 @@ export default function Requests() {
           onOpenCancel={(request) => openCancelDialog(request.id)}
           onOpenReschedule={(request) => openRescheduleDialog(request)}
           onRespondReschedule={handleRespondReschedule}
-          onRequestDiscussion={async (requestId) => {
-            await handleRequestDiscussion(requestId);
-            setSelectedRequest(prev => prev ? { ...prev, discussion_requested: true } : null);
-          }}
-          onAcceptDiscussion={async (requestId) => {
-            await handleAcceptDiscussion(requestId);
-            setSelectedRequest(prev => prev ? { ...prev, discussion_accepted: true, provider_phone_revealed: true } : null);
-          }}
           onOpenReview={(request) => {
             setReviewRequest(request);
           }}
