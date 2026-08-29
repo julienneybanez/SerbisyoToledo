@@ -40,7 +40,7 @@ export default function VerificationRequestModal({ onClose }) {
         return;
       }
 
-      if (!formData.governmentId || !formData.certifications) {
+      if (!formData.governmentId) {
         setError(t('verificationRequiredDocumentsError'));
         setIsLoading(false);
         return;
@@ -52,7 +52,9 @@ export default function VerificationRequestModal({ onClose }) {
       submitData.append('address', formData.address.trim());
       submitData.append('serviceDescription', formData.serviceDescription.trim());
       submitData.append('governmentId', formData.governmentId);
-      submitData.append('certifications', formData.certifications);
+      if (formData.certifications) {
+        submitData.append('certifications', formData.certifications);
+      }
 
       await userProfileAPI.submitVerificationRequest(submitData);
 
@@ -159,7 +161,7 @@ export default function VerificationRequestModal({ onClose }) {
             </div>
 
             <div className="form-group">
-              <label htmlFor="certifications" className="form-label">{t('verificationCertificationsLicense')}<span className="required">*</span></label>
+              <label htmlFor="certifications" className="form-label">{t('verificationCertificationsLicense')} <span className="optional-label">({t('optional')})</span></label>
               <input
                 id="certifications"
                 name="certifications"
@@ -167,8 +169,8 @@ export default function VerificationRequestModal({ onClose }) {
                 className="form-input"
                 accept="image/*,.pdf"
                 onChange={handleFileChange}
-                required
               />
+              <p className="form-help">{t('verificationCertificationsOptionalHelp')}</p>
             </div>
           </section>
 
