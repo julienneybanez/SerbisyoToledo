@@ -4,7 +4,6 @@ import { serviceProfileAPI } from '../../services/api';
 import './EditPortfolioModal.css';
 
 export default function EditPortfolioModal({ onClose }) {
-  const fileInputRef = useRef(null);
   const completedJobPhotoInputRef = useRef(null);
   const linkedJobPhotoInputRef = useRef(null);
   
@@ -23,7 +22,6 @@ export default function EditPortfolioModal({ onClose }) {
   const [newSkill, setNewSkill] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
 
