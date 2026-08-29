@@ -926,11 +926,11 @@ export const assistantAPI = {
     return handleResponse(response);
   },
 
-  sendMessage: async ({ message, locale = 'en', context = {} }) => {
+  sendMessage: async ({ message, locale = 'en', context = {}, history = [] }) => {
     const response = await fetch(`${API_BASE_URL}/assistant/message`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message, locale, context }),
+      body: JSON.stringify({ message, locale, context, history }),
     });
     return handleResponse(response);
   },
