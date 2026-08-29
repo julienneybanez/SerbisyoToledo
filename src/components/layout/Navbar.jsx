@@ -26,12 +26,8 @@ function Navbar() {
   const [providerPublicProfileRoute, setProviderPublicProfileRoute] = useState('/dashboard');
   const { language, setLanguage, t } = useLanguage();
 
-  const providerListingLabel = language === 'ceb'
-    ? (hasServiceProfile ? 'Usba ang Service Listing' : 'I-post ang Service Listing')
-    : (hasServiceProfile ? 'Edit Service Listing' : 'Post Service Listing');
-  const providerPortfolioLabel = language === 'ceb'
-    ? 'Portfolio ug About Me'
-    : 'Portfolio & About Me';
+  const providerListingLabel = t(hasServiceProfile ? 'serviceListing' : 'postServiceListing');
+  const providerPortfolioLabel = t('publicProfile');
 
   useEffect(() => {
     const handleScroll = () => {
@@ -177,7 +173,7 @@ function Navbar() {
           className={`navbar-toggler ${mobileMenuOpen ? 'is-open' : ''}`}
           type="button"
           onClick={() => setMobileMenuOpen((open) => !open)}
-          aria-label="Toggle navigation"
+          aria-label={t('toggleNavigation')}
           aria-expanded={mobileMenuOpen}
           aria-controls="serbisyo-navbar"
         >
@@ -300,13 +296,13 @@ function Navbar() {
                   <button
                     className="profile-avatar-btn"
                     onClick={() => setDropdownOpen((open) => !open)}
-                    aria-label="Profile menu"
+                    aria-label={t('profileMenuAria')}
                     aria-expanded={dropdownOpen}
                   >
                     {user?.profileImage ? (
                       <img
                         src={user.profileImage}
-                        alt="Profile"
+                        alt={t('profileImageAlt')}
                         className="profile-avatar-img"
                         draggable="false"
                       />
@@ -318,9 +314,9 @@ function Navbar() {
                   </button>
 
                   {dropdownOpen && (
-                    <div className="profile-dropdown-menu" role="menu" aria-label="Profile menu">
+                    <div className="profile-dropdown-menu" role="menu" aria-label={t('profileMenuAria')}>
                       <div className="dropdown-user-info">
-                        <span className="dropdown-user-name" title={user?.fullName || 'User'}>
+                        <span className="dropdown-user-name" title={user?.fullName || t('profileFallbackUser')}>
                           {user?.fullName}
                         </span>
                         <span className="dropdown-user-type">
@@ -390,7 +386,7 @@ function Navbar() {
                       </Link>
 
                       <hr className="dropdown-divider" />
-                      <div className="dropdown-preferences" role="group" aria-label="Display preferences">
+                      <div className="dropdown-preferences" role="group" aria-label={t('displayPreferences')}>
                         <label className="dropdown-pref-label" htmlFor="navbar-language-select">{t('language')}</label>
                         <select
                           id="navbar-language-select"
