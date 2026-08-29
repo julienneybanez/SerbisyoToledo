@@ -6,7 +6,6 @@ const DEFAULT_LANGUAGE = 'en';
 
 const DICTIONARY = {
   en: {
-    reason: 'Reason',
     serviceListingCloseAria: 'Close service listing form',
     serviceListingLoading: 'Loading service listing...',
     editServiceListing: 'Edit Service Listing',
@@ -189,8 +188,6 @@ const DICTIONARY = {
     emailVerificationRequiredLogin: 'Please verify your email address before logging in.',
     emailVerificationSent: 'Verification email sent. Please check your inbox.',
     emailVerificationResendFailed: 'Unable to resend verification email right now.',
-    resendVerificationEmail: 'Resend Verification Email',
-    sending: 'Sending...',
     registrationVerifyBeforeLogin: 'Account created. Please verify your email before logging in.',
 
     availabilityPageTitle: 'Availability',
@@ -426,7 +423,6 @@ const DICTIONARY = {
     providerTypicalResponseTime: 'Typical response time',
     providerLoginRequired: 'Login Required',
     providerLoginRequestMessage: 'You need to be logged in to request a service from this provider.',
-    createAccount: 'Create Account',
     unavailable: 'Unavailable',
     providerPortfolioImageAlt: '{name} portfolio item',
     providerLoadingProfile: 'Loading profile...',
@@ -1061,7 +1057,6 @@ const DICTIONARY = {
     searchVerificationPlaceholder: 'Search by name, email, or profession...',
   },
   ceb: {
-    reason: 'Rason',
     serviceListingCloseAria: 'Sirad-i ang service listing form',
     serviceListingLoading: 'Nag-load sa service listing...',
     editServiceListing: 'Usba ang Service Listing',
@@ -1244,8 +1239,6 @@ const DICTIONARY = {
     emailVerificationRequiredLogin: 'Palihog i-verify ang imong email address una mag-login.',
     emailVerificationSent: 'Na-send na ang verification email. Palihog tan-awa ang imong inbox.',
     emailVerificationResendFailed: 'Dili ma-resend ang verification email karon.',
-    resendVerificationEmail: 'I-resend ang Verification Email',
-    sending: 'Nagpadala...',
     registrationVerifyBeforeLogin: 'Nahimo na ang account. Palihog i-verify ang imong email una mag-login.',
 
     availabilityPageTitle: 'Availability',
@@ -1481,7 +1474,6 @@ const DICTIONARY = {
     providerTypicalResponseTime: 'Kasagarang oras sa pagtubag',
     providerLoginRequired: 'Kinahanglan Mag-login',
     providerLoginRequestMessage: 'Kinahanglan naka-login aron maka-request og serbisyo gikan niini nga provider.',
-    createAccount: 'Paghimo og Account',
     unavailable: 'Dili Available',
     providerPortfolioImageAlt: 'Portfolio item ni {name}',
     providerLoadingProfile: 'Nag-load sa profile...',
@@ -1570,6 +1562,11 @@ const DICTIONARY = {
     cancelServiceRequest: 'Kanselahon ang Service Request',
     declineServiceRequest: 'I-decline ang Service Request',
     requestsRescheduleProposalFailed: 'Napakyas ang pagpadala sa reschedule proposal.',
+    requestsProviderScheduleUnavailable: 'Dili makuha ang impormasyon sa schedule sa provider para niini nga request.',
+    requestsNoProviderDates: 'Walay available nga petsa ang provider sulod sa kasamtangang booking window.',
+    requestsLoadProviderDatesFailed: 'Dili ma-load ang available nga mga petsa sa provider.',
+    requestsNoCommonProviderTime: 'Walay parehas nga available nga oras sa provider para niini nga schedule.',
+    requestsLoadProviderTimesFailed: 'Dili ma-load ang available nga mga oras sa provider.',
     requestsRescheduleResponseFailed: 'Napakyas ang pagtubag sa reschedule proposal',
     requestsDeclineReasonRequired: 'Kinahanglan ang rason sa pag-decline.',
     requestsDeclineFailed: 'Napakyas ang pag-decline sa request',
@@ -2111,6 +2108,8 @@ const DICTIONARY = {
     searchVerificationPlaceholder: 'Pangita pinaagi sa ngalan, email, o propesyon...',
   },
 };
+
+export { DICTIONARY as LANGUAGE_DICTIONARY };
 
 const LanguageContext = createContext(null);
 
