@@ -174,10 +174,15 @@ function App() {
     return () => window.cancelAnimationFrame(frame);
   }, [location.pathname]);
 
-  const shouldLiftChatbotButton = isMobileAuthenticated && location.pathname.startsWith('/provider/');
   const isMobileShellLayout = isMobileViewport;
-  const hideChatbotOnRoute = location.pathname === '/about';
   const isPublicProviderRoute = /^\/provider\/[^/]+\/?$/.test(location.pathname);
+  const chatbotAllowedRole = !currentUser || currentUser.userType === 'client';
+  const chatbotRelevantRoute = (
+    ['/', '/feed', '/client-dashboard'].includes(location.pathname)
+    || isPublicProviderRoute
+  );
+  const shouldShowChatbot = chatbotAllowedRole && chatbotRelevantRoute;
+  const shouldLiftChatbotButton = isMobileAuthenticated && isPublicProviderRoute;
   const workspaceRoutes = currentUser?.userType === 'tradesperson'
     ? ['/dashboard', '/requests', '/provider-settings', '/provider-schedule', '/provider-availability', '/provider-credentials', '/notifications']
     : currentUser?.userType === 'client'
@@ -241,6 +246,12 @@ function App() {
 
     setShowMobileServiceProfile(true);
   }, [currentUser, hasServiceProfile]);
+
+  useEffect(() => {
+    if (!shouldShowChatbot && isChatbotOpen) {
+      setIsChatbotOpen(false);
+    }
+  }, [isChatbotOpen, shouldShowChatbot]);
 
   const handleInitialLoadReady = useCallback(() => {
     setHasCompletedInitialLoad(true);
@@ -319,19 +330,24 @@ function App() {
         <Footer className="public-route-footer" />
       )}
 
-      {!hideChatbotOnRoute && (
+      {shouldShowChatbot && (
         <>
           <button
             className={`floating-btn ${shouldLiftChatbotButton ? 'floating-btn-avoid-sticky' : ''}`.trim()}
             onClick={() => setIsChatbotOpen(true)}
-            aria-label="Open chat support"
+            aria-label="Open SerbisyoToledo assistant"
           >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-            </svg>
+            <i className="bi bi-chat-dots-fill" aria-hidden="true"></i>
           </button>
 
-          <Chatbot isOpen={isChatbotOpen} onClose={() => setIsChatbotOpen(false)} />
+          <Chatbot
+            isOpen={isChatbotOpen}
+            onClose={() => setIsChatbotOpen(false)}
+            context={{
+              route: location.pathname,
+              role: currentUser?.userType || 'guest',
+            }}
+          />
         </>
       )}
 
