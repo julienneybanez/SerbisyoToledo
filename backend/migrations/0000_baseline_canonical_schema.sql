@@ -252,17 +252,27 @@ CREATE TABLE verification_requests (
 -- even in the should-never-happen case its verification request is gone).
 -- No IP address / browser fingerprint / device fingerprint columns are
 -- collected — not required for this capstone consent system.
+--
+-- Uniqueness note: MySQL unique indexes treat NULL as distinct-from-NULL,
+-- so a plain UNIQUE(..., verification_request_id) would NOT actually stop
+-- duplicate registration-context rows (verification_request_id is always
+-- NULL for those). verification_request_key is a generated, NOT NULL
+-- column that substitutes 0 for NULL, so registration-context duplicates
+-- (which all resolve to key 0) are correctly rejected, while each real
+-- verification request keeps its own distinct key and may have its own
+-- verification_data_consent row.
 CREATE TABLE legal_acceptances (
-  id                       BIGINT UNSIGNED  NOT NULL AUTO_INCREMENT,
-  user_id                  BIGINT UNSIGNED  NOT NULL,
-  acceptance_type          VARCHAR(64)      NOT NULL,
-  document_version         VARCHAR(32)      NOT NULL,
-  context                  VARCHAR(64)      NOT NULL,
-  verification_request_id  INT UNSIGNED     NULL,
-  accepted_at              TIMESTAMP        NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  created_at               TIMESTAMP        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  id                        BIGINT UNSIGNED  NOT NULL AUTO_INCREMENT,
+  user_id                   BIGINT UNSIGNED  NOT NULL,
+  acceptance_type           VARCHAR(64)      NOT NULL,
+  document_version          VARCHAR(32)      NOT NULL,
+  context                   VARCHAR(64)      NOT NULL,
+  verification_request_id   INT UNSIGNED     NULL,
+  verification_request_key INT UNSIGNED     GENERATED ALWAYS AS (COALESCE(verification_request_id, 0)) STORED NOT NULL,
+  accepted_at               TIMESTAMP        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  created_at                TIMESTAMP        NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
-  UNIQUE KEY uq_legal_acceptance_event (user_id, acceptance_type, document_version, context, verification_request_id),
+  UNIQUE KEY uq_legal_acceptance_event (user_id, acceptance_type, document_version, context, verification_request_key),
   KEY idx_legal_acceptance_user_type (user_id, acceptance_type),
   KEY idx_legal_acceptance_verification_request (verification_request_id),
   CONSTRAINT fk_legal_acceptance_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE RESTRICT,
