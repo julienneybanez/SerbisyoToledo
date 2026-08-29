@@ -1,3 +1,7 @@
+import { useCallback, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { serviceRequestAPI } from '../../services/api';
+import { useLanguage } from '../../context/LanguageContext';
 import './RequestDetailsModal.css';
 
 export default function RequestDetailsModal({
@@ -7,8 +11,6 @@ export default function RequestDetailsModal({
   detailsLoading,
   onClose,
   onStatusUpdate,
-  onRequestDiscussion,
-  onAcceptDiscussion,
   onOpenReview,
   onOpenDecline,
   onOpenCancel,
@@ -17,6 +19,62 @@ export default function RequestDetailsModal({
   onOpenReport,
   actionLoading,
 }) {
+  const navigate = useNavigate();
+  const { t } = useLanguage();
+  const [phoneShare, setPhoneShare] = useState(null);
+  const [phoneShareLoading, setPhoneShareLoading] = useState(false);
+  const [phoneShareError, setPhoneShareError] = useState('');
+
+  const loadPhoneShare = useCallback(async () => {
+    if (!request?.id || !['accepted', 'on_the_way', 'in_progress'].includes(request.status)) {
+      setPhoneShare(null);
+      return;
+    }
+
+    setPhoneShareLoading(true);
+    setPhoneShareError('');
+    try {
+      const response = await serviceRequestAPI.getPhoneShare(request.id);
+      if (response?.success) {
+        setPhoneShare(response.data);
+      }
+    } catch (error) {
+      setPhoneShareError(error.message || t('phoneShareLoadFailed'));
+    } finally {
+      setPhoneShareLoading(false);
+    }
+  }, [request?.id, request?.status, t]);
+
+  useEffect(() => {
+    loadPhoneShare();
+  }, [loadPhoneShare]);
+
+  const handleRequestPhone = async () => {
+    setPhoneShareLoading(true);
+    setPhoneShareError('');
+    try {
+      await serviceRequestAPI.requestPhoneShare(request.id);
+      await loadPhoneShare();
+    } catch (error) {
+      setPhoneShareError(error.message || t('phoneShareRequestFailed'));
+    } finally {
+      setPhoneShareLoading(false);
+    }
+  };
+
+  const handlePhoneResponse = async (action) => {
+    setPhoneShareLoading(true);
+    setPhoneShareError('');
+    try {
+      await serviceRequestAPI.respondPhoneShare(request.id, action);
+      await loadPhoneShare();
+    } catch (error) {
+      setPhoneShareError(error.message || t('phoneShareResponseFailed'));
+    } finally {
+      setPhoneShareLoading(false);
+    }
+  };
+
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       weekday: 'long',
@@ -268,87 +326,101 @@ export default function RequestDetailsModal({
             </div>
           </div>
 
-          {/* Client Address (if available) */}
-          {request.client_address && (
+          {/* Request-owned service location snapshot */}
+          {request.service_location && (
             <div className="detail-card full-width">
               <div className="detail-card-header">
                 <i className="bi bi-geo-alt"></i>
                 <h3>Service Location</h3>
               </div>
               <div className="detail-card-body">
-                <p className="address-text">{request.client_address}</p>
+                <p className="address-text">{request.service_location}</p>
               </div>
             </div>
           )}
 
-          {/* Contact Information for Active Requests */}
-          {['accepted', 'on_the_way', 'in_progress'].includes(request.status) && (
+          {/* Internal Messages are always available while a request is active.
+              Phone sharing is a separate, explicit consent flow after acceptance. */}
+          {['pending', 'accepted', 'on_the_way', 'in_progress'].includes(request.status) && (
             <div className="detail-card full-width contact-card">
               <div className="detail-card-header">
-                <i className="bi bi-telephone"></i>
-                <h3>Contact Information</h3>
+                <i className="bi bi-chat-dots"></i>
+                <h3>{t('requestCommunication')}</h3>
               </div>
               <div className="detail-card-body">
-                {!isProvider && request.discussion_accepted && request.provider_phone ? (
-                  <div className="phone-display">
-                    <i className="bi bi-telephone-fill"></i>
-                    <div>
-                      <span className="phone-label">Provider's Phone</span>
-                      <a href={`tel:${request.provider_phone}`} className="phone-number">
-                        {request.provider_phone}
-                      </a>
-                    </div>
-                  </div>
-                ) : isProvider && request.discussion_accepted ? (
-                  <div className="contact-shared-notice">
-                    <i className="bi bi-check-circle-fill"></i>
-                    <span>Your contact information has been shared with the client.</span>
-                  </div>
-                ) : isProvider && request.discussion_requested && onAcceptDiscussion ? (
-                  <div className="discussion-request-modal">
-                    <div className="discussion-request-info">
-                      <i className="bi bi-chat-dots-fill"></i>
-                      <span>The client wants to discuss details about this job.</span>
-                    </div>
-                    <button
-                      className="btn-accept-discussion-modal"
-                      onClick={() => onAcceptDiscussion && onAcceptDiscussion(request.id)}
-                      disabled={actionLoading === request.id}
-                    >
-                      {actionLoading === request.id ? (
-                        <><span className="spinner-btn"></span> Accepting...</>
-                      ) : (
-                        <><i className="bi bi-telephone"></i> Accept & Share Phone Number</>
-                      )}
-                    </button>
-                  </div>
-                ) : !isProvider && request.discussion_requested ? (
-                  <div className="discussion-pending-modal">
-                    <i className="bi bi-hourglass-split"></i>
-                    <span>Waiting for provider to accept discussion request...</span>
-                  </div>
-                ) : !isProvider && onRequestDiscussion ? (
-                  <div className="discussion-request-modal">
-                    <div className="contact-pending-notice">
-                      <i className="bi bi-info-circle"></i>
-                      <span>Request a discussion to get the provider's contact information.</span>
-                    </div>
-                    <button
-                      className="btn-request-discussion-modal"
-                      onClick={() => onRequestDiscussion && onRequestDiscussion(request.id)}
-                      disabled={actionLoading === request.id}
-                    >
-                      {actionLoading === request.id ? (
-                        <><span className="spinner-btn"></span> Sending...</>
-                      ) : (
-                        <><i className="bi bi-chat-dots"></i> Request to Discuss Details</>
-                      )}
-                    </button>
-                  </div>
-                ) : (
+                <div className="discussion-request-modal">
                   <div className="contact-pending-notice">
-                    <i className="bi bi-info-circle"></i>
-                    <span>Contact information will be available once the client requests a discussion.</span>
+                    <i className="bi bi-chat-square-text"></i>
+                    <span>{t('requestMessagesHelp')}</span>
+                  </div>
+                  <button
+                    type="button"
+                    className="btn-request-discussion-modal"
+                    onClick={() => {
+                      onClose?.();
+                      navigate('/messages?request=' + request.id);
+                    }}
+                  >
+                    <i className="bi bi-chat-dots-fill"></i> {isProvider ? t('messageClient') : t('messageProvider')}
+                  </button>
+                </div>
+
+                {['accepted', 'on_the_way', 'in_progress'].includes(request.status) && (
+                  <div className="phone-sharing-section">
+                    <div className="phone-sharing-heading">
+                      <strong>{t('phoneNumber')}</strong>
+                      <span>{t('phoneSharePrivateHelp')}</span>
+                    </div>
+
+                    {phoneShareError && <div className="alert alert-danger">{phoneShareError}</div>}
+                    {phoneShareLoading && !phoneShare ? (
+                      <div className="contact-pending-notice"><span>{t('loading')}</span></div>
+                    ) : (
+                      <>
+                        {phoneShare?.requestedFromMe?.status === 'pending' && (
+                          <div className="discussion-request-modal">
+                            <div className="discussion-request-info">
+                              <i className="bi bi-telephone-inbound"></i>
+                              <span>{t('phoneShareIncomingRequest')}</span>
+                            </div>
+                            <div className="reschedule-actions">
+                              <button type="button" className="action-btn btn-accept" onClick={() => handlePhoneResponse('share')} disabled={phoneShareLoading}>
+                                {t('sharePhoneNumber')}
+                              </button>
+                              <button type="button" className="action-btn btn-decline" onClick={() => handlePhoneResponse('decline')} disabled={phoneShareLoading}>
+                                {t('decline')}
+                              </button>
+                            </div>
+                          </div>
+                        )}
+
+                        {phoneShare?.sharedPhone ? (
+                          <div className="phone-display">
+                            <i className="bi bi-telephone-fill"></i>
+                            <div>
+                              <span className="phone-label">{isProvider ? t('clientPhone') : t('providerPhone')}</span>
+                              <a href={'tel:' + phoneShare.sharedPhone.e164} className="phone-number">
+                                {phoneShare.sharedPhone.display}
+                              </a>
+                            </div>
+                          </div>
+                        ) : phoneShare?.requestedByMe?.status === 'pending' ? (
+                          <div className="discussion-pending-modal">
+                            <i className="bi bi-hourglass-split"></i>
+                            <span>{t('phoneSharePending')}</span>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            className="btn-request-discussion-modal"
+                            onClick={handleRequestPhone}
+                            disabled={phoneShareLoading}
+                          >
+                            <i className="bi bi-telephone-plus"></i> {t('requestPhoneNumber')}
+                          </button>
+                        )}
+                      </>
+                    )}
                   </div>
                 )}
               </div>
