@@ -1515,7 +1515,7 @@ export default function Requests() {
                 aria-readonly="true"
               />
 
-              <label htmlFor="reschedule-reason" className="decline-dialog-label">Reason</label>
+              <label htmlFor="reschedule-reason" className="decline-dialog-label">{t('reason')}</label>
               <textarea
                 id="reschedule-reason"
                 className="decline-dialog-textarea"
