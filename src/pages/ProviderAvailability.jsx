@@ -178,7 +178,7 @@ export default function ProviderAvailability() {
       } catch (error) {
         setFlash({
           type: 'error',
-          message: error?.message || t('availabilityLoadFailed'),
+          message: t('availabilityLoadFailed'),
         });
       } finally {
         if (mounted) setLoading(false);
@@ -343,12 +343,12 @@ export default function ProviderAvailability() {
 
       setFlash({
         type: 'success',
-        message: response?.message || t('availabilitySaveSuccess'),
+        message: t('availabilitySaveSuccess'),
       });
     } catch (error) {
       setFlash({
         type: 'error',
-        message: error?.message || t('availabilitySaveFailed'),
+        message: t('availabilitySaveFailed'),
       });
     } finally {
       setSaving(false);
