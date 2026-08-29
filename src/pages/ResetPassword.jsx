@@ -88,7 +88,7 @@ const ResetPassword = () => {
                 className="form-control"
                 placeholder={t('enterNewPassword')}
                 autoComplete="new-password"
-                minLength={6}
+                minLength={10} maxLength={128}
                 required
               />
               <button
@@ -114,7 +114,7 @@ const ResetPassword = () => {
                 className="form-control"
                 placeholder={t('confirmNewPassword')}
                 autoComplete="new-password"
-                minLength={6}
+                minLength={10} maxLength={128}
                 required
               />
               <button
