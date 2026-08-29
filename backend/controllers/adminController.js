@@ -145,45 +145,57 @@ exports.getUserById = async (req, res) => {
   }
 };
 
-// Update user status (verify, activate, suspend)
+// Update account activation state. Provider verification is intentionally
+// handled only through the Verification Requests workflow so its audit trail
+// cannot be bypassed from User Management.
 exports.updateUserStatus = async (req, res) => {
   try {
     const { id } = req.params;
     const { isVerified, isActive } = req.body;
 
-    const updates = [];
-    const values = [];
-
     if (typeof isVerified === 'boolean') {
-      updates.push('is_verified = ?');
-      values.push(isVerified);
-    }
-
-    if (typeof isActive === 'boolean') {
-      updates.push('is_active = ?');
-      values.push(isActive);
-    }
-
-    if (updates.length === 0) {
-      return res.status(400).json({
+      return res.status(409).json({
         success: false,
-        message: 'No valid fields to update'
+        code: 'USE_VERIFICATION_WORKFLOW',
+        message: 'Provider verification must be changed through Verification Requests.'
       });
     }
 
-    values.push(id);
+    if (typeof isActive !== 'boolean') {
+      return res.status(400).json({
+        success: false,
+        message: 'Account active status is required.'
+      });
+    }
+
+    if (Number(id) === Number(req.user.userId) && !isActive) {
+      return res.status(409).json({
+        success: false,
+        message: 'You cannot suspend your own administrator account.'
+      });
+    }
+
+    const [users] = await db.query('SELECT id, user_type FROM users WHERE id = ? LIMIT 1', [id]);
+    if (users.length === 0) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
     await db.query(
-      `UPDATE users SET ${updates.join(', ')} WHERE id = ?`,
-      values
+      'UPDATE users SET is_active = ?, is_online = IF(?, is_online, FALSE) WHERE id = ?',
+      [isActive, isActive, id]
     );
 
-    res.json({
+    if (!isActive && users[0].user_type === 'tradesperson') {
+      await db.query('UPDATE service_profiles SET is_published = FALSE WHERE user_id = ?', [id]);
+    }
+
+    return res.json({
       success: true,
-      message: 'User status updated successfully'
+      message: isActive ? 'Account reactivated successfully' : 'Account suspended successfully'
     });
   } catch (error) {
     console.error('Error updating user status:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Failed to update user status',
       error: process.env.NODE_ENV === 'development' ? error.message : undefined
@@ -191,13 +203,21 @@ exports.updateUserStatus = async (req, res) => {
   }
 };
 
-// Delete user
+// Legacy DELETE endpoint now performs a safe deactivation instead of physically
+// deleting relational history. The later full schema redesign will formalize
+// account anonymization/retention rules.
 exports.deleteUser = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Check if user exists
-    const [users] = await db.query('SELECT id FROM users WHERE id = ?', [id]);
+    if (Number(id) === Number(req.user.userId)) {
+      return res.status(409).json({
+        success: false,
+        message: 'You cannot deactivate your own administrator account.'
+      });
+    }
+
+    const [users] = await db.query('SELECT id, user_type FROM users WHERE id = ? LIMIT 1', [id]);
     if (users.length === 0) {
       return res.status(404).json({
         success: false,
@@ -205,17 +225,24 @@ exports.deleteUser = async (req, res) => {
       });
     }
 
-    await db.query('DELETE FROM users WHERE id = ?', [id]);
+    await db.query(
+      'UPDATE users SET is_active = FALSE, is_online = FALSE, last_seen_at = NOW() WHERE id = ?',
+      [id]
+    );
 
-    res.json({
+    if (users[0].user_type === 'tradesperson') {
+      await db.query('UPDATE service_profiles SET is_published = FALSE WHERE user_id = ?', [id]);
+    }
+
+    return res.json({
       success: true,
-      message: 'User deleted successfully'
+      message: 'Account deactivated. Booking, report, review, and moderation history was preserved.'
     });
   } catch (error) {
-    console.error('Error deleting user:', error);
-    res.status(500).json({
+    console.error('Error deactivating user:', error);
+    return res.status(500).json({
       success: false,
-      message: 'Failed to delete user',
+      message: 'Failed to deactivate user',
       error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
