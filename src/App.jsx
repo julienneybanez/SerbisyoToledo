@@ -19,7 +19,8 @@ import { isPublicProviderRoute, shouldShowChatbotForContext } from './utils/chat
 
 // Admin imports
 import AdminLayout from './components/layout/AdminLayout';
-import { authAPI, clearAuthSession, getUser, isAuthenticated, serviceProfileAPI } from './services/api';
+import { authAPI, getUser, isAuthenticated, serviceProfileAPI } from './services/api';
+import { connectMessagingSocket, disconnectMessagingSocket } from './services/socket';
 
 const Home = lazyWithRetry(() => import('./pages/Home'), 'Home');
 const About = lazyWithRetry(() => import('./pages/About'), 'About');
@@ -36,6 +37,7 @@ const ClientDashboard = lazyWithRetry(() => import('./pages/ClientDashboard'), '
 const ProviderSchedule = lazyWithRetry(() => import('./pages/ProviderSchedule'), 'ProviderSchedule');
 const ProviderAvailability = lazyWithRetry(() => import('./pages/ProviderAvailability'), 'ProviderAvailability');
 const Requests = lazyWithRetry(() => import('./pages/Requests'), 'Requests');
+const Messages = lazyWithRetry(() => import('./pages/Messages'), 'Messages');
 const ClientSettings = lazyWithRetry(() => import('./pages/ClientSettings'), 'ClientSettings');
 const ServiceProviderSettings = lazyWithRetry(() => import('./pages/ServiceProviderSettings'), 'ServiceProviderSettings');
 const Chatbot = lazyWithRetry(() => import('./components/common/Chatbot'), 'Chatbot');
@@ -86,6 +88,36 @@ function App() {
       window.removeEventListener('authChange', updateAuthState);
     };
   }, []);
+
+  useEffect(() => {
+    let mounted = true;
+
+    authAPI.getMe()
+      .then((response) => {
+        if (mounted && response?.success && response.data?.user) {
+          setCurrentUser(response.data.user);
+        }
+      })
+      .catch(() => {
+        if (mounted) {
+          setCurrentUser(getUser());
+        }
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!currentUser || !['client', 'tradesperson'].includes(currentUser.userType)) {
+      disconnectMessagingSocket();
+      return undefined;
+    }
+
+    connectMessagingSocket();
+    return () => disconnectMessagingSocket();
+  }, [currentUser?.id, currentUser?.userType]);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT_PX}px)`);
@@ -185,9 +217,9 @@ function App() {
   });
   const shouldLiftChatbotButton = isMobileAuthenticated && providerPublicRoute;
   const workspaceRoutes = currentUser?.userType === 'tradesperson'
-    ? ['/dashboard', '/requests', '/provider-settings', '/provider-schedule', '/provider-availability', '/provider-credentials', '/notifications']
+    ? ['/dashboard', '/requests', '/messages', '/provider-settings', '/provider-schedule', '/provider-availability', '/provider-credentials', '/notifications']
     : currentUser?.userType === 'client'
-      ? ['/client-dashboard', '/feed', '/requests', '/client-settings', '/notifications']
+      ? ['/client-dashboard', '/feed', '/requests', '/messages', '/client-settings', '/notifications']
       : [];
   const isAuthenticatedWorkspace = Boolean(
     currentUser
@@ -215,8 +247,9 @@ function App() {
     setMobileProfileMenuOpen((open) => !open);
   }, []);
 
-  const handleMobileLogout = () => {
-    clearAuthSession({ preserveRedirect: false });
+  const handleMobileLogout = async () => {
+    await authAPI.logout();
+    setCurrentUser(null);
     setMobileProfileMenuOpen(false);
   };
 
@@ -454,6 +487,14 @@ function App() {
               element={(
                 <ProtectedRoute allowedRoles={['client', 'tradesperson']}>
                   <Requests />
+                </ProtectedRoute>
+              )}
+            />
+            <Route
+              path="/messages"
+              element={(
+                <ProtectedRoute allowedRoles={['client', 'tradesperson']}>
+                  <Messages />
                 </ProtectedRoute>
               )}
             />
