@@ -9,7 +9,7 @@ import {
   LocationIcon,
   UserIcon,
 } from './Icons';
-import { isAuthenticated, serviceProfileAPI, serviceRequestAPI } from '../../services/api';
+import { getUser, isAuthenticated, serviceProfileAPI, serviceRequestAPI } from '../../services/api';
 import { BOOKING_TYPE, SPECIFIC_DATE_BOOKING_ENABLED } from '../../constants/domain';
 import { useLanguage } from '../../context/LanguageContext';
 import './BookingModal.css';
@@ -102,6 +102,7 @@ export default function BookingModal({ provider, onClose }) {
   const [selectedTime, setSelectedTime] = useState('');
   const [selectedServiceTypeKey, setSelectedServiceTypeKey] = useState('');
   const [jobDetails, setJobDetails] = useState('');
+  const [serviceLocation, setServiceLocation] = useState(() => getUser()?.address || '');
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
 
@@ -559,7 +560,7 @@ export default function BookingModal({ provider, onClose }) {
 
     if (step === 3) {
       const hasValidServiceTypeSelection = providerServiceTypes.length <= 1 || Boolean(selectedServiceTypeKey);
-      return hasValidServiceTypeSelection && jobDetails.trim().length > 0;
+      return hasValidServiceTypeSelection && jobDetails.trim().length > 0 && serviceLocation.trim().length > 0;
     }
 
     return true;
@@ -608,6 +609,7 @@ export default function BookingModal({ provider, onClose }) {
         scheduledTime: selectedTime,
         estimatedDurationMinutes: Number(estimatedDurationMinutes),
         jobDetails: jobDetails.trim(),
+        serviceLocation: serviceLocation.trim(),
       });
 
       if (response.success) setStep(4);
@@ -811,6 +813,20 @@ export default function BookingModal({ provider, onClose }) {
               <input className="booking-input" value={providerServiceTypes[0].label} readOnly aria-readonly="true" />
             </div>
           )}
+
+          <div className="booking-form-group">
+            <label htmlFor="booking-service-location">{t('bookingServiceLocation')}</label>
+            <textarea
+              id="booking-service-location"
+              className="booking-textarea"
+              rows={3}
+              maxLength={500}
+              value={serviceLocation}
+              onChange={(event) => setServiceLocation(event.target.value)}
+              placeholder={t('bookingServiceLocationPlaceholder')}
+            />
+            <p className="booking-field-help">{t('bookingServiceLocationHelp')}</p>
+          </div>
 
           <div className="booking-form-group">
             <label htmlFor="booking-job-details">{t('bookingJobDetailsLocation')}</label>
