@@ -122,7 +122,7 @@ export default function Requests() {
     } finally {
       setLoading(false);
     }
-  }, [isProvider, t, user?.id, user?.userType]);
+  }, [isProvider, t]);
 
   useEffect(() => {
     fetchRequests();

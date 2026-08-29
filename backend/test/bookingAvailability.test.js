@@ -155,7 +155,7 @@ describe('bookingAvailability.checkScheduleConflict', () => {
     expect(slots).toEqual([]);
   });
 
-  it('returns only the exact provider-selected start time for explicit availability', async () => {
+  it('returns every usable slot within the provider-selected availability window', async () => {
     const connection = {
       query: vi.fn(async (sql) => {
         const text = String(sql);
@@ -206,6 +206,14 @@ describe('bookingAvailability.checkScheduleConflict', () => {
       {
         time: '09:00:00',
         endTime: '10:00:00',
+      },
+      {
+        time: '10:00:00',
+        endTime: '11:00:00',
+      },
+      {
+        time: '11:00:00',
+        endTime: '12:00:00',
       },
     ]);
   });

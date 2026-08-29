@@ -4,7 +4,6 @@ const {
   normalizeCategoryLabels,
   getServiceTypesForProfile,
   getServiceTypeByKey,
-  toCategoryKey,
 } = require('../config/serviceTaxonomy');
 const {
   BLOCKING_STATUSES,
@@ -152,20 +151,6 @@ const normalizeRequestSchedule = (requestRow) => {
     startTime,
     durationMinutes,
   };
-};
-
-const getRequestCategoryKeys = (requestRow = {}) => {
-  const serviceType = getServiceTypeByKey(requestRow.service_type_key);
-  if (serviceType?.categoryKey) {
-    return [serviceType.categoryKey];
-  }
-
-  return normalizeCategoryLabels(
-    parseJsonArray(requestRow.service_categories, []),
-    { preserveUnknown: false }
-  )
-    .map((label) => toCategoryKey(label))
-    .filter(Boolean);
 };
 
 const getRequestDisplayLabel = (requestRow = {}) => {

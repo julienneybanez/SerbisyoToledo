@@ -117,6 +117,9 @@ function App() {
 
     connectMessagingSocket();
     return () => disconnectMessagingSocket();
+    // Depend on primitive id/userType instead of the currentUser object reference
+    // to avoid reconnecting the socket on every unrelated re-render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser?.id, currentUser?.userType]);
 
   useEffect(() => {

@@ -180,6 +180,7 @@ describe('Backend Security Hardening', () => {
         serviceProfileId: 7,
         jobTitle: 'Fix leaking pipe',
         jobDetails: 'Kitchen sink pipe is leaking heavily.',
+        serviceLocation: '123 Rizal St, Toledo City',
         bookingType: 'one_day',
         startDate: '2099-12-31',
         endDate: '2099-12-31',
@@ -553,7 +554,7 @@ describe('Backend Security Hardening', () => {
       .send({
         fullName: 'Provider One',
         email: 'provider.invalidlang@example.com',
-        password: 'pass1234',
+        password: 'pass123456',
         userType: 'tradesperson',
         languages: ['ceb', 'xx'],
       });
@@ -581,7 +582,7 @@ describe('Backend Security Hardening', () => {
       .send({
         fullName: 'Provider Two',
         email: 'provider.validlang@example.com',
-        password: 'pass1234',
+        password: 'pass123456',
         userType: 'tradesperson',
         languages: ['ceb', 'en'],
       });
@@ -649,6 +650,7 @@ describe('Backend Security Hardening', () => {
         serviceTypeKey: 'electrical_troubleshooting',
         jobTitle: 'Fix breaker panel',
         jobDetails: 'Need urgent electrical work',
+        serviceLocation: '123 Rizal St, Toledo City',
         bookingType: 'one_day',
         startDate: '2099-12-31',
         endDate: '2099-12-31',

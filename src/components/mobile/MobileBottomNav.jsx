@@ -72,6 +72,7 @@ export default function MobileBottomNav({ role = 'client', profileMenuOpen = fal
 
   useEffect(() => {
     if (!['client', 'tradesperson'].includes(role)) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- reset badge when role no longer messaging-eligible
       setUnreadMessages(0);
       return undefined;
     }
