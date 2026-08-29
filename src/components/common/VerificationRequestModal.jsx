@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
+import { Link } from 'react-router-dom';
 import { userProfileAPI } from '../../services/api';
 import { useLanguage } from '../../context/LanguageContext';
 import './ServiceProfileModal.css';
@@ -14,6 +15,7 @@ export default function VerificationRequestModal({ onClose }) {
     governmentId: null,
     certifications: null,
   });
+  const [consentGiven, setConsentGiven] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
@@ -46,12 +48,19 @@ export default function VerificationRequestModal({ onClose }) {
         return;
       }
 
+      if (!consentGiven) {
+        setError(t('verificationConsentRequiredError'));
+        setIsLoading(false);
+        return;
+      }
+
       const submitData = new FormData();
       submitData.append('fullName', formData.fullName.trim());
       submitData.append('phoneNumber', formData.phoneNumber.trim());
       submitData.append('address', formData.address.trim());
       submitData.append('serviceDescription', formData.serviceDescription.trim());
       submitData.append('governmentId', formData.governmentId);
+      submitData.append('verificationConsent', 'true');
       if (formData.certifications) {
         submitData.append('certifications', formData.certifications);
       }
@@ -182,6 +191,24 @@ export default function VerificationRequestModal({ onClose }) {
               <li>{t('verificationIncompleteDelayNote')}</li>
             </ul>
           </section>
+
+          <div className="form-group verification-consent-field">
+            <label htmlFor="verification-consent" className="verification-consent-label">
+              <input
+                id="verification-consent"
+                type="checkbox"
+                checked={consentGiven}
+                onChange={(e) => setConsentGiven(e.target.checked)}
+                required
+              />
+              <span>
+                {t('verificationConsentText')}{' '}
+                <Link to="/privacy#provider-verification" target="_blank" rel="noopener noreferrer">
+                  {t('privacyNotice')}
+                </Link>.
+              </span>
+            </label>
+          </div>
 
           <button type="submit" className="btn-submit" disabled={isLoading || success}>
             {isLoading ? t('verificationSubmitting') : t('verificationSubmitRequest')}

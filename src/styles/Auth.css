@@ -592,6 +592,44 @@
   line-height: 1.5;
 }
 
+.auth-agreement-field {
+  margin-top: 0.25rem;
+}
+
+.auth-agreement-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  min-height: 44px;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  cursor: pointer;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.auth-agreement-label input {
+  margin-top: 0.2rem;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  accent-color: var(--brand-primary);
+}
+
+.auth-agreement-label input:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+
+.auth-agreement-label a {
+  color: var(--brand-primary);
+  font-weight: 650;
+  text-decoration: underline;
+}
+
 .auth-page-compact {
   min-height: 100%;
 }

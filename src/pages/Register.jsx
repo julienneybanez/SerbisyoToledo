@@ -22,6 +22,7 @@ const Register = () => {
   const [skills, setSkills] = useState([]);
   const [languages, setLanguages] = useState([]);
   const [currentSkill, setCurrentSkill] = useState('');
+  const [agreedToPolicies, setAgreedToPolicies] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -80,12 +81,20 @@ const Register = () => {
       return;
     }
 
+    if (!agreedToPolicies) {
+      setError(t('registerAgreementRequired'));
+      setIsLoading(false);
+      return;
+    }
+
     try {
       const registrationData = {
         fullName: formData.fullName,
         email: formData.email,
         password: formData.password,
         userType,
+        acceptedTerms: true,
+        acknowledgedPrivacy: true,
       };
 
       if (userType === 'tradesperson') {
@@ -204,6 +213,24 @@ const Register = () => {
                 </div>
               </section>
             )}
+
+            <div className="auth-field auth-agreement-field">
+              <label htmlFor="register-agree-policies" className="auth-agreement-label">
+                <input
+                  id="register-agree-policies"
+                  type="checkbox"
+                  checked={agreedToPolicies}
+                  onChange={(event) => setAgreedToPolicies(event.target.checked)}
+                  required
+                />
+                <span>
+                  {t('registerAgreementPrefix')}{' '}
+                  <Link to="/terms" target="_blank" rel="noopener noreferrer">{t('termsAndConditions')}</Link>
+                  {' '}{t('registerAgreementAnd')}{' '}
+                  <Link to="/privacy" target="_blank" rel="noopener noreferrer">{t('privacyNotice')}</Link>.
+                </span>
+              </label>
+            </div>
 
             <button type="submit" className="btn btn-primary auth-submit" disabled={isLoading}>
               {isLoading ? <><span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>{t('creatingAccount')}</> : t('createAccount')}

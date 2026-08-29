@@ -24,6 +24,8 @@ import { connectMessagingSocket, disconnectMessagingSocket } from './services/so
 
 const Home = lazyWithRetry(() => import('./pages/Home'), 'Home');
 const About = lazyWithRetry(() => import('./pages/About'), 'About');
+const Terms = lazyWithRetry(() => import('./pages/Terms'), 'Terms');
+const Privacy = lazyWithRetry(() => import('./pages/Privacy'), 'Privacy');
 const Login = lazyWithRetry(() => import('./pages/Login'), 'Login');
 const Register = lazyWithRetry(() => import('./pages/Register'), 'Register');
 const ForgotPassword = lazyWithRetry(() => import('./pages/ForgotPassword'), 'ForgotPassword');
@@ -452,6 +454,8 @@ function App() {
           <Route element={publicShell}>
             <Route path="/" element={<RoleAwarePublicRoute><Home /></RoleAwarePublicRoute>} />
             <Route path="/about" element={<RoleAwarePublicRoute><About /></RoleAwarePublicRoute>} />
+            <Route path="/terms" element={<Terms />} />
+            <Route path="/privacy" element={<Privacy />} />
             <Route path="/feed" element={<RoleAwarePublicRoute allowedAuthenticatedRoles={['client']}><Feed /></RoleAwarePublicRoute>} />
             <Route
               path="/notifications"
