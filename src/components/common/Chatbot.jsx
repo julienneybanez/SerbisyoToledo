@@ -188,10 +188,19 @@ const Chatbot = ({ isOpen, onClose, context = {} }) => {
     setIsResponding(true);
 
     try {
+      const history = messages
+        .filter((item) => item.id !== 'welcome')
+        .slice(-8)
+        .map((item) => ({
+          role: item.sender === 'bot' ? 'assistant' : 'user',
+          content: item.text,
+        }));
+
       const response = await assistantAPI.sendMessage({
         message: messageText,
         locale: language,
         context,
+        history,
       });
       const payload = response?.data || {};
 
