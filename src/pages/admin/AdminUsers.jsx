@@ -93,26 +93,6 @@ function AdminUsers() {
     }
   };
 
-  const handleToggleVerification = async (user) => {
-    if (user.type !== 'tradesperson') return;
-
-    try {
-      setActionLoading(`verify-${user.id}`);
-      const response = await adminAPI.updateUserStatus(user.id, { isVerified: !user.isVerified });
-      if (response.success) {
-        await fetchUsers();
-      }
-    } catch (err) {
-      openDialog({
-        title: t('updateFailed'),
-        lines: [err.message || t('failedUpdateVerificationStatus')],
-        tone: 'danger',
-      });
-    } finally {
-      setActionLoading('');
-    }
-  };
-
   const handleViewActivity = async (userId) => {
     try {
       const response = await adminAPI.getUserActivity(userId);
@@ -241,19 +221,6 @@ function AdminUsers() {
                       ? t('deactivate')
                       : t('reactivate')}
                 </button>
-                {user.type === 'tradesperson' && (
-                  <button
-                    className="btn-investigate btn-users-action"
-                    disabled={actionLoading === `verify-${user.id}`}
-                    onClick={() => handleToggleVerification(user)}
-                  >
-                    {actionLoading === `verify-${user.id}`
-                      ? t('updating')
-                      : user.isVerified
-                        ? t('unverifyProvider')
-                        : t('verifyProvider')}
-                  </button>
-                )}
                 <button className="btn-approve btn-users-action" onClick={() => handleViewActivity(user.id)}>
                   {t('viewActivity')}
                 </button>
@@ -320,19 +287,6 @@ function AdminUsers() {
                             ? t('deactivate')
                             : t('reactivate')}
                       </button>
-                      {user.type === 'tradesperson' && (
-                        <button
-                          className="btn-investigate"
-                          disabled={actionLoading === `verify-${user.id}`}
-                          onClick={() => handleToggleVerification(user)}
-                        >
-                          {actionLoading === `verify-${user.id}`
-                            ? t('updating')
-                            : user.isVerified
-                              ? t('unverifyProvider')
-                              : t('verifyProvider')}
-                        </button>
-                      )}
                       <button className="btn-approve" onClick={() => handleViewActivity(user.id)}>
                         {t('viewActivity')}
                       </button>
