@@ -32,6 +32,7 @@ const ServiceProviderPortfolio = lazyWithRetry(() => import('./pages/ServiceProv
 const ServiceProviderDashboard = lazyWithRetry(() => import('./pages/ServiceProviderDashboard'), 'ServiceProviderDashboard');
 const ClientDashboard = lazyWithRetry(() => import('./pages/ClientDashboard'), 'ClientDashboard');
 const ProviderSchedule = lazyWithRetry(() => import('./pages/ProviderSchedule'), 'ProviderSchedule');
+const ProviderAvailability = lazyWithRetry(() => import('./pages/ProviderAvailability'), 'ProviderAvailability');
 const Requests = lazyWithRetry(() => import('./pages/Requests'), 'Requests');
 const ClientSettings = lazyWithRetry(() => import('./pages/ClientSettings'), 'ClientSettings');
 const ServiceProviderSettings = lazyWithRetry(() => import('./pages/ServiceProviderSettings'), 'ServiceProviderSettings');
@@ -467,7 +468,7 @@ function App() {
               path="/provider-availability"
               element={(
                 <ProtectedRoute allowedRoles={['tradesperson']}>
-                  <ServiceProviderSettings />
+                  <ProviderAvailability />
                 </ProtectedRoute>
               )}
             />
