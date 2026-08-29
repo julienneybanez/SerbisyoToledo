@@ -3,8 +3,21 @@
 
 START TRANSACTION;
 
-ALTER TABLE service_requests
-  ADD COLUMN IF NOT EXISTS service_location VARCHAR(500) DEFAULT NULL;
+-- Plain "ADD COLUMN IF NOT EXISTS" was rejected as a syntax error against the
+-- target MySQL instance, so this uses the portable information_schema/PREPARE
+-- idiom instead to stay idempotent across MySQL versions.
+SET @service_location_exists = (
+  SELECT COUNT(*) FROM information_schema.columns
+  WHERE table_schema = DATABASE() AND table_name = 'service_requests' AND column_name = 'service_location'
+);
+SET @service_location_ddl = IF(
+  @service_location_exists > 0,
+  'SELECT 1',
+  'ALTER TABLE service_requests ADD COLUMN service_location VARCHAR(500) DEFAULT NULL'
+);
+PREPARE service_location_stmt FROM @service_location_ddl;
+EXECUTE service_location_stmt;
+DEALLOCATE PREPARE service_location_stmt;
 
 ALTER TABLE reviews
   MODIFY COLUMN rating DECIMAL(2,1) NOT NULL;
