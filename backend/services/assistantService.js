@@ -23,7 +23,57 @@ const getFallbackReply = ({ message, locale }) => {
   const input = String(message || '').trim().toLowerCase();
   const isCebuano = locale === 'ceb';
 
-  const recommendationIntent = /find|looking for|recommend|need|book|provider|service|plumb|electric|carpent|clean|massage|aircon|garden|laundry|pangita|kinahanglan|serbisyo|provider/.test(input);
+  if (/what is serbisyotoledo|what are you|unsa ang serbisyotoledo|kinsa ka/.test(input)) {
+    return {
+      reply: isCebuano
+        ? 'Ako ang SerbisyoToledo assistant. Makatabang ko sa pagpangita og local services, pagsabot sa booking flow, ug basic questions bahin sa platform.'
+        : 'I am the SerbisyoToledo assistant. I can help with finding local services, understanding the booking flow, and basic questions about the platform.',
+      action: null,
+      intent: 'about_platform',
+    };
+  }
+
+  if (/register|sign up|provider account|become.*provider|service provider.*account|rehistro|mag-provider/.test(input)) {
+    return {
+      reply: isCebuano
+        ? 'Sa Sign Up, pilia ang Service Provider. Kinahanglan ma-verify ang imong email ug provider verification una ka maka-post sa imong unang Service Listing.'
+        : 'During Sign Up, choose Service Provider. Your email must be verified, and provider verification is required before posting your first Service Listing.',
+      action: null,
+      intent: 'provider_onboarding',
+    };
+  }
+
+  if (/availability|schedule|available dates|time slots|eskedyul|available nga petsa|kanus-a/.test(input)) {
+    return {
+      reply: isCebuano
+        ? 'Ang provider mopili sa iyang available dates ug oras sa Availability page. Ang kliyente makakita ra sa dates ug time slots nga gi-set sa provider.'
+        : 'Providers choose their available dates and hours on the Availability page. Clients only see dates and time slots the provider has made available.',
+      action: null,
+      intent: 'availability_help',
+    };
+  }
+
+  if (/how.*book|booking.*work|booking flow|send.*request|unsaon.*booking|unsaon.*pag-book|booking.*unsaon/.test(input)) {
+    return {
+      reply: isCebuano
+        ? 'Para mag-book, ablihi ang provider profile, pilia ang Request Service, dayon pagpili og available date ug oras ug isumite ang detalye sa serbisyo. Kinahanglan dawaton sa provider ang request una kini ma-confirm.'
+        : 'To book, open a provider profile, choose Request Service, select an available date and time, then submit the service details. The provider must accept the request before it is confirmed.',
+      action: null,
+      intent: 'booking_help',
+    };
+  }
+
+  if (/faq|help|tabang/.test(input)) {
+    return {
+      reply: isCebuano
+        ? 'Makatabang ko sa pagpangita og serbisyo, booking, provider verification, availability, ug basic paggamit sa SerbisyoToledo. Unsay gusto nimong mahibal-an?'
+        : 'I can help with finding services, booking, provider verification, availability, and basic SerbisyoToledo usage. What would you like to know?',
+      action: null,
+      intent: 'help',
+    };
+  }
+
+  const recommendationIntent = /find|looking for|recommend|need|provider near|service near|plumb|tubero|electric|elektrisyan|carpent|karpintero|clean|limpyo|massage|aircon|garden|laundry|repair|mechanic|locksmith|pangita|kinahanglan.*serbisyo/.test(input);
 
   if (recommendationIntent) {
     return {
@@ -35,46 +85,6 @@ const getFallbackReply = ({ message, locale }) => {
         query: String(message || '').trim(),
       },
       intent: 'service_discovery',
-    };
-  }
-
-  if (/what is serbisyotoledo|what are you|unsa ang serbisyotoledo|kinsa ka/.test(input)) {
-    return {
-      reply: isCebuano
-        ? 'Ako ang SerbisyoToledo assistant. Makatabang ko sa pagpangita og local services, pagsabot sa booking flow, ug basic questions bahin sa platform.'
-        : 'I am the SerbisyoToledo assistant. I can help with finding local services, understanding the booking flow, and basic questions about the platform.',
-      action: null,
-      intent: 'about_platform',
-    };
-  }
-
-  if (/register|sign up|service provider|provider account|rehistro/.test(input)) {
-    return {
-      reply: isCebuano
-        ? 'Sa Sign Up, pilia ang Service Provider. Kinahanglan ma-verify ang imong email ug provider verification una ka maka-post sa imong unang Service Listing.'
-        : 'During Sign Up, choose Service Provider. Your email must be verified, and provider verification is required before posting your first Service Listing.',
-      action: null,
-      intent: 'provider_onboarding',
-    };
-  }
-
-  if (/availability|schedule|available|eskedyul|kanus-a/.test(input)) {
-    return {
-      reply: isCebuano
-        ? 'Ang provider mopili sa iyang available dates ug oras sa Availability page. Ang kliyente makakita ra sa dates ug time slots nga gi-set sa provider.'
-        : 'Providers choose their available dates and hours on the Availability page. Clients only see dates and time slots the provider has made available.',
-      action: null,
-      intent: 'availability_help',
-    };
-  }
-
-  if (/faq|help|tabang/.test(input)) {
-    return {
-      reply: isCebuano
-        ? 'Makatabang ko sa pagpangita og serbisyo, booking, provider verification, availability, ug basic paggamit sa SerbisyoToledo. Unsay gusto nimong mahibal-an?'
-        : 'I can help with finding services, booking, provider verification, availability, and basic SerbisyoToledo usage. What would you like to know?',
-      action: null,
-      intent: 'help',
     };
   }
 
