@@ -5,6 +5,69 @@ import { normalizeStoredUser } from '../utils/runtimeGuards';
 const isLocalHost = typeof window !== 'undefined' && ['localhost', '127.0.0.1'].includes(window.location.hostname);
 export const API_BASE_URL = import.meta.env.VITE_API_URL || (isLocalHost ? 'http://localhost:5000/api' : '/api');
 
+const nativeFetch = globalThis.fetch.bind(globalThis);
+let csrfToken = null;
+let csrfBootstrapPromise = null;
+
+const getCsrfToken = async () => {
+  if (csrfToken) return csrfToken;
+  if (!csrfBootstrapPromise) {
+    csrfBootstrapPromise = nativeFetch(`${API_BASE_URL}/auth/csrf`, {
+      method: 'GET',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+    })
+      .then(async (response) => {
+        const data = await response.json();
+        if (!response.ok || !data?.success || !data?.data?.csrfToken) {
+          throw new ApiError(data?.message || 'Unable to initialize request security.', {
+            status: response.status,
+            code: data?.code || 'CSRF_BOOTSTRAP_FAILED',
+          });
+        }
+        csrfToken = data.data.csrfToken;
+        return csrfToken;
+      })
+      .finally(() => {
+        csrfBootstrapPromise = null;
+      });
+  }
+  return csrfBootstrapPromise;
+};
+
+const apiFetch = async (url, options = {}, retryCsrf = true) => {
+  const method = String(options.method || 'GET').toUpperCase();
+  const headers = new Headers(options.headers || {});
+  const isMutation = !['GET', 'HEAD', 'OPTIONS'].includes(method);
+
+  if (isMutation) {
+    const token = await getCsrfToken();
+    headers.set('X-CSRF-Token', token);
+  }
+
+  const response = await nativeFetch(url, {
+    ...options,
+    headers,
+    credentials: 'include',
+  });
+
+  if (response.status === 403 && retryCsrf) {
+    const clone = response.clone();
+    try {
+      const data = await clone.json();
+      if (data?.code === 'CSRF_TOKEN_INVALID') {
+        csrfToken = null;
+        await getCsrfToken();
+        return apiFetch(url, options, false);
+      }
+    } catch {
+      // Let the normal response handler report the original error.
+    }
+  }
+
+  return response;
+};
+
 // Helper function to handle API responses
 const handleResponse = async (response) => {
   const contentType = response.headers.get('content-type') || '';
@@ -48,28 +111,22 @@ const handleResponse = async (response) => {
   return data;
 };
 
-// Get stored token
+// Authentication is cookie-based. Browser JavaScript never receives or stores the JWT.
+// getToken remains as a temporary compatibility hint for older API helper branches that
+// still conditionally build an Authorization header; the backend prefers the HttpOnly cookie.
 export const getToken = () => {
-  const token = localStorage.getItem('authToken');
-  if (!token || token === 'undefined' || token === 'null') {
-    return null;
-  }
-  return token;
+  localStorage.removeItem('authToken');
+  return localStorage.getItem('user') ? 'cookie-session' : null;
 };
 
-// Set stored token
-export const setToken = (token) => {
-  if (!token) {
-    localStorage.removeItem('authToken');
-    return;
-  }
-  localStorage.setItem('authToken', token);
+export const setToken = () => {
+  localStorage.removeItem('authToken');
 };
 
-// Remove stored token
 export const removeToken = () => {
   localStorage.removeItem('authToken');
   localStorage.removeItem('user');
+  csrfToken = null;
 };
 
 export const clearAuthSession = ({ preserveRedirect = true } = {}) => {
@@ -82,7 +139,6 @@ export const clearAuthSession = ({ preserveRedirect = true } = {}) => {
   window.dispatchEvent(new Event('authChange'));
 };
 
-// Get stored user
 export const getUser = () => {
   const rawUser = localStorage.getItem('user');
   if (!rawUser) return null;
@@ -100,7 +156,6 @@ export const getUser = () => {
   }
 };
 
-// Set stored user
 export const setUser = (user) => {
   const normalizedUser = normalizeStoredUser(user);
   if (!normalizedUser) {
@@ -109,19 +164,17 @@ export const setUser = (user) => {
     });
   }
 
+  // This is a non-secret display/routing cache only. /auth/me is authoritative.
   localStorage.setItem('user', JSON.stringify(normalizedUser));
 };
 
-// Check if user is authenticated
-export const isAuthenticated = () => {
-  return !!getToken();
-};
+export const isAuthenticated = () => Boolean(getUser());
 
 // Auth API calls
 export const authAPI = {
   // Register a new user
   register: async (userData) => {
-    const response = await fetch(`${API_BASE_URL}/auth/register`, {
+    const response = await apiFetch(`${API_BASE_URL}/auth/register`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -131,13 +184,7 @@ export const authAPI = {
     
     const data = await handleResponse(response);
     
-    // Public registration requires email verification. Only create an
-    // authenticated local session if the backend actually issued a token.
-    if (data.success && data.data?.token) {
-      setToken(data.data.token);
-      setUser(data.data.user);
-      window.dispatchEvent(new Event('authChange'));
-    } else if (data.success) {
+    if (data.success) {
       removeToken();
     }
     
@@ -146,7 +193,7 @@ export const authAPI = {
 
   // Login user
   login: async (credentials) => {
-    const response = await fetch(`${API_BASE_URL}/auth/login`, {
+    const response = await apiFetch(`${API_BASE_URL}/auth/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -156,32 +203,18 @@ export const authAPI = {
     
     const data = await handleResponse(response);
     
-    // Store token and user data
-    if (data.success && data.data) {
-      setToken(data.data.token);
+    if (data.success && data.data?.user) {
+      csrfToken = null;
       setUser(data.data.user);
-      try {
-        await fetch(`${API_BASE_URL}/user/presence`, {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${data.data.token}`,
-          },
-          body: JSON.stringify({ online: true }),
-        });
-      } catch {
-        // Presence heartbeat should not block login.
-      }
-      // Notify components of auth change
       window.dispatchEvent(new Event('authChange'));
     }
-    
+
     return data;
   },
 
   // Request password reset email
   forgotPassword: async (payload) => {
-    const response = await fetch(`${API_BASE_URL}/auth/forgot-password`, {
+    const response = await apiFetch(`${API_BASE_URL}/auth/forgot-password`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -194,7 +227,7 @@ export const authAPI = {
 
   // Reset password with token
   resetPassword: async (token, payload) => {
-    const response = await fetch(`${API_BASE_URL}/auth/reset-password/${token}`, {
+    const response = await apiFetch(`${API_BASE_URL}/auth/reset-password/${token}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -207,58 +240,31 @@ export const authAPI = {
 
   // Get current user profile
   getMe: async () => {
-    const token = getToken();
-    
-    if (!token) {
-      throw new ApiError('No authentication token found', { code: 'AUTH_TOKEN_MISSING' });
-    }
-    
-    const response = await fetch(`${API_BASE_URL}/auth/me`, {
+    const response = await apiFetch(`${API_BASE_URL}/auth/me`, {
       method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
+      headers: { 'Content-Type': 'application/json' },
     });
-    
+
     const data = await handleResponse(response);
-    
-    // Update stored user data
-    if (data.success && data.data) {
+    if (data.success && data.data?.user) {
       setUser(data.data.user);
+      window.dispatchEvent(new Event('authChange'));
     }
-    
     return data;
   },
 
   // Logout user
   logout: async () => {
-    const token = getToken();
-    
     try {
-      if (token) {
-        await fetch(`${API_BASE_URL}/user/presence`, {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-          },
-          body: JSON.stringify({ online: false }),
-        });
-
-        await fetch(`${API_BASE_URL}/auth/logout`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-          },
-        });
-      }
+      await apiFetch(`${API_BASE_URL}/auth/logout`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
     } catch (error) {
       console.error('Logout API error:', error);
     } finally {
-      // Always clear local storage
       removeToken();
+      window.dispatchEvent(new Event('authChange'));
     }
   },
 
@@ -270,7 +276,7 @@ export const authAPI = {
       throw new ApiError('No authentication token found', { code: 'AUTH_TOKEN_MISSING' });
     }
     
-    const response = await fetch(`${API_BASE_URL}/auth/update-profile`, {
+    const response = await apiFetch(`${API_BASE_URL}/auth/update-profile`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -293,7 +299,7 @@ export const authAPI = {
 export const verificationAPI = {
   verifyEmail: async (token) => {
     const params = new URLSearchParams({ token });
-    const response = await fetch(`${API_BASE_URL}/auth/verify-email?${params.toString()}`, {
+    const response = await apiFetch(`${API_BASE_URL}/auth/verify-email?${params.toString()}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -304,7 +310,7 @@ export const verificationAPI = {
   },
 
   resendVerification: async (payload) => {
-    const response = await fetch(`${API_BASE_URL}/auth/resend-verification`, {
+    const response = await apiFetch(`${API_BASE_URL}/auth/resend-verification`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -326,7 +332,7 @@ export const adminAPI = {
       throw new ApiError('No authentication token found', { code: 'AUTH_TOKEN_MISSING' });
     }
     
-    const response = await fetch(`${API_BASE_URL}/admin/dashboard-stats`, {
+    const response = await apiFetch(`${API_BASE_URL}/admin/dashboard-stats`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -345,7 +351,7 @@ export const adminAPI = {
       throw new ApiError('No authentication token found', { code: 'AUTH_TOKEN_MISSING' });
     }
     
-    const response = await fetch(`${API_BASE_URL}/admin/users`, {
+    const response = await apiFetch(`${API_BASE_URL}/admin/users`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -364,7 +370,7 @@ export const adminAPI = {
       throw new ApiError('No authentication token found', { code: 'AUTH_TOKEN_MISSING' });
     }
     
-    const response = await fetch(`${API_BASE_URL}/admin/users/${id}`, {
+    const response = await apiFetch(`${API_BASE_URL}/admin/users/${id}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -383,7 +389,7 @@ export const adminAPI = {
       throw new ApiError('No authentication token found', { code: 'AUTH_TOKEN_MISSING' });
     }
     
-    const response = await fetch(`${API_BASE_URL}/admin/users/${id}/status`, {
+    const response = await apiFetch(`${API_BASE_URL}/admin/users/${id}/status`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -403,7 +409,7 @@ export const adminAPI = {
       throw new ApiError('No authentication token found', { code: 'AUTH_TOKEN_MISSING' });
     }
 
-    const response = await fetch(`${API_BASE_URL}/admin/users/${id}/activity`, {
+    const response = await apiFetch(`${API_BASE_URL}/admin/users/${id}/activity`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -422,7 +428,7 @@ export const adminAPI = {
       throw new ApiError('No authentication token found', { code: 'AUTH_TOKEN_MISSING' });
     }
 
-    const response = await fetch(`${API_BASE_URL}/admin/verification-requests`, {
+    const response = await apiFetch(`${API_BASE_URL}/admin/verification-requests`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -441,7 +447,7 @@ export const adminAPI = {
       throw new ApiError('No authentication token found', { code: 'AUTH_TOKEN_MISSING' });
     }
 
-    const response = await fetch(`${API_BASE_URL}/admin/verification-requests/${id}`, {
+    const response = await apiFetch(`${API_BASE_URL}/admin/verification-requests/${id}`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
@@ -461,7 +467,7 @@ export const adminAPI = {
       throw new ApiError('No authentication token found', { code: 'AUTH_TOKEN_MISSING' });
     }
 
-    const response = await fetch(`${API_BASE_URL}/admin/reports`, {
+    const response = await apiFetch(`${API_BASE_URL}/admin/reports`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -480,7 +486,7 @@ export const adminAPI = {
       throw new ApiError('No authentication token found', { code: 'AUTH_TOKEN_MISSING' });
     }
 
-    const response = await fetch(`${API_BASE_URL}/admin/provider-credentials`, {
+    const response = await apiFetch(`${API_BASE_URL}/admin/provider-credentials`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -499,7 +505,7 @@ export const adminAPI = {
       throw new ApiError('No authentication token found', { code: 'AUTH_TOKEN_MISSING' });
     }
 
-    const response = await fetch(`${API_BASE_URL}/admin/provider-credentials/${id}`, {
+    const response = await apiFetch(`${API_BASE_URL}/admin/provider-credentials/${id}`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
@@ -519,7 +525,7 @@ export const adminAPI = {
       throw new ApiError('No authentication token found', { code: 'AUTH_TOKEN_MISSING' });
     }
 
-    const response = await fetch(`${API_BASE_URL}/admin/reports/${id}`, {
+    const response = await apiFetch(`${API_BASE_URL}/admin/reports/${id}`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
@@ -539,7 +545,7 @@ export const adminAPI = {
       throw new ApiError('No authentication token found', { code: 'AUTH_TOKEN_MISSING' });
     }
     
-    const response = await fetch(`${API_BASE_URL}/admin/users/${id}`, {
+    const response = await apiFetch(`${API_BASE_URL}/admin/users/${id}`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
@@ -556,7 +562,7 @@ export const serviceProfileAPI = {
   // Create or update service profile
   createProfile: async (formData) => {
     const token = getToken();
-    const response = await fetch(`${API_BASE_URL}/service-profiles/create`, {
+    const response = await apiFetch(`${API_BASE_URL}/service-profiles/create`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -579,7 +585,7 @@ export const serviceProfileAPI = {
     if (filters.minRating) params.append('minRating', filters.minRating);
     if (filters.search) params.append('search', filters.search);
 
-    const response = await fetch(`${API_BASE_URL}/service-profiles/all?${params}`, {
+    const response = await apiFetch(`${API_BASE_URL}/service-profiles/all?${params}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -591,7 +597,7 @@ export const serviceProfileAPI = {
 
   // Get canonical service taxonomy (categories + service types)
   getTaxonomy: async () => {
-    const response = await fetch(`${API_BASE_URL}/service-profiles/taxonomy`, {
+    const response = await apiFetch(`${API_BASE_URL}/service-profiles/taxonomy`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -603,7 +609,7 @@ export const serviceProfileAPI = {
 
   // Get single profile by ID
   getProfileById: async (id) => {
-    const response = await fetch(`${API_BASE_URL}/service-profiles/${id}`, {
+    const response = await apiFetch(`${API_BASE_URL}/service-profiles/${id}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -623,7 +629,7 @@ export const serviceProfileAPI = {
     if (Array.isArray(dates) && dates.length > 0) params.set('dates', dates.join(','));
     if (excludeRequestId) params.set('excludeRequestId', String(excludeRequestId));
 
-    const response = await fetch(`${API_BASE_URL}/service-profiles/${id}/available-slots?${params.toString()}`, {
+    const response = await apiFetch(`${API_BASE_URL}/service-profiles/${id}/available-slots?${params.toString()}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -641,7 +647,7 @@ export const serviceProfileAPI = {
     if (duration) params.set('duration', String(duration));
     if (excludeRequestId) params.set('excludeRequestId', String(excludeRequestId));
 
-    const response = await fetch(`${API_BASE_URL}/service-profiles/${id}/available-dates?${params.toString()}`, {
+    const response = await apiFetch(`${API_BASE_URL}/service-profiles/${id}/available-dates?${params.toString()}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -665,7 +671,7 @@ export const serviceProfileAPI = {
     if (filters.duration) params.set('duration', String(filters.duration));
     if (filters.limit) params.set('limit', String(filters.limit));
 
-    const response = await fetch(`${API_BASE_URL}/service-profiles/recommendations?${params.toString()}`, {
+    const response = await apiFetch(`${API_BASE_URL}/service-profiles/recommendations?${params.toString()}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -678,7 +684,7 @@ export const serviceProfileAPI = {
   // Get current user's profile
   getMyProfile: async () => {
     const token = getToken();
-    const response = await fetch(`${API_BASE_URL}/service-profiles/user/me`, {
+    const response = await apiFetch(`${API_BASE_URL}/service-profiles/user/me`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -692,7 +698,7 @@ export const serviceProfileAPI = {
   // Toggle profile publish status
   togglePublish: async (isPublished) => {
     const token = getToken();
-    const response = await fetch(`${API_BASE_URL}/service-profiles/toggle-publish`, {
+    const response = await apiFetch(`${API_BASE_URL}/service-profiles/toggle-publish`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
@@ -707,7 +713,7 @@ export const serviceProfileAPI = {
   // Provider availability
   getMyAvailability: async () => {
     const token = getToken();
-    const response = await fetch(`${API_BASE_URL}/service-profiles/availability/me`, {
+    const response = await apiFetch(`${API_BASE_URL}/service-profiles/availability/me`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -719,7 +725,7 @@ export const serviceProfileAPI = {
 
   saveMyAvailability: async (payload) => {
     const token = getToken();
-    const response = await fetch(`${API_BASE_URL}/service-profiles/availability/me`, {
+    const response = await apiFetch(`${API_BASE_URL}/service-profiles/availability/me`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -732,7 +738,7 @@ export const serviceProfileAPI = {
 
   addAvailabilityException: async (payload) => {
     const token = getToken();
-    const response = await fetch(`${API_BASE_URL}/service-profiles/availability/me/exceptions`, {
+    const response = await apiFetch(`${API_BASE_URL}/service-profiles/availability/me/exceptions`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -745,7 +751,7 @@ export const serviceProfileAPI = {
 
   deleteAvailabilityException: async (exceptionId) => {
     const token = getToken();
-    const response = await fetch(`${API_BASE_URL}/service-profiles/availability/me/exceptions/${exceptionId}`, {
+    const response = await apiFetch(`${API_BASE_URL}/service-profiles/availability/me/exceptions/${exceptionId}`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
@@ -758,7 +764,7 @@ export const serviceProfileAPI = {
   // Provider languages
   getMyLanguages: async () => {
     const token = getToken();
-    const response = await fetch(`${API_BASE_URL}/service-profiles/languages/me`, {
+    const response = await apiFetch(`${API_BASE_URL}/service-profiles/languages/me`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -770,7 +776,7 @@ export const serviceProfileAPI = {
 
   updateMyLanguages: async (languages) => {
     const token = getToken();
-    const response = await fetch(`${API_BASE_URL}/service-profiles/languages/me`, {
+    const response = await apiFetch(`${API_BASE_URL}/service-profiles/languages/me`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -784,7 +790,7 @@ export const serviceProfileAPI = {
   // Provider credentials
   getMyCredentials: async () => {
     const token = getToken();
-    const response = await fetch(`${API_BASE_URL}/service-profiles/credentials/me`, {
+    const response = await apiFetch(`${API_BASE_URL}/service-profiles/credentials/me`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -796,7 +802,7 @@ export const serviceProfileAPI = {
 
   createCredential: async (formData) => {
     const token = getToken();
-    const response = await fetch(`${API_BASE_URL}/service-profiles/credentials/me`, {
+    const response = await apiFetch(`${API_BASE_URL}/service-profiles/credentials/me`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -808,7 +814,7 @@ export const serviceProfileAPI = {
 
   submitCredentialForReview: async (credentialId) => {
     const token = getToken();
-    const response = await fetch(`${API_BASE_URL}/service-profiles/credentials/me/${credentialId}/submit`, {
+    const response = await apiFetch(`${API_BASE_URL}/service-profiles/credentials/me/${credentialId}/submit`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -821,7 +827,7 @@ export const serviceProfileAPI = {
   // Completed request linkage for portfolio
   getEligibleCompletedRequests: async () => {
     const token = getToken();
-    const response = await fetch(`${API_BASE_URL}/service-profiles/portfolio/completed-requests`, {
+    const response = await apiFetch(`${API_BASE_URL}/service-profiles/portfolio/completed-requests`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -842,7 +848,7 @@ export const serviceProfileAPI = {
       headers['Content-Type'] = 'application/json';
     }
 
-    const response = await fetch(`${API_BASE_URL}/service-profiles/portfolio/from-request`, {
+    const response = await apiFetch(`${API_BASE_URL}/service-profiles/portfolio/from-request`, {
       method: 'POST',
       headers,
       body: isFormData ? payload : JSON.stringify(payload),
@@ -852,7 +858,7 @@ export const serviceProfileAPI = {
 
   updateCompletedPortfolioItemImage: async (itemId, formData) => {
     const token = getToken();
-    const response = await fetch(`${API_BASE_URL}/service-profiles/portfolio/item/${itemId}/image`, {
+    const response = await apiFetch(`${API_BASE_URL}/service-profiles/portfolio/item/${itemId}/image`, {
       method: 'PUT',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -865,7 +871,7 @@ export const serviceProfileAPI = {
   // Get portfolio for editing
   getMyPortfolio: async () => {
     const token = getToken();
-    const response = await fetch(`${API_BASE_URL}/service-profiles/portfolio/me`, {
+    const response = await apiFetch(`${API_BASE_URL}/service-profiles/portfolio/me`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -878,7 +884,7 @@ export const serviceProfileAPI = {
   // Update portfolio details (about me, skills, response time)
   updatePortfolioDetails: async (data) => {
     const token = getToken();
-    const response = await fetch(`${API_BASE_URL}/service-profiles/portfolio/details`, {
+    const response = await apiFetch(`${API_BASE_URL}/service-profiles/portfolio/details`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
@@ -892,7 +898,7 @@ export const serviceProfileAPI = {
   // Add portfolio image
   addPortfolioImage: async (formData) => {
     const token = getToken();
-    const response = await fetch(`${API_BASE_URL}/service-profiles/portfolio/image`, {
+    const response = await apiFetch(`${API_BASE_URL}/service-profiles/portfolio/image`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -905,7 +911,7 @@ export const serviceProfileAPI = {
   // Delete portfolio image
   deletePortfolioImage: async (imageId) => {
     const token = getToken();
-    const response = await fetch(`${API_BASE_URL}/service-profiles/portfolio/image/${imageId}`, {
+    const response = await apiFetch(`${API_BASE_URL}/service-profiles/portfolio/image/${imageId}`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
@@ -919,7 +925,7 @@ export const serviceProfileAPI = {
 // Assistant API (provider-agnostic preparation)
 export const assistantAPI = {
   getCapabilities: async () => {
-    const response = await fetch(`${API_BASE_URL}/assistant/capabilities`, {
+    const response = await apiFetch(`${API_BASE_URL}/assistant/capabilities`, {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
     });
@@ -927,7 +933,7 @@ export const assistantAPI = {
   },
 
   sendMessage: async ({ message, locale = 'en', context = {}, history = [] }) => {
-    const response = await fetch(`${API_BASE_URL}/assistant/message`, {
+    const response = await apiFetch(`${API_BASE_URL}/assistant/message`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ message, locale, context, history }),
@@ -941,7 +947,7 @@ export const serviceRequestAPI = {
   // Create a new service request
   createRequest: async (requestData) => {
     const token = getToken();
-    const response = await fetch(`${API_BASE_URL}/service-requests/create`, {
+    const response = await apiFetch(`${API_BASE_URL}/service-requests/create`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -955,7 +961,7 @@ export const serviceRequestAPI = {
   // Get client's sent requests
   getClientRequests: async () => {
     const token = getToken();
-    const response = await fetch(`${API_BASE_URL}/service-requests/client`, {
+    const response = await apiFetch(`${API_BASE_URL}/service-requests/client`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -968,7 +974,7 @@ export const serviceRequestAPI = {
   // Get provider's received requests
   getProviderRequests: async () => {
     const token = getToken();
-    const response = await fetch(`${API_BASE_URL}/service-requests/provider`, {
+    const response = await apiFetch(`${API_BASE_URL}/service-requests/provider`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -981,7 +987,7 @@ export const serviceRequestAPI = {
   // Get single request by ID
   getRequestById: async (requestId) => {
     const token = getToken();
-    const response = await fetch(`${API_BASE_URL}/service-requests/${requestId}`, {
+    const response = await apiFetch(`${API_BASE_URL}/service-requests/${requestId}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -999,7 +1005,7 @@ export const serviceRequestAPI = {
       payload.cancellationReason = cancellation.cancellationReason;
       payload.cancellationReasonOther = cancellation.cancellationReasonOther;
     }
-    const response = await fetch(`${API_BASE_URL}/service-requests/${requestId}/status`, {
+    const response = await apiFetch(`${API_BASE_URL}/service-requests/${requestId}/status`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
@@ -1013,7 +1019,7 @@ export const serviceRequestAPI = {
   // Create reschedule proposal
   proposeReschedule: async (requestId, payload) => {
     const token = getToken();
-    const response = await fetch(`${API_BASE_URL}/service-requests/${requestId}/reschedules`, {
+    const response = await apiFetch(`${API_BASE_URL}/service-requests/${requestId}/reschedules`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -1027,7 +1033,7 @@ export const serviceRequestAPI = {
   // Respond to reschedule proposal
   respondReschedule: async (requestId, rescheduleId, action) => {
     const token = getToken();
-    const response = await fetch(`${API_BASE_URL}/service-requests/${requestId}/reschedules/${rescheduleId}/respond`, {
+    const response = await apiFetch(`${API_BASE_URL}/service-requests/${requestId}/reschedules/${rescheduleId}/respond`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
@@ -1041,7 +1047,7 @@ export const serviceRequestAPI = {
   // Request discussion (client)
   requestDiscussion: async (requestId) => {
     const token = getToken();
-    const response = await fetch(`${API_BASE_URL}/service-requests/${requestId}/request-discussion`, {
+    const response = await apiFetch(`${API_BASE_URL}/service-requests/${requestId}/request-discussion`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -1054,7 +1060,7 @@ export const serviceRequestAPI = {
   // Accept discussion (provider)
   acceptDiscussion: async (requestId) => {
     const token = getToken();
-    const response = await fetch(`${API_BASE_URL}/service-requests/${requestId}/accept-discussion`, {
+    const response = await apiFetch(`${API_BASE_URL}/service-requests/${requestId}/accept-discussion`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -1067,7 +1073,7 @@ export const serviceRequestAPI = {
   // Create a review for a completed request (client)
   createReview: async (requestId, { rating, comment }) => {
     const token = getToken();
-    const response = await fetch(`${API_BASE_URL}/service-requests/${requestId}/review`, {
+    const response = await apiFetch(`${API_BASE_URL}/service-requests/${requestId}/review`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -1081,7 +1087,7 @@ export const serviceRequestAPI = {
   // Report user for a request interaction
   createReport: async (requestId, formData) => {
     const token = getToken();
-    const response = await fetch(`${API_BASE_URL}/service-requests/${requestId}/report`, {
+    const response = await apiFetch(`${API_BASE_URL}/service-requests/${requestId}/report`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -1098,7 +1104,7 @@ export const notificationAPI = {
   // Get all notifications
   getNotifications: async (limit = 20, offset = 0) => {
     const token = getToken();
-    const response = await fetch(`${API_BASE_URL}/notifications?limit=${limit}&offset=${offset}`, {
+    const response = await apiFetch(`${API_BASE_URL}/notifications?limit=${limit}&offset=${offset}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -1111,7 +1117,7 @@ export const notificationAPI = {
   // Get unread count
   getUnreadCount: async () => {
     const token = getToken();
-    const response = await fetch(`${API_BASE_URL}/notifications/unread-count`, {
+    const response = await apiFetch(`${API_BASE_URL}/notifications/unread-count`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -1124,7 +1130,7 @@ export const notificationAPI = {
   // Mark single notification as read
   markAsRead: async (notificationId) => {
     const token = getToken();
-    const response = await fetch(`${API_BASE_URL}/notifications/${notificationId}/read`, {
+    const response = await apiFetch(`${API_BASE_URL}/notifications/${notificationId}/read`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
@@ -1137,7 +1143,7 @@ export const notificationAPI = {
   // Mark all as read
   markAllAsRead: async () => {
     const token = getToken();
-    const response = await fetch(`${API_BASE_URL}/notifications/read-all`, {
+    const response = await apiFetch(`${API_BASE_URL}/notifications/read-all`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
@@ -1150,7 +1156,7 @@ export const notificationAPI = {
   // Delete notification
   deleteNotification: async (notificationId) => {
     const token = getToken();
-    const response = await fetch(`${API_BASE_URL}/notifications/${notificationId}`, {
+    const response = await apiFetch(`${API_BASE_URL}/notifications/${notificationId}`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
@@ -1163,7 +1169,7 @@ export const notificationAPI = {
   // Clear all notifications
   clearAll: async () => {
     const token = getToken();
-    const response = await fetch(`${API_BASE_URL}/notifications`, {
+    const response = await apiFetch(`${API_BASE_URL}/notifications`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
@@ -1179,7 +1185,7 @@ export const userProfileAPI = {
   // Get current user profile with photo
   getProfile: async () => {
     const token = getToken();
-    const response = await fetch(`${API_BASE_URL}/user/profile`, {
+    const response = await apiFetch(`${API_BASE_URL}/user/profile`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -1191,7 +1197,7 @@ export const userProfileAPI = {
 
   updatePresence: async (online = true) => {
     const token = getToken();
-    const response = await fetch(`${API_BASE_URL}/user/presence`, {
+    const response = await apiFetch(`${API_BASE_URL}/user/presence`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
@@ -1206,7 +1212,7 @@ export const userProfileAPI = {
   // Update profile (name, phone, address, bio, photo)
   updateProfile: async (formData) => {
     const token = getToken();
-    const response = await fetch(`${API_BASE_URL}/user/profile`, {
+    const response = await apiFetch(`${API_BASE_URL}/user/profile`, {
       method: 'PATCH',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -1238,7 +1244,7 @@ export const userProfileAPI = {
   // Remove profile photo
   removePhoto: async () => {
     const token = getToken();
-    const response = await fetch(`${API_BASE_URL}/user/profile/photo`, {
+    const response = await apiFetch(`${API_BASE_URL}/user/profile/photo`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
@@ -1264,7 +1270,7 @@ export const userProfileAPI = {
   // Submit verification request (service provider)
   submitVerificationRequest: async (formData) => {
     const token = getToken();
-    const response = await fetch(`${API_BASE_URL}/user/verification-request`, {
+    const response = await apiFetch(`${API_BASE_URL}/user/verification-request`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
