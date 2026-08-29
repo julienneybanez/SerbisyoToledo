@@ -819,8 +819,8 @@ const isScheduleAvailableForRange = async (
     };
   }
 
-  // Backward compatibility: if a provider has not configured any weekly windows
-  // or date exceptions yet, keep legacy behavior and allow schedule creation.
+  // Providers must explicitly choose availability. An empty availability
+  // configuration must never create client-bookable dates.
   await ensureAvailabilitySchema(connection);
   const [availabilityConfigRows] = await connection.query(
     `SELECT
@@ -835,8 +835,9 @@ const isScheduleAvailableForRange = async (
 
   if (weeklyCount === 0 && exceptionCount === 0) {
     return {
-      available: true,
+      available: false,
       reason: 'availability_not_configured',
+      message: 'This service provider has not added available dates yet.',
     };
   }
 
