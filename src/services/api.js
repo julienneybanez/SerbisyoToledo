@@ -1044,28 +1044,43 @@ export const serviceRequestAPI = {
     return handleResponse(response);
   },
 
-  // Request discussion (client)
-  requestDiscussion: async (requestId) => {
-    const token = getToken();
-    const response = await apiFetch(`${API_BASE_URL}/service-requests/${requestId}/request-discussion`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
+  getPhoneShare: async (requestId) => {
+    const response = await apiFetch(`${API_BASE_URL}/service-requests/${requestId}/phone-share`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
     });
     return handleResponse(response);
   },
 
-  // Accept discussion (provider)
-  acceptDiscussion: async (requestId) => {
-    const token = getToken();
-    const response = await apiFetch(`${API_BASE_URL}/service-requests/${requestId}/accept-discussion`, {
+  requestPhoneShare: async (requestId) => {
+    const response = await apiFetch(`${API_BASE_URL}/service-requests/${requestId}/phone-share/request`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
+      headers: { 'Content-Type': 'application/json' },
+    });
+    return handleResponse(response);
+  },
+
+  respondPhoneShare: async (requestId, action) => {
+    const response = await apiFetch(`${API_BASE_URL}/service-requests/${requestId}/phone-share/respond`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action }),
+    });
+    return handleResponse(response);
+  },
+
+  archiveRequest: async (requestId) => {
+    const response = await apiFetch(`${API_BASE_URL}/service-requests/${requestId}/archive`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    return handleResponse(response);
+  },
+
+  unarchiveRequest: async (requestId) => {
+    const response = await apiFetch(`${API_BASE_URL}/service-requests/${requestId}/archive`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
     });
     return handleResponse(response);
   },
@@ -1095,6 +1110,59 @@ export const serviceRequestAPI = {
       body: formData,
     });
 
+    return handleResponse(response);
+  },
+};
+
+export const messageAPI = {
+  listConversations: async () => {
+    const response = await apiFetch(`${API_BASE_URL}/messages`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    return handleResponse(response);
+  },
+
+  getUnreadCount: async () => {
+    const response = await apiFetch(`${API_BASE_URL}/messages/unread-count`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    return handleResponse(response);
+  },
+
+  openRequestConversation: async (requestId) => {
+    const response = await apiFetch(`${API_BASE_URL}/messages/request/${requestId}/open`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    return handleResponse(response);
+  },
+
+  getMessages: async (conversationId, { beforeId = null, limit = 60 } = {}) => {
+    const params = new URLSearchParams({ limit: String(limit) });
+    if (beforeId) params.set('beforeId', String(beforeId));
+    const response = await apiFetch(`${API_BASE_URL}/messages/${conversationId}/messages?${params.toString()}`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    return handleResponse(response);
+  },
+
+  sendMessage: async (conversationId, message) => {
+    const response = await apiFetch(`${API_BASE_URL}/messages/${conversationId}/messages`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message }),
+    });
+    return handleResponse(response);
+  },
+
+  markRead: async (conversationId) => {
+    const response = await apiFetch(`${API_BASE_URL}/messages/${conversationId}/read`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+    });
     return handleResponse(response);
   },
 };
