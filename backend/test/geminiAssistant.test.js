@@ -40,6 +40,17 @@ describe('Gemini assistant provider', () => {
     expect(result).toMatchObject({ intent: 'service_discovery', action: { type: 'recommend_providers', filters: { category: 'Plumbing' } } });
   });
 
+  it.each([
+    ['English', 'Help me choose a service, I need a plumber near Poblacion', 'en'],
+    ['Cebuano', 'Tabangi ko pagpili og serbisyo, kinahanglan kog tubero duol sa Poblacion', 'ceb'],
+  ])('prioritizes recognized service evidence over broad help in %s fallback', async (_name, message, locale) => {
+    const result = await generateAssistantReply({ message, locale });
+    expect(result).toMatchObject({
+      intent: 'service_discovery',
+      action: { type: 'recommend_providers', filters: { category: 'Plumbing' } },
+    });
+  });
+
   it('does not discover providers for an ambiguous repair request', async () => {
     const result = await generateAssistantReply({ message: 'I need someone to repair something.', locale: 'en' });
     expect(result.action).toBeNull();
@@ -89,6 +100,30 @@ describe('Gemini assistant provider', () => {
     expect(result).toMatchObject({ intent: 'service_discovery', action: { filters: { category: 'Plumbing' } } });
   });
 
+  it('rejects a categoryless Gemini discovery action for ambiguous repair', async () => {
+    process.env.AI_PROVIDER = 'gemini';
+    process.env.AI_MODEL = 'gemini-test';
+    process.env.AI_API_KEY = 'secret';
+    generate.mockResolvedValue({
+      reply: 'I can search for providers.',
+      intent: 'service_discovery',
+      action: { type: 'recommend_providers', query: 'repair', filters: { category: null, search: null } },
+    });
+
+    const result = await generateAssistantReply({ message: 'I need someone to repair something.', locale: 'en' });
+    expect(result).toMatchObject({ mode: 'ai', intent: 'help', action: null });
+    expect(result.reply).toMatch(/serviced or repaired/i);
+  });
+
+  it('keeps a valid Gemini Plumbing discovery action', () => {
+    const result = normalizeAiResult({
+      reply: 'I can help.',
+      intent: 'service_discovery',
+      action: { type: 'recommend_providers', query: 'plumber', filters: { category: 'Plumbing' } },
+    }, { message: 'I need a plumber', locale: 'en' });
+    expect(result).toMatchObject({ intent: 'service_discovery', action: { filters: { category: 'Plumbing' } } });
+  });
+
   it('normalizes a service-discovery action against the actual taxonomy', () => {
     const result = normalizeAiResult({ reply: 'I can narrow the search.', intent: 'service_discovery', action: { type: 'recommend_providers', query: 'tubero', filters: { category: 'plumbing', location: 'Poblacion', maxPrice: 900, minRating: 4.5, language: 'ceb', availabilityDate: '2026-09-01', duration: 120, search: null } } });
     expect(result.action.filters).toMatchObject({ category: 'Plumbing', location: 'Poblacion', language: 'ceb', duration: 120 });
@@ -101,8 +136,6 @@ describe('Gemini assistant provider', () => {
     ['infers Electrical from Cebuano', null, 'Pangita kog elektrisyan', 'Electrical'],
     ['infers Carpentry from Cebuano', null, 'Kinahanglan kog karpintero', 'Carpentry'],
     ['infers Tech Repair from phone repair', null, 'I need phone repair', 'Tech Repair'],
-    ['leaves ambiguous repair requests uncategorized', null, 'I need someone to repair something', null],
-    ['rejects malicious categories without service evidence', 'DROP TABLE users', 'I need help with something', null],
   ])('%s', (_name, category, message, expectedCategory) => {
     const result = normalizeAiResult({
       reply: 'I can help find a provider.',
@@ -119,6 +152,19 @@ describe('Gemini assistant provider', () => {
     expect(result.action.filters.maxPrice).toBe(900);
     expect(result.action.filters.language).toBe('ceb');
     expect(result.action.filters.duration).toBe(120);
+  });
+
+  it.each([
+    ['leaves ambiguous repair requests uncategorized', null, 'I need someone to repair something'],
+    ['rejects malicious categories without service evidence', 'DROP TABLE users', 'I need help with something'],
+  ])('%s', (_name, category, message) => {
+    const result = normalizeAiResult({
+      reply: 'I can help find a provider.',
+      intent: 'service_discovery',
+      action: { type: 'recommend_providers', query: '', filters: { category, search: null } },
+    }, { message });
+
+    expect(result).toMatchObject({ intent: 'help', action: null });
   });
 
   it('keeps Cebuano locale and falls back after provider failure', async () => {

@@ -73,6 +73,14 @@ const getServiceHelpClarification = (locale) => ({
   intent: 'help',
 });
 
+const getServiceDiscoveryClarification = (locale) => ({
+  reply: locale === 'ceb'
+    ? 'Unsay kinahanglan nimong ipa-service o ayuhon? Isulti ang problema aron matabangan tika pagpili sa hustong serbisyo.'
+    : 'What do you need serviced or repaired? Tell me the problem so I can help identify the right service.',
+  action: null,
+  intent: 'help',
+});
+
 const normalizeAiResult = (value, { message = '', locale = 'en' } = {}) => {
   if (!value || typeof value !== 'object') throw new Error('malformed_output');
   const reply = stringOrNull(value.reply, 1200);
@@ -88,6 +96,7 @@ const normalizeAiResult = (value, { message = '', locale = 'en' } = {}) => {
   const category = categoryKey
     ? getCategoryByKey(categoryKey)?.label || null
     : inferCategoryFromText(filters.search, value.action.query, message);
+  if (!category) return getServiceDiscoveryClarification(normalizeLocale(locale));
   const language = SUPPORTED_FILTER_LANGUAGES.has(filters.language) ? filters.language : null;
   const action = {
     type: 'recommend_providers',
@@ -210,16 +219,6 @@ const getFallbackReply = ({ message, locale }) => {
     };
   }
 
-  if (/faq|help|tabang/.test(input)) {
-    return {
-      reply: isCebuano
-        ? 'Makatabang ko sa pagpangita og serbisyo, booking, provider verification, availability, ug basic paggamit sa SerbisyoToledo. Unsay gusto nimong mahibal-an?'
-        : 'I can help with finding services, booking, provider verification, availability, and basic SerbisyoToledo usage. What would you like to know?',
-      action: null,
-      intent: 'help',
-    };
-  }
-
   const inferredCategory = inferCategoryFromText(message);
 
   if (inferredCategory) {
@@ -233,6 +232,16 @@ const getFallbackReply = ({ message, locale }) => {
         filters: { category: inferredCategory },
       },
       intent: 'service_discovery',
+    };
+  }
+
+  if (/faq|help|tabang/.test(input)) {
+    return {
+      reply: isCebuano
+        ? 'Makatabang ko sa pagpangita og serbisyo, booking, provider verification, availability, ug basic paggamit sa SerbisyoToledo. Unsay gusto nimong mahibal-an?'
+        : 'I can help with finding services, booking, provider verification, availability, and basic SerbisyoToledo usage. What would you like to know?',
+      action: null,
+      intent: 'help',
     };
   }
 

@@ -33,7 +33,7 @@ export const buildRecommendationFilters = (rawInput, locale) => {
   const input = source.toLowerCase();
   const serviceMatch = SERVICE_KEYWORDS.find((item) => input.includes(item.keyword));
   const category = serviceMatch?.category;
-  const locationMatch = source.match(/(?:in|near|around|sa|duol sa)\s+([a-z\s.-]{3,40})/i);
+  const locationMatch = source.match(/(?:in|near|around|sa|duol sa)\s+([a-z\s.-]{3,40}?)(?=\s+(?:under|below|max|budget|with|rating|stars|today|tomorrow|karon|ugma|hangtod)\b|$)/i);
   const location = locationMatch ? locationMatch[1].trim() : undefined;
   const budgetMatch = input.match(/(?:under|below|max|budget|hangtod)\s*(?:p|php|₱)?\s*(\d{3,6})/i);
   const maxPrice = budgetMatch ? Number(budgetMatch[1]) : undefined;

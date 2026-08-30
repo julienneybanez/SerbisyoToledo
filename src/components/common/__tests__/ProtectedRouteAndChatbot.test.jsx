@@ -220,6 +220,18 @@ describe('Chatbot', () => {
     expect(buildRecommendationFilters('I need phone repair', 'en').category).toBe('Tech Repair');
   });
 
+  it.each([
+    ['English', 'I need a plumber near Poblacion under 1000'],
+    ['Cebuano', 'tubero duol sa Poblacion hangtod 1000'],
+  ])('stops %s location parsing before a budget qualifier', (_name, message) => {
+    expect(buildRecommendationFilters(message, 'en')).toMatchObject({
+      category: 'Plumbing',
+      location: 'Poblacion',
+      maxPrice: 1000,
+      search: undefined,
+    });
+  });
+
   it('automatically scrolls to the latest message after a reply', async () => {
     assistantAPI.sendMessage.mockResolvedValue({
       success: true,
