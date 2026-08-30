@@ -1,9 +1,17 @@
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { serviceProfileAPI } from '../../services/api';
+import { useLanguage } from '../../context/LanguageContext';
 import './EditPortfolioModal.css';
 
+const LANGUAGE_OPTIONS = [
+  { value: 'ceb', labelKey: 'languageOptionCebuano' },
+  { value: 'en', labelKey: 'languageOptionEnglish' },
+  { value: 'fil', labelKey: 'languageOptionFilipino' },
+];
+
 export default function EditPortfolioModal({ onClose }) {
+  const { t } = useLanguage();
   const completedJobPhotoInputRef = useRef(null);
   const linkedJobPhotoInputRef = useRef(null);
   
@@ -13,6 +21,7 @@ export default function EditPortfolioModal({ onClose }) {
     skills: [],
   });
   const [portfolio, setPortfolio] = useState([]);
+  const [selectedLanguages, setSelectedLanguages] = useState([]);
   const [eligibleCompletedRequests, setEligibleCompletedRequests] = useState([]);
   const [selectedCompletedRequestId, setSelectedCompletedRequestId] = useState('');
   const [completedJobPhoto, setCompletedJobPhoto] = useState(null);
@@ -52,9 +61,16 @@ export default function EditPortfolioModal({ onClose }) {
         setPortfolio(response.data.portfolio || []);
       }
 
-      const completedResponse = await serviceProfileAPI.getEligibleCompletedRequests();
+      const [completedResponse, languagesResponse] = await Promise.all([
+        serviceProfileAPI.getEligibleCompletedRequests(),
+        serviceProfileAPI.getMyLanguages(),
+      ]);
+
       if (completedResponse.success && completedResponse.data) {
         setEligibleCompletedRequests(completedResponse.data.requests || []);
+      }
+      if (languagesResponse.success) {
+        setSelectedLanguages(languagesResponse.data?.languages || []);
       }
     } catch (err) {
       if (err.status === 404) {
@@ -205,6 +221,14 @@ export default function EditPortfolioModal({ onClose }) {
     }));
   };
 
+  const handleLanguageToggle = (code) => {
+    setSelectedLanguages((current) => (
+      current.includes(code)
+        ? current.filter((item) => item !== code)
+        : [...current, code]
+    ));
+  };
+
   const handleDeleteImage = async (imageId) => {
     if (!confirm('Delete this image from your portfolio?')) return;
 
@@ -224,19 +248,22 @@ export default function EditPortfolioModal({ onClose }) {
     setIsSaving(true);
 
     try {
-      const response = await serviceProfileAPI.updatePortfolioDetails({
-        aboutMe: formData.aboutMe,
-        responseTime: formData.responseTime,
-        skills: formData.skills,
-      });
+      const [profileResponse, languagesResponse] = await Promise.all([
+        serviceProfileAPI.updatePortfolioDetails({
+          aboutMe: formData.aboutMe,
+          responseTime: formData.responseTime,
+          skills: formData.skills,
+        }),
+        serviceProfileAPI.updateMyLanguages(selectedLanguages),
+      ]);
       
-      if (response.success) {
+      if (profileResponse.success && languagesResponse.success) {
         setSuccess(true);
         setTimeout(() => {
           onClose();
         }, 1000);
       } else {
-        setError(response.message || 'Failed to update portfolio');
+        setError(profileResponse.message || languagesResponse.message || 'Failed to update provider profile');
       }
     } catch (err) {
       setError(err.message || 'An error occurred');
@@ -253,8 +280,8 @@ export default function EditPortfolioModal({ onClose }) {
         </button>
 
         <div className="edit-portfolio-header">
-          <h2>Edit Profile</h2>
-          <p>Update your profile details and showcase your work</p>
+          <h2>Edit Provider Profile</h2>
+          <p>Update the information clients see about you and showcase your work.</p>
         </div>
 
         {isLoading ? (
@@ -274,7 +301,7 @@ export default function EditPortfolioModal({ onClose }) {
             {success && (
               <div className="alert alert-success">
                 <i className="bi bi-check-circle"></i>
-                Portfolio updated successfully!
+                Provider profile updated successfully!
               </div>
             )}
 
@@ -288,6 +315,27 @@ export default function EditPortfolioModal({ onClose }) {
                 placeholder="Tell clients about yourself, your experience, and what makes you unique..."
                 rows="4"
               />
+            </div>
+
+            {/* Languages */}
+            <div className="form-section">
+              <h3><i className="bi bi-translate"></i> {t('languagesSpoken')}</h3>
+              <p className="completed-job-linker-help">
+                These are the languages shown on your provider profile. Languages selected during sign-up are loaded here automatically.
+              </p>
+              <div className="provider-profile-language-options">
+                {LANGUAGE_OPTIONS.map((option) => (
+                  <label key={option.value} className="provider-profile-language-option">
+                    <input
+                      type="checkbox"
+                      checked={selectedLanguages.includes(option.value)}
+                      onChange={() => handleLanguageToggle(option.value)}
+                      disabled={isSaving}
+                    />
+                    <span>{t(option.labelKey)}</span>
+                  </label>
+                ))}
+              </div>
             </div>
 
             {/* Response Time */}
