@@ -439,8 +439,9 @@ exports.createOrUpdateProfile = async (req, res) => {
       'SELECT id, banner_image_public_id FROM service_profiles WHERE user_id = ?',
       [userId]
     );
+    const hadExistingProfile = existingProfile.length > 0;
 
-    if (existingProfile.length === 0 && !providerRows[0].is_verified) {
+    if (!hadExistingProfile && !providerRows[0].is_verified) {
       return res.status(403).json({
         success: false,
         code: 'PROVIDER_VERIFICATION_REQUIRED',
@@ -452,20 +453,12 @@ exports.createOrUpdateProfile = async (req, res) => {
     const { barangayAddress, startingPrice, description } = req.body;
     let serviceCategories = req.body.serviceCategories || [];
     let serviceTypes = req.body.serviceTypes || [];
-    let languages = req.body.languages || [];
     let bannerImageUrl = null;
     let bannerImagePublicId = null;
 
     // Normalize input arrays
     serviceCategories = parseJsonArray(serviceCategories, []);
     serviceTypes = parseJsonArray(serviceTypes, []);
-    if (typeof languages === 'string') {
-      try {
-        languages = JSON.parse(languages);
-      } catch {
-        languages = [languages];
-      }
-    }
 
     // Validate required fields
     if (!barangayAddress || !startingPrice) {
@@ -475,14 +468,8 @@ exports.createOrUpdateProfile = async (req, res) => {
       });
     }
 
-    // Validate and normalize languages
-    const normalizedLanguages = normalizeLanguageCodes(languages);
-    if (normalizedLanguages.some((code) => !SUPPORTED_LANGUAGE_CODES.has(code))) {
-      return res.status(400).json({
-        success: false,
-        message: 'Unsupported language code provided'
-      });
-    }
+    // Languages are account/provider-profile data stored in person_languages.
+    // Service Listing saves must never overwrite the languages selected at registration.
 
     // Check for legacy categories
     const hasLegacyRepair = serviceCategories.some((category) => isLegacyCategoryValue(category));
@@ -568,6 +555,12 @@ exports.createOrUpdateProfile = async (req, res) => {
         const updates = ['barangay_address = ?', 'starting_price = ?', 'description = ?'];
         const params = [barangayAddress, parseFloat(startingPrice), description || null];
 
+        // Saving a verified provider's Service Listing means posting it publicly.
+        // This also repairs listings created by the previous flow with is_published = FALSE.
+        if (providerRows[0].is_verified) {
+          updates.push('is_published = TRUE');
+        }
+
         if (bannerImageUrl) {
           updates.push('banner_image_url = ?');
           params.push(bannerImageUrl);
@@ -595,7 +588,7 @@ exports.createOrUpdateProfile = async (req, res) => {
         const [result] = await connection.query(
           `INSERT INTO service_profiles 
            (user_id, barangay_address, starting_price, description, banner_image_url, banner_image_public_id, is_published, taxonomy_needs_review) 
-           VALUES (?, ?, ?, ?, ?, ?, FALSE, FALSE)`,
+           VALUES (?, ?, ?, ?, ?, ?, TRUE, FALSE)`,
           [
             userId,
             barangayAddress,
@@ -611,7 +604,6 @@ exports.createOrUpdateProfile = async (req, res) => {
         // Create category and type assignments (transactional)
         await applyProfileCategories(connection, profileId, categoryKeys);
         await applyProfileServiceTypes(connection, profileId, validServiceTypeKeys);
-        await applyPersonLanguages(connection, userId, normalizedLanguages);
 
         if (req.body.skills) {
           const parsedSkills = parseMaybeJsonArray(req.body.skills);
@@ -629,11 +621,13 @@ exports.createOrUpdateProfile = async (req, res) => {
         await deleteImageByPublicId(existingProfile[0].banner_image_public_id);
       }
 
-      const isUpdate = existingProfile.length > 0;
-      return res.status(isUpdate ? 200 : 201).json({
+      return res.status(hadExistingProfile ? 200 : 201).json({
         success: true,
-        message: isUpdate ? 'Service profile updated successfully' : 'Service profile created successfully',
-        profileId: existingProfile[0]?.id
+        message: hadExistingProfile
+          ? 'Service Listing updated and published successfully'
+          : 'Service Listing posted successfully',
+        profileId: existingProfile[0]?.id,
+        isPublished: Boolean(providerRows[0].is_verified),
       });
 
     } catch (txError) {
