@@ -6,25 +6,17 @@ import { PageHeader } from '../components/ui';
 import { useLanguage } from '../context/LanguageContext';
 import '../styles/UserSettings.css';
 
-const LANGUAGE_OPTIONS = [
-  { value: 'ceb', labelKey: 'languageOptionCebuano' },
-  { value: 'en', labelKey: 'languageOptionEnglish' },
-  { value: 'fil', labelKey: 'languageOptionFilipino' },
-];
-
 function ServiceProviderSettings() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { language, t } = useLanguage();
+  const { t } = useLanguage();
   const [isSaving, setIsSaving] = useState(false);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const [flash, setFlash] = useState({ type: 'info', message: '' });
   const [initialSettings, setInitialSettings] = useState(null);
-  const [languageSaving, setLanguageSaving] = useState(false);
   const [credentialLoading, setCredentialLoading] = useState(true);
   const [isSendingVerification, setIsSendingVerification] = useState(false);
   const [credentials, setCredentials] = useState([]);
-  const [selectedLanguages, setSelectedLanguages] = useState([]);
   const [newCredential, setNewCredential] = useState({
     credentialName: '',
     credentialType: '',
@@ -45,16 +37,12 @@ function ServiceProviderSettings() {
     emailVerified: false,
   });
 
-  const languagesCredentialsLabel = language === 'ceb'
-    ? 'Mga Pinulongan ug Credentials'
-    : 'Language & Credentials';
-
   const pageMode = location.pathname === '/provider-credentials'
-    ? 'profile'
+    ? 'credentials'
     : 'account';
 
-  const pageTitle = pageMode === 'profile'
-    ? languagesCredentialsLabel
+  const pageTitle = pageMode === 'credentials'
+    ? t('credentials')
     : t('providerSettingsPageTitle');
 
   useEffect(() => {
@@ -115,31 +103,21 @@ function ServiceProviderSettings() {
       try {
         setCredentialLoading(true);
 
-        const [languagesResult, credentialsResult] = await Promise.allSettled([
-          serviceProfileAPI.getMyLanguages
-            ? serviceProfileAPI.getMyLanguages()
-            : Promise.resolve({ success: true, data: { languages: [] } }),
+        const credentialsResult = await Promise.resolve(
           serviceProfileAPI.getMyCredentials
             ? serviceProfileAPI.getMyCredentials()
-            : Promise.resolve({ success: true, data: { credentials: [] } }),
-        ]);
+            : { success: true, data: { credentials: [] } },
+        );
 
-        if (languagesResult.status === 'rejected') {
-          console.error('Failed to load provider languages:', languagesResult.reason);
-        }
-        if (credentialsResult.status === 'rejected') {
-          console.error('Failed to load provider credentials:', credentialsResult.reason);
+        if (!credentialsResult?.success) {
+          console.error('Failed to load provider credentials');
         }
 
-        if (languagesResult.status === 'fulfilled' && languagesResult.value?.success) {
-          setSelectedLanguages(languagesResult.value.data?.languages || []);
-        }
-
-        if (credentialsResult.status === 'fulfilled' && credentialsResult.value?.success) {
-          setCredentials(credentialsResult.value.data?.credentials || []);
+        if (credentialsResult?.success) {
+          setCredentials(credentialsResult.data?.credentials || []);
         }
       } catch (err) {
-        console.error('Failed to load provider languages/credentials:', err);
+        console.error('Failed to load provider credentials:', err);
       } finally {
         setCredentialLoading(false);
       }
@@ -190,25 +168,6 @@ function ServiceProviderSettings() {
       setFlash({ type: 'error', message: getFriendlyErrorMessage(t('providerSettingsSaveFailed')) });
     } finally {
       setIsSaving(false);
-    }
-  };
-
-  const handleLanguageToggle = (code) => {
-    setSelectedLanguages((prev) => (
-      prev.includes(code) ? prev.filter((item) => item !== code) : [...prev, code]
-    ));
-  };
-
-  const handleSaveLanguages = async () => {
-    try {
-      setLanguageSaving(true);
-      setFlash({ type: 'info', message: '' });
-      await serviceProfileAPI.updateMyLanguages(selectedLanguages);
-      setFlash({ type: 'success', message: t('providerLanguagesUpdatedSuccess') });
-    } catch {
-      setFlash({ type: 'error', message: getFriendlyErrorMessage(t('providerLanguagesUpdateFailed')) });
-    } finally {
-      setLanguageSaving(false);
     }
   };
 
@@ -408,31 +367,10 @@ function ServiceProviderSettings() {
             </div>
           )}
 
-          {pageMode === 'profile' && (
+          {pageMode === 'credentials' && (
             <div className="settings-section">
-              <h2 className="settings-section-title">{t('languagesSpoken')}</h2>
-              <div className="settings-group">
-                {LANGUAGE_OPTIONS.map((option) => (
-                  <label key={option.value} className="settings-help" style={{ display: 'block', marginBottom: '0.35rem' }}>
-                    <input
-                      type="checkbox"
-                      checked={selectedLanguages.includes(option.value)}
-                      onChange={() => handleLanguageToggle(option.value)}
-                      disabled={languageSaving}
-                      style={{ marginRight: '0.45rem' }}
-                    />
-                    {t(option.labelKey)}
-                  </label>
-                ))}
-              </div>
-
-              <div className="settings-actions">
-                <button className="btn-save" onClick={handleSaveLanguages} disabled={languageSaving}>
-                  {languageSaving ? t('saving') : t('providerSaveLanguages')}
-                </button>
-              </div>
-
-              <div className="settings-section-divider"></div>
+              <h2 className="settings-section-title">{t('credentials')}</h2>
+              
               <h3 className="settings-subsection-title">{t('providerCredentialsCertificatesTitle')}</h3>
 
               <div className="settings-group">

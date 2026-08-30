@@ -72,7 +72,7 @@ export default function WorkspaceSidebar({
             {hasServiceProfile && (
               <>
                 <button type="button" className="workspace-nav-link workspace-nav-action" onClick={onEditProviderProfile}>
-                  <i className="bi bi-person-lines-fill" aria-hidden="true"></i><span>{t('publicProfile')}</span>
+                  <i className="bi bi-person-lines-fill" aria-hidden="true"></i><span>{t('providerProfile')}</span>
                 </button>
                 <NavLink to="/provider-availability" className={({ isActive }) => `workspace-nav-link ${isActive ? 'active' : ''}`}>
                   <i className="bi bi-calendar2-check" aria-hidden="true"></i><span>{t('providerSettingsNavAvailability')}</span>

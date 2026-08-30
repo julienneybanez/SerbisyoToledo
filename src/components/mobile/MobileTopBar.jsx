@@ -42,7 +42,7 @@ export default function MobileTopBar({
       : '/notifications';
 
   const providerListingLabel = t(hasServiceProfile ? 'serviceListing' : 'postServiceListing');
-  const providerPortfolioLabel = t('publicProfile');
+  const providerPortfolioLabel = t('providerProfile');
   const adminSystemStatusLabel = language === 'ceb' ? 'Status sa System' : 'System Status';
 
   useEffect(() => {

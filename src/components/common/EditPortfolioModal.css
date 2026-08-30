@@ -758,3 +758,31 @@
   background: var(--surface-muted);
   border-color: var(--border);
 }
+
+.provider-profile-language-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.provider-profile-language-option {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--border, #d8e2ea);
+  border-radius: 10px;
+  background: var(--surface, #fff);
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.provider-profile-language-option:has(input:checked) {
+  border-color: var(--primary, #167aa8);
+  background: color-mix(in srgb, var(--primary, #167aa8) 7%, var(--surface, #fff));
+}
+
+.provider-profile-language-option input {
+  accent-color: var(--primary, #167aa8);
+}

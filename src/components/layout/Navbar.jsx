@@ -27,7 +27,7 @@ function Navbar() {
   const { language, setLanguage, t } = useLanguage();
 
   const providerListingLabel = t(hasServiceProfile ? 'serviceListing' : 'postServiceListing');
-  const providerPortfolioLabel = t('publicProfile');
+  const providerPortfolioLabel = t('providerProfile');
 
   useEffect(() => {
     const handleScroll = () => {
@@ -60,7 +60,7 @@ function Navbar() {
         if (isMounted) {
           const hasProfile = Boolean(response?.success && response?.data?.id);
           setHasServiceProfile(hasProfile);
-          setProviderPublicProfileRoute(hasProfile ? `/provider/${response.data.id}` : '/dashboard');
+          setProviderPublicProfileRoute(hasProfile && response.data.isPublished ? `/provider/${response.data.id}` : '/dashboard');
         }
       } catch {
         if (isMounted) {
