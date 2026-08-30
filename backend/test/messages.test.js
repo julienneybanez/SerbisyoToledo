@@ -315,4 +315,38 @@ describe('Messages authorization and lifecycle', () => {
 
     expect(res.status).toBe(404);
   });
+  it('includes the other participant profile photo in the conversation list', async () => {
+    vi.spyOn(db, 'query').mockImplementation(async (sql) => {
+      if (sql === authUserSql) {
+        return [[{ id: CLIENT_ID, user_type: 'client', is_active: 1 }]];
+      }
+      if (String(sql).includes('INSERT IGNORE INTO conversations')) {
+        return [{ affectedRows: 0 }];
+      }
+      if (String(sql).includes('AS other_user_photo')) {
+        return [[{
+          id: 5,
+          service_request_id: 55,
+          request_status: 'accepted',
+          service_label: 'Plumbing Repair',
+          other_user_id: PROVIDER_ID,
+          other_user_name: 'Provider One',
+          other_user_photo: 'https://res.cloudinary.com/example/provider.jpg',
+          last_message: 'See you tomorrow',
+          last_message_at: '2026-08-30T00:00:00.000Z',
+          unread_count: 0,
+        }]];
+      }
+      return [[]];
+    });
+
+    const res = await request(app)
+      .get('/api/messages')
+      .set('Authorization', `Bearer ${signToken(CLIENT_ID)}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.conversations[0].otherUser.profilePhoto)
+      .toBe('https://res.cloudinary.com/example/provider.jpg');
+  });
+
 });
