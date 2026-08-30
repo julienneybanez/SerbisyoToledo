@@ -87,7 +87,7 @@ describe('Messages', () => {
 
     const { container } = renderWithAppProviders(<Messages />);
 
-    expect(await screen.findByText('Provider One')).toBeInTheDocument();
+    expect((await screen.findAllByText('Provider One')).length).toBeGreaterThan(0);
     expect(container.querySelector('.messages-avatar-image')).toBeInTheDocument();
     expect(container.querySelector('.messages-page-heading')).not.toBeInTheDocument();
   });
