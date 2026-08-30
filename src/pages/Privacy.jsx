@@ -6,21 +6,21 @@ const PRIVACY_VERSION = '1.0';
 const PRIVACY_EFFECTIVE_DATE = 'August 30, 2026';
 
 const SECTIONS = [
-  { id: 'data-collected', title: '1. What Data May Be Collected' },
-  { id: 'why-processed', title: '2. Why Information Is Processed' },
-  { id: 'provider-verification', title: '3. Provider-Verification Data' },
-  { id: 'public-information', title: '4. What Information May Appear Publicly' },
-  { id: 'private-information', title: '5. What Remains Private' },
-  { id: 'phone-sharing', title: '6. Phone-Number Sharing Behavior' },
-  { id: 'message-handling', title: '7. Message Handling' },
-  { id: 'service-location', title: '8. Service-Location Handling' },
-  { id: 'third-party', title: '9. Third-Party Infrastructure/Services' },
-  { id: 'security', title: '10. Security' },
-  { id: 'retention', title: '11. Retention' },
-  { id: 'privacy-rights', title: '12. User Privacy Rights' },
-  { id: 'consent-withdrawal', title: '13. Consent Withdrawal' },
-  { id: 'changes', title: '14. Changes to the Privacy Notice' },
-  { id: 'contact', title: '15. Contact / Support / Privacy Concerns' },
+  { id: 'data-collected', title: 'What Data May Be Collected' },
+  { id: 'why-processed', title: 'Why Information Is Processed' },
+  { id: 'provider-verification', title: 'Provider-Verification Data' },
+  { id: 'public-information', title: 'What Information May Appear Publicly' },
+  { id: 'private-information', title: 'What Remains Private' },
+  { id: 'phone-sharing', title: 'Phone-Number Sharing Behavior' },
+  { id: 'message-handling', title: 'Message Handling' },
+  { id: 'service-location', title: 'Service-Location Handling' },
+  { id: 'third-party', title: 'Third-Party Infrastructure/Services' },
+  { id: 'security', title: 'Security' },
+  { id: 'retention', title: 'Retention' },
+  { id: 'privacy-rights', title: 'User Privacy Rights' },
+  { id: 'consent-withdrawal', title: 'Consent Withdrawal' },
+  { id: 'changes', title: 'Changes to the Privacy Notice' },
+  { id: 'contact', title: 'Contact / Support / Privacy Concerns' },
 ];
 
 const Privacy = () => {
