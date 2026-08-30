@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { DayPicker } from 'react-day-picker';
 import 'react-day-picker/style.css';
 import { serviceProfileAPI } from '../services/api';
@@ -128,6 +129,7 @@ export default function ProviderAvailability() {
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [hasServiceProfile, setHasServiceProfile] = useState(true);
   const [flash, setFlash] = useState({ type: 'info', message: '' });
   const [acceptingBookings, setAcceptingBookings] = useState(true);
   const [selectedDateKeys, setSelectedDateKeys] = useState([]);
@@ -148,12 +150,15 @@ export default function ProviderAvailability() {
         setLoading(true);
         const response = await serviceProfileAPI.getMyAvailability();
         if (!mounted || !response?.success) return;
+        setHasServiceProfile(true);
 
-        const entries = Array.isArray(response.data?.availability)
-          ? response.data.availability
-          : (Array.isArray(response.data?.specificAvailability)
-            ? response.data.specificAvailability
-            : []);
+        const entries = Array.isArray(response.data?.availableSlots)
+          ? response.data.availableSlots
+          : (Array.isArray(response.data?.availability)
+            ? response.data.availability
+            : (Array.isArray(response.data?.specificAvailability)
+              ? response.data.specificAvailability
+              : []));
 
         const normalizedEntries = entries
           .map((entry) => ({
@@ -180,11 +185,17 @@ export default function ProviderAvailability() {
         const accepting = response.data?.acceptingBookings
           ?? (String(response.data?.settings?.availability_status || 'available').toLowerCase() !== 'unavailable');
         setAcceptingBookings(Boolean(accepting));
-      } catch {
-        setFlash({
-          type: 'error',
-          message: t('availabilityLoadFailed'),
-        });
+      } catch (err) {
+        if (!mounted) return;
+        if (err?.status === 404) {
+          setHasServiceProfile(false);
+          setFlash({ type: 'info', message: '' });
+        } else {
+          setFlash({
+            type: 'error',
+            message: t('availabilityLoadFailed'),
+          });
+        }
       } finally {
         if (mounted) setLoading(false);
       }
@@ -359,6 +370,35 @@ export default function ProviderAvailability() {
       setSaving(false);
     }
   };
+
+  if (!loading && !hasServiceProfile) {
+    return (
+      <div className="provider-availability-page">
+        <div className="provider-availability-inner">
+          <PageHeader
+            title={t('availabilityPageTitle')}
+            subtitle={t('availabilityPageSubtitle')}
+            className="availability-page-header"
+          />
+
+          <section className="availability-card">
+            <div className="availability-card-heading">
+              <div>
+                <span className="availability-step" aria-hidden="true">
+                  <i className="bi bi-briefcase"></i>
+                </span>
+                <h2>{t('availabilityListingRequiredTitle')}</h2>
+              </div>
+            </div>
+            <p>{t('availabilityListingRequiredDescription')}</p>
+            <Link className="st-button st-button--primary st-button--md" to="/dashboard">
+              {t('availabilityGoToDashboard')}
+            </Link>
+          </section>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="provider-availability-page">

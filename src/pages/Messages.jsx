@@ -117,7 +117,8 @@ export default function Messages() {
   }, [activeConversationId, loadConversations, t]);
 
   useEffect(() => {
-    const socket = connectMessagingSocket();
+    let cancelled = false;
+    let socket = null;
 
     const handleNewMessage = (incoming) => {
       if (Number(incoming.conversationId) === Number(activeConversationId)) {
@@ -135,14 +136,29 @@ export default function Messages() {
       loadConversations();
     };
 
-    socket.on('message:new', handleNewMessage);
-    socket.on('messages:unread-changed', handleUnreadChanged);
+    const connect = async () => {
+      try {
+        const connectedSocket = await connectMessagingSocket();
+        if (cancelled || !connectedSocket) return;
 
-    if (activeConversationId) {
-      socket.emit('conversation:join', activeConversationId);
-    }
+        socket = connectedSocket;
+        socket.on('message:new', handleNewMessage);
+        socket.on('messages:unread-changed', handleUnreadChanged);
+
+        if (activeConversationId) {
+          socket.emit('conversation:join', activeConversationId);
+        }
+      } catch {
+        // REST messaging remains usable even if realtime connection is temporarily unavailable.
+      }
+    };
+
+    connect();
 
     return () => {
+      cancelled = true;
+      if (!socket) return;
+
       if (activeConversationId) {
         socket.emit('conversation:leave', activeConversationId);
       }

@@ -78,16 +78,20 @@ export default function ClientDashboard() {
     if (!onboardingData?.tasks) return [];
     return onboardingData.tasks.map((task) => ({
       key: task.id,
-      label: t(task.titleKey, task.defaultTitle),
-      description: task.id === 'email_verified'
-        ? t('feedChecklistBasicProfileDescription', 'Ensure your email address is verified')
+      label: task.id === 'email_verified'
+        ? t('checklistVerifyEmail')
         : task.id === 'profile_info'
-        ? t('feedChecklistContactDescription', 'Add contact phone and Toledo address')
-        : t('feedChecklistFirstBookingDescription', 'Submit your first service request'),
+        ? t('feedChecklistContactLabel')
+        : t('feedChecklistFirstBookingLabel'),
+      description: task.id === 'email_verified'
+        ? t('checklistVerifyEmailDescription')
+        : task.id === 'profile_info'
+        ? t('feedChecklistContactDescription')
+        : t('feedChecklistFirstBookingDescription'),
       completed: task.completed,
       actionType: 'link',
       to: task.actionPath || (task.id === 'first_request' ? '/feed' : '/client-settings'),
-      actionLabel: task.id === 'first_request' ? t('feedChecklistFindProviders', 'Find Providers') : t('feedChecklistOpenSettings', 'Open Settings'),
+      actionLabel: task.id === 'first_request' ? t('feedChecklistFindProviders') : t('feedChecklistOpenSettings'),
     }));
   }, [onboardingData, t]);
 

@@ -90,13 +90,28 @@ export default function MobileBottomNav({ role = 'client', profileMenuOpen = fal
     };
 
     loadUnread();
-    const socket = connectMessagingSocket();
+
+    let socket = null;
     const handleUnreadChanged = () => loadUnread();
-    socket.on('messages:unread-changed', handleUnreadChanged);
-    socket.on('message:new', handleUnreadChanged);
+
+    const connect = async () => {
+      try {
+        const connectedSocket = await connectMessagingSocket();
+        if (!mounted || !connectedSocket) return;
+
+        socket = connectedSocket;
+        socket.on('messages:unread-changed', handleUnreadChanged);
+        socket.on('message:new', handleUnreadChanged);
+      } catch {
+        // The badge can continue using REST data if realtime is unavailable.
+      }
+    };
+
+    connect();
 
     return () => {
       mounted = false;
+      if (!socket) return;
       socket.off('messages:unread-changed', handleUnreadChanged);
       socket.off('message:new', handleUnreadChanged);
     };
