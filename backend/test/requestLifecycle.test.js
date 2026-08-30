@@ -341,7 +341,7 @@ describe('Canonical Request Lifecycle Hardening', () => {
 
     expect(res.status).toBe(200);
 
-    const updateRequestCall = conn.query.mock.calls.find(([sql]) => sql.includes('UPDATE service_requests SET'));
+    const updateRequestCall = conn.query.mock.calls.find(([sql]) => sql.includes('UPDATE service_requests'));
     expect(updateRequestCall).toBeTruthy();
     // 3 days * 500 = 1500
     const updateParams = updateRequestCall[1];

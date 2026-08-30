@@ -1,5 +1,4 @@
 const db = require('../config/database');
-const { parseJsonArray } = require('../utils/jsonHelpers');
 const {
   normalizeCategoryLabels,
   getServiceTypesForProfile,
@@ -8,15 +7,10 @@ const {
 const {
   BLOCKING_STATUSES,
   parseDateOnly,
-  formatDateOnly,
   parseTimeInputToSql,
-  calculateDurationDays,
-  checkScheduleConflict,
   checkScheduleConflictForDates,
   normalizeBookingDates,
   isScheduleAvailableForDates,
-  isScheduleAvailableForRange,
-  supportsRequestDatesTable,
 } = require('../utils/bookingAvailability');
 
 const MAX_JOB_DETAILS_LENGTH = 2000;
@@ -162,7 +156,7 @@ const getRequestDisplayLabel = (requestRow = {}) => {
 };
 
 const getPersistedRequestDates = async (queryable, requestRow = {}) => {
-  if (await supportsRequestDatesTable(queryable)) {
+  try {
     const [rows] = await queryable.query(
       `SELECT DATE_FORMAT(service_date, '%Y-%m-%d') AS service_date
        FROM service_request_dates
@@ -178,6 +172,8 @@ const getPersistedRequestDates = async (queryable, requestRow = {}) => {
     if (exactDates.length > 0) {
       return exactDates;
     }
+  } catch {
+    // Fall back to schedule derivation
   }
 
   return normalizeBookingDates({
@@ -193,7 +189,7 @@ const attachBookingDates = async (queryable, requestRows = []) => {
 
   let exactDatesByRequest = new Map();
 
-  if (await supportsRequestDatesTable(queryable)) {
+  try {
     const ids = rows.map((row) => Number(row.id)).filter(Number.isFinite);
     if (ids.length > 0) {
       const placeholders = ids.map(() => '?').join(', ');
@@ -212,6 +208,8 @@ const attachBookingDates = async (queryable, requestRows = []) => {
         return map;
       }, new Map());
     }
+  } catch {
+    // Ignore if exact dates table query fails
   }
 
   return rows.map((row) => {
@@ -248,42 +246,23 @@ const attachBookingDates = async (queryable, requestRows = []) => {
   });
 };
 
-const supportsSpecificRescheduleStorage = async (connection) => {
-  try {
-    const [rows] = await connection.query(
-      `SELECT COUNT(*) AS column_count
-       FROM information_schema.columns
-       WHERE table_schema = DATABASE()
-         AND table_name = 'service_request_reschedules'
-         AND column_name IN ('proposed_multi_day_mode', 'proposed_specific_dates_json')`
-    );
-    return Number(rows?.[0]?.column_count || 0) === 2;
-  } catch {
-    return false;
-  }
-};
-
-const supportsRequestBookingMetadata = async (connection) => {
-  try {
-    const [rows] = await connection.query(
-      `SELECT COUNT(*) AS column_count
-       FROM information_schema.columns
-       WHERE table_schema = DATABASE()
-         AND table_name = 'service_requests'
-         AND column_name IN ('multi_day_mode', 'requested_dates_count')`
-    );
-    return Number(rows?.[0]?.column_count || 0) === 2;
-  } catch {
-    return false;
-  }
-};
-
-const getRescheduleProposalDates = (proposal = {}) => {
-  if (String(proposal.proposed_multi_day_mode || '').toLowerCase() === 'specific_dates') {
-    return normalizeBookingDates({
-      bookingType: 'specific_dates',
-      dates: parseJsonArray(proposal.proposed_specific_dates_json, []),
-    });
+const getRescheduleProposalDates = async (queryable, proposal = {}) => {
+  if (proposal.id) {
+    try {
+      const [rows] = await queryable.query(
+        `SELECT DATE_FORMAT(proposed_date, '%Y-%m-%d') AS proposed_date
+         FROM service_request_reschedule_dates
+         WHERE reschedule_id = ?
+         ORDER BY proposed_date ASC`,
+        [proposal.id]
+      );
+      const exactDates = rows.map((r) => String(r.proposed_date || '').trim()).filter(Boolean);
+      if (exactDates.length > 0) {
+        return exactDates;
+      }
+    } catch {
+      // Fall through to date range derivation
+    }
   }
 
   const startDate = proposal.proposed_start_date;
@@ -500,16 +479,6 @@ exports.createRequest = async (req, res) => {
       }
     }
 
-    const requestDatesStorageAvailable = await supportsRequestDatesTable(connection);
-    if (normalized.canonicalBookingType === 'specific_dates' && !requestDatesStorageAvailable) {
-      await connection.rollback();
-      return res.status(503).json({
-        success: false,
-        code: 'BOOKING_DATES_SCHEMA_REQUIRED',
-        message: 'Specific-date booking is prepared in the frontend/backend, but the booking-dates database migration still needs to be applied.',
-      });
-    }
-
     const conflict = await checkScheduleConflictForDates(connection, {
       providerId: profile.provider_id,
       dates: normalized.normalizedDates,
@@ -578,7 +547,7 @@ exports.createRequest = async (req, res) => {
       [requestId, clientId]
     );
 
-    if (requestDatesStorageAvailable) {
+    if (normalized.normalizedDates.length > 0) {
       const valuesSql = normalized.normalizedDates.map(() => '(?, ?)').join(', ');
       const values = normalized.normalizedDates.flatMap((date) => [requestId, date]);
       await connection.query(
@@ -1240,16 +1209,6 @@ exports.proposeReschedule = async (req, res) => {
       });
     }
 
-    const supportsSpecificMetadata = await supportsSpecificRescheduleStorage(connection);
-    if (canonicalBookingType === 'specific_dates' && !supportsSpecificMetadata) {
-      await connection.rollback();
-      return res.status(503).json({
-        success: false,
-        code: 'RESCHEDULE_DATES_SCHEMA_REQUIRED',
-        message: 'Specific-date rescheduling is prepared in the frontend/backend, but the reschedule-date database migration still needs to be applied.',
-      });
-    }
-
     const availability = await isScheduleAvailableForDates(connection, {
       serviceProfileId: request.service_profile_id,
       providerId: request.provider_id,
@@ -1287,67 +1246,47 @@ exports.proposeReschedule = async (req, res) => {
     const proposedStartDateIso = normalizedProposedDates[0];
     const proposedEndDateIso = normalizedProposedDates[normalizedProposedDates.length - 1];
 
-    if (supportsSpecificMetadata) {
+    const [rescheduleResult] = await connection.query(
+      `INSERT INTO service_request_reschedules (
+         service_request_id,
+         original_start_date,
+         original_end_date,
+         original_start_time,
+         proposed_start_date,
+         proposed_end_date,
+         proposed_start_time,
+         proposed_estimated_duration_minutes,
+         proposed_multi_day_mode,
+         proposed_by,
+         reschedule_reason,
+         reschedule_status
+       )
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
+      [
+        request.id,
+        existingSchedule.startDate,
+        existingSchedule.endDate,
+        existingSchedule.startTime,
+        proposedStartDateIso,
+        proposedEndDateIso,
+        normalizedProposedTime,
+        normalizedDurationMinutes,
+        canonicalBookingType === 'specific_dates' ? 'specific_dates' : 'continuous',
+        actorId,
+        trimmedReason,
+      ]
+    );
+
+    const rescheduleId = rescheduleResult.insertId;
+
+    if (normalizedProposedDates.length > 0) {
+      const placeholders = normalizedProposedDates.map(() => '(?, ?)').join(', ');
+      const dateValues = normalizedProposedDates.flatMap((date) => [rescheduleId, date]);
       await connection.query(
-        `INSERT INTO service_request_reschedules (
-           service_request_id,
-           original_start_date,
-           original_end_date,
-           original_start_time,
-           proposed_start_date,
-           proposed_end_date,
-           proposed_start_time,
-           proposed_estimated_duration_minutes,
-           proposed_multi_day_mode,
-           proposed_specific_dates_json,
-           proposed_by,
-           reschedule_reason,
-           reschedule_status
-         )
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
-        [
-          request.id,
-          existingSchedule.startDate,
-          existingSchedule.endDate,
-          existingSchedule.startTime,
-          proposedStartDateIso,
-          proposedEndDateIso,
-          normalizedProposedTime,
-          normalizedDurationMinutes,
-          canonicalBookingType === 'specific_dates' ? 'specific_dates' : 'continuous',
-          canonicalBookingType === 'specific_dates' ? JSON.stringify(normalizedProposedDates) : null,
-          actorId,
-          trimmedReason,
-        ]
-      );
-    } else {
-      await connection.query(
-        `INSERT INTO service_request_reschedules (
-           service_request_id,
-           original_start_date,
-           original_end_date,
-           original_start_time,
-           proposed_start_date,
-           proposed_end_date,
-           proposed_start_time,
-           proposed_estimated_duration_minutes,
-           proposed_by,
-           reschedule_reason,
-           reschedule_status
-         )
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
-        [
-          request.id,
-          existingSchedule.startDate,
-          existingSchedule.endDate,
-          existingSchedule.startTime,
-          proposedStartDateIso,
-          proposedEndDateIso,
-          normalizedProposedTime,
-          normalizedDurationMinutes,
-          actorId,
-          trimmedReason,
-        ]
+        `INSERT INTO service_request_reschedule_dates (reschedule_id, proposed_date)
+         VALUES ${placeholders}
+         ON DUPLICATE KEY UPDATE proposed_date = VALUES(proposed_date)`,
+        dateValues
       );
     }
 
@@ -1459,7 +1398,7 @@ exports.respondToReschedule = async (req, res) => {
     }
 
     if (action === 'accepted') {
-      const proposedDates = getRescheduleProposalDates(proposal);
+      const proposedDates = await getRescheduleProposalDates(connection, proposal);
       if (proposedDates.length === 0) {
         await connection.rollback();
         return res.status(409).json({ success: false, message: 'The proposed schedule has no valid service dates.' });
@@ -1505,62 +1444,36 @@ exports.respondToReschedule = async (req, res) => {
       const durationDays = proposedDates.length;
       const dailyRateSnapshot = Number(request.daily_rate_snapshot || 0);
       const estimatedTotal = dailyRateSnapshot * durationDays;
-      const proposedStartDate = proposedDates[0];
-      const proposedEndDate = proposedDates[proposedDates.length - 1];
-      const proposedStartAt = `${proposedStartDate} ${proposal.proposed_start_time}`;
-      const proposedEndAt = `${proposedEndDate} ${proposal.proposed_start_time}`;
-      const storageBookingType = durationDays > 1 ? 'multi_day' : 'one_day';
-      const specificMode = String(proposal.proposed_multi_day_mode || '').toLowerCase() === 'specific_dates';
-      const hasRequestMetadata = await supportsRequestBookingMetadata(connection);
+      const specificMode = String(proposal.proposed_multi_day_mode || '').toLowerCase() === 'specific_dates' ? 'specific_dates' : 'continuous';
 
-      const updateFields = [
-        'booking_type = ?',
-        'start_date = ?',
-        'end_date = ?',
-        'start_time = ?',
-        'scheduled_start_at = ?',
-        'scheduled_end_at = ?',
-        'estimated_duration_minutes = ?',
-        'duration_days = ?',
-        'estimated_total = ?',
-      ];
-      const updateValues = [
-        storageBookingType,
-        proposedStartDate,
-        proposedEndDate,
-        proposal.proposed_start_time,
-        proposedStartAt,
-        proposedEndAt,
-        proposedDurationMinutes,
-        durationDays,
-        estimatedTotal,
-      ];
-
-      if (hasRequestMetadata) {
-        updateFields.push('multi_day_mode = ?', 'requested_dates_count = ?');
-        updateValues.push(specificMode ? 'specific_dates' : 'continuous', durationDays);
-      }
-
-      updateValues.push(request.id);
       await connection.query(
-        `UPDATE service_requests SET ${updateFields.join(', ')} WHERE id = ?`,
-        updateValues
+        `UPDATE service_requests
+         SET start_time = ?,
+             estimated_duration_minutes = ?,
+             estimated_total = ?,
+             multi_day_mode = ?
+         WHERE id = ?`,
+        [
+          proposal.proposed_start_time,
+          proposedDurationMinutes,
+          estimatedTotal,
+          specificMode,
+          request.id,
+        ]
       );
 
-      if (await supportsRequestDatesTable(connection)) {
-        await connection.query(
-          'DELETE FROM service_request_dates WHERE service_request_id = ?',
-          [request.id]
-        );
+      await connection.query(
+        'DELETE FROM service_request_dates WHERE service_request_id = ?',
+        [request.id]
+      );
 
-        const placeholders = proposedDates.map(() => '(?, ?)').join(', ');
-        const dateValues = proposedDates.flatMap((date) => [request.id, date]);
-        await connection.query(
-          `INSERT INTO service_request_dates (service_request_id, service_date)
-           VALUES ${placeholders}`,
-          dateValues
-        );
-      }
+      const placeholders = proposedDates.map(() => '(?, ?)').join(', ');
+      const dateValues = proposedDates.flatMap((date) => [request.id, date]);
+      await connection.query(
+        `INSERT INTO service_request_dates (service_request_id, service_date)
+         VALUES ${placeholders}`,
+        dateValues
+      );
     }
 
     await connection.query(
@@ -1644,8 +1557,8 @@ exports.getRequestById = async (req, res) => {
       [requestId]
     );
 
-    const formattedReschedules = reschedules.map((item) => {
-      const specificDates = parseJsonArray(item.proposed_specific_dates_json, []);
+    const formattedReschedules = await Promise.all(reschedules.map(async (item) => {
+      const dates = await getRescheduleProposalDates(db, item);
       const isSpecific = String(item.proposed_multi_day_mode || '').toLowerCase() === 'specific_dates';
       const bookingMode = isSpecific
         ? 'specific_dates'
@@ -1654,9 +1567,9 @@ exports.getRequestById = async (req, res) => {
       return {
         ...item,
         proposed_booking_mode: bookingMode,
-        proposed_specific_dates: isSpecific ? specificDates : [],
+        proposed_specific_dates: dates,
       };
-    });
+    }));
 
     res.json({
       success: true,

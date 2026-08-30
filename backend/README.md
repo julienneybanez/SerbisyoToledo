@@ -52,17 +52,13 @@ Important: Keep `CLOUDINARY_API_SECRET` in backend/server environment only. Neve
 
 ### 3. Initialize Database
 
-Make sure MySQL is running, then run:
+Make sure MySQL is running, then run versioned migrations:
 
 ```bash
-node config/init-db.js
+npm run db:migrate
 ```
 
-This will:
-- Create the `serbisyo_toledo` database
-- Create the `users` table with all required fields
-- Create the `refresh_tokens` table
-- Create the `password_reset_tokens` table
+This will apply all pending versioned migrations against the canonical schema baseline.
 
 ### 3.1 Migrate Existing Images to Cloudinary (optional)
 

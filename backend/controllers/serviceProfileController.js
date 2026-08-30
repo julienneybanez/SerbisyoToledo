@@ -13,7 +13,6 @@ const {
 const {
   hasCloudinaryConfig,
   uploadImageBuffer,
-  getSignedDeliveryUrl,
   deleteImageByPublicId,
 } = require('../utils/cloudinaryService');
 const {
@@ -21,13 +20,27 @@ const {
   formatDateOnly,
   parseTimeInputToSql,
   getAvailableSlotsForDate,
+  getCommonAvailableSlotsForDates,
+  normalizeBookingDates,
   ensureAvailabilitySettings,
 } = require('../utils/bookingAvailability');
 
 const SUPPORTED_LANGUAGE_CODES = new Set(['ceb', 'en', 'fil']);
-const SUPPORTED_PRICING_UNITS = new Set(['per_day']);
 const SUPPORTED_AVAILABILITY_STATUSES = new Set(['available', 'unavailable']);
 const PRESENCE_WINDOW_MINUTES = 5;
+
+const parseMaybeJsonArray = (value) => {
+  if (Array.isArray(value)) return value;
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value);
+      return Array.isArray(parsed) ? parsed : [parsed];
+    } catch {
+      return [value];
+    }
+  }
+  return value != null ? [value] : [];
+};
 
 const toNullableNumber = (value) => {
   if (value === null || value === undefined || value === '') return null;
@@ -38,20 +51,6 @@ const toNullableNumber = (value) => {
 const toCount = (value) => {
   const number = Number(value);
   return Number.isFinite(number) && number >= 0 ? number : 0;
-};
-
-const toDateOnlyString = (value) => {
-  if (!value) return '';
-
-  if (value instanceof Date && !Number.isNaN(value.getTime())) {
-    const year = value.getFullYear();
-    const month = String(value.getMonth() + 1).padStart(2, '0');
-    const day = String(value.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  }
-
-  const match = String(value).match(/^(\d{4}-\d{2}-\d{2})/);
-  return match ? match[1] : '';
 };
 const REVIEW_STATS_JOIN = `
   LEFT JOIN (
@@ -104,7 +103,7 @@ const FUTURE_AVAILABILITY_CONFIGURED_SQL = `
 `;
 
 const derivePublicAvailabilityStatus = (profile, hasFutureBookableSlot = null) => {
-  if (!Boolean(profile.show_availability_status)) {
+  if (!profile.show_availability_status) {
     return null;
   }
 
@@ -112,7 +111,7 @@ const derivePublicAvailabilityStatus = (profile, hasFutureBookableSlot = null) =
     return 'unavailable';
   }
 
-  if (Boolean(profile.has_active_booking)) {
+  if (profile.has_active_booking) {
     return 'busy';
   }
 
@@ -124,7 +123,7 @@ const derivePublicAvailabilityStatus = (profile, hasFutureBookableSlot = null) =
     return 'available';
   }
 
-  return Boolean(profile.has_future_availability_config)
+  return profile.has_future_availability_config
     ? 'accepting_requests'
     : 'no_slots';
 };
@@ -328,31 +327,6 @@ const applyProfileServiceTypes = async (connection, serviceProfileId, serviceTyp
       [serviceProfileId, typeKey]
     );
   }
-};
-
-// Canonical: Read category keys for a profile
-const getProfileCategoryKeys = async (connection, serviceProfileId) => {
-  const [rows] = await connection.query(
-    'SELECT category_key FROM service_profile_categories WHERE service_profile_id = ? ORDER BY category_key',
-    [serviceProfileId]
-  );
-  return rows.map((row) => row.category_key);
-};
-
-// Canonical: Read service type keys for a profile
-const getProfileServiceTypeKeys = async (connection, serviceProfileId) => {
-  const [rows] = await connection.query(
-    'SELECT service_type_key FROM service_profile_types WHERE service_profile_id = ? ORDER BY service_type_key',
-    [serviceProfileId]
-  );
-  return rows.map((row) => row.service_type_key);
-};
-
-// Canonical: Read full taxonomy assignments for a profile
-const getProfileTaxonomyAssignments = async (connection, serviceProfileId) => {
-  const categoryKeys = await getProfileCategoryKeys(connection, serviceProfileId);
-  const serviceTypeKeys = await getProfileServiceTypeKeys(connection, serviceProfileId);
-  return { categoryKeys, serviceTypeKeys };
 };
 
 // Canonical: Validate publish requirements for a profile
@@ -1793,7 +1767,6 @@ exports.saveMyAvailability = async (req, res) => {
       availableSlots,
       availability,
       blackouts,
-      settings,
       specificAvailability,
     } = req.body;
 
@@ -2091,13 +2064,6 @@ exports.listEligibleCompletedRequests = async (req, res) => {
   try {
     const userId = req.user?.userId;
 
-    const [profiles] = await db.query('SELECT id FROM service_profiles WHERE user_id = ? LIMIT 1', [userId]);
-    if (profiles.length === 0) {
-      return res.status(404).json({ success: false, message: 'Service profile not found' });
-    }
-
-    const serviceProfileId = profiles[0].id;
-
     const [rows] = await db.query(
       `SELECT sr.id, sr.service_type_key, sr.service_type_label, sr.created_at
        FROM service_requests sr
@@ -2234,19 +2200,6 @@ exports.createPortfolioFromCompletedRequest = async (req, res) => {
         hasPhoto: Boolean(imageUrl),
       }
     });
-
-    await connection.commit();
-    uploadedImagePublicId = null;
-
-    return res.status(201).json({
-      success: true,
-      message: 'Completed job linked to portfolio successfully',
-      data: {
-        id: insertResult.insertId,
-        src: imageUrl,
-        hasPhoto: Boolean(imageUrl),
-      }
-    });
   } catch (error) {
     if (connection) {
       await connection.rollback();
@@ -2307,7 +2260,7 @@ exports.updateCompletedPortfolioItemImage = async (req, res) => {
       });
     }
 
-    if (!Boolean(items[0].completed_through_platform)) {
+    if (!items[0].completed_through_platform) {
       return res.status(409).json({
         success: false,
         message: 'This photo action is only for completed-job portfolio entries'
@@ -2412,8 +2365,6 @@ exports.createCredential = async (req, res) => {
 
     let documentUrl = null;
     let documentPublicId = null;
-    let documentData = null;
-    let documentMime = null;
 
     if (req.file) {
       if (hasCloudinaryConfig()) {

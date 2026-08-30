@@ -2,32 +2,7 @@ const BLOCKING_STATUSES = ['accepted', 'on_the_way', 'in_progress'];
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
-const requestDatesTableSupport = new WeakMap();
-
-const supportsRequestDatesTable = async (connection) => {
-  if (!connection || typeof connection.query !== 'function') {
-    return false;
-  }
-
-  if (requestDatesTableSupport.has(connection)) {
-    return requestDatesTableSupport.get(connection);
-  }
-
-  try {
-    const [rows] = await connection.query(
-      `SELECT COUNT(*) AS table_count
-       FROM information_schema.tables
-       WHERE table_schema = DATABASE()
-         AND table_name = 'service_request_dates'`
-    );
-    const supported = Number(rows?.[0]?.table_count || 0) > 0;
-    requestDatesTableSupport.set(connection, supported);
-    return supported;
-  } catch {
-    requestDatesTableSupport.set(connection, false);
-    return false;
-  }
-};
+const supportsRequestDatesTable = async () => true;
 
 const parseDateOnly = (dateString) => {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(String(dateString || ''))) {
@@ -131,18 +106,8 @@ const calculateDurationDays = (startDate, endDate) => {
   return diffDays > 0 ? diffDays : null;
 };
 
-const dateRangeOverlaps = (existingStart, existingEnd, requestedStart, requestedEnd) => {
-  return existingStart <= requestedEnd && existingEnd >= requestedStart;
-};
-
 const timeRangesOverlap = (existingStartMinutes, existingEndMinutes, requestedStartMinutes, requestedEndMinutes) => {
   return existingStartMinutes < requestedEndMinutes && existingEndMinutes > requestedStartMinutes;
-};
-
-const dayOfWeekFromDate = (dateString) => {
-  const date = parseDateOnly(dateString);
-  if (!date) return null;
-  return date.getUTCDay();
 };
 
 const getDurationMinutesFromScheduledTimestamps = (startValue, endValue) => {
