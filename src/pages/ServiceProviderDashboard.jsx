@@ -278,7 +278,7 @@ export default function ServiceProviderDashboard() {
       description: t('providerChecklistPublicProfileDescription'),
       completed: Boolean((myProfile?.description || myPortfolio?.aboutMe || '').trim()),
       actionType: 'button',
-      actionLabel: t('publicProfile'),
+      actionLabel: t('providerProfile'),
       onAction: () => setShowPortfolioModal(true),
     },
     {
