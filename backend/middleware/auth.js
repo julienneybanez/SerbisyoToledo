@@ -7,9 +7,11 @@ const { getSessionTokenFromRequest } = require('../utils/sessionCookies');
 exports.authenticateToken = async (req, res, next) => {
   // Prefer the HttpOnly session cookie. Bearer auth remains as a transitional
   // compatibility path for tests/API clients while the browser no longer stores JWTs.
+  const cookieToken = getSessionTokenFromRequest(req);
   const authHeader = req.headers['authorization'];
-  const bearerToken = authHeader && authHeader.split(' ')[1];
-  const token = getSessionTokenFromRequest(req) || bearerToken;
+  const rawBearer = authHeader && authHeader.startsWith('Bearer ') ? authHeader.split(' ')[1] : null;
+  const bearerToken = rawBearer && rawBearer !== 'cookie-session' ? rawBearer : null;
+  const token = cookieToken || bearerToken;
 
   if (!token) {
     return res.status(401).json({

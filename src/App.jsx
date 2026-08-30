@@ -19,7 +19,7 @@ import { isPublicProviderRoute, shouldShowChatbotForContext } from './utils/chat
 
 // Admin imports
 import AdminLayout from './components/layout/AdminLayout';
-import { authAPI, getUser, isAuthenticated, serviceProfileAPI } from './services/api';
+import { authAPI, getUser, isAuthenticated, removeToken, serviceProfileAPI } from './services/api';
 import { connectMessagingSocket, disconnectMessagingSocket } from './services/socket';
 
 const Home = lazyWithRetry(() => import('./pages/Home'), 'Home');
@@ -100,9 +100,14 @@ function App() {
           setCurrentUser(response.data.user);
         }
       })
-      .catch(() => {
+      .catch((err) => {
         if (mounted) {
-          setCurrentUser(getUser());
+          if (err?.status === 401) {
+            removeToken();
+            setCurrentUser(null);
+          } else {
+            setCurrentUser(getUser());
+          }
         }
       });
 

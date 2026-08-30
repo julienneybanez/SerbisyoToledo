@@ -1,5 +1,5 @@
 import { io } from 'socket.io-client';
-import { API_BASE_URL } from './api';
+import { API_BASE_URL, authAPI } from './api';
 
 const socketOrigin = (() => {
   try {
@@ -22,13 +22,33 @@ export const getMessagingSocket = () => {
       withCredentials: true,
       transports: ['websocket', 'polling'],
     });
+
+    socket.on('connect_error', async () => {
+      try {
+        const response = await authAPI.getSocketTicket();
+        if (response?.success && response.data?.ticket) {
+          socket.auth = { ticket: response.data.ticket };
+          socket.connect();
+        }
+      } catch {
+        // Ticket retrieval failed or user unauthenticated
+      }
+    });
   }
   return socket;
 };
 
-export const connectMessagingSocket = () => {
+export const connectMessagingSocket = async () => {
   const instance = getMessagingSocket();
   if (!instance.connected) {
+    try {
+      const response = await authAPI.getSocketTicket();
+      if (response?.success && response.data?.ticket) {
+        instance.auth = { ticket: response.data.ticket };
+      }
+    } catch {
+      // If ticket fetch fails, attempt connecting with cookies alone
+    }
     instance.connect();
   }
   return instance;
