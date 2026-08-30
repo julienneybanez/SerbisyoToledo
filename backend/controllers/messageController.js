@@ -31,6 +31,11 @@ exports.listConversations = async (req, res) => {
               COALESCE(sr.service_type_label, 'Service Request') AS service_label,
               CASE WHEN sr.client_id = ? THEN sr.provider_id ELSE sr.client_id END AS other_user_id,
               CASE WHEN sr.client_id = ? THEN provider.full_name ELSE client.full_name END AS other_user_name,
+              CASE WHEN sr.client_id = ? THEN
+                COALESCE(provider.profile_photo_url, provider.profile_image)
+              ELSE
+                COALESCE(client.profile_photo_url, client.profile_image)
+              END AS other_user_photo,
               (SELECT m.message_text FROM messages m WHERE m.conversation_id = c.id ORDER BY m.id DESC LIMIT 1) AS last_message,
               (SELECT m.created_at FROM messages m WHERE m.conversation_id = c.id ORDER BY m.id DESC LIMIT 1) AS last_message_at,
               (SELECT COUNT(*) FROM messages m
@@ -41,7 +46,7 @@ exports.listConversations = async (req, res) => {
        JOIN users provider ON provider.id = sr.provider_id
        WHERE sr.client_id = ? OR sr.provider_id = ?
        ORDER BY COALESCE(last_message_at, c.updated_at) DESC`,
-      [userId, userId, userId, userId, userId]
+      [userId, userId, userId, userId, userId, userId]
     );
 
     return res.json({
@@ -52,7 +57,13 @@ exports.listConversations = async (req, res) => {
           serviceRequestId: row.service_request_id,
           requestStatus: row.request_status,
           serviceLabel: row.service_label,
-          otherUser: { id: row.other_user_id, name: row.other_user_name },
+          otherUser: {
+            id: row.other_user_id,
+            name: row.other_user_name,
+            profilePhoto: /^(https?:\/\/|data:image\/)/i.test(String(row.other_user_photo || '').trim())
+              ? row.other_user_photo
+              : null,
+          },
           lastMessage: row.last_message,
           lastMessageAt: row.last_message_at,
           unreadCount: Number(row.unread_count || 0),
@@ -118,7 +129,9 @@ exports.getConversationMessages = async (req, res) => {
     const [conversationRows] = await db.query(
       `SELECT c.id, c.service_request_id, sr.client_id, sr.provider_id, sr.status,
               COALESCE(sr.service_type_label, 'Service Request') AS service_label,
-              client.full_name AS client_name, provider.full_name AS provider_name
+              client.full_name AS client_name, provider.full_name AS provider_name,
+              COALESCE(client.profile_photo_url, client.profile_image) AS client_photo,
+              COALESCE(provider.profile_photo_url, provider.profile_image) AS provider_photo
        FROM conversations c
        JOIN service_requests sr ON sr.id = c.service_request_id
        JOIN users client ON client.id = sr.client_id
@@ -158,8 +171,20 @@ exports.getConversationMessages = async (req, res) => {
           serviceLabel: conversation.service_label,
           writable: WRITABLE_STATUSES.has(conversation.status),
           otherUser: conversation.client_id === userId
-            ? { id: conversation.provider_id, name: conversation.provider_name }
-            : { id: conversation.client_id, name: conversation.client_name },
+            ? {
+                id: conversation.provider_id,
+                name: conversation.provider_name,
+                profilePhoto: /^(https?:\/\/|data:image\/)/i.test(String(conversation.provider_photo || '').trim())
+                  ? conversation.provider_photo
+                  : null,
+              }
+            : {
+                id: conversation.client_id,
+                name: conversation.client_name,
+                profilePhoto: /^(https?:\/\/|data:image\/)/i.test(String(conversation.client_photo || '').trim())
+                  ? conversation.client_photo
+                  : null,
+              },
         },
         messages: messages.reverse().map((message) => ({
           id: message.id,
