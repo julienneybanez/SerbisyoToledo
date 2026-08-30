@@ -1144,30 +1144,22 @@ export const userProfileAPI = {
     });
     const data = await handleResponse(response);
 
-    // Read the profile back from the server before showing success. This keeps
-    // the UI, local display cache, and persisted database values in sync.
-    if (data.success) {
-      const persistedResponse = await apiFetch(`${API_BASE_URL}/user/profile`, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
-      });
-      const persisted = await handleResponse(persistedResponse);
-      const profile = persisted.data || data.data;
-
+    // The backend updates the row and then reads it back from MySQL before
+    // returning this payload, so use that persisted response as the UI source
+    // of truth without introducing a second request that could fail afterward.
+    if (data.success && data.data) {
       const currentUser = getUser();
-      if (currentUser && profile) {
+      if (currentUser) {
         setUser({
           ...currentUser,
-          fullName: profile.fullName,
-          phone: profile.phone,
-          address: profile.address,
-          bio: profile.bio,
-          profileImage: profile.profilePhoto,
+          fullName: data.data.fullName,
+          phone: data.data.phone,
+          address: data.data.address,
+          bio: data.data.bio,
+          profileImage: data.data.profilePhoto,
         });
         window.dispatchEvent(new Event('authChange'));
       }
-
-      return { ...data, data: profile };
     }
 
     return data;
