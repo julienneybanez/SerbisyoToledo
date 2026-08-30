@@ -308,17 +308,33 @@ export default function Messages() {
                     <span>{t('messagesKeepBookingDetailsHere')}</span>
                   </div>
                 ) : (
-                  messages.map((message) => (
-                    <div key={message.id} className={'message-row ' + (message.mine ? 'mine' : 'theirs')}>
-                      <div className="message-bubble">
-                        <div className="message-text">{message.text}</div>
-                        <div className="message-meta">
-                          {formatTime(message.createdAt)}
-                          {message.mine && message.readAt ? ' · ' + t('messagesRead') : ''}
+                  messages.map((message) => {
+                    const rowPhoto = message.mine
+                      ? user?.profileImage
+                      : (conversation?.otherUser?.profilePhoto || selectedItem?.otherUser?.profilePhoto);
+                    const rowName = message.mine
+                      ? user?.fullName
+                      : (conversation?.otherUser?.name || selectedItem?.otherUser?.name);
+
+                    return (
+                      <div key={message.id} className={'message-row ' + (message.mine ? 'mine' : 'theirs')}>
+                        <span className="message-row-avatar" aria-hidden="true">
+                          {rowPhoto ? (
+                            <img src={rowPhoto} alt="" className="messages-avatar-image non-draggable-image" draggable="false" />
+                          ) : (
+                            (rowName || 'U').slice(0, 1).toUpperCase()
+                          )}
+                        </span>
+                        <div className="message-bubble">
+                          <div className="message-text">{message.text}</div>
+                          <div className="message-meta">
+                            {formatTime(message.createdAt)}
+                            {message.mine && message.readAt ? ' · ' + t('messagesRead') : ''}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))
+                    );
+                  })
                 )}
                 <div ref={bottomRef} />
               </div>
