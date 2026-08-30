@@ -22,6 +22,25 @@ describe('Assistant preparation API', () => {
     expect(res.body.data.supportedLocales).toEqual(expect.arrayContaining(['en', 'ceb']));
   });
 
+  it('reports configured Gemini capabilities without exposing the API key', async () => {
+    process.env.AI_PROVIDER = 'gemini';
+    process.env.AI_MODEL = 'gemini-test';
+    process.env.AI_API_KEY = 'never-expose-this-key';
+
+    const res = await request(app).get('/api/assistant/capabilities');
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toMatchObject({
+      available: true,
+      providerConfigured: true,
+      provider: 'gemini',
+      model: 'gemini-test',
+      supportsProviderRecommendations: true,
+      persistence: 'none',
+    });
+    expect(JSON.stringify(res.body)).not.toContain(process.env.AI_API_KEY);
+  });
+
   it('returns a structured Cebuano provider-recommendation action', async () => {
     const res = await request(app)
       .post('/api/assistant/message')

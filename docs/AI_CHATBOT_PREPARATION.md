@@ -1,10 +1,10 @@
 # AI Chatbot Preparation
 
-This document describes the integration boundary prepared for SerbisyoToledo before a production AI provider is selected.
+This document describes the provider-agnostic SerbisyoToledo assistant integration.
 
 ## Current state
 
-The assistant works without an AI vendor. The frontend sends messages to a dedicated backend assistant API, and the backend currently returns deterministic fallback answers in English or Cebuano.
+The assistant supports Gemini as its first provider adapter while retaining deterministic fallback answers in English or Cebuano.
 
 No assistant conversation is stored in MySQL. Recent messages are held only in the browser while the chatbot is open and are sent as a bounded stateless history with each request.
 
@@ -86,23 +86,19 @@ Response shape may contain:
 }
 ```
 
-## Future AI provider integration
+## Provider integration
 
-The vendor-specific implementation belongs in:
+The provider-agnostic coordinator is `backend/services/assistantService.js`. Gemini-specific code is isolated in `backend/services/ai/geminiAdapter.js`; the maintained server-side instruction is `backend/services/ai/geminiInstruction.js`.
 
-`backend/services/assistantService.js`
+Required environment variable names:
 
-The frontend and route/controller contract should remain unchanged.
+`AI_PROVIDER=gemini`, `AI_MODEL`, and `AI_API_KEY`. The API key is server-side only and is never included in capabilities, responses, frontend data, or safe diagnostics.
 
-Environment placeholders already exist:
+Gemini uses structured JSON output. The server validates intent, action type, filter sizes, numeric ranges, dates, locales, and categories against the SerbisyoToledo taxonomy before returning an action. Provider recommendations are still fetched only from the platform recommendation API; Gemini never receives the provider database.
 
-```
-AI_PROVIDER=disabled
-AI_MODEL=
-AI_API_KEY=
-```
+The current request is stateless: only the latest eight bounded chat messages plus allowlisted route, role, locale, and Toledo date context are sent to the provider. No cookies, JWTs, account data, verification documents, or environment data are sent. No conversation is persisted.
 
-Do not enable a provider merely by supplying credentials until a provider adapter, system prompt, safety behavior, timeouts, and error handling have been reviewed.
+Gemini requests have a bounded timeout. Provider errors, quota errors, timeouts, and malformed JSON fall back to the deterministic assistant with a usable HTTP 200 response. Future providers can be added as separate adapters while preserving the assistant API contract.
 
 ## Database
 
