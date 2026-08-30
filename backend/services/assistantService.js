@@ -5,16 +5,20 @@ const SUPPORTED_LOCALES = new Set(['en', 'ceb']);
 const SUPPORTED_FILTER_LANGUAGES = new Set(['en', 'ceb', 'fil']);
 const SUPPORTED_INTENTS = new Set(['general', 'about_platform', 'help', 'booking_help', 'availability_help', 'provider_onboarding', 'service_discovery']);
 const CATEGORY_INFERENCE_RULES = [
-  { key: 'plumbing', pattern: /\b(plumbing|plumber|tubero)\b/i },
-  { key: 'electrical', pattern: /\b(electrical|electrician|elektrisyan)\b/i },
+  { key: 'plumbing', pattern: /\b(plumbing|plumber|tubero|leaking pipe|leaking.*sink)\b/i },
+  { key: 'electrical', pattern: /\b(electrical|electrician|elektrisyan|electrical problem|problema sa kuryente)\b/i },
   { key: 'carpentry', pattern: /\b(carpentry|carpenter|karpintero)\b/i },
   { key: 'cleaning', pattern: /\b(cleaning|cleaner|limpyo|pagpanglimpyo)\b/i },
   { key: 'gardening_landscaping', pattern: /\b(gardening|gardener|landscaping)\b/i },
+  { key: 'appliance_repair', pattern: /\b(appliance repair|refrigerator repair|fridge repair|washing machine repair|electric fan repair|broken appliance|guba nga appliance)\b/i },
   { key: 'aircon_refrigeration', pattern: /\b(aircon|air conditioning|refrigeration)\b/i },
   { key: 'laundry', pattern: /\blaundry\b/i },
   { key: 'locksmith', pattern: /\blocksmith\b/i },
-  { key: 'beauty_wellness', pattern: /\b(massage|hilot)\b/i },
-  { key: 'tech_repair', pattern: /\b(computer repair|laptop repair|phone repair|tech repair)\b/i },
+  { key: 'beauty_wellness', pattern: /\b(massage|hilot|barber|hair service|nail service|makeup service)\b/i },
+  { key: 'painting', pattern: /\b(painter|painting|pintor)\b/i },
+  { key: 'masonry_minor_construction', pattern: /\b(masonry|mason|tiling|concrete work|minor construction)\b/i },
+  { key: 'welding_metalwork', pattern: /\b(welding|welder|metalwork)\b/i },
+  { key: 'tech_repair', pattern: /\b(computer repair|laptop repair|phone repair|mobile repair|tech repair|electronics repair)\b/i },
 ];
 let geminiAdapterFactory = createGeminiAdapter;
 
@@ -55,11 +59,34 @@ const inferCategoryFromText = (...values) => {
   return match ? getCategoryByKey(match.key)?.label || null : null;
 };
 
-const normalizeAiResult = (value, { message = '' } = {}) => {
+const isGenericServiceHelpRequest = (message) => {
+  const text = String(message || '');
+  const genericHelp = /help me choose (the right |a )?service|find (another )?service|find a service|don't know what service i need|tabangi ko pagpili( sa)? hustong serbisyo|tabangi ko pagpili og serbisyo|pagpangita og laing serbisyo/i;
+  return genericHelp.test(text) && !inferCategoryFromText(text);
+};
+
+const getServiceHelpClarification = (locale) => ({
+  reply: locale === 'ceb'
+    ? 'Sige. Isulti unsay problema o unsay kinahanglan nimong ipa-service, pananglitan leaking nga tubo, problema sa kuryente, guba nga appliance, o pagpanglimpyo sa balay. Tabangan tika pagpili sa hustong serbisyo.'
+    : 'Sure. Tell me what problem you need help with, for example a leaking pipe, electrical problem, broken appliance, house cleaning, or something else. I will help you identify the right type of service.',
+  action: null,
+  intent: 'help',
+});
+
+const getServiceDiscoveryClarification = (locale) => ({
+  reply: locale === 'ceb'
+    ? 'Unsay kinahanglan nimong ipa-service o ayuhon? Isulti ang problema aron matabangan tika pagpili sa hustong serbisyo.'
+    : 'What do you need serviced or repaired? Tell me the problem so I can help identify the right service.',
+  action: null,
+  intent: 'help',
+});
+
+const normalizeAiResult = (value, { message = '', locale = 'en' } = {}) => {
   if (!value || typeof value !== 'object') throw new Error('malformed_output');
   const reply = stringOrNull(value.reply, 1200);
   const intent = SUPPORTED_INTENTS.has(value.intent) ? value.intent : 'general';
   if (!reply) throw new Error('malformed_output');
+  if (isGenericServiceHelpRequest(message)) return getServiceHelpClarification(normalizeLocale(locale));
   if (!value.action) return { reply, intent, action: null };
   if (value.action.type !== 'recommend_providers' || typeof value.action !== 'object') {
     return { reply, intent, action: null };
@@ -69,6 +96,7 @@ const normalizeAiResult = (value, { message = '' } = {}) => {
   const category = categoryKey
     ? getCategoryByKey(categoryKey)?.label || null
     : inferCategoryFromText(filters.search, value.action.query, message);
+  if (!category) return getServiceDiscoveryClarification(normalizeLocale(locale));
   const language = SUPPORTED_FILTER_LANGUAGES.has(filters.language) ? filters.language : null;
   const action = {
     type: 'recommend_providers',
@@ -96,6 +124,60 @@ const getContextAccepted = (context, history) => ({
 const getFallbackReply = ({ message, locale }) => {
   const input = String(message || '').trim().toLowerCase();
   const isCebuano = locale === 'ceb';
+
+  if (isGenericServiceHelpRequest(message)) {
+    return getServiceHelpClarification(locale);
+  }
+
+  if (/what should i check before (choosing a provider|booking)|unsay angay nakong (tan-awon before mopili og provider|i-check before mag-book)/.test(input)) {
+    return {
+      reply: isCebuano
+        ? 'Tan-awa kung verified ang provider, ang services nga iyang gi-offer, starting rate, barangay o location, ug availability. Tan-awa pud ang portfolio work, ratings ug reviews kung naa, ug verified credentials kung gipakita.'
+        : 'Check whether the provider is verified, their services offered, starting rate, barangay or location, and availability. Review completed portfolio work, ratings and reviews when available, and any separately verified credentials shown.',
+      action: null,
+      intent: 'help',
+    };
+  }
+
+  if (/how do i know a provider is verified|what does verified mean|unsaon nako pagkahibalo kung verified ang provider|unsay pasabot sa verified/.test(input)) {
+    return {
+      reply: isCebuano
+        ? 'Ang Verified nagpasabot nga na-review ug na-approve sa SerbisyoToledo admin ang provider verification request. Lahi kini sa professional credentials, nga mahimong separately verified kung gipakita sa profile.'
+        : 'Verified means the provider verification request was reviewed and approved by a SerbisyoToledo admin. This is separate from professional credentials, which may be verified separately when shown on the profile.',
+      action: null,
+      intent: 'help',
+    };
+  }
+
+  if (/how do booking dates work|giunsa pag-work ang booking dates/.test(input)) {
+    return {
+      reply: isCebuano
+        ? 'Makita ra nimo ang dates ug time slots nga gi-set sa provider. Makapili ka og supported booking dates, ug dili dapat ma-offer ang unavailable o conflicting nga oras. Ang pag-submit sa request dili pa garantiya nga accepted hangtod dawaton sa provider.'
+        : 'You see only dates and time slots the provider has made available. You can choose a supported booking date option, and unavailable or conflicting times should not be offered. Submitting a request does not guarantee acceptance until the provider accepts it.',
+      action: null,
+      intent: 'availability_help',
+    };
+  }
+
+  if (/what do my request statuses mean|unsay pasabot sa statuses sa akong requests/.test(input)) {
+    return {
+      reply: isCebuano
+        ? 'Pending: naghulat og tubag. Accepted: gidawat sa provider. Declined: wala gidawat. On the way: padulong na ang provider. In progress: gisugdan na ang trabaho. Completed: nahuman na. Cancelled: nakansela ang request.'
+        : 'Pending means waiting for a response. Accepted means the provider accepted. Declined means it was not accepted. On the way means the provider is travelling. In progress means work has started. Completed means finished. Cancelled means the request was cancelled.',
+      action: null,
+      intent: 'help',
+    };
+  }
+
+  if (/where do i manage my bookings|asa nako ma-manage akong bookings/.test(input)) {
+    return {
+      reply: isCebuano
+        ? 'Sa client dashboard, ablihi ang My Requests aron makita ug ma-manage ang imong booking requests.'
+        : 'On the client dashboard, open My Requests to view and manage your booking requests.',
+      action: null,
+      intent: 'help',
+    };
+  }
 
   if (/what is serbisyotoledo|what are you|unsa ang serbisyotoledo|kinsa ka/.test(input)) {
     return {
@@ -127,13 +209,29 @@ const getFallbackReply = ({ message, locale }) => {
     };
   }
 
-  if (/how.*book|booking.*work|booking flow|send.*request|unsaon.*booking|unsaon.*pag-book|booking.*unsaon/.test(input)) {
+  if (/how.*book|booking.*work|booking flow|send.*request|request this provider|unsaon.*booking|unsaon.*pag-book|booking.*unsaon|pag-request ani nga provider/.test(input)) {
     return {
       reply: isCebuano
-        ? 'Para mag-book, ablihi ang provider profile, pilia ang Request Service, dayon pagpili og available date ug oras ug isumite ang detalye sa serbisyo. Kinahanglan dawaton sa provider ang request una kini ma-confirm.'
-        : 'To book, open a provider profile, choose Request Service, select an available date and time, then submit the service details. The provider must accept the request before it is confirmed.',
+        ? 'Para mag-book: 1) tan-awa ang Browse Services ug ablihi ang provider profile; 2) pilia ang Request Service; 3) pilia ang available date ug time slot; 4) isulod ang service details ug isumite. Kinahanglan dawaton sa provider ang request una kini ma-confirm.'
+        : 'To book: 1) browse services and open a provider profile; 2) choose Request Service; 3) select an available date and time slot; 4) enter service details and submit. The provider must accept the request before it is confirmed.',
       action: null,
       intent: 'booking_help',
+    };
+  }
+
+  const inferredCategory = inferCategoryFromText(message);
+
+  if (inferredCategory) {
+    return {
+      reply: isCebuano
+        ? 'Makatabang ko pagpangita og service provider. Isulti ang serbisyo, lugar, o budget aron mas tukma ang recommendations.'
+        : 'I can help you find a service provider. Tell me the service, location, or budget so I can narrow the recommendations.',
+      action: {
+        type: 'recommend_providers',
+        query: String(message || '').trim(),
+        filters: { category: inferredCategory },
+      },
+      intent: 'service_discovery',
     };
   }
 
@@ -144,21 +242,6 @@ const getFallbackReply = ({ message, locale }) => {
         : 'I can help with finding services, booking, provider verification, availability, and basic SerbisyoToledo usage. What would you like to know?',
       action: null,
       intent: 'help',
-    };
-  }
-
-  const recommendationIntent = /find|looking for|recommend|need|provider near|service near|plumb|tubero|electric|elektrisyan|carpent|karpintero|clean|limpyo|massage|aircon|garden|laundry|repair|mechanic|locksmith|pangita|kinahanglan.*serbisyo/.test(input);
-
-  if (recommendationIntent) {
-    return {
-      reply: isCebuano
-        ? 'Makatabang ko pagpangita og service provider. Isulti ang serbisyo, lugar, o budget aron mas tukma ang recommendations.'
-        : 'I can help you find a service provider. Tell me the service, location, or budget so I can narrow the recommendations.',
-      action: {
-        type: 'recommend_providers',
-        query: String(message || '').trim(),
-      },
-      intent: 'service_discovery',
     };
   }
 
@@ -180,7 +263,7 @@ const generateAssistantReply = async ({ message, locale = 'en', context = {}, hi
       const adapter = geminiAdapterFactory({ apiKey: process.env.AI_API_KEY, model: config.model });
       const result = normalizeAiResult(
         await adapter.generate({ message, locale: normalizedLocale, context: getContextAccepted(context, history), history }),
-        { message }
+        { message, locale: normalizedLocale }
       );
       return { mode: 'ai', providerConfigured: true, ...result, locale: normalizedLocale, contextAccepted: getContextAccepted(context, history) };
     } catch (error) {
@@ -203,6 +286,7 @@ module.exports = {
   normalizeLocale,
   normalizeAiResult,
   inferCategoryFromText,
+  isGenericServiceHelpRequest,
   setGeminiAdapterFactoryForTests: (factory) => {
     geminiAdapterFactory = factory || createGeminiAdapter;
   },
