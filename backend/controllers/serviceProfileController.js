@@ -2362,6 +2362,7 @@ exports.getMyCredentials = async (req, res) => {
 
 exports.createCredential = async (req, res) => {
   let uploadedDocumentPublicId = null;
+  let uploadedDocumentResourceType = null;
 
   try {
     const userId = req.user?.userId;
@@ -2415,17 +2416,19 @@ exports.createCredential = async (req, res) => {
         });
       }
 
+      const resourceType = req.file.mimetype === 'application/pdf' ? 'raw' : 'image';
       const uploadResult = await credentialCloudinaryService.uploadImageBuffer({
         buffer: req.file.buffer,
         mimeType: req.file.mimetype,
         folder: 'serbisyo-toledo/credentials',
-        resourceType: req.file.mimetype === 'application/pdf' ? 'raw' : 'image',
+        resourceType,
         deliveryType: 'authenticated',
       });
 
       documentUrl = uploadResult.secure_url;
       documentPublicId = uploadResult.public_id;
       uploadedDocumentPublicId = uploadResult.public_id;
+      uploadedDocumentResourceType = resourceType;
     }
 
     const [result] = await db.query(
@@ -2462,7 +2465,8 @@ exports.createCredential = async (req, res) => {
       ]
     );
 
-      uploadedDocumentPublicId = null;
+    uploadedDocumentPublicId = null;
+    uploadedDocumentResourceType = null;
 
     return res.status(201).json({
       success: true,
@@ -2471,7 +2475,10 @@ exports.createCredential = async (req, res) => {
     });
   } catch (error) {
     if (uploadedDocumentPublicId) {
-      await credentialCloudinaryService.deleteImageByPublicId(uploadedDocumentPublicId);
+      await credentialCloudinaryService.deleteImageByPublicId(
+        uploadedDocumentPublicId,
+        uploadedDocumentResourceType
+      );
     }
     console.error('Error creating credential:', error);
     return res.status(500).json({ success: false, message: 'Failed to create credential' });

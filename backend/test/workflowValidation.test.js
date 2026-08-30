@@ -207,7 +207,23 @@ describe('credential and review application validation', () => {
     const res = response();
     await serviceProfileController.createCredential({ user: { userId: 2 }, body: { credentialName: 'License', credentialType: 'professional_license' }, file: { buffer: Buffer.from('png'), mimetype: 'image/png' } }, res);
     expect(res.statusCode).toBe(500);
-    expect(cleanup).toHaveBeenCalledWith('credential-new');
+    expect(cleanup).toHaveBeenCalledWith('credential-new', 'image');
+  });
+
+  it('cleans up an uploaded PDF credential document with its raw resource type after insert failure', async () => {
+    vi.spyOn(cloudinaryService, 'hasCloudinaryConfig').mockReturnValue(true);
+    const upload = vi.spyOn(cloudinaryService, 'uploadImageBuffer').mockResolvedValue({ secure_url: 'https://images.test/credential.pdf', public_id: 'credential-pdf-new' });
+    const cleanup = vi.spyOn(cloudinaryService, 'deleteImageByPublicId').mockResolvedValue();
+    vi.spyOn(db, 'query').mockImplementation(async (sql) => {
+      if (String(sql).startsWith('SELECT id FROM service_profiles')) return [[{ id: 7 }]];
+      if (String(sql).includes('INSERT INTO provider_credentials')) throw new Error('insert failed');
+      return [[]];
+    });
+    const res = response();
+    await serviceProfileController.createCredential({ user: { userId: 2 }, body: { credentialName: 'License', credentialType: 'professional_license' }, file: { buffer: Buffer.from('pdf'), mimetype: 'application/pdf' } }, res);
+    expect(res.statusCode).toBe(500);
+    expect(upload).toHaveBeenCalledWith(expect.objectContaining({ resourceType: 'raw', deliveryType: 'authenticated' }));
+    expect(cleanup).toHaveBeenCalledWith('credential-pdf-new', 'raw');
   });
 
   it('rejects a selected credential document when storage is unavailable without inserting', async () => {
