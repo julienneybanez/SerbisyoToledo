@@ -64,7 +64,7 @@ export default function ProviderSchedule() {
         setError('');
         const response = await serviceRequestAPI.getProviderRequests();
         if (mounted && response?.success) setRequests(response.data?.requests || []);
-      } catch (err) {
+      } catch {
         if (mounted) setError(t('providerScheduleLoadError'));
       } finally {
         if (mounted) setLoading(false);

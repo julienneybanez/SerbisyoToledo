@@ -1,7 +1,8 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, screen, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import ProviderAvailability from '../ProviderAvailability';
 import { serviceProfileAPI } from '../../services/api';
+import { renderWithAppProviders } from '../../test/testUtils';
 
 vi.mock('../../services/api', () => ({
   serviceProfileAPI: {
@@ -34,7 +35,7 @@ describe('ProviderAvailability', () => {
   });
 
   it('turns a quick preset into explicit dates and saves the simplified payload', async () => {
-    render(<ProviderAvailability />);
+    renderWithAppProviders(<ProviderAvailability />);
 
     expect(await screen.findByText('Availability')).toBeInTheDocument();
     expect(screen.getByText('Weekdays')).toBeInTheDocument();
@@ -42,7 +43,7 @@ describe('ProviderAvailability', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Whole Day' }));
     fireEvent.click(screen.getByRole('button', { name: /Apply Preset/i }));
 
-    expect(await screen.findByText(/available dates? selected/i)).toBeInTheDocument();
+    expect(await screen.findByText(/available date\(s\) selected/i)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: /Save Availability/i }));
 

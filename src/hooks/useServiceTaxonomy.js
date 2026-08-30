@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { serviceProfileAPI } from '../services/api';
 
 const FALLBACK_TAXONOMY = {
@@ -96,12 +96,15 @@ export default function useServiceTaxonomy() {
     return (taxonomy.categories || []).filter((category) => keys.has(category.key));
   }, [taxonomy.categories, taxonomy.moreCategoryKeys]);
 
-  const getCategory = (value) => categoryByLabel.get(normalizeText(value)) || null;
+  const getCategory = useCallback(
+    (value) => categoryByLabel.get(normalizeText(value)) || null,
+    [categoryByLabel]
+  );
 
-  const getServiceTypesForCategory = (categoryValue) => {
+  const getServiceTypesForCategory = useCallback((categoryValue) => {
     const category = getCategory(categoryValue);
     return Array.isArray(category?.serviceTypes) ? category.serviceTypes : [];
-  };
+  }, [getCategory]);
 
   return {
     taxonomy,

@@ -1,7 +1,8 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, screen } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import VerificationRequestModal from '../VerificationRequestModal';
 import { userProfileAPI } from '../../../services/api';
+import { renderWithAppProviders } from '../../../test/testUtils';
 
 vi.mock('../../../services/api', () => ({
   userProfileAPI: {
@@ -15,21 +16,21 @@ describe('VerificationRequestModal', () => {
   });
 
   it('renders the verification request form fields', () => {
-    render(<VerificationRequestModal onClose={() => {}} />);
+    renderWithAppProviders(<VerificationRequestModal onClose={() => {}} />);
 
     expect(screen.getByText('Request Verification')).toBeInTheDocument();
-    expect(screen.getByText(/required documents/i)).toBeInTheDocument();
+    expect(screen.getByText('Verification Documents')).toBeInTheDocument();
     expect(screen.getByLabelText(/full name/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/phone number/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/address/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/describe your services/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/government-issued id/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/government-issued id/i, { selector: 'input[type="file"]' })).toBeInTheDocument();
     expect(screen.getByLabelText(/certifications/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /submit request/i })).toBeInTheDocument();
   });
 
   it('shows a success message after submission', async () => {
-    render(<VerificationRequestModal onClose={() => {}} />);
+    renderWithAppProviders(<VerificationRequestModal onClose={() => {}} />);
 
     fireEvent.change(screen.getByLabelText(/full name/i), {
       target: { value: 'Fix It Services' },
@@ -47,12 +48,14 @@ describe('VerificationRequestModal', () => {
     const idFile = new File(['id'], 'id.png', { type: 'image/png' });
     const permitFile = new File(['permit'], 'permit.pdf', { type: 'application/pdf' });
 
-    fireEvent.change(screen.getByLabelText(/government-issued id/i), {
+    fireEvent.change(screen.getByLabelText(/government-issued id/i, { selector: 'input[type="file"]' }), {
       target: { files: [idFile] },
     });
     fireEvent.change(screen.getByLabelText(/certifications/i), {
       target: { files: [permitFile] },
     });
+
+    fireEvent.click(screen.getByRole('checkbox', { name: /privacy notice/i }));
 
     fireEvent.click(screen.getByRole('button', { name: /submit request/i }));
 

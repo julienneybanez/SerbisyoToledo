@@ -7,6 +7,7 @@ import ClientDashboard from '../ClientDashboard';
 import AdminUsers from '../admin/AdminUsers';
 import { LanguageProvider } from '../../context/LanguageContext';
 import { adminAPI, getUser, isAuthenticated, serviceProfileAPI, serviceRequestAPI } from '../../services/api';
+import { renderWithAppProviders } from '../../test/testUtils';
 
 const mockNavigate = vi.fn();
 const setSearchParamsMock = vi.fn();
@@ -77,7 +78,7 @@ describe('Targeted correctness checks', () => {
       expect(serviceProfileAPI.getAllProfiles).toHaveBeenCalled();
     });
 
-    fireEvent.click(screen.getByRole('button', { name: /^Filters$/i }));
+    fireEvent.click(screen.getByRole('button', { name: /^Filters/i }));
 
     fireEvent.change(screen.getByLabelText('Search by service, provider, or location'), {
       target: { value: 'electrician' },
@@ -87,7 +88,9 @@ describe('Targeted correctness checks', () => {
       target: { value: 'Toledo' },
     });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Clear Filters' }));
+    const clearAdvancedFilters = screen.getAllByRole('button', { name: 'Clear Filters' })
+      .find((button) => button.classList.contains('clear-filters-btn'));
+    fireEvent.click(clearAdvancedFilters);
 
     expect(screen.getByLabelText('Search by service, provider, or location')).toHaveValue('');
     expect(screen.getByPlaceholderText('Enter location')).toHaveValue('');
@@ -114,11 +117,7 @@ describe('Targeted correctness checks', () => {
       },
     });
 
-    render(
-      <MemoryRouter>
-        <ServiceProviderDashboard />
-      </MemoryRouter>,
-    );
+    renderWithAppProviders(<ServiceProviderDashboard />);
 
     const activeLabel = await screen.findByText('Active Jobs');
     expect(activeLabel.previousElementSibling).toHaveTextContent('3');
@@ -142,11 +141,7 @@ describe('Targeted correctness checks', () => {
       },
     });
 
-    render(
-      <MemoryRouter>
-        <ClientDashboard />
-      </MemoryRouter>,
-    );
+    renderWithAppProviders(<ClientDashboard />);
 
     expect(await screen.findByText('Plumbing Repair')).toBeInTheDocument();
     expect(screen.getByText('Active Requests').previousElementSibling).toHaveTextContent('1');

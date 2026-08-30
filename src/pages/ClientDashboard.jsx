@@ -40,7 +40,7 @@ export default function ClientDashboard() {
         setError('');
         const response = await serviceRequestAPI.getClientRequests();
         if (mounted && response?.success) setRequests(response.data?.requests || []);
-      } catch (err) {
+      } catch {
         if (mounted) setError(t('clientDashboardLoadError'));
       } finally {
         if (mounted) setLoading(false);
