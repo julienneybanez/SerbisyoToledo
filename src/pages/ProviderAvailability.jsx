@@ -152,11 +152,13 @@ export default function ProviderAvailability() {
         if (!mounted || !response?.success) return;
         setHasServiceProfile(true);
 
-        const entries = Array.isArray(response.data?.availability)
-          ? response.data.availability
-          : (Array.isArray(response.data?.specificAvailability)
-            ? response.data.specificAvailability
-            : []);
+        const entries = Array.isArray(response.data?.availableSlots)
+          ? response.data.availableSlots
+          : (Array.isArray(response.data?.availability)
+            ? response.data.availability
+            : (Array.isArray(response.data?.specificAvailability)
+              ? response.data.specificAvailability
+              : []));
 
         const normalizedEntries = entries
           .map((entry) => ({
