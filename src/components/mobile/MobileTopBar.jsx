@@ -157,6 +157,15 @@ export default function MobileTopBar({
               </>
             ) : role === 'tradesperson' ? (
               <>
+                <button
+                  type="button"
+                  className="mobile-profile-menu-item"
+                  role="menuitem"
+                  onClick={onEditClientProfile}
+                >
+                  <i className="bi bi-pencil-square"></i>
+                  {t('editProfile')}
+                </button>
                 {hasServiceProfile && (
                   <button
                     type="button"
@@ -165,7 +174,7 @@ export default function MobileTopBar({
                     onClick={onPreviewProfile}
                   >
                     <i className="bi bi-eye"></i>
-                    {t('viewPublicProfile')}
+                    {t('viewProfileAsClient')}
                   </button>
                 )}
                 <button
