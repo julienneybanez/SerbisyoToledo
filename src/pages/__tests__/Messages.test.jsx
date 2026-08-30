@@ -47,4 +47,49 @@ describe('Messages', () => {
       expect(socketMock.on).toHaveBeenCalledWith('messages:unread-changed', expect.any(Function));
     });
   });
+  it('uses participant photos and does not render the redundant page title', async () => {
+    messageAPI.listConversations.mockResolvedValue({
+      success: true,
+      data: {
+        conversations: [{
+          id: 5,
+          serviceRequestId: 55,
+          requestStatus: 'accepted',
+          serviceLabel: 'Plumbing Repair',
+          otherUser: {
+            id: 21,
+            name: 'Provider One',
+            profilePhoto: 'https://example.test/provider.jpg',
+          },
+          unreadCount: 0,
+          writable: true,
+        }],
+      },
+    });
+    messageAPI.getMessages.mockResolvedValue({
+      success: true,
+      data: {
+        conversation: {
+          id: 5,
+          requestStatus: 'accepted',
+          serviceLabel: 'Plumbing Repair',
+          writable: true,
+          otherUser: {
+            id: 21,
+            name: 'Provider One',
+            profilePhoto: 'https://example.test/provider.jpg',
+          },
+        },
+        messages: [],
+      },
+    });
+    messageAPI.markRead.mockResolvedValue({ success: true });
+
+    const { container } = renderWithAppProviders(<Messages />);
+
+    expect(await screen.findByText('Provider One')).toBeInTheDocument();
+    expect(container.querySelector('.messages-avatar-image')).toBeInTheDocument();
+    expect(container.querySelector('.messages-page-heading')).not.toBeInTheDocument();
+  });
+
 });
