@@ -305,8 +305,6 @@ const DICTIONARY = {
     postServiceListing: 'Post Service Listing',
     manageServiceListing: 'Manage Service Listing',
     publicProfile: 'Public Profile',
-    providerProfile: 'Provider Profile',
-    providerProfile: 'Provider Profile',
     credentials: 'Credentials',
     previewProviderPage: 'Preview Provider Page',
     clientSidebarRequests: 'My Requests',
