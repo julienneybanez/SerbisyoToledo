@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { authAPI, getUser, serviceProfileAPI, serviceRequestAPI } from '../services/api';
+import { authAPI, getUser, serviceProfileAPI, serviceRequestAPI, userProfileAPI } from '../services/api';
 import ProfileCompletionChecklist from '../components/common/ProfileCompletionChecklist';
 import ServiceProfileModal from '../components/common/ServiceProfileModal';
 import EditPortfolioModal from '../components/common/EditPortfolioModal';
@@ -78,6 +78,7 @@ export default function ServiceProviderDashboard() {
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showPortfolioModal, setShowPortfolioModal] = useState(false);
   const [showVerificationRequest, setShowVerificationRequest] = useState(false);
+  const [verificationStatus, setVerificationStatus] = useState(null);
   const [requests, setRequests] = useState([]);
   const [requestSummary, setRequestSummary] = useState({
     pending: 0,
@@ -180,10 +181,28 @@ export default function ServiceProviderDashboard() {
     }
   }, [t]);
 
+  const fetchVerificationStatus = useCallback(async () => {
+    try {
+      const response = await userProfileAPI.getVerificationStatus();
+      if (response?.success) {
+        setVerificationStatus(response.data || null);
+        if (response.data?.isVerified && !user?.isVerified) {
+          const me = await authAPI.getMe();
+          if (me?.success && me.data?.user) {
+            setUser(me.data.user);
+          }
+        }
+      }
+    } catch {
+      setVerificationStatus(null);
+    }
+  }, [user?.isVerified]);
+
   useEffect(() => {
     fetchRequests();
     fetchChecklistData();
-  }, [fetchChecklistData]);
+    fetchVerificationStatus();
+  }, [fetchChecklistData, fetchVerificationStatus]);
 
   const handleOpenServiceListing = async () => {
     if (myProfile?.id) {
@@ -217,12 +236,20 @@ export default function ServiceProviderDashboard() {
     {
       key: 'verification',
       label: t('providerChecklistVerificationLabel'),
-      description: t('providerChecklistVerificationDescription'),
+      description: verificationStatus?.status === 'pending'
+        ? t('providerVerificationPendingDescription')
+        : verificationStatus?.status === 'rejected'
+          ? t('providerVerificationRejectedDescription')
+          : t('providerChecklistVerificationDescription'),
       completed: Boolean(user?.isVerified),
       isApplicable: !myProfile?.id || !user?.isVerified,
-      actionType: 'button',
-      actionLabel: t('verification'),
-      onAction: () => setShowVerificationRequest(true),
+      actionType: verificationStatus?.status === 'pending' ? null : 'button',
+      actionLabel: verificationStatus?.status === 'rejected'
+        ? t('providerVerificationResubmit')
+        : t('verification'),
+      onAction: verificationStatus?.status === 'pending'
+        ? undefined
+        : () => setShowVerificationRequest(true),
     },
     {
       key: 'taxonomy-refresh',
@@ -729,21 +756,47 @@ export default function ServiceProviderDashboard() {
           )}
         </section>
 
-        <section className={`level-up-banner ${user?.isVerified ? 'verified' : ''}`}>
+        <section className={`level-up-banner verification-state-${verificationStatus?.status || (user?.isVerified ? 'approved' : 'not_submitted')} ${user?.isVerified ? 'verified' : ''}`}>
           <span className="level-up-icon" aria-hidden="true">
-            <i className={`bi ${user?.isVerified ? 'bi-patch-check-fill' : 'bi-shield-check'}`}></i>
+            <i className={`bi ${
+              user?.isVerified
+                ? 'bi-patch-check-fill'
+                : verificationStatus?.status === 'pending'
+                  ? 'bi-hourglass-split'
+                  : verificationStatus?.status === 'rejected'
+                    ? 'bi-shield-x'
+                    : 'bi-shield-check'
+            }`}></i>
           </span>
           <div className="level-up-copy">
-            <h2>{user?.isVerified ? t('providerVerificationApproved') : t('providerVerificationTitle')}</h2>
+            <h2>
+              {user?.isVerified
+                ? t('providerVerificationApproved')
+                : verificationStatus?.status === 'pending'
+                  ? t('providerVerificationPending')
+                  : verificationStatus?.status === 'rejected'
+                    ? t('providerVerificationRejected')
+                    : t('providerVerificationTitle')}
+            </h2>
             <p>
               {user?.isVerified
                 ? t('providerVerificationApprovedDescription')
-                : t('providerVerificationListingRequirement')}
+                : verificationStatus?.status === 'pending'
+                  ? t('providerVerificationPendingDescription')
+                  : verificationStatus?.status === 'rejected'
+                    ? t('providerVerificationRejectedDescription')
+                    : t('providerVerificationListingRequirement')}
             </p>
+            {verificationStatus?.status === 'rejected' && verificationStatus?.rejectionReason && (
+              <div className="provider-verification-reason" role="status">
+                <strong>{t('providerVerificationRejectionReason')}</strong>
+                <span>{verificationStatus.rejectionReason}</span>
+              </div>
+            )}
           </div>
-          {!user?.isVerified && (
+          {!user?.isVerified && verificationStatus?.status !== 'pending' && (
             <button className="btn-get-verified" onClick={() => setShowVerificationRequest(true)}>
-              Get Verified
+              {verificationStatus?.status === 'rejected' ? t('providerVerificationResubmit') : t('providerGetVerified')}
             </button>
           )}
         </section>
@@ -783,7 +836,13 @@ export default function ServiceProviderDashboard() {
         )}
 
         {showVerificationRequest && (
-          <VerificationRequestModal onClose={() => setShowVerificationRequest(false)} />
+          <VerificationRequestModal
+            onClose={() => {
+              setShowVerificationRequest(false);
+              fetchVerificationStatus();
+              fetchChecklistData();
+            }}
+          />
         )}
 
         {selectedRequest && (

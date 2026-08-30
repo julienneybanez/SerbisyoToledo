@@ -18,6 +18,7 @@ export default function MobileTopBar({
   user,
   role = 'guest',
   onMenu,
+  profileRoute = '/dashboard',
   settingsRoute,
   onLogout,
   profileMenuOpen,
@@ -157,7 +158,16 @@ export default function MobileTopBar({
               </>
             ) : role === 'tradesperson' ? (
               <>
-                {hasServiceProfile && (
+                <button
+                  type="button"
+                  className="mobile-profile-menu-item"
+                  role="menuitem"
+                  onClick={onEditClientProfile}
+                >
+                  <i className="bi bi-pencil-square"></i>
+                  {t('editProfile')}
+                </button>
+                {hasServiceProfile && profileRoute !== '/dashboard' && (
                   <button
                     type="button"
                     className="mobile-profile-menu-item"
@@ -165,7 +175,7 @@ export default function MobileTopBar({
                     onClick={onPreviewProfile}
                   >
                     <i className="bi bi-eye"></i>
-                    {t('viewPublicProfile')}
+                    {t('viewProfileAsClient')}
                   </button>
                 )}
                 <button

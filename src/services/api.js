@@ -1113,6 +1113,17 @@ export const userProfileAPI = {
     return handleResponse(response);
   },
 
+  // Get the latest provider verification state and rejection reason
+  getVerificationStatus: async () => {
+    const response = await apiFetch(`${API_BASE_URL}/user/verification-status`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    return handleResponse(response);
+  },
+
   updatePresence: async (online = true) => {
     const response = await apiFetch(`${API_BASE_URL}/user/presence`, {
       method: 'PATCH',
@@ -1132,8 +1143,10 @@ export const userProfileAPI = {
       body: formData,
     });
     const data = await handleResponse(response);
-    
-    // Update stored user data with new profile info
+
+    // The backend updates the row and then reads it back from MySQL before
+    // returning this payload, so use that persisted response as the UI source
+    // of truth without introducing a second request that could fail afterward.
     if (data.success && data.data) {
       const currentUser = getUser();
       if (currentUser) {
@@ -1143,12 +1156,12 @@ export const userProfileAPI = {
           phone: data.data.phone,
           address: data.data.address,
           bio: data.data.bio,
-          profileImage: data.data.profilePhoto
+          profileImage: data.data.profilePhoto,
         });
         window.dispatchEvent(new Event('authChange'));
       }
     }
-    
+
     return data;
   },
 

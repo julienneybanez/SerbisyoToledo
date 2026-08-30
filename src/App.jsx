@@ -152,7 +152,7 @@ function App() {
         .then((response) => {
           const hasProfile = Boolean(response?.success && response?.data?.id);
           setHasServiceProfile(hasProfile);
-          setProviderPublicProfileRoute(hasProfile ? `/provider/${response.data.id}` : '/dashboard');
+          setProviderPublicProfileRoute(hasProfile && response.data.isPublished ? `/provider/${response.data.id}` : '/dashboard');
         })
         .catch(() => {});
     };
@@ -181,7 +181,7 @@ function App() {
 
         const hasProfile = Boolean(response?.success && response?.data?.id);
         setHasServiceProfile(hasProfile);
-        setProviderPublicProfileRoute(hasProfile ? `/provider/${response.data.id}` : '/dashboard');
+        setProviderPublicProfileRoute(hasProfile && response.data.isPublished ? `/provider/${response.data.id}` : '/dashboard');
       } catch {
         if (!isMounted) {
           return;

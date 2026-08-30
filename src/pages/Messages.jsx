@@ -214,13 +214,6 @@ export default function Messages() {
 
   return (
     <div className="messages-page">
-      <div className="messages-page-heading">
-        <div>
-          <h1>{t('messages')}</h1>
-          <p>{t('messagesSubtitle')}</p>
-        </div>
-      </div>
-
       {error && <div className="alert alert-danger messages-alert">{error}</div>}
 
       <div className="messages-shell">
@@ -247,7 +240,11 @@ export default function Messages() {
                   onClick={() => selectConversation(item.id)}
                 >
                   <span className="messages-avatar" aria-hidden="true">
-                    {(item.otherUser?.name || 'U').slice(0, 1).toUpperCase()}
+                    {item.otherUser?.profilePhoto ? (
+                      <img src={item.otherUser.profilePhoto} alt="" className="messages-avatar-image non-draggable-image" draggable="false" />
+                    ) : (
+                      (item.otherUser?.name || 'U').slice(0, 1).toUpperCase()
+                    )}
                   </span>
                   <span className="messages-conversation-copy">
                     <span className="messages-conversation-topline">
@@ -282,6 +279,18 @@ export default function Messages() {
                 <button type="button" className="messages-mobile-back" onClick={closeMobileThread} aria-label={t('messagesBackToConversations')}>
                   <i className="bi bi-chevron-left" aria-hidden="true"></i>
                 </button>
+                <span className="messages-thread-avatar" aria-hidden="true">
+                  {(conversation?.otherUser?.profilePhoto || selectedItem?.otherUser?.profilePhoto) ? (
+                    <img
+                      src={conversation?.otherUser?.profilePhoto || selectedItem?.otherUser?.profilePhoto}
+                      alt=""
+                      className="messages-avatar-image non-draggable-image"
+                      draggable="false"
+                    />
+                  ) : (
+                    (conversation?.otherUser?.name || selectedItem?.otherUser?.name || 'U').slice(0, 1).toUpperCase()
+                  )}
+                </span>
                 <div>
                   <strong>{conversation?.otherUser?.name || selectedItem?.otherUser?.name || t('user')}</strong>
                   <span>{conversation?.serviceLabel || selectedItem?.serviceLabel}</span>
@@ -299,17 +308,33 @@ export default function Messages() {
                     <span>{t('messagesKeepBookingDetailsHere')}</span>
                   </div>
                 ) : (
-                  messages.map((message) => (
-                    <div key={message.id} className={'message-row ' + (message.mine ? 'mine' : 'theirs')}>
-                      <div className="message-bubble">
-                        <div className="message-text">{message.text}</div>
-                        <div className="message-meta">
-                          {formatTime(message.createdAt)}
-                          {message.mine && message.readAt ? ' · ' + t('messagesRead') : ''}
+                  messages.map((message) => {
+                    const rowPhoto = message.mine
+                      ? user?.profileImage
+                      : (conversation?.otherUser?.profilePhoto || selectedItem?.otherUser?.profilePhoto);
+                    const rowName = message.mine
+                      ? user?.fullName
+                      : (conversation?.otherUser?.name || selectedItem?.otherUser?.name);
+
+                    return (
+                      <div key={message.id} className={'message-row ' + (message.mine ? 'mine' : 'theirs')}>
+                        <span className="message-row-avatar" aria-hidden="true">
+                          {rowPhoto ? (
+                            <img src={rowPhoto} alt="" className="messages-avatar-image non-draggable-image" draggable="false" />
+                          ) : (
+                            (rowName || 'U').slice(0, 1).toUpperCase()
+                          )}
+                        </span>
+                        <div className="message-bubble">
+                          <div className="message-text">{message.text}</div>
+                          <div className="message-meta">
+                            {formatTime(message.createdAt)}
+                            {message.mine && message.readAt ? ' · ' + t('messagesRead') : ''}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))
+                    );
+                  })
                 )}
                 <div ref={bottomRef} />
               </div>

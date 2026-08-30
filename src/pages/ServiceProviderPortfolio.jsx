@@ -170,7 +170,11 @@ const ProviderCard = ({ provider, profile, onBack, hideBackLink = false, isPrevi
 
       <div className="profile-summary">
         <div className="profile-header">
-          <div className="profile-avatar-large">{initials}</div>
+          <div className="profile-avatar-large">
+            {provider.profilePhoto ? (
+              <img src={provider.profilePhoto} alt={`${provider.name} profile`} className="profile-avatar-image non-draggable-image" draggable="false" />
+            ) : initials}
+          </div>
           <div className="profile-details">
             <div className="profile-name-row">
               <h1>{provider.name}</h1>
@@ -513,6 +517,7 @@ const ServiceProviderPortfolio = () => {
             dailyRate: apiProfile.dailyRate ?? apiProfile.startingPrice,
             verified: apiProfile.verified || false,
             image: apiProfile.image,
+            profilePhoto: apiProfile.profilePhoto || null,
             isPublished: apiProfile.isPublished !== false,
             availabilityStatus: apiProfile.availabilityStatus,
             acceptingRequests: apiProfile.acceptingRequests !== false,
