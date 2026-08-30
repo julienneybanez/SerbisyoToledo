@@ -1113,6 +1113,17 @@ export const userProfileAPI = {
     return handleResponse(response);
   },
 
+  // Get the latest provider verification state and rejection reason
+  getVerificationStatus: async () => {
+    const response = await apiFetch(`${API_BASE_URL}/user/verification-status`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    return handleResponse(response);
+  },
+
   updatePresence: async (online = true) => {
     const response = await apiFetch(`${API_BASE_URL}/user/presence`, {
       method: 'PATCH',
