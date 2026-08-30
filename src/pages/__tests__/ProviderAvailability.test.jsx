@@ -19,7 +19,7 @@ describe('ProviderAvailability', () => {
       success: true,
       data: {
         acceptingBookings: true,
-        availability: [],
+        availableSlots: [],
         systemRules: {
           allowSameDayBooking: false,
           minAdvanceNoticeMinutes: 720,
@@ -32,6 +32,16 @@ describe('ProviderAvailability', () => {
       success: true,
       message: 'Availability saved successfully',
     });
+  });
+
+  it('shows a service-listing prerequisite instead of a load error when no listing exists', async () => {
+    serviceProfileAPI.getMyAvailability.mockRejectedValueOnce({ status: 404 });
+
+    renderWithAppProviders(<ProviderAvailability />);
+
+    expect(await screen.findByText('Post your service listing first')).toBeInTheDocument();
+    expect(screen.getByText(/Availability is connected to your service listing/i)).toBeInTheDocument();
+    expect(screen.queryByText('Unable to load availability right now.')).not.toBeInTheDocument();
   });
 
   it('turns a quick preset into explicit dates and saves the simplified payload', async () => {
