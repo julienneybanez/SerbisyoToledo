@@ -51,7 +51,7 @@ describe('Backend Security Hardening', () => {
   });
 
   it('2b) prevents an unverified provider from posting a service listing', async () => {
-    const mockConnection = createConnectionMock(async (sql) => {
+    const mockConnection = createConnectionMock(async () => {
       return [[]];
     });
 
@@ -641,7 +641,7 @@ describe('Backend Security Hardening', () => {
   });
 
   it('22) rejects profile service type when it does not match selected category', async () => {
-    const mockConnection = createConnectionMock(async (sql) => {
+    const mockConnection = createConnectionMock(async () => {
       return [[]];
     });
 
@@ -719,7 +719,7 @@ describe('Backend Security Hardening', () => {
   });
 
   it('24) rejects creating/updating profile with legacy Repair category', async () => {
-    const mockConnection = createConnectionMock(async (sql) => {
+    const mockConnection = createConnectionMock(async () => {
       return [[]];
     });
 

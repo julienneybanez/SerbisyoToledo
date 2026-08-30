@@ -43,6 +43,7 @@ export default defineConfig([
   {
     files: ['**/*.test.{js,jsx}', '**/__tests__/**/*.{js,jsx}', 'backend/test/**/*.js'],
     languageOptions: {
+      sourceType: 'module',
       globals: {
         ...globals.vitest,
       },

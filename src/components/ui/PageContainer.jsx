@@ -1,12 +1,10 @@
+import { createElement } from 'react';
+
 export default function PageContainer({
-  as: Component = 'div',
+  as: component = 'div',
   className = '',
   children,
   ...props
 }) {
-  return (
-    <Component className={['st-page-container', className].filter(Boolean).join(' ')} {...props}>
-      {children}
-    </Component>
-  );
+  return createElement(component, { className: ['st-page-container', className].filter(Boolean).join(' '), ...props }, children);
 }

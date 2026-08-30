@@ -169,7 +169,7 @@ describe('Settings pages', () => {
     expect(screen.queryByText('Languages Spoken')).not.toBeInTheDocument();
     expect(screen.queryByTestId('theme-toggle')).not.toBeInTheDocument();
 
-    expect(screen.getByText('Not Verified')).toBeInTheDocument();
+    expect(screen.getByText(/not verified/i)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Resend Verification Email' }));
     await waitFor(() => {

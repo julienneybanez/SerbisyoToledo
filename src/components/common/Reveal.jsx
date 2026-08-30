@@ -1,4 +1,4 @@
-import { createElement, useEffect, useRef, useState } from 'react';
+import { createElement, useEffect, useState } from 'react';
 
 export default function Reveal({
   as = 'div',
@@ -8,23 +8,15 @@ export default function Reveal({
   variant = 'up',
   ...rest
 }) {
-  const elementRef = useRef(null);
-  const [isVisible, setIsVisible] = useState(false);
+  const [element, setElement] = useState(null);
+  const [isVisible, setIsVisible] = useState(() => (
+    typeof window === 'undefined'
+    || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    || !('IntersectionObserver' in window)
+  ));
 
   useEffect(() => {
-    const node = elementRef.current;
-    if (!node) return undefined;
-
-    if (typeof window === 'undefined') {
-      setIsVisible(true);
-      return undefined;
-    }
-
-    const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-    if (reducedMotion || !('IntersectionObserver' in window)) {
-      setIsVisible(true);
-      return undefined;
-    }
+    if (!element || isVisible) return undefined;
 
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -39,9 +31,9 @@ export default function Reveal({
       }
     );
 
-    observer.observe(node);
+    observer.observe(element);
     return () => observer.disconnect();
-  }, []);
+  }, [element, isVisible]);
 
   const classes = [
     'reveal',
@@ -54,7 +46,7 @@ export default function Reveal({
     as,
     {
       ...rest,
-      ref: elementRef,
+      ref: setElement,
       className: classes,
       style: {
         ...(rest.style || {}),

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -14,7 +14,7 @@ describe('Migration Runner Bootstrap States', () => {
   // Helper to create a mock connection
   function createMockConnection(responseMap) {
     const connection = {
-      query: vi.fn(async (sql, params) => {
+      query: vi.fn(async (sql) => {
         // Lookup the response by SQL query pattern
         for (const [pattern, response] of Object.entries(responseMap)) {
           if (sql.includes(pattern)) {
