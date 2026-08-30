@@ -53,8 +53,6 @@ const getProviderProfile = async (connection, serviceProfileId) => {
       sp.id AS service_profile_id,
       sp.user_id AS provider_id,
       sp.starting_price,
-      sp.service_categories,
-      sp.service_types,
       sp.is_published,
       u.user_type,
       u.is_active
@@ -413,8 +411,16 @@ exports.createRequest = async (req, res) => {
       });
     }
 
-    const profileCategories = normalizeCategoryLabels(parseJsonArray(profile.service_categories, []), { preserveUnknown: true });
-    const profileServiceTypeKeys = parseJsonArray(profile.service_types, []);
+    const profileCategories = await connection.query(
+      'SELECT category_key FROM service_profile_categories WHERE service_profile_id = ? ORDER BY category_key',
+      [profile.service_profile_id]
+    ).then(([rows]) => normalizeCategoryLabels(rows.map((row) => row.category_key), { preserveUnknown: true }));
+
+    const [profileTypeRows] = await connection.query(
+      'SELECT service_type_key FROM service_profile_types WHERE service_profile_id = ? ORDER BY service_type_key',
+      [profile.service_profile_id]
+    );
+    const profileServiceTypeKeys = profileTypeRows.map((row) => row.service_type_key);
     const offeredServiceTypes = getServiceTypesForProfile({
       categoryLabels: profileCategories,
       serviceTypeKeys: profileServiceTypeKeys,
@@ -442,22 +448,28 @@ exports.createRequest = async (req, res) => {
       });
     }
 
+    if (profileServiceTypeKeys.length === 0) {
+      await connection.rollback();
+      return res.status(400).json({
+        success: false,
+        message: 'This service profile does not have any service types configured',
+      });
+    }
+
     const effectiveServiceType = requestedServiceTypeKey
-      ? offeredServiceTypeByKey.get(requestedServiceTypeKey)
-      : (offeredServiceTypes[0] || null);
+      ? offeredServiceTypeByKey.get(requestedServiceTypeKey) || getServiceTypeByKey(requestedServiceTypeKey)
+      : (offeredServiceTypes[0] || getServiceTypeByKey(profileServiceTypeKeys[0]) || null);
     const serviceRequestLabel = String(
       effectiveServiceType?.label || profileCategories[0] || 'Service Request'
     ).trim() || 'Service Request';
 
-    // Serialize booking creation for the client and provider. This prevents
-    // simultaneous requests from racing past category and schedule checks.
     const participantIds = [Number(clientId), Number(profile.provider_id)].sort((a, b) => a - b);
     await connection.query(
       'SELECT id FROM users WHERE id IN (?, ?) ORDER BY id FOR UPDATE',
       participantIds
     );
 
-    const targetServiceTypeKey = effectiveServiceType?.key || null;
+    const targetServiceTypeKey = (effectiveServiceType?.key || requestedServiceTypeKey || profileServiceTypeKeys[0] || null);
 
     if (targetServiceTypeKey) {
       const activeStatusPlaceholders = ACTIVE_REQUEST_STATUSES.map(() => '?').join(', ');
@@ -498,52 +510,6 @@ exports.createRequest = async (req, res) => {
       });
     }
 
-    const scheduleAvailability = await isScheduleAvailableForDates(connection, {
-      serviceProfileId: profile.service_profile_id,
-      providerId: profile.provider_id,
-      dates: normalized.normalizedDates,
-      startTime: normalized.normalizedStartTime,
-      durationMinutes: normalized.normalizedDurationMinutes,
-    });
-
-    if (!scheduleAvailability.available) {
-      await connection.rollback();
-      return res.status(409).json({
-        success: false,
-        message: scheduleAvailability.message || 'The selected schedule is not available for this provider.',
-        code: 'SCHEDULE_UNAVAILABLE',
-      });
-    }
-
-    const [duplicateRows] = await connection.query(
-      `SELECT id
-       FROM service_requests
-       WHERE client_id = ?
-         AND provider_id = ?
-         AND service_profile_id = ?
-         AND start_date = ?
-         AND end_date = ?
-         AND start_time = ?
-         AND status IN ('pending', 'accepted', 'on_the_way', 'in_progress')
-       LIMIT 1`,
-      [
-        clientId,
-        profile.provider_id,
-        profile.service_profile_id,
-        normalized.normalizedStartDate,
-        normalized.normalizedEndDate,
-        normalized.normalizedStartTime,
-      ]
-    );
-
-    if (duplicateRows.length > 0) {
-      await connection.rollback();
-      return res.status(409).json({
-        success: false,
-        message: 'A similar booking request already exists for this schedule.'
-      });
-    }
-
     const conflict = await checkScheduleConflictForDates(connection, {
       providerId: profile.provider_id,
       dates: normalized.normalizedDates,
@@ -559,6 +525,7 @@ exports.createRequest = async (req, res) => {
       });
     }
 
+    const requestMultiDayMode = normalized.canonicalBookingType === 'specific_dates' ? 'specific_dates' : 'continuous';
     const dailyRate = Number(profile.starting_price || 0);
     const estimatedTotal = dailyRate * normalized.durationDays;
 
@@ -569,46 +536,47 @@ exports.createRequest = async (req, res) => {
          service_profile_id,
          service_type_key,
          service_type_label,
-         job_title,
          job_details,
          service_location,
-         booking_type,
-         start_date,
-         end_date,
+         multi_day_mode,
          start_time,
-         scheduled_start_at,
-         scheduled_end_at,
          estimated_duration_minutes,
-         duration_days,
+         pricing_unit_snapshot,
          daily_rate_snapshot,
-         estimated_total
+         estimated_total,
+         status
        )
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         clientId,
         profile.provider_id,
         profile.service_profile_id,
-        effectiveServiceType?.key || null,
-        serviceRequestLabel,
-        // Temporary DB compatibility only: job_title is no longer client input
-        // and should be dropped when the later database migration is applied.
+        targetServiceTypeKey,
         serviceRequestLabel,
         jobDetails,
         normalizedServiceLocation,
-        normalized.storageBookingType,
-        normalized.normalizedStartDate,
-        normalized.normalizedEndDate,
+        requestMultiDayMode,
         normalized.normalizedStartTime,
-        `${normalized.normalizedStartDate} ${normalized.normalizedStartTime}`,
-        `${normalized.normalizedEndDate} ${normalized.normalizedStartTime}`,
         normalized.normalizedDurationMinutes,
-        normalized.durationDays,
+        'per_day',
         dailyRate,
         estimatedTotal,
+        'pending',
       ]
     );
 
     const requestId = result.insertId;
+
+    await connection.query(
+      `INSERT INTO service_request_status_history (
+         service_request_id,
+         from_status,
+         to_status,
+         changed_by,
+         record_source
+       ) VALUES (?, NULL, 'pending', ?, 'live')`,
+      [requestId, clientId]
+    );
 
     if (requestDatesStorageAvailable) {
       const valuesSql = normalized.normalizedDates.map(() => '(?, ?)').join(', ');
@@ -803,11 +771,6 @@ exports.updateRequestStatus = async (req, res) => {
         });
       }
 
-      await connection.query(
-        'SELECT id FROM service_profiles WHERE id = ? AND user_id = ? FOR UPDATE',
-        [request.service_profile_id, request.provider_id]
-      );
-
       const schedule = normalizeRequestSchedule(request);
       const requestDates = await getPersistedRequestDates(connection, request);
       const conflict = await checkScheduleConflictForDates(connection, {
@@ -863,6 +826,10 @@ exports.updateRequestStatus = async (req, res) => {
         });
       }
 
+      const effectiveReasonText = normalizedCancellationReason === 'Other'
+        ? normalizedCancellationReasonOther
+        : normalizedCancellationReason;
+
       await connection.query(
         `UPDATE service_requests
          SET status = 'cancelled',
@@ -877,6 +844,18 @@ exports.updateRequestStatus = async (req, res) => {
           normalizedCancellationReason === 'Other' ? normalizedCancellationReasonOther : null,
           requestId,
         ]
+      );
+
+      await connection.query(
+        `INSERT INTO service_request_status_history (
+           service_request_id,
+           from_status,
+           to_status,
+           changed_by,
+           reason,
+           record_source
+         ) VALUES (?, ?, 'cancelled', ?, ?, 'live')`,
+        [Number(requestId), currentStatus, userId, effectiveReasonText]
       );
 
       await connection.query(
@@ -940,7 +919,13 @@ exports.updateRequestStatus = async (req, res) => {
           await connection.rollback();
           return res.status(409).json({ success: false, message: 'You have already confirmed completion' });
         }
-        await connection.query('UPDATE service_requests SET provider_completed = TRUE WHERE id = ?', [requestId]);
+        await connection.query(
+          `UPDATE service_requests
+           SET provider_completed = TRUE,
+               provider_completed_at = COALESCE(provider_completed_at, NOW())
+           WHERE id = ? AND provider_completed = FALSE`,
+          [requestId]
+        );
       }
 
       if (isClientAction) {
@@ -948,30 +933,47 @@ exports.updateRequestStatus = async (req, res) => {
           await connection.rollback();
           return res.status(409).json({ success: false, message: 'You have already confirmed completion' });
         }
-        await connection.query('UPDATE service_requests SET client_completed = TRUE WHERE id = ?', [requestId]);
+        await connection.query(
+          `UPDATE service_requests
+           SET client_completed = TRUE,
+               client_completed_at = COALESCE(client_completed_at, NOW())
+           WHERE id = ? AND client_completed = FALSE`,
+          [requestId]
+        );
       }
 
-      const [updated] = await connection.query('SELECT provider_completed, client_completed FROM service_requests WHERE id = ? FOR UPDATE', [requestId]);
+      const [updated] = await connection.query(
+        'SELECT status, provider_completed, client_completed FROM service_requests WHERE id = ? FOR UPDATE',
+        [requestId]
+      );
       const bothConfirmed = updated[0].provider_completed && updated[0].client_completed;
 
       if (bothConfirmed) {
-        await connection.query('UPDATE service_requests SET status = ? WHERE id = ?', ['completed', requestId]);
+        if (updated[0].status !== 'completed') {
+          await connection.query('UPDATE service_requests SET status = ? WHERE id = ? AND status <> \'completed\'', ['completed', requestId]);
 
-        await connection.query(
-          'UPDATE service_profiles SET jobs_completed = jobs_completed + 1 WHERE user_id = ?',
-          [request.provider_id]
-        );
+          await connection.query(
+            `INSERT INTO service_request_status_history (
+               service_request_id,
+               from_status,
+               to_status,
+               changed_by,
+               record_source
+             ) VALUES (?, 'in_progress', 'completed', ?, 'live')`,
+            [Number(requestId), userId]
+          );
 
-        await connection.query(
-          `INSERT INTO notifications (user_id, type, title, message, related_request_id)
-           VALUES (?, 'service_completed', ?, ?, ?)`,
-          [request.client_id, 'Service Completed', `Your service request "${getRequestDisplayLabel(request)}" has been completed! You can now leave a review.`, requestId]
-        );
-        await connection.query(
-          `INSERT INTO notifications (user_id, type, title, message, related_request_id)
-           VALUES (?, 'service_completed', ?, ?, ?)`,
-          [request.provider_id, 'Service Completed', `The service "${getRequestDisplayLabel(request)}" has been marked as completed by both parties.`, requestId]
-        );
+          await connection.query(
+            `INSERT INTO notifications (user_id, type, title, message, related_request_id)
+             VALUES (?, 'service_completed', ?, ?, ?)`,
+            [request.client_id, 'Service Completed', `Your service request "${getRequestDisplayLabel(request)}" has been completed! You can now leave a review.`, requestId]
+          );
+          await connection.query(
+            `INSERT INTO notifications (user_id, type, title, message, related_request_id)
+             VALUES (?, 'service_completed', ?, ?, ?)`,
+            [request.provider_id, 'Service Completed', `The service "${getRequestDisplayLabel(request)}" has been marked as completed by both parties.`, requestId]
+          );
+        }
 
         await connection.commit();
 
@@ -998,8 +1000,8 @@ exports.updateRequestStatus = async (req, res) => {
         message: 'Completion confirmed! Waiting for the other party to confirm.',
         data: {
           fullyCompleted: false,
-          provider_completed: isProviderAction ? true : request.provider_completed,
-          client_completed: isClientAction ? true : request.client_completed,
+          provider_completed: isProviderAction ? true : Boolean(request.provider_completed),
+          client_completed: isClientAction ? true : Boolean(request.client_completed),
         }
       });
     }
@@ -1030,17 +1032,36 @@ exports.updateRequestStatus = async (req, res) => {
           message: 'Reason for declining must not exceed 500 characters'
         });
       }
-    }
 
-    if (status === 'declined') {
       await connection.query(
         'UPDATE service_requests SET status = ?, decline_reason = ? WHERE id = ?',
         [status, trimmedReason, requestId]
+      );
+      await connection.query(
+        `INSERT INTO service_request_status_history (
+           service_request_id,
+           from_status,
+           to_status,
+           changed_by,
+           reason,
+           record_source
+         ) VALUES (?, ?, 'declined', ?, ?, 'live')`,
+        [Number(requestId), currentStatus, userId, trimmedReason]
       );
     } else {
       await connection.query(
         'UPDATE service_requests SET status = ? WHERE id = ?',
         [status, requestId]
+      );
+      await connection.query(
+        `INSERT INTO service_request_status_history (
+           service_request_id,
+           from_status,
+           to_status,
+           changed_by,
+           record_source
+         ) VALUES (?, ?, ?, ?, 'live')`,
+        [Number(requestId), currentStatus, status, userId]
       );
     }
 
@@ -1698,8 +1719,8 @@ exports.createReview = async (req, res) => {
     }
 
     const [existingReview] = await db.query(
-      'SELECT id FROM reviews WHERE service_request_id = ? AND client_id = ?',
-      [requestId, clientId]
+      'SELECT id FROM reviews WHERE service_request_id = ?',
+      [requestId]
     );
 
     if (existingReview.length > 0) {
@@ -1710,23 +1731,9 @@ exports.createReview = async (req, res) => {
     }
 
     await db.query(
-      `INSERT INTO reviews (service_profile_id, client_id, service_request_id, rating, comment)
-       VALUES (?, ?, ?, ?, ?)`,
-      [request.profile_id, clientId, requestId, rating, trimmedComment || null]
-    );
-
-    const [ratingResult] = await db.query(
-      `SELECT AVG(rating) as avg_rating, COUNT(*) as total_reviews 
-       FROM reviews WHERE service_profile_id = ?`,
-      [request.profile_id]
-    );
-
-    const avgRating = parseFloat(ratingResult[0].avg_rating).toFixed(1);
-    const totalReviews = ratingResult[0].total_reviews;
-
-    await db.query(
-      'UPDATE service_profiles SET rating = ?, reviews_count = ? WHERE id = ?',
-      [avgRating, totalReviews, request.profile_id]
+      `INSERT INTO reviews (service_request_id, rating, comment)
+       VALUES (?, ?, ?)`,
+      [requestId, rating, trimmedComment || null]
     );
 
     await db.query(
@@ -1738,9 +1745,16 @@ exports.createReview = async (req, res) => {
     res.status(201).json({
       success: true,
       message: 'Review submitted successfully',
-      data: { avgRating, totalReviews }
+      data: { rating }
     });
   } catch (error) {
+    if (error.code === 'ER_DUP_ENTRY') {
+      return res.status(400).json({
+        success: false,
+        message: 'You have already reviewed this service request'
+      });
+    }
+
     console.error('Create review error:', error);
     res.status(500).json({
       success: false,

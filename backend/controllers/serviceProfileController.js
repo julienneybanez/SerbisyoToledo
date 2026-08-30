@@ -2320,15 +2320,14 @@ exports.listEligibleCompletedRequests = async (req, res) => {
     const serviceProfileId = profiles[0].id;
 
     const [rows] = await db.query(
-      `SELECT sr.id, sr.service_type_key, sr.service_type_label, sr.created_at, sr.start_date, sr.end_date
+      `SELECT sr.id, sr.service_type_key, sr.service_type_label, sr.created_at
        FROM service_requests sr
-       LEFT JOIN portfolio_items pi ON pi.service_request_id = sr.id AND pi.service_profile_id = sr.service_profile_id
-       WHERE sr.service_profile_id = ?
-         AND sr.provider_id = ?
+       LEFT JOIN portfolio_items pi ON pi.service_request_id = sr.id
+       WHERE sr.provider_id = ?
          AND sr.status = 'completed'
          AND pi.id IS NULL
        ORDER BY sr.created_at DESC`,
-      [serviceProfileId, userId]
+      [userId]
     );
 
     return res.json({
@@ -2351,9 +2350,6 @@ exports.createPortfolioFromCompletedRequest = async (req, res) => {
     const userId = req.user?.userId;
     const {
       serviceRequestId,
-      caption,
-      description,
-      serviceCategory,
       isPublished,
       isFeatured,
     } = req.body;
@@ -2365,23 +2361,12 @@ exports.createPortfolioFromCompletedRequest = async (req, res) => {
     connection = await db.getConnection();
     await connection.beginTransaction();
 
-    const [profiles] = await connection.query(
-      'SELECT id FROM service_profiles WHERE user_id = ? LIMIT 1',
-      [userId]
-    );
-    if (profiles.length === 0) {
-      await connection.rollback();
-      return res.status(404).json({ success: false, message: 'Service profile not found' });
-    }
-
-    const serviceProfileId = profiles[0].id;
-
     const [requests] = await connection.query(
-      `SELECT id, service_type_key, service_type_label, status, start_date, end_date
+      `SELECT id, status
        FROM service_requests
-       WHERE id = ? AND service_profile_id = ? AND provider_id = ?
+       WHERE id = ? AND provider_id = ?
        LIMIT 1 FOR UPDATE`,
-      [serviceRequestId, serviceProfileId, userId]
+      [serviceRequestId, userId]
     );
 
     if (requests.length === 0) {
@@ -2428,18 +2413,9 @@ exports.createPortfolioFromCompletedRequest = async (req, res) => {
     }
 
     const [orderResult] = await connection.query(
-      'SELECT COALESCE(MAX(display_order), 0) + 1 AS nextOrder FROM portfolio_items WHERE service_profile_id = ?',
-      [serviceProfileId]
+      'SELECT COALESCE(MAX(display_order), 0) + 1 AS nextOrder FROM portfolio_items'
     );
 
-    const completedServiceType = getServiceTypeByKey(requests[0].service_type_key);
-    const completedServiceLabel = String(
-      requests[0].service_type_label || completedServiceType?.label || 'Completed Service'
-    ).trim() || 'Completed Service';
-
-    // Never auto-publish the client's private request details. Providers may
-    // provide a separate public description explicitly.
-    const safeDescription = String(description || '').trim();
     const publishFlag = isPublished == null
       ? true
       : !['false', '0', 'no'].includes(String(isPublished).trim().toLowerCase());
@@ -2449,35 +2425,36 @@ exports.createPortfolioFromCompletedRequest = async (req, res) => {
 
     const [insertResult] = await connection.query(
       `INSERT INTO portfolio_items (
-         service_profile_id,
          service_request_id,
-         caption,
-         display_order,
-         job_title,
-         job_description,
-         service_category,
-         completed_at,
+         image_url,
+         image_public_id,
          is_published,
          is_featured,
-         completed_through_platform,
-         image_url,
-         image_public_id
+         display_order
        )
-       VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), ?, ?, TRUE, ?, ?)`,
+       VALUES (?, ?, ?, ?, ?, ?)`,
       [
-        serviceProfileId,
         serviceRequestId,
-        String(caption || '').trim(),
-        orderResult[0].nextOrder,
-        completedServiceLabel,
-        safeDescription,
-        String(serviceCategory || '').trim() || null,
-        publishFlag,
-        featuredFlag,
         imageUrl,
         imagePublicId,
+        publishFlag,
+        featuredFlag,
+        orderResult[0].nextOrder,
       ]
     );
+
+    await connection.commit();
+    uploadedImagePublicId = null;
+
+    return res.status(201).json({
+      success: true,
+      message: 'Completed job linked to portfolio successfully',
+      data: {
+        id: insertResult.insertId,
+        src: imageUrl,
+        hasPhoto: Boolean(imageUrl),
+      }
+    });
 
     await connection.commit();
     uploadedImagePublicId = null;

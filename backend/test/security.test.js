@@ -553,7 +553,7 @@ describe('Backend Security Hardening', () => {
         return [[]];
       }
 
-      if (sql.includes('SELECT COALESCE(MAX(display_order), 0) + 1 AS nextOrder FROM portfolio_items WHERE service_profile_id = ?')) {
+      if (sql.includes('SELECT COALESCE(MAX(display_order), 0) + 1 AS nextOrder FROM portfolio_items')) {
         return [[{ nextOrder: 4 }]];
       }
 
@@ -581,7 +581,7 @@ describe('Backend Security Hardening', () => {
     expect(insertCall).toBeTruthy();
 
     const insertParams = insertCall[1];
-    expect(insertParams[5]).toBe('');
+    expect(insertParams.includes('Heavy plumbing job')).toBe(false);
   });
 
   it('20) rejects provider registration with unsupported language code', async () => {
