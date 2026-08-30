@@ -309,18 +309,25 @@ exports.updateProfile = async (req, res) => {
 
     const previousPublicId = existingUsers[0]?.profile_photo_public_id;
 
-    // Handle profile photo upload if provided
+    // Handle profile photo upload if provided. Never report a successful save
+    // while silently discarding the selected image.
     if (req.file) {
-      if (hasCloudinaryConfig()) {
-        const uploadResult = await uploadImageBuffer({
-          buffer: req.file.buffer,
-          mimeType: req.file.mimetype,
-          folder: 'serbisyo-toledo/profile-photos',
+      if (!hasCloudinaryConfig()) {
+        return res.status(503).json({
+          success: false,
+          code: 'PROFILE_PHOTO_STORAGE_UNAVAILABLE',
+          message: 'Profile photo storage is temporarily unavailable. Please try again later.'
         });
-
-        profilePhotoUrl = uploadResult.secure_url;
-        profilePhotoPublicId = uploadResult.public_id;
       }
+
+      const uploadResult = await uploadImageBuffer({
+        buffer: req.file.buffer,
+        mimeType: req.file.mimetype,
+        folder: 'serbisyo-toledo/profile-photos',
+      });
+
+      profilePhotoUrl = uploadResult.secure_url;
+      profilePhotoPublicId = uploadResult.public_id;
     }
 
     // Build dynamic update query
