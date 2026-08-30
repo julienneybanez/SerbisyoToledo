@@ -235,6 +235,57 @@ exports.getOnboardingProgress = async (req, res) => {
   }
 };
 
+// Get the current provider verification state. The latest request remains visible
+// after review so providers do not have to rely on an old notification to know
+// why they were rejected or whether a request is still under review.
+exports.getVerificationStatus = async (req, res) => {
+  try {
+    const userId = req.user?.userId;
+    if (!userId) {
+      return res.status(401).json({ success: false, message: 'Authentication required' });
+    }
+
+    const [users] = await db.query(
+      'SELECT id, is_verified FROM users WHERE id = ? LIMIT 1',
+      [userId]
+    );
+
+    if (users.length === 0) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    const [requests] = await db.query(
+      `SELECT id, status, rejection_reason, created_at, reviewed_at
+       FROM verification_requests
+       WHERE user_id = ?
+       ORDER BY created_at DESC, id DESC
+       LIMIT 1`,
+      [userId]
+    );
+
+    const latest = requests[0] || null;
+    const status = users[0].is_verified
+      ? 'approved'
+      : (latest?.status || 'not_submitted');
+
+    return res.json({
+      success: true,
+      data: {
+        status,
+        isVerified: Boolean(users[0].is_verified),
+        requestId: latest?.id || null,
+        rejectionReason: status === 'rejected' ? (latest?.rejection_reason || null) : null,
+        submittedAt: latest?.created_at || null,
+        reviewedAt: latest?.reviewed_at || null,
+        canResubmit: status === 'rejected' || status === 'not_submitted',
+      },
+    });
+  } catch (error) {
+    console.error('Error fetching verification status:', error);
+    return res.status(500).json({ success: false, message: 'Failed to fetch verification status' });
+  }
+};
+
 // Update user profile (name, photo, phone, address, bio)
 exports.updateProfile = async (req, res) => {
   try {
