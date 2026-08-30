@@ -21,7 +21,9 @@ const parseCookies = (cookieHeader = '') => String(cookieHeader)
 
 const baseCookieOptions = () => ({
   secure: isProduction(),
-  sameSite: isProduction() ? 'none' : 'lax',
+  // Browser REST traffic is same-origin through the Vercel /api proxy.
+  // Lax avoids depending on third-party/cross-site cookie acceptance.
+  sameSite: 'lax',
   path: '/',
 });
 
