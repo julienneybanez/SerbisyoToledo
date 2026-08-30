@@ -18,6 +18,7 @@ export default function MobileTopBar({
   user,
   role = 'guest',
   onMenu,
+  profileRoute = '/dashboard',
   settingsRoute,
   onLogout,
   profileMenuOpen,
@@ -166,7 +167,7 @@ export default function MobileTopBar({
                   <i className="bi bi-pencil-square"></i>
                   {t('editProfile')}
                 </button>
-                {hasServiceProfile && (
+                {hasServiceProfile && profileRoute !== '/dashboard' && (
                   <button
                     type="button"
                     className="mobile-profile-menu-item"
