@@ -3,6 +3,11 @@ const db = require('../config/database');
 const WRITABLE_STATUSES = new Set(['pending', 'accepted', 'on_the_way', 'in_progress']);
 const MAX_MESSAGE_LENGTH = 2000;
 
+const normalizeProfilePhoto = (value) => {
+  const normalized = String(value || '').trim();
+  return /^(https?:\/\/|data:image\/)/i.test(normalized) ? normalized : null;
+};
+
 const ensureConversation = async (executor, requestId) => {
   await executor.query('INSERT IGNORE INTO conversations (service_request_id) VALUES (?)', [requestId]);
   const [rows] = await executor.query(
@@ -60,9 +65,7 @@ exports.listConversations = async (req, res) => {
           otherUser: {
             id: row.other_user_id,
             name: row.other_user_name,
-            profilePhoto: /^(https?:\/\/|data:image\/)/i.test(String(row.other_user_photo || '').trim())
-              ? row.other_user_photo
-              : null,
+            profilePhoto: normalizeProfilePhoto(row.other_user_photo),
           },
           lastMessage: row.last_message,
           lastMessageAt: row.last_message_at,
@@ -174,16 +177,12 @@ exports.getConversationMessages = async (req, res) => {
             ? {
                 id: conversation.provider_id,
                 name: conversation.provider_name,
-                profilePhoto: /^(https?:\/\/|data:image\/)/i.test(String(conversation.provider_photo || '').trim())
-                  ? conversation.provider_photo
-                  : null,
+                profilePhoto: normalizeProfilePhoto(conversation.provider_photo),
               }
             : {
                 id: conversation.client_id,
                 name: conversation.client_name,
-                profilePhoto: /^(https?:\/\/|data:image\/)/i.test(String(conversation.client_photo || '').trim())
-                  ? conversation.client_photo
-                  : null,
+                profilePhoto: normalizeProfilePhoto(conversation.client_photo),
               },
         },
         messages: messages.reverse().map((message) => ({
