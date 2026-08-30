@@ -119,6 +119,16 @@ describe('Chatbot', () => {
         action: {
           type: 'recommend_providers',
           query: 'plumber near Toledo under 1000',
+          filters: {
+            category: 'Plumbing',
+            location: 'Toledo',
+            maxPrice: 1000,
+            minRating: null,
+            language: null,
+            availabilityDate: null,
+            duration: null,
+            search: null,
+          },
         },
       },
     });
@@ -158,6 +168,14 @@ describe('Chatbot', () => {
       });
       expect(serviceProfileAPI.getRecommendations).toHaveBeenCalledTimes(1);
     });
+
+    expect(serviceProfileAPI.getRecommendations).toHaveBeenCalledWith(expect.objectContaining({
+      category: 'Plumbing',
+      location: 'Toledo',
+      maxPrice: 1000,
+      search: undefined,
+      limit: 3,
+    }));
 
     expect(await screen.findByText('Mario Helper')).toBeInTheDocument();
     expect(screen.getByText('P450 / hour')).toBeInTheDocument();

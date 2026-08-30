@@ -61,6 +61,24 @@ const SERVICE_KEYWORDS = [
   { keyword: 'locksmith', category: 'Locksmith' },
 ];
 
+const ALLOWED_RECOMMENDATION_CATEGORIES = new Set([
+  'Carpentry',
+  'Plumbing',
+  'Electrical',
+  'Cleaning',
+  'Gardening & Landscaping',
+  'Appliance Repair',
+  'Aircon & Refrigeration',
+  'Beauty & Wellness',
+  'Locksmith',
+  'Laundry',
+  'Painting',
+  'Masonry & Minor Construction',
+  'Welding & Metalwork',
+  'Tech Repair',
+  'Other Services',
+]);
+
 const buildRecommendationFilters = (rawInput, locale) => {
   const input = String(rawInput || '').toLowerCase();
   const serviceMatch = SERVICE_KEYWORDS.find((item) => input.includes(item.keyword));
@@ -101,6 +119,31 @@ const buildRecommendationFilters = (rawInput, locale) => {
     language: requestedLanguage || (locale === 'ceb' ? undefined : requestedLanguage),
     availabilityDate,
     search: rawInput,
+    limit: 3,
+  };
+};
+
+const buildStructuredRecommendationFilters = (filters, rawInput, locale) => {
+  const fallback = buildRecommendationFilters(rawInput, locale);
+  const safe = filters && typeof filters === 'object' ? filters : {};
+  const allowedLanguages = new Set(['en', 'ceb', 'fil']);
+  const safeNumber = (value, min, max) => {
+    const number = Number(value);
+    return Number.isFinite(number) && number >= min && number <= max ? number : undefined;
+  };
+  const safeDate = /^\d{4}-\d{2}-\d{2}$/.test(String(safe.availabilityDate || ''))
+    ? safe.availabilityDate
+    : undefined;
+
+  return {
+    category: ALLOWED_RECOMMENDATION_CATEGORIES.has(safe.category) ? safe.category : fallback.category,
+    location: typeof safe.location === 'string' && safe.location.length <= 120 ? safe.location : fallback.location,
+    maxPrice: safeNumber(safe.maxPrice, 0, 1000000) ?? fallback.maxPrice,
+    minRating: safeNumber(safe.minRating, 0, 5) ?? fallback.minRating,
+    language: allowedLanguages.has(safe.language) ? safe.language : fallback.language,
+    availabilityDate: safeDate || fallback.availabilityDate,
+    duration: safeNumber(safe.duration, 30, 1440) ?? fallback.duration,
+    search: typeof safe.search === 'string' && safe.search.length <= 120 ? safe.search : undefined,
     limit: 3,
   };
 };
@@ -158,10 +201,10 @@ const Chatbot = ({ isOpen, onClose, context = {} }) => {
     }]);
   };
 
-  const loadRecommendations = async (query) => {
+  const loadRecommendations = async (query, aiFilters) => {
     try {
       const response = await serviceProfileAPI.getRecommendations(
-        buildRecommendationFilters(query, language)
+        aiFilters ? buildStructuredRecommendationFilters(aiFilters, query, language) : buildRecommendationFilters(query, language)
       );
       const providers = response?.data?.providers || [];
 
@@ -213,7 +256,8 @@ const Chatbot = ({ isOpen, onClose, context = {} }) => {
 
       if (payload.action?.type === 'recommend_providers') {
         const recommendationResult = await loadRecommendations(
-          payload.action.query || messageText
+          payload.action.query || messageText,
+          payload.action.filters
         );
         addBotMessage({
           text: recommendationResult.text,

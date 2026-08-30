@@ -1,4 +1,10 @@
+const { createGeminiAdapter } = require('./ai/geminiAdapter');
+const { toCategoryKey, getCategoryByKey } = require('../config/serviceTaxonomy');
+
 const SUPPORTED_LOCALES = new Set(['en', 'ceb']);
+const SUPPORTED_FILTER_LANGUAGES = new Set(['en', 'ceb', 'fil']);
+const SUPPORTED_INTENTS = new Set(['general', 'about_platform', 'help', 'booking_help', 'availability_help', 'provider_onboarding', 'service_discovery']);
+let geminiAdapterFactory = createGeminiAdapter;
 
 const normalizeLocale = (locale) => (
   SUPPORTED_LOCALES.has(String(locale || '').toLowerCase())
@@ -14,10 +20,58 @@ const getAssistantConfiguration = () => {
   return {
     provider,
     model,
-    providerConfigured: Boolean(provider && provider !== 'disabled' && model && apiKey),
+    providerConfigured: provider === 'gemini' && Boolean(model && apiKey),
     supportedLocales: [...SUPPORTED_LOCALES],
   };
 };
+
+const stringOrNull = (value, maxLength) => {
+  const normalized = String(value || '').trim().slice(0, maxLength);
+  return normalized || null;
+};
+
+const numberOrNull = (value, min, max) => {
+  const normalized = Number(value);
+  return Number.isFinite(normalized) && normalized >= min && normalized <= max ? normalized : null;
+};
+
+const dateOrNull = (value) => (/^\d{4}-\d{2}-\d{2}$/.test(String(value || '')) ? String(value) : null);
+
+const normalizeAiResult = (value) => {
+  if (!value || typeof value !== 'object') throw new Error('malformed_output');
+  const reply = stringOrNull(value.reply, 1200);
+  const intent = SUPPORTED_INTENTS.has(value.intent) ? value.intent : 'general';
+  if (!reply) throw new Error('malformed_output');
+  if (!value.action) return { reply, intent, action: null };
+  if (value.action.type !== 'recommend_providers' || typeof value.action !== 'object') {
+    return { reply, intent, action: null };
+  }
+  const filters = value.action.filters && typeof value.action.filters === 'object' ? value.action.filters : {};
+  const categoryKey = toCategoryKey(filters.category);
+  const category = categoryKey ? getCategoryByKey(categoryKey)?.label || null : null;
+  const language = SUPPORTED_FILTER_LANGUAGES.has(filters.language) ? filters.language : null;
+  const action = {
+    type: 'recommend_providers',
+    query: stringOrNull(value.action.query, 300) || stringOrNull(filters.search, 120) || '',
+    filters: {
+      category,
+      location: stringOrNull(filters.location, 120),
+      maxPrice: numberOrNull(filters.maxPrice, 0, 1000000),
+      minRating: numberOrNull(filters.minRating, 0, 5),
+      language,
+      availabilityDate: dateOrNull(filters.availabilityDate),
+      duration: numberOrNull(filters.duration, 30, 1440),
+      search: stringOrNull(filters.search, 120),
+    },
+  };
+  return { reply, intent: intent === 'service_discovery' ? intent : 'service_discovery', action };
+};
+
+const getContextAccepted = (context, history) => ({
+  route: String(context?.route || '').slice(0, 120),
+  role: String(context?.role || 'guest').slice(0, 32),
+  historyCount: Array.isArray(history) ? history.length : 0,
+});
 
 const getFallbackReply = ({ message, locale }) => {
   const input = String(message || '').trim().toLowerCase();
@@ -101,34 +155,22 @@ const generateAssistantReply = async ({ message, locale = 'en', context = {}, hi
   const normalizedLocale = normalizeLocale(locale);
   const config = getAssistantConfiguration();
 
-  // AI integration seam:
-  // When a provider is selected later, implement the provider adapter here.
-  // The frontend/backend contract should not need to change.
   if (config.providerConfigured) {
-    return {
-      mode: 'fallback',
-      providerConfigured: true,
-      ...getFallbackReply({ message, locale: normalizedLocale }),
-      locale: normalizedLocale,
-      contextAccepted: {
-        route: String(context?.route || '').slice(0, 120),
-        role: String(context?.role || 'guest').slice(0, 32),
-        historyCount: Array.isArray(history) ? history.length : 0,
-      },
-      notice: 'AI provider is configured but the provider adapter has not been enabled yet.',
-    };
+    try {
+      const adapter = geminiAdapterFactory({ apiKey: process.env.AI_API_KEY, model: config.model });
+      const result = normalizeAiResult(await adapter.generate({ message, locale: normalizedLocale, context: getContextAccepted(context, history), history }));
+      return { mode: 'ai', providerConfigured: true, ...result, locale: normalizedLocale, contextAccepted: getContextAccepted(context, history) };
+    } catch (error) {
+      console.warn('Assistant provider fallback:', { provider: config.provider, category: error.category || 'invalid_response', timeout: error.category === 'timeout' });
+    }
   }
 
   return {
     mode: 'fallback',
-    providerConfigured: false,
+    providerConfigured: config.providerConfigured,
     ...getFallbackReply({ message, locale: normalizedLocale }),
     locale: normalizedLocale,
-    contextAccepted: {
-      route: String(context?.route || '').slice(0, 120),
-      role: String(context?.role || 'guest').slice(0, 32),
-      historyCount: Array.isArray(history) ? history.length : 0,
-    },
+    contextAccepted: getContextAccepted(context, history),
   };
 };
 
@@ -136,4 +178,8 @@ module.exports = {
   getAssistantConfiguration,
   generateAssistantReply,
   normalizeLocale,
+  normalizeAiResult,
+  setGeminiAdapterFactoryForTests: (factory) => {
+    geminiAdapterFactory = factory || createGeminiAdapter;
+  },
 };
