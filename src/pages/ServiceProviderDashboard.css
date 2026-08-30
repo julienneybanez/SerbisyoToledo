@@ -1070,3 +1070,30 @@
     font-size: 0.8rem;
   }
 }
+
+.level-up-banner.verification-state-pending {
+  border-color: color-mix(in srgb, var(--brand-primary) 32%, var(--border));
+}
+
+.level-up-banner.verification-state-rejected {
+  border-color: color-mix(in srgb, var(--color-danger, #b42318) 42%, var(--border));
+}
+
+.provider-verification-reason {
+  margin-top: 0.7rem;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid color-mix(in srgb, var(--color-danger, #b42318) 30%, var(--border));
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--color-danger, #b42318) 6%, var(--surface));
+  display: grid;
+  gap: 0.2rem;
+}
+
+.provider-verification-reason strong {
+  font-size: 0.84rem;
+}
+
+.provider-verification-reason span {
+  overflow-wrap: anywhere;
+  line-height: 1.45;
+}
