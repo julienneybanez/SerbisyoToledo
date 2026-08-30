@@ -79,6 +79,38 @@ const ALLOWED_RECOMMENDATION_CATEGORIES = new Set([
   'Other Services',
 ]);
 
+const getChatbotSuggestions = ({ route, t }) => {
+  if (/^\/provider\/[^/]+\/?$/.test(route)) {
+    return [
+      { emoji: '✅', text: t('chatbotSuggestionProviderBooking') },
+      { emoji: '📅', text: t('chatbotSuggestionProviderRequest') },
+      { emoji: '🛡️', text: t('chatbotSuggestionVerifiedMeaning') },
+    ];
+  }
+
+  if (route === '/client-dashboard') {
+    return [
+      { emoji: '🔎', text: t('chatbotSuggestionDashboardFind') },
+      { emoji: '📋', text: t('chatbotSuggestionRequestStatuses') },
+      { emoji: '📅', text: t('chatbotSuggestionManageBookings') },
+    ];
+  }
+
+  if (route === '/feed') {
+    return [
+      { emoji: '🔎', text: t('chatbotSuggestionFeedChoose') },
+      { emoji: '⚖️', text: t('chatbotSuggestionProviderSelection') },
+      { emoji: '📅', text: t('chatbotSuggestionBookingDates') },
+    ];
+  }
+
+  return [
+    { emoji: '🔎', text: t('chatbotSuggestionHomeChoose') },
+    { emoji: '📅', text: t('chatbotSuggestionHomeBooking') },
+    { emoji: '🛡️', text: t('chatbotSuggestionHomeVerified') },
+  ];
+};
+
 const buildRecommendationFilters = (rawInput, locale) => {
   const input = String(rawInput || '').toLowerCase();
   const serviceMatch = SERVICE_KEYWORDS.find((item) => input.includes(item.keyword));
@@ -165,11 +197,10 @@ const Chatbot = ({ isOpen, onClose, context = {} }) => {
   const [isResponding, setIsResponding] = useState(false);
   const [copiedMessageId, setCopiedMessageId] = useState(null);
 
-  const suggestions = useMemo(() => ([
-    { emoji: '🔎', text: t('chatbotSuggestionFindService') },
-    { emoji: '📅', text: t('chatbotSuggestionBooking') },
-    { emoji: '❓', text: t('chatbotSuggestionHelp') },
-  ]), [t]);
+  const suggestions = useMemo(
+    () => getChatbotSuggestions({ route: context.route || '/', t }),
+    [context.route, t]
+  );
 
   useEffect(() => {
     setMessages((current) => {

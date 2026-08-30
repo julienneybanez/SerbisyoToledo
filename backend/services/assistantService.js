@@ -97,6 +97,66 @@ const getFallbackReply = ({ message, locale }) => {
   const input = String(message || '').trim().toLowerCase();
   const isCebuano = locale === 'ceb';
 
+  if (/help me choose (the right |a )?service|find (another )?service|find a service|don't know what service i need|tabangi ko pagpili( sa)? hustong serbisyo|tabangi ko pagpili og serbisyo|pagpangita og laing serbisyo/.test(input)) {
+    return {
+      reply: isCebuano
+        ? 'Sige. Isulti unsay problema o unsay kinahanglan nimong ipa-service, pananglitan leaking nga tubo, problema sa kuryente, guba nga appliance, o pagpanglimpyo sa balay. Tabangan tika pagpili sa hustong serbisyo.'
+        : 'Sure. Tell me what problem you need help with, for example a leaking pipe, electrical problem, broken appliance, house cleaning, or something else. I will help you identify the right type of service.',
+      action: null,
+      intent: 'help',
+    };
+  }
+
+  if (/what should i check before (choosing a provider|booking)|unsay angay nakong (tan-awon before mopili og provider|i-check before mag-book)/.test(input)) {
+    return {
+      reply: isCebuano
+        ? 'Tan-awa kung verified ang provider, ang services nga iyang gi-offer, starting rate, barangay o location, ug availability. Tan-awa pud ang portfolio work, ratings ug reviews kung naa, ug verified credentials kung gipakita.'
+        : 'Check whether the provider is verified, their services offered, starting rate, barangay or location, and availability. Review completed portfolio work, ratings and reviews when available, and any separately verified credentials shown.',
+      action: null,
+      intent: 'help',
+    };
+  }
+
+  if (/how do i know a provider is verified|what does verified mean|unsaon nako pagkahibalo kung verified ang provider|unsay pasabot sa verified/.test(input)) {
+    return {
+      reply: isCebuano
+        ? 'Ang Verified nagpasabot nga na-review ug na-approve sa SerbisyoToledo admin ang provider verification request. Lahi kini sa professional credentials, nga mahimong separately verified kung gipakita sa profile.'
+        : 'Verified means the provider verification request was reviewed and approved by a SerbisyoToledo admin. This is separate from professional credentials, which may be verified separately when shown on the profile.',
+      action: null,
+      intent: 'help',
+    };
+  }
+
+  if (/how do booking dates work|giunsa pag-work ang booking dates/.test(input)) {
+    return {
+      reply: isCebuano
+        ? 'Makita ra nimo ang dates ug time slots nga gi-set sa provider. Makapili ka og supported booking dates, ug dili dapat ma-offer ang unavailable o conflicting nga oras. Ang pag-submit sa request dili pa garantiya nga accepted hangtod dawaton sa provider.'
+        : 'You see only dates and time slots the provider has made available. You can choose a supported booking date option, and unavailable or conflicting times should not be offered. Submitting a request does not guarantee acceptance until the provider accepts it.',
+      action: null,
+      intent: 'availability_help',
+    };
+  }
+
+  if (/what do my request statuses mean|unsay pasabot sa statuses sa akong requests/.test(input)) {
+    return {
+      reply: isCebuano
+        ? 'Pending: naghulat og tubag. Accepted: gidawat sa provider. Declined: wala gidawat. On the way: padulong na ang provider. In progress: gisugdan na ang trabaho. Completed: nahuman na. Cancelled: nakansela ang request.'
+        : 'Pending means waiting for a response. Accepted means the provider accepted. Declined means it was not accepted. On the way means the provider is travelling. In progress means work has started. Completed means finished. Cancelled means the request was cancelled.',
+      action: null,
+      intent: 'help',
+    };
+  }
+
+  if (/where do i manage my bookings|asa nako ma-manage akong bookings/.test(input)) {
+    return {
+      reply: isCebuano
+        ? 'Sa client dashboard, ablihi ang My Requests aron makita ug ma-manage ang imong booking requests.'
+        : 'On the client dashboard, open My Requests to view and manage your booking requests.',
+      action: null,
+      intent: 'help',
+    };
+  }
+
   if (/what is serbisyotoledo|what are you|unsa ang serbisyotoledo|kinsa ka/.test(input)) {
     return {
       reply: isCebuano
@@ -127,11 +187,11 @@ const getFallbackReply = ({ message, locale }) => {
     };
   }
 
-  if (/how.*book|booking.*work|booking flow|send.*request|unsaon.*booking|unsaon.*pag-book|booking.*unsaon/.test(input)) {
+  if (/how.*book|booking.*work|booking flow|send.*request|request this provider|unsaon.*booking|unsaon.*pag-book|booking.*unsaon|pag-request ani nga provider/.test(input)) {
     return {
       reply: isCebuano
-        ? 'Para mag-book, ablihi ang provider profile, pilia ang Request Service, dayon pagpili og available date ug oras ug isumite ang detalye sa serbisyo. Kinahanglan dawaton sa provider ang request una kini ma-confirm.'
-        : 'To book, open a provider profile, choose Request Service, select an available date and time, then submit the service details. The provider must accept the request before it is confirmed.',
+        ? 'Para mag-book: 1) tan-awa ang Browse Services ug ablihi ang provider profile; 2) pilia ang Request Service; 3) pilia ang available date ug time slot; 4) isulod ang service details ug isumite. Kinahanglan dawaton sa provider ang request una kini ma-confirm.'
+        : 'To book: 1) browse services and open a provider profile; 2) choose Request Service; 3) select an available date and time slot; 4) enter service details and submit. The provider must accept the request before it is confirmed.',
       action: null,
       intent: 'booking_help',
     };

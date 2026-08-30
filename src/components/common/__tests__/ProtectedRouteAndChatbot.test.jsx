@@ -105,11 +105,23 @@ describe('Chatbot', () => {
     });
   });
 
-  const renderChatbot = () => render(
+  const renderChatbot = (route = '/feed') => render(
     <LanguageProvider>
-      <Chatbot isOpen onClose={() => {}} context={{ route: '/feed', role: 'client' }} />
+      <Chatbot isOpen onClose={() => {}} context={{ route, role: 'client' }} />
     </LanguageProvider>,
   );
+
+  it.each([
+    ['/', ['Help me choose the right service', 'How do I book a service?', 'How do I know a provider is verified?']],
+    ['/feed', ['Help me choose a service', 'What should I check before choosing a provider?', 'How do booking dates work?']],
+    ['/provider/7', ['What should I check before booking?', 'How do I request this provider?', 'What does Verified mean?']],
+    ['/client-dashboard', ['How do I find another service?', 'What do my request statuses mean?', 'Where do I manage my bookings?']],
+  ])('shows contextual presets on %s', (route, labels) => {
+    renderChatbot(route);
+    for (const label of labels) {
+      expect(screen.getByRole('button', { name: label })).toBeInTheDocument();
+    }
+  });
 
   it('uses the assistant backend intent before loading live provider recommendations', async () => {
     assistantAPI.sendMessage.mockResolvedValue({
@@ -219,5 +231,20 @@ describe('Chatbot', () => {
       expect(writeText).toHaveBeenCalled();
     });
     expect(screen.getByTitle('Copied')).toBeInTheDocument();
+  });
+
+  it('shows the improved empty recommendation message', async () => {
+    assistantAPI.sendMessage.mockResolvedValue({
+      success: true,
+      data: { reply: 'I can help.', action: { type: 'recommend_providers', query: 'plumber', filters: { category: 'Plumbing' } } },
+    });
+    serviceProfileAPI.getRecommendations.mockResolvedValue({ success: true, data: { providers: [] } });
+    renderChatbot();
+
+    const input = screen.getByLabelText('Message SerbisyoToledo assistant');
+    fireEvent.change(input, { target: { value: 'I need a plumber' } });
+    fireEvent.keyDown(input, { key: 'Enter', code: 'Enter' });
+
+    expect(await screen.findByText(/no matching providers listed right now/i)).toBeInTheDocument();
   });
 });

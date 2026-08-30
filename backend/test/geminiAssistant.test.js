@@ -23,6 +23,23 @@ describe('Gemini assistant provider', () => {
     expect(generate).not.toHaveBeenCalled();
   });
 
+  it.each([
+    ['asks English users to describe a generic service need', 'Help me choose a service', 'en', /leaking pipe/i],
+    ['asks Cebuano users to describe a generic service need', 'Tabangi ko pagpili og serbisyo', 'ceb', /leaking nga tubo/i],
+    ['gives concrete booking steps', 'How do I book a service?', 'en', /Request Service/i],
+    ['explains provider verification accurately', 'What does Verified mean?', 'en', /reviewed and approved/i],
+  ])('%s', async (_name, message, locale, expectedReply) => {
+    const result = await generateAssistantReply({ message, locale });
+    expect(result.mode).toBe('fallback');
+    expect(result.reply).toMatch(expectedReply);
+    expect(result.action).toBeNull();
+  });
+
+  it('uses a discovery action only after recognizable service evidence is present', async () => {
+    const result = await generateAssistantReply({ message: 'I need a plumber', locale: 'en' });
+    expect(result).toMatchObject({ intent: 'service_discovery', action: { type: 'recommend_providers' } });
+  });
+
   it('reports configured Gemini capabilities without exposing its key', () => {
     process.env.AI_PROVIDER = 'gemini';
     process.env.AI_MODEL = 'gemini-test';
