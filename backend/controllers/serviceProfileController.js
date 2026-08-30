@@ -78,11 +78,14 @@ const ACTIVE_BOOKING_EXISTS_SQL = `
         sr_busy.status IN ('on_the_way', 'in_progress')
         OR (
           sr_busy.status = 'accepted'
-          AND sr_busy.start_date IS NOT NULL
-          AND sr_busy.end_date IS NOT NULL
           AND sr_busy.start_time IS NOT NULL
           AND sr_busy.estimated_duration_minutes IS NOT NULL
-          AND DATE(${TOLEDO_NOW_SQL}) BETWEEN sr_busy.start_date AND sr_busy.end_date
+          AND EXISTS (
+            SELECT 1
+            FROM service_request_dates srd_busy
+            WHERE srd_busy.service_request_id = sr_busy.id
+              AND srd_busy.service_date = DATE(${TOLEDO_NOW_SQL})
+          )
           AND TIME(${TOLEDO_NOW_SQL}) >= sr_busy.start_time
           AND TIME(${TOLEDO_NOW_SQL}) < ADDTIME(
             sr_busy.start_time,
