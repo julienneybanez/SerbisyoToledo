@@ -1143,23 +1143,33 @@ export const userProfileAPI = {
       body: formData,
     });
     const data = await handleResponse(response);
-    
-    // Update stored user data with new profile info
-    if (data.success && data.data) {
+
+    // Read the profile back from the server before showing success. This keeps
+    // the UI, local display cache, and persisted database values in sync.
+    if (data.success) {
+      const persistedResponse = await apiFetch(`${API_BASE_URL}/user/profile`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      const persisted = await handleResponse(persistedResponse);
+      const profile = persisted.data || data.data;
+
       const currentUser = getUser();
-      if (currentUser) {
+      if (currentUser && profile) {
         setUser({
           ...currentUser,
-          fullName: data.data.fullName,
-          phone: data.data.phone,
-          address: data.data.address,
-          bio: data.data.bio,
-          profileImage: data.data.profilePhoto
+          fullName: profile.fullName,
+          phone: profile.phone,
+          address: profile.address,
+          bio: profile.bio,
+          profileImage: profile.profilePhoto,
         });
         window.dispatchEvent(new Event('authChange'));
       }
+
+      return { ...data, data: profile };
     }
-    
+
     return data;
   },
 
