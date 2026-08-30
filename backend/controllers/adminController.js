@@ -38,7 +38,7 @@ exports.getDashboardStats = async (req, res) => {
 
     // Active reports
     const [activeReportsResult] = await db.query(
-      "SELECT COUNT(*) as count FROM user_reports WHERE status IN ('pending', 'under_review')"
+      "SELECT COUNT(*) as count FROM user_reports WHERE status IN ('pending', 'investigating')"
     );
     const activeReports = activeReportsResult[0].count;
 
@@ -254,8 +254,8 @@ exports.getVerificationRequests = async (req, res) => {
   try {
     const [rows] = await db.query(
       `SELECT vr.id, vr.user_id, vr.full_name, vr.phone_number, vr.address, vr.service_description,
-              vr.government_id_data, vr.government_id_mime,
-              vr.certifications_data, vr.certifications_mime,
+              (vr.government_id_data IS NOT NULL) AS has_government_id,
+              (vr.certifications_data IS NOT NULL) AS has_certifications,
               vr.status, vr.rejection_reason, vr.admin_notes, vr.created_at,
               u.email, u.profession
        FROM verification_requests vr
@@ -284,12 +284,8 @@ exports.getVerificationRequests = async (req, res) => {
       adminNotes: row.admin_notes,
       createdAt: row.created_at,
       documents: {
-        governmentId: row.government_id_data
-          ? `data:${row.government_id_mime || 'application/octet-stream'};base64,${Buffer.from(row.government_id_data).toString('base64')}`
-          : null,
-        certifications: row.certifications_data
-          ? `data:${row.certifications_mime || 'application/octet-stream'};base64,${Buffer.from(row.certifications_data).toString('base64')}`
-          : null,
+        hasGovernmentId: Boolean(row.has_government_id),
+        hasCertifications: Boolean(row.has_certifications),
       }
     }));
 
@@ -304,6 +300,44 @@ exports.getVerificationRequests = async (req, res) => {
       message: 'Failed to fetch verification requests',
       error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
+  }
+};
+
+exports.getVerificationDocument = async (req, res) => {
+  try {
+    const requestId = Number(req.params.id);
+    const documentType = String(req.params.documentType || '').toLowerCase();
+    const columns = documentType === 'government-id'
+      ? ['government_id_data', 'government_id_mime']
+      : documentType === 'certifications'
+        ? ['certifications_data', 'certifications_mime']
+        : null;
+
+    if (!requestId || !columns) {
+      return res.status(400).json({ success: false, message: 'Invalid verification document request' });
+    }
+
+    const [rows] = await db.query(
+      `SELECT ${columns[0]} AS document_data, ${columns[1]} AS document_mime
+       FROM verification_requests
+       WHERE id = ?
+       LIMIT 1`,
+      [requestId]
+    );
+    const document = rows[0];
+    if (!document || !document.document_data) {
+      return res.status(404).json({ success: false, message: 'Verification document not found' });
+    }
+
+    return res.json({
+      success: true,
+      data: {
+        dataUrl: `data:${document.document_mime || 'application/octet-stream'};base64,${Buffer.from(document.document_data).toString('base64')}`,
+      },
+    });
+  } catch (error) {
+    console.error('Error fetching verification document:', error);
+    return res.status(500).json({ success: false, message: 'Failed to fetch verification document' });
   }
 };
 
@@ -429,14 +463,16 @@ exports.getUserActivity = async (req, res) => {
     );
 
     const [recentRequests] = await db.query(
-      `SELECT id,
-              COALESCE(service_type_label, 'Service Request') AS service_label,
-              status,
-              start_date AS scheduled_date,
-              created_at
-       FROM service_requests
-       WHERE client_id = ? OR provider_id = ?
-       ORDER BY created_at DESC
+            `SELECT sr.id,
+              COALESCE(sr.service_type_label, 'Service Request') AS service_label,
+              sr.status,
+              MIN(srd.service_date) AS scheduled_date,
+              sr.created_at
+             FROM service_requests sr
+             LEFT JOIN service_request_dates srd ON srd.service_request_id = sr.id
+             WHERE sr.client_id = ? OR sr.provider_id = ?
+             GROUP BY sr.id, sr.service_type_label, sr.status, sr.created_at
+             ORDER BY sr.created_at DESC
        LIMIT 5`,
       [id, id]
     );

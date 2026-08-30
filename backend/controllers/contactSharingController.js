@@ -34,14 +34,14 @@ exports.getPhoneShareState = async (req, res) => {
 
     const otherId = counterpartId(request, userId);
     const [rows] = await db.query(
-      `SELECT id, requester_id, owner_user_id, status, requested_at, responded_at
+      `SELECT id, requester_user_id, owner_user_id, status, requested_at, responded_at
        FROM service_request_contact_shares
        WHERE service_request_id = ? AND contact_type = 'phone'
-         AND ((requester_id = ? AND owner_user_id = ?) OR (requester_id = ? AND owner_user_id = ?))`,
+        AND ((requester_user_id = ? AND owner_user_id = ?) OR (requester_user_id = ? AND owner_user_id = ?))`,
       [requestId, userId, otherId, otherId, userId]
     );
 
-    const requestedByMe = rows.find((row) => row.requester_id === userId) || null;
+    const requestedByMe = rows.find((row) => row.requester_user_id === userId) || null;
     const requestedFromMe = rows.find((row) => row.owner_user_id === userId) || null;
     let sharedPhone = null;
 
@@ -96,7 +96,7 @@ exports.requestPhoneShare = async (req, res) => {
     const ownerId = counterpartId(request, userId);
     const [existing] = await db.query(
       `SELECT id, status FROM service_request_contact_shares
-       WHERE service_request_id = ? AND requester_id = ? AND owner_user_id = ?
+      WHERE service_request_id = ? AND requester_user_id = ? AND owner_user_id = ?
          AND contact_type = 'phone'
        LIMIT 1`,
       [requestId, userId, ownerId]
@@ -119,7 +119,7 @@ exports.requestPhoneShare = async (req, res) => {
     } else {
       await db.query(
         `INSERT INTO service_request_contact_shares
-         (service_request_id, requester_id, owner_user_id, contact_type, status)
+         (service_request_id, requester_user_id, owner_user_id, contact_type, status)
          VALUES (?, ?, ?, 'phone', 'pending')`,
         [requestId, userId, ownerId]
       );
@@ -164,7 +164,7 @@ exports.respondToPhoneShare = async (req, res) => {
     const requesterId = counterpartId(request, ownerId);
     const [rows] = await db.query(
       `SELECT id, status FROM service_request_contact_shares
-       WHERE service_request_id = ? AND requester_id = ? AND owner_user_id = ?
+      WHERE service_request_id = ? AND requester_user_id = ? AND owner_user_id = ?
          AND contact_type = 'phone'
        LIMIT 1`,
       [requestId, requesterId, ownerId]

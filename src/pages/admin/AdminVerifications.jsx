@@ -134,19 +134,17 @@ function AdminVerifications({ mode = 'verifications' }) {
     return { kind: 'unknown', mime };
   };
 
-  const openDocumentPreview = (dataUrl, label) => {
-    if (!dataUrl) {
-      return;
+  const openDocumentPreview = async (requestId, documentType, label) => {
+    try {
+      const response = await adminAPI.getVerificationDocument(requestId, documentType);
+      const dataUrl = response.data?.dataUrl;
+      if (!dataUrl) return;
+      const { kind, mime } = getDocumentType(dataUrl);
+      setIsImageZoomed(false);
+      setDocumentPreview({ dataUrl, label, kind, mime });
+    } catch (err) {
+      setError(err.message || t('failedLoadVerificationRequests'));
     }
-
-    const { kind, mime } = getDocumentType(dataUrl);
-    setIsImageZoomed(false);
-    setDocumentPreview({
-      dataUrl,
-      label,
-      kind,
-      mime,
-    });
   };
 
   const closeDocumentPreview = () => {
@@ -387,23 +385,23 @@ function AdminVerifications({ mode = 'verifications' }) {
                 <div className="request-documents">
                   <button
                     className="btn-view-details"
-                    onClick={() => openDocumentPreview(request.documents?.governmentId, 'Government ID')}
-                    disabled={!request.documents?.governmentId}
+                    onClick={() => openDocumentPreview(request.id, 'government-id', 'Government ID')}
+                    disabled={!request.documents?.hasGovernmentId}
                     aria-label={t('adminPreviewGovernmentIdDocument')}
                   >
                     {t('adminViewGovernmentId')}
                   </button>
                   <button
                     className="btn-view-details"
-                    onClick={() => openDocumentPreview(request.documents?.certifications, 'Certifications')}
-                    disabled={!request.documents?.certifications}
+                    onClick={() => openDocumentPreview(request.id, 'certifications', 'Certifications')}
+                    disabled={!request.documents?.hasCertifications}
                     aria-label={t('adminPreviewCertificationsDocument')}
                   >
                     {t('adminViewCertifications')}
                   </button>
                 </div>
 
-                {!request.documents?.governmentId && !request.documents?.certifications && (
+                {!request.documents?.hasGovernmentId && !request.documents?.hasCertifications && (
                   <p className="request-detail">{t('adminNoDocumentSubmitted')}</p>
                 )}
               </div>
@@ -429,8 +427,8 @@ function AdminVerifications({ mode = 'verifications' }) {
                 ) : (
                   <button
                     className="btn-view-details"
-                    onClick={() => openDocumentPreview(request.documents?.governmentId || request.documents?.certifications, 'Verification Document')}
-                    disabled={!request.documents?.governmentId && !request.documents?.certifications}
+                    onClick={() => openDocumentPreview(request.id, request.documents?.hasGovernmentId ? 'government-id' : 'certifications', 'Verification Document')}
+                    disabled={!request.documents?.hasGovernmentId && !request.documents?.hasCertifications}
                     aria-label={t('adminPreviewVerificationDocument')}
                   >
                     {t('viewDetails')}

@@ -27,6 +27,16 @@ const {
 
 const SUPPORTED_LANGUAGE_CODES = new Set(['ceb', 'en', 'fil']);
 const SUPPORTED_AVAILABILITY_STATUSES = new Set(['available', 'unavailable']);
+const CREDENTIAL_TYPES = new Set([
+  'professional_license',
+  'tesda_certification',
+  'safety_training',
+  'technical_certification',
+  'government_accreditation',
+  'manufacturer_certification',
+  'training_certificate',
+  'other',
+]);
 const PRESENCE_WINDOW_MINUTES = 5;
 
 const parseMaybeJsonArray = (value) => {
@@ -52,14 +62,15 @@ const toCount = (value) => {
   const number = Number(value);
   return Number.isFinite(number) && number >= 0 ? number : 0;
 };
+const parseBoolean = (value) => value === true || value === 1 || value === '1' || value === 'true';
 const REVIEW_STATS_JOIN = `
   LEFT JOIN (
-    SELECT
-      service_profile_id,
+    SELECT sr.service_profile_id,
       ROUND(AVG(rating), 1) AS rating,
       COUNT(*) AS reviews_count
-    FROM reviews
-    GROUP BY service_profile_id
+    FROM reviews r
+    JOIN service_requests sr ON sr.id = r.service_request_id
+    GROUP BY sr.service_profile_id
   ) review_stats ON review_stats.service_profile_id = sp.id
 `;
 
@@ -2248,10 +2259,12 @@ exports.updateCompletedPortfolioItemImage = async (req, res) => {
     }
 
     const [items] = await db.query(
-      `SELECT pi.id, pi.image_public_id, pi.completed_through_platform
+      `SELECT pi.id, pi.image_public_id
        FROM portfolio_items pi
-       JOIN service_profiles sp ON sp.id = pi.service_profile_id
-       WHERE pi.id = ? AND sp.user_id = ?
+       JOIN service_requests sr ON sr.id = pi.service_request_id
+       WHERE pi.id = ?
+         AND sr.provider_id = ?
+         AND sr.status = 'completed'
        LIMIT 1`,
       [portfolioItemId, userId]
     );
@@ -2260,13 +2273,6 @@ exports.updateCompletedPortfolioItemImage = async (req, res) => {
       return res.status(404).json({
         success: false,
         message: 'Portfolio item not found or not authorized'
-      });
-    }
-
-    if (!items[0].completed_through_platform) {
-      return res.status(409).json({
-        success: false,
-        message: 'This photo action is only for completed-job portfolio entries'
       });
     }
 
@@ -2365,6 +2371,35 @@ exports.createCredential = async (req, res) => {
     const serviceProfileId = profiles[0].id;
     const payload = req.body;
     const relatedSkills = Array.isArray(payload.relatedSkills) ? payload.relatedSkills : [];
+    const credentialName = String(payload.credentialName || '').trim();
+    const credentialType = String(payload.credentialType || '').trim();
+    const issuingOrganization = String(payload.issuingOrganization || '').trim();
+    const credentialId = String(payload.credentialId || '').trim();
+    const credentialUrl = String(payload.credentialUrl || '').trim();
+    const doesNotExpire = parseBoolean(payload.doesNotExpire);
+    const issueDate = payload.issueDate || null;
+    const expirationDate = doesNotExpire ? null : (payload.expirationDate || null);
+
+    if (!credentialName || credentialName.length > 255 || !CREDENTIAL_TYPES.has(credentialType)) {
+      return res.status(400).json({ success: false, message: 'A valid credential name and type are required' });
+    }
+    if (issuingOrganization.length > 255 || credentialId.length > 120 || credentialUrl.length > 500) {
+      return res.status(400).json({ success: false, message: 'Credential details exceed the allowed length' });
+    }
+    if ((issueDate && !parseDateOnly(issueDate)) || (expirationDate && !parseDateOnly(expirationDate))) {
+      return res.status(400).json({ success: false, message: 'Credential dates must use YYYY-MM-DD format' });
+    }
+    if (issueDate && expirationDate && expirationDate < issueDate) {
+      return res.status(400).json({ success: false, message: 'Expiration date cannot be before issue date' });
+    }
+    if (credentialUrl) {
+      try {
+        const parsedUrl = new URL(credentialUrl);
+        if (!['http:', 'https:'].includes(parsedUrl.protocol)) throw new Error('invalid_protocol');
+      } catch {
+        return res.status(400).json({ success: false, message: 'Credential URL must be a valid HTTP or HTTPS URL' });
+      }
+    }
 
     let documentUrl = null;
     let documentPublicId = null;
@@ -2404,14 +2439,14 @@ exports.createCredential = async (req, res) => {
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'unverified', NULL)`,
       [
         serviceProfileId,
-        String(payload.credentialName || '').trim(),
-        String(payload.credentialType || '').trim(),
-        String(payload.issuingOrganization || '').trim(),
-        String(payload.credentialId || '').trim() || null,
-        payload.issueDate || null,
-        payload.doesNotExpire ? null : (payload.expirationDate || null),
-        Boolean(payload.doesNotExpire),
-        String(payload.credentialUrl || '').trim() || null,
+        credentialName,
+        credentialType,
+        issuingOrganization || null,
+        credentialId || null,
+        issueDate,
+        expirationDate,
+        doesNotExpire,
+        credentialUrl || null,
         JSON.stringify(relatedSkills),
         documentUrl,
         documentPublicId,

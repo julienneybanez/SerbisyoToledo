@@ -4,6 +4,18 @@ const dotenv = require('dotenv');
 dotenv.config();
 
 const getPoolConfig = () => {
+  if (process.env.CANONICAL_INTEGRATION_TEST === '1') {
+    return {
+      socketPath: process.env.CANONICAL_TEST_DB_SOCKET || '\\\\.\\pipe\\serbisyo_canonical_test',
+      user: process.env.CANONICAL_TEST_DB_USER || 'root',
+      password: process.env.CANONICAL_TEST_DB_PASSWORD || '',
+      database: process.env.CANONICAL_TEST_DB_NAME || 'serbisyotoledo_canonical_test',
+      waitForConnections: true,
+      connectionLimit: 4,
+      queueLimit: 0,
+    };
+  }
+
   const databaseUrl = process.env.DATABASE_URL || process.env.MYSQL_URL || process.env.DB_URL;
 
   if (databaseUrl) {

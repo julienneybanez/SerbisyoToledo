@@ -66,7 +66,7 @@ describe('Canonical Request Lifecycle Hardening', () => {
         return [[{ table_count: 1 }]];
       }
       if (sql.includes('FROM service_profiles sp')) {
-        return [[{ service_profile_id: 7, provider_id: PROVIDER_ID, is_published: 1, user_type: 'tradesperson', is_active: 1 }]];
+        return [[{ service_profile_id: 7, provider_id: PROVIDER_ID, is_published: 1, user_type: 'tradesperson', is_active: 1, is_verified: 1 }]];
       }
       if (sql.includes('SELECT category_key FROM service_profile_categories')) {
         return [[{ category_key: 'plumbing' }]];
@@ -77,7 +77,7 @@ describe('Canonical Request Lifecycle Hardening', () => {
       if (sql.includes('FROM provider_availability_settings')) {
         return [[{ availability_status: 'available' }]];
       }
-      if (sql.includes('FROM provider_weekly_availability')) {
+      if (sql.includes('FROM provider_available_slots')) {
         return [[{ start_time: '08:00:00', end_time: '18:00:00', is_available: 1 }]];
       }
       if (sql.includes('FROM service_requests sr') && sql.includes('service_date')) {
@@ -116,7 +116,7 @@ describe('Canonical Request Lifecycle Hardening', () => {
 
     const conn = createConnectionMock(async (sql) => {
       if (sql.includes('FROM service_profiles sp')) {
-        return [[{ service_profile_id: 7, provider_id: PROVIDER_ID, is_published: 1, user_type: 'tradesperson', is_active: 1 }]];
+        return [[{ service_profile_id: 7, provider_id: PROVIDER_ID, is_published: 1, user_type: 'tradesperson', is_active: 1, is_verified: 1 }]];
       }
       if (sql.includes('SELECT category_key FROM service_profile_categories')) {
         return [[{ category_key: 'plumbing' }]];

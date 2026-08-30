@@ -110,18 +110,6 @@ const timeRangesOverlap = (existingStartMinutes, existingEndMinutes, requestedSt
   return existingStartMinutes < requestedEndMinutes && existingEndMinutes > requestedStartMinutes;
 };
 
-const getDurationMinutesFromScheduledTimestamps = (startValue, endValue) => {
-  const start = startValue instanceof Date ? startValue : new Date(startValue);
-  const end = endValue instanceof Date ? endValue : new Date(endValue);
-
-  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
-    return 0;
-  }
-
-  const diffMinutes = Math.round((end.getTime() - start.getTime()) / (60 * 1000));
-  return diffMinutes > 0 ? diffMinutes : 0;
-};
-
 const getEffectiveBookingDurationMinutes = (row = {}) => {
   // A multi-day request repeats the same service duration on each selected date.
   // Never infer a per-day duration from scheduled_start_at -> scheduled_end_at,
@@ -131,8 +119,7 @@ const getEffectiveBookingDurationMinutes = (row = {}) => {
     return fromEstimate;
   }
 
-  const fromTimestamps = getDurationMinutesFromScheduledTimestamps(row.scheduled_start_at, row.scheduled_end_at);
-  return fromTimestamps > 0 ? fromTimestamps : 0;
+  return 0;
 };
 
 const ensureAvailabilitySchema = async (connection) => {
@@ -223,37 +210,16 @@ const ensureAvailabilitySettings = async (connection, serviceProfileId) => {
 };
 
 const getConfirmedBookingsForDate = async (connection, providerId, dateString, excludeRequestId = null) => {
-  const exactDateStorage = await supportsRequestDatesTable(connection);
   const params = [providerId, dateString, ...BLOCKING_STATUSES];
-
-  let sql;
-
-  if (exactDateStorage) {
-    sql = `
+  let sql = `
       SELECT sr.id,
              sr.start_time,
-             sr.estimated_duration_minutes,
-             sr.scheduled_start_at,
-             sr.scheduled_end_at
+             sr.estimated_duration_minutes
       FROM service_requests sr
       JOIN service_request_dates srd ON srd.service_request_id = sr.id
       WHERE sr.provider_id = ?
         AND srd.service_date = ?
         AND sr.status IN (?, ?, ?)`;
-  } else {
-    params.splice(2, 0, dateString);
-    sql = `
-      SELECT sr.id,
-             sr.start_time,
-             sr.estimated_duration_minutes,
-             sr.scheduled_start_at,
-             sr.scheduled_end_at
-      FROM service_requests sr
-      WHERE sr.provider_id = ?
-        AND COALESCE(sr.start_date, DATE(sr.scheduled_start_at)) <= ?
-        AND COALESCE(sr.end_date, DATE(sr.scheduled_end_at)) >= ?
-        AND sr.status IN (?, ?, ?)`;
-  }
 
   if (excludeRequestId != null) {
     sql += ' AND sr.id <> ?';
@@ -266,20 +232,7 @@ const getConfirmedBookingsForDate = async (connection, providerId, dateString, e
 
 const getBookingRowStartTime = (row = {}) => {
   const explicit = parseTimeInputToSql(row.start_time);
-  if (explicit) return explicit;
-
-  if (row.scheduled_start_at instanceof Date) {
-    const hh = String(row.scheduled_start_at.getUTCHours()).padStart(2, '0');
-    const mm = String(row.scheduled_start_at.getUTCMinutes()).padStart(2, '0');
-    const ss = String(row.scheduled_start_at.getUTCSeconds()).padStart(2, '0');
-    return `${hh}:${mm}:${ss}`;
-  }
-
-  if (typeof row.scheduled_start_at === 'string' && row.scheduled_start_at.length >= 16) {
-    return parseTimeInputToSql(row.scheduled_start_at.slice(11, 19));
-  }
-
-  return null;
+  return explicit || null;
 };
 
 const getAvailabilityWindowsForDate = async (connection, serviceProfileId, dateString) => {

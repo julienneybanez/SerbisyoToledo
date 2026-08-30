@@ -70,8 +70,7 @@ function AdminDashboard() {
   const getStatusClass = (status) => {
     switch ((status || '').toLowerCase()) {
       case 'pending': return 'status-pending';
-      case 'under_review': return 'status-review';
-      case 'under review': return 'status-review';
+      case 'investigating': return 'status-review';
       case 'resolved': return 'status-resolved';
       default: return '';
     }

@@ -110,6 +110,7 @@ describe('Backend Security Hardening', () => {
           is_published: 1, 
           user_type: 'tradesperson', 
           is_active: 1,
+          is_verified: 1,
           service_types: JSON.stringify(['leak_repair']),
           service_categories: JSON.stringify(['Plumbing'])
         }]];
@@ -123,8 +124,16 @@ describe('Backend Security Hardening', () => {
       if (sql.includes('SELECT service_type_key FROM service_profile_types')) {
         return [[{ service_type_key: 'leak_repair' }]];
       }
-      if (sql.includes('SELECT availability_status FROM provider_availability_settings')) {
-        return [[{ availability_status: 'available' }]];
+      if (sql.includes('FROM provider_availability_settings')) {
+        return [[{
+          availability_status: 'available',
+          allow_same_day_booking: 1,
+          min_advance_notice_minutes: 0,
+          max_advance_booking_days: 36500,
+        }]];
+      }
+      if (sql.includes('FROM provider_available_slots')) {
+        return [[{ start_time: '08:00:00', end_time: '18:00:00' }]];
       }
       if (sql.includes('SELECT id FROM service_requests WHERE client_id')) {
         return [[]];  // No duplicate requests
@@ -201,7 +210,7 @@ describe('Backend Security Hardening', () => {
 
     const conn = createConnectionMock(async (sql) => {
       if (sql.includes('FROM service_profiles sp')) {
-        return [[{ service_profile_id: 7, provider_id: 21, is_published: 1, user_type: 'tradesperson', is_active: 1 }]];
+        return [[{ service_profile_id: 7, provider_id: 21, is_published: 1, user_type: 'tradesperson', is_active: 1, is_verified: 1 }]];
       }
       return [[]];
     });
@@ -689,6 +698,7 @@ describe('Backend Security Hardening', () => {
           is_published: 1,
           user_type: 'tradesperson',
           is_active: 1,
+          is_verified: 1,
         }]];
       }
       return [[]];
