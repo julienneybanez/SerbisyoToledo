@@ -5,16 +5,20 @@ const SUPPORTED_LOCALES = new Set(['en', 'ceb']);
 const SUPPORTED_FILTER_LANGUAGES = new Set(['en', 'ceb', 'fil']);
 const SUPPORTED_INTENTS = new Set(['general', 'about_platform', 'help', 'booking_help', 'availability_help', 'provider_onboarding', 'service_discovery']);
 const CATEGORY_INFERENCE_RULES = [
-  { key: 'plumbing', pattern: /\b(plumbing|plumber|tubero)\b/i },
-  { key: 'electrical', pattern: /\b(electrical|electrician|elektrisyan)\b/i },
+  { key: 'plumbing', pattern: /\b(plumbing|plumber|tubero|leaking pipe|leaking.*sink)\b/i },
+  { key: 'electrical', pattern: /\b(electrical|electrician|elektrisyan|electrical problem|problema sa kuryente)\b/i },
   { key: 'carpentry', pattern: /\b(carpentry|carpenter|karpintero)\b/i },
   { key: 'cleaning', pattern: /\b(cleaning|cleaner|limpyo|pagpanglimpyo)\b/i },
   { key: 'gardening_landscaping', pattern: /\b(gardening|gardener|landscaping)\b/i },
+  { key: 'appliance_repair', pattern: /\b(appliance repair|refrigerator repair|fridge repair|washing machine repair|electric fan repair|broken appliance|guba nga appliance)\b/i },
   { key: 'aircon_refrigeration', pattern: /\b(aircon|air conditioning|refrigeration)\b/i },
   { key: 'laundry', pattern: /\blaundry\b/i },
   { key: 'locksmith', pattern: /\blocksmith\b/i },
-  { key: 'beauty_wellness', pattern: /\b(massage|hilot)\b/i },
-  { key: 'tech_repair', pattern: /\b(computer repair|laptop repair|phone repair|tech repair)\b/i },
+  { key: 'beauty_wellness', pattern: /\b(massage|hilot|barber|hair service|nail service|makeup service)\b/i },
+  { key: 'painting', pattern: /\b(painter|painting|pintor)\b/i },
+  { key: 'masonry_minor_construction', pattern: /\b(masonry|mason|tiling|concrete work|minor construction)\b/i },
+  { key: 'welding_metalwork', pattern: /\b(welding|welder|metalwork)\b/i },
+  { key: 'tech_repair', pattern: /\b(computer repair|laptop repair|phone repair|mobile repair|tech repair|electronics repair)\b/i },
 ];
 let geminiAdapterFactory = createGeminiAdapter;
 
@@ -55,11 +59,26 @@ const inferCategoryFromText = (...values) => {
   return match ? getCategoryByKey(match.key)?.label || null : null;
 };
 
-const normalizeAiResult = (value, { message = '' } = {}) => {
+const isGenericServiceHelpRequest = (message) => {
+  const text = String(message || '');
+  const genericHelp = /help me choose (the right |a )?service|find (another )?service|find a service|don't know what service i need|tabangi ko pagpili( sa)? hustong serbisyo|tabangi ko pagpili og serbisyo|pagpangita og laing serbisyo/i;
+  return genericHelp.test(text) && !inferCategoryFromText(text);
+};
+
+const getServiceHelpClarification = (locale) => ({
+  reply: locale === 'ceb'
+    ? 'Sige. Isulti unsay problema o unsay kinahanglan nimong ipa-service, pananglitan leaking nga tubo, problema sa kuryente, guba nga appliance, o pagpanglimpyo sa balay. Tabangan tika pagpili sa hustong serbisyo.'
+    : 'Sure. Tell me what problem you need help with, for example a leaking pipe, electrical problem, broken appliance, house cleaning, or something else. I will help you identify the right type of service.',
+  action: null,
+  intent: 'help',
+});
+
+const normalizeAiResult = (value, { message = '', locale = 'en' } = {}) => {
   if (!value || typeof value !== 'object') throw new Error('malformed_output');
   const reply = stringOrNull(value.reply, 1200);
   const intent = SUPPORTED_INTENTS.has(value.intent) ? value.intent : 'general';
   if (!reply) throw new Error('malformed_output');
+  if (isGenericServiceHelpRequest(message)) return getServiceHelpClarification(normalizeLocale(locale));
   if (!value.action) return { reply, intent, action: null };
   if (value.action.type !== 'recommend_providers' || typeof value.action !== 'object') {
     return { reply, intent, action: null };
@@ -97,14 +116,8 @@ const getFallbackReply = ({ message, locale }) => {
   const input = String(message || '').trim().toLowerCase();
   const isCebuano = locale === 'ceb';
 
-  if (/help me choose (the right |a )?service|find (another )?service|find a service|don't know what service i need|tabangi ko pagpili( sa)? hustong serbisyo|tabangi ko pagpili og serbisyo|pagpangita og laing serbisyo/.test(input)) {
-    return {
-      reply: isCebuano
-        ? 'Sige. Isulti unsay problema o unsay kinahanglan nimong ipa-service, pananglitan leaking nga tubo, problema sa kuryente, guba nga appliance, o pagpanglimpyo sa balay. Tabangan tika pagpili sa hustong serbisyo.'
-        : 'Sure. Tell me what problem you need help with, for example a leaking pipe, electrical problem, broken appliance, house cleaning, or something else. I will help you identify the right type of service.',
-      action: null,
-      intent: 'help',
-    };
+  if (isGenericServiceHelpRequest(message)) {
+    return getServiceHelpClarification(locale);
   }
 
   if (/what should i check before (choosing a provider|booking)|unsay angay nakong (tan-awon before mopili og provider|i-check before mag-book)/.test(input)) {
@@ -207,9 +220,9 @@ const getFallbackReply = ({ message, locale }) => {
     };
   }
 
-  const recommendationIntent = /find|looking for|recommend|need|provider near|service near|plumb|tubero|electric|elektrisyan|carpent|karpintero|clean|limpyo|massage|aircon|garden|laundry|repair|mechanic|locksmith|pangita|kinahanglan.*serbisyo/.test(input);
+  const inferredCategory = inferCategoryFromText(message);
 
-  if (recommendationIntent) {
+  if (inferredCategory) {
     return {
       reply: isCebuano
         ? 'Makatabang ko pagpangita og service provider. Isulti ang serbisyo, lugar, o budget aron mas tukma ang recommendations.'
@@ -217,6 +230,7 @@ const getFallbackReply = ({ message, locale }) => {
       action: {
         type: 'recommend_providers',
         query: String(message || '').trim(),
+        filters: { category: inferredCategory },
       },
       intent: 'service_discovery',
     };
@@ -240,7 +254,7 @@ const generateAssistantReply = async ({ message, locale = 'en', context = {}, hi
       const adapter = geminiAdapterFactory({ apiKey: process.env.AI_API_KEY, model: config.model });
       const result = normalizeAiResult(
         await adapter.generate({ message, locale: normalizedLocale, context: getContextAccepted(context, history), history }),
-        { message }
+        { message, locale: normalizedLocale }
       );
       return { mode: 'ai', providerConfigured: true, ...result, locale: normalizedLocale, contextAccepted: getContextAccepted(context, history) };
     } catch (error) {
@@ -263,6 +277,7 @@ module.exports = {
   normalizeLocale,
   normalizeAiResult,
   inferCategoryFromText,
+  isGenericServiceHelpRequest,
   setGeminiAdapterFactoryForTests: (factory) => {
     geminiAdapterFactory = factory || createGeminiAdapter;
   },

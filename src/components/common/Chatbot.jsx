@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { assistantAPI, serviceProfileAPI } from '../../services/api';
 import { useLanguage } from '../../context/LanguageContext';
+import { buildRecommendationFilters } from '../../utils/chatbotRecommendations';
 import './Chatbot.css';
 
 const RobotIcon = () => (
@@ -42,24 +43,6 @@ const getPricingUnitLabel = (unit, t) => {
   if (normalized === 'per_job') return t('pricingPerJob');
   return t('pricingPerDay');
 };
-
-const SERVICE_KEYWORDS = [
-  { keyword: 'plumb', category: 'Plumbing' },
-  { keyword: 'tubero', category: 'Plumbing' },
-  { keyword: 'electric', category: 'Electrical' },
-  { keyword: 'elektrisyan', category: 'Electrical' },
-  { keyword: 'carpent', category: 'Carpentry' },
-  { keyword: 'karpintero', category: 'Carpentry' },
-  { keyword: 'clean', category: 'Cleaning' },
-  { keyword: 'limpyo', category: 'Cleaning' },
-  { keyword: 'garden', category: 'Gardening & Landscaping' },
-  { keyword: 'aircon', category: 'Aircon & Refrigeration' },
-  { keyword: 'massage', category: 'Beauty & Wellness' },
-  { keyword: 'laundry', category: 'Laundry' },
-  { keyword: 'mechanic', category: 'Tech Repair' },
-  { keyword: 'repair', category: 'Tech Repair' },
-  { keyword: 'locksmith', category: 'Locksmith' },
-];
 
 const ALLOWED_RECOMMENDATION_CATEGORIES = new Set([
   'Carpentry',
@@ -109,50 +92,6 @@ const getChatbotSuggestions = ({ route, t }) => {
     { emoji: '📅', text: t('chatbotSuggestionHomeBooking') },
     { emoji: '🛡️', text: t('chatbotSuggestionHomeVerified') },
   ];
-};
-
-const buildRecommendationFilters = (rawInput, locale) => {
-  const input = String(rawInput || '').toLowerCase();
-  const serviceMatch = SERVICE_KEYWORDS.find((item) => input.includes(item.keyword));
-  const category = serviceMatch?.category;
-
-  const locationMatch = input.match(/(?:in|near|around|sa|duol sa)\s+([a-z\s.-]{3,40})/i);
-  const location = locationMatch ? locationMatch[1].trim() : undefined;
-
-  const budgetMatch = input.match(/(?:under|below|max|budget|hangtod)\s*(?:p|php|₱)?\s*(\d{3,6})/i);
-  const maxPrice = budgetMatch ? Number(budgetMatch[1]) : undefined;
-
-  const ratingMatch = input.match(/(\d(?:\.\d)?)\s*(?:\+)?\s*(?:stars?|rating)/i);
-  const minRating = ratingMatch ? Number(ratingMatch[1]) : undefined;
-
-  const requestedLanguage = input.includes('cebuano') || input.includes('bisaya')
-    ? 'ceb'
-    : input.includes('filipino') || input.includes('tagalog')
-      ? 'fil'
-      : input.includes('english')
-        ? 'en'
-        : undefined;
-
-  let availabilityDate;
-  const now = new Date();
-  if (input.includes('tomorrow') || input.includes('ugma')) {
-    const tomorrow = new Date(now);
-    tomorrow.setDate(now.getDate() + 1);
-    availabilityDate = tomorrow.toISOString().slice(0, 10);
-  } else if (input.includes('today') || input.includes('karon')) {
-    availabilityDate = now.toISOString().slice(0, 10);
-  }
-
-  return {
-    category,
-    location,
-    maxPrice,
-    minRating,
-    language: requestedLanguage || (locale === 'ceb' ? undefined : requestedLanguage),
-    availabilityDate,
-    search: rawInput,
-    limit: 3,
-  };
 };
 
 const buildStructuredRecommendationFilters = (filters, rawInput, locale) => {

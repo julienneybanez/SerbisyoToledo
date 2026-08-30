@@ -5,6 +5,7 @@ import ProtectedRoute, { RoleAwarePublicRoute } from '../ProtectedRoute';
 import Chatbot from '../Chatbot';
 import { LanguageProvider } from '../../../context/LanguageContext';
 import { assistantAPI, getUser, isAuthenticated, serviceProfileAPI } from '../../../services/api';
+import { buildRecommendationFilters } from '../../../utils/chatbotRecommendations';
 
 vi.mock('../../../services/api', () => ({
   getUser: vi.fn(),
@@ -191,6 +192,32 @@ describe('Chatbot', () => {
 
     expect(await screen.findByText('Mario Helper')).toBeInTheDocument();
     expect(screen.getByText('P450 / hour')).toBeInTheDocument();
+  });
+
+  it('keeps fallback discovery search unset after extracting category and location', async () => {
+    assistantAPI.sendMessage.mockResolvedValue({
+      success: true,
+      data: { reply: 'I can help.', action: { type: 'recommend_providers', query: 'I need a plumber near Poblacion' } },
+    });
+    serviceProfileAPI.getRecommendations.mockResolvedValue({ success: true, data: { providers: [] } });
+    renderChatbot();
+
+    const input = screen.getByLabelText('Message SerbisyoToledo assistant');
+    fireEvent.change(input, { target: { value: 'I need a plumber near Poblacion' } });
+    fireEvent.keyDown(input, { key: 'Enter', code: 'Enter' });
+
+    await waitFor(() => expect(serviceProfileAPI.getRecommendations).toHaveBeenCalledTimes(1));
+    expect(serviceProfileAPI.getRecommendations).toHaveBeenCalledWith(expect.objectContaining({
+      category: 'Plumbing',
+      location: 'Poblacion',
+      search: undefined,
+    }));
+  });
+
+  it('does not treat generic repair or mechanic as Tech Repair fallback evidence', () => {
+    expect(buildRecommendationFilters('I need someone to repair something', 'en').category).toBeUndefined();
+    expect(buildRecommendationFilters('I need a mechanic', 'en').category).toBeUndefined();
+    expect(buildRecommendationFilters('I need phone repair', 'en').category).toBe('Tech Repair');
   });
 
   it('automatically scrolls to the latest message after a reply', async () => {
