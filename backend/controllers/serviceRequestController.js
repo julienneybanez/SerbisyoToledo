@@ -12,6 +12,7 @@ const {
   normalizeBookingDates,
   isScheduleAvailableForDates,
 } = require('../utils/bookingAvailability');
+const cloudinaryService = require('../utils/cloudinaryService');
 
 const MAX_JOB_DETAILS_LENGTH = 2000;
 const MAX_DECLINE_REASON_LENGTH = 500;
@@ -49,7 +50,8 @@ const getProviderProfile = async (connection, serviceProfileId) => {
       sp.starting_price,
       sp.is_published,
       u.user_type,
-      u.is_active
+      u.is_active,
+      u.is_verified
      FROM service_profiles sp
      JOIN users u ON u.id = sp.user_id
      WHERE sp.id = ?
@@ -366,7 +368,7 @@ exports.createRequest = async (req, res) => {
       });
     }
 
-    if (profile.user_type !== 'tradesperson' || !profile.is_active) {
+    if (profile.user_type !== 'tradesperson' || !profile.is_active || !profile.is_verified) {
       await connection.rollback();
       return res.status(400).json({
         success: false,
@@ -477,6 +479,22 @@ exports.createRequest = async (req, res) => {
           },
         });
       }
+    }
+
+    const availability = await isScheduleAvailableForDates(connection, {
+      serviceProfileId: profile.service_profile_id,
+      providerId: profile.provider_id,
+      dates: normalized.normalizedDates,
+      startTime: normalized.normalizedStartTime,
+      durationMinutes: normalized.normalizedDurationMinutes,
+    });
+
+    if (!availability.available) {
+      await connection.rollback();
+      return res.status(409).json({
+        success: false,
+        message: 'This schedule is no longer available. Please choose another available time.',
+      });
     }
 
     const conflict = await checkScheduleConflictForDates(connection, {
@@ -610,10 +628,10 @@ exports.getClientRequests = async (req, res) => {
     const clientId = req.user.userId;
 
     const [requests] = await db.query(
-      `SELECT sr.*, 
-              sp.full_name as provider_name, 
+      `SELECT sr.*,
+              u.full_name as provider_name,
               sp.barangay_address as provider_location,
-              (SELECT COUNT(*) FROM reviews rv WHERE rv.service_request_id = sr.id AND rv.client_id = sr.client_id) as has_review
+              (SELECT COUNT(*) FROM reviews rv WHERE rv.service_request_id = sr.id) as has_review
        FROM service_requests sr
        JOIN service_profiles sp ON sr.service_profile_id = sp.id
        JOIN users u ON sr.provider_id = u.id
@@ -651,7 +669,7 @@ exports.getProviderRequests = async (req, res) => {
     const providerId = req.user.userId;
 
     const [requests] = await db.query(
-      `SELECT sr.*, 
+      `SELECT sr.*,
               u.full_name as client_name
        FROM service_requests sr
        JOIN users u ON sr.client_id = u.id
@@ -1528,8 +1546,8 @@ exports.getRequestById = async (req, res) => {
     const userId = req.user.userId;
 
     const [requests] = await db.query(
-      `SELECT sr.*, 
-              sp.full_name as provider_name,
+          `SELECT sr.*,
+              u.full_name as provider_name,
               sp.barangay_address as provider_location,
               c.full_name as client_name
        FROM service_requests sr
@@ -1592,10 +1610,10 @@ exports.createReview = async (req, res) => {
     const { rating, comment } = req.body;
     const trimmedComment = String(comment || '').trim();
 
-    if (!rating || rating < 0.5 || rating > 5 || (rating * 2) % 1 !== 0) {
+    if (!rating || rating < 1 || rating > 5 || (rating * 2) % 1 !== 0) {
       return res.status(400).json({
         success: false,
-        message: 'Rating must be between 0.5 and 5, in half-star increments'
+        message: 'Rating must be between 1 and 5, in half-star increments'
       });
     }
 
@@ -1721,21 +1739,38 @@ exports.createReport = async (req, res) => {
     }
 
     const screenshotFile = req.file;
+    let uploadedScreenshot = null;
+    if (screenshotFile) {
+      if (!cloudinaryService.hasCloudinaryConfig()) {
+        return res.status(503).json({ success: false, message: 'Screenshot upload is temporarily unavailable' });
+      }
+      uploadedScreenshot = await cloudinaryService.uploadImageBuffer({
+        buffer: screenshotFile.buffer,
+        mimeType: screenshotFile.mimetype,
+        folder: 'serbisyo-toledo/reports',
+      });
+    }
 
-    await db.query(
+    try {
+      await db.query(
       `INSERT INTO user_reports
-       (request_id, reporter_id, reported_user_id, reason, description, screenshot_data, screenshot_mime, status, priority)
-       VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', 'medium')`,
+       (request_id, reporter_id, reported_user_id, reason, description, screenshot_url, status)
+       VALUES (?, ?, ?, ?, ?, ?, 'pending')`,
       [
         requestId,
         reporterId,
         reportedIdNum,
         reason,
         description,
-        screenshotFile ? screenshotFile.buffer : null,
-        screenshotFile ? (screenshotFile.mimetype || 'application/octet-stream') : null,
+        uploadedScreenshot?.secure_url || null,
       ]
-    );
+      );
+    } catch (error) {
+      if (uploadedScreenshot?.public_id) {
+        await cloudinaryService.deleteImageByPublicId(uploadedScreenshot.public_id);
+      }
+      throw error;
+    }
 
     res.status(201).json({
       success: true,

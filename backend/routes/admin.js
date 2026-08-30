@@ -25,6 +25,9 @@ router.get('/users/:id/activity', adminController.getUserActivity);
 // GET /api/admin/verification-requests - Get verification requests
 router.get('/verification-requests', adminController.getVerificationRequests);
 
+// GET /api/admin/verification-requests/:id/documents/:documentType - Get one sensitive verification document
+router.get('/verification-requests/:id/documents/:documentType', adminController.getVerificationDocument);
+
 // PATCH /api/admin/verification-requests/:id - Approve/reject verification request
 router.patch('/verification-requests/:id', adminController.reviewVerificationRequest);
 

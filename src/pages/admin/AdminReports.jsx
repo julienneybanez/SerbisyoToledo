@@ -133,7 +133,7 @@ function AdminReports() {
   });
 
   const pendingCount = reports.filter((r) => r.status === 'pending').length;
-  const reviewCount = reports.filter((r) => r.status === 'under_review').length;
+  const reviewCount = reports.filter((r) => r.status === 'investigating').length;
   const resolvedCount = reports.filter((r) => ['resolved', 'dismissed'].includes(r.status)).length;
 
   return (
@@ -179,7 +179,7 @@ function AdminReports() {
           <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} aria-label={t('adminFilterReportsByStatus')}>
             <option value="all">{t('allStatuses')}</option>
             <option value="pending">{t('pending')}</option>
-            <option value="under_review">{t('adminUnderReview')}</option>
+            <option value="investigating">{t('adminUnderReview')}</option>
             <option value="dismissed">{t('adminDismissed')}</option>
             <option value="resolved">{t('adminResolved')}</option>
           </select>
@@ -204,7 +204,7 @@ function AdminReports() {
                 <div className="request-header">
                   <h4 className="request-name">{report.reportedUser}</h4>
                   <span className="document-tag">{report.reportedUserType}</span>
-                  <span className={`status-badge ${report.status === 'pending' ? 'status-pending' : report.status === 'under_review' ? 'status-review' : report.status === 'dismissed' ? 'status-dismissed' : 'status-verified'}`}>
+                  <span className={`status-badge ${report.status === 'pending' ? 'status-pending' : report.status === 'investigating' ? 'status-review' : report.status === 'dismissed' ? 'status-dismissed' : 'status-verified'}`}>
                     {report.status.replace('_', ' ')}
                   </span>
                 </div>
@@ -258,7 +258,7 @@ function AdminReports() {
                     </button>
                   </>
                 ) : null}
-                {report.status === 'under_review' ? (
+                {report.status === 'investigating' ? (
                   <>
                     <button
                       className="btn-approve"

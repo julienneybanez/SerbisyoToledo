@@ -446,13 +446,22 @@ function ServiceProviderSettings() {
                 />
 
                 <label className="settings-label">{t('providerCredentialTypeLabel')}</label>
-                <input
-                  type="text"
+                <select
                   className="settings-input"
                   value={newCredential.credentialType}
                   onChange={(e) => setNewCredential((prev) => ({ ...prev, credentialType: e.target.value }))}
                   disabled={credentialSaving}
-                />
+                >
+                  <option value="">{t('providerCredentialTypePlaceholder')}</option>
+                  <option value="professional_license">{t('providerCredentialTypeProfessionalLicense')}</option>
+                  <option value="tesda_certification">{t('providerCredentialTypeTesda')}</option>
+                  <option value="safety_training">{t('providerCredentialTypeSafetyTraining')}</option>
+                  <option value="technical_certification">{t('providerCredentialTypeTechnicalCertification')}</option>
+                  <option value="government_accreditation">{t('providerCredentialTypeGovernmentAccreditation')}</option>
+                  <option value="manufacturer_certification">{t('providerCredentialTypeManufacturerCertification')}</option>
+                  <option value="training_certificate">{t('providerCredentialTypeTrainingCertificate')}</option>
+                  <option value="other">{t('providerCredentialTypeOther')}</option>
+                </select>
 
                 <label className="settings-label">{t('providerIssuingOrganizationLabel')}</label>
                 <input

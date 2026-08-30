@@ -444,6 +444,20 @@ export const adminAPI = {
     return handleResponse(response);
   },
 
+  getVerificationDocument: async (id, documentType) => {
+    const token = getToken();
+    if (!token) {
+      throw new ApiError('No authentication token found', { code: 'AUTH_TOKEN_MISSING' });
+    }
+
+    const response = await apiFetch(`${API_BASE_URL}/admin/verification-requests/${id}/documents/${documentType}`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+    });
+
+    return handleResponse(response);
+  },
+
   // Review verification request
   reviewVerificationRequest: async (id, reviewData) => {
     const token = getToken();

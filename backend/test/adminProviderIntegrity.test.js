@@ -133,6 +133,119 @@ describe('Admin/provider integrity', () => {
     expect(resWithGovIdOnly.status).toBe(201);
   });
 
+  it('returns verification document metadata in the admin list without document bodies', async () => {
+    vi.spyOn(db, 'query').mockImplementation(async (sql) => {
+      if (sql === authUserSql) return [[{ id: ADMIN_ID, user_type: 'admin', is_active: 1 }]];
+      if (String(sql).includes('FROM verification_requests vr')) {
+        return [[{
+          id: 3,
+          user_id: PROVIDER_ID,
+          full_name: 'Provider One',
+          phone_number: '09171234567',
+          address: 'Poblacion',
+          service_description: 'Plumbing',
+          has_government_id: 1,
+          has_certifications: 0,
+          status: 'pending',
+          created_at: new Date(),
+          email: 'provider@example.test',
+          profession: 'Plumber',
+        }]];
+      }
+      return [[]];
+    });
+
+    const res = await request(app)
+      .get('/api/admin/verification-requests')
+      .set('Authorization', `Bearer ${signToken(ADMIN_ID)}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.data[0].documents).toEqual({ hasGovernmentId: true, hasCertifications: false });
+    expect(JSON.stringify(res.body)).not.toContain('data:');
+  });
+
+  it('allows only admins to explicitly fetch one verification document', async () => {
+    vi.spyOn(db, 'query').mockImplementation(async (sql) => {
+      if (sql === authUserSql) return [[{ id: ADMIN_ID, user_type: 'admin', is_active: 1 }]];
+      if (String(sql).includes('AS document_data')) {
+        return [[{ document_data: PNG_BUFFER, document_mime: 'image/png' }]];
+      }
+      return [[]];
+    });
+
+    const adminResponse = await request(app)
+      .get('/api/admin/verification-requests/3/documents/government-id')
+      .set('Authorization', `Bearer ${signToken(ADMIN_ID)}`);
+    expect(adminResponse.status).toBe(200);
+    expect(adminResponse.body.data.dataUrl).toMatch(/^data:image\/png;base64,/);
+
+    vi.spyOn(db, 'query').mockImplementation(async (sql) => {
+      if (sql === authUserSql) return [[{ id: PROVIDER_ID, user_type: 'tradesperson', is_active: 1 }]];
+      return [[]];
+    });
+    const providerResponse = await request(app)
+      .get('/api/admin/verification-requests/3/documents/government-id')
+      .set('Authorization', `Bearer ${signToken(PROVIDER_ID)}`);
+    expect(providerResponse.status).toBe(403);
+
+    const unauthenticatedResponse = await request(app)
+      .get('/api/admin/verification-requests/3/documents/government-id');
+    expect(unauthenticatedResponse.status).toBe(401);
+  });
+
+  it.each([
+    ['rolls back for a missing verification request', [], 404],
+    ['rolls back for a processed verification request', [{ id: 3, user_id: PROVIDER_ID, status: 'approved' }], 400],
+  ])('%s after starting its transaction', async (_name, rows, expectedStatus) => {
+    vi.spyOn(db, 'query').mockImplementation(async (sql) => {
+      if (sql === authUserSql) return [[{ id: ADMIN_ID, user_type: 'admin', is_active: 1 }]];
+      return [[]];
+    });
+    const connection = {
+      beginTransaction: vi.fn(async () => {}),
+      rollback: vi.fn(async () => {}),
+      commit: vi.fn(async () => {}),
+      release: vi.fn(),
+      query: vi.fn(async () => [rows]),
+    };
+    vi.spyOn(db, 'getConnection').mockResolvedValue(connection);
+
+    const res = await request(app)
+      .patch('/api/admin/verification-requests/3')
+      .set('Authorization', `Bearer ${signToken(ADMIN_ID)}`)
+      .send({ action: 'approve' });
+
+    expect(res.status).toBe(expectedStatus);
+    expect(connection.rollback).toHaveBeenCalledOnce();
+    expect(connection.commit).not.toHaveBeenCalled();
+  });
+
+  it('commits a successful verification review without rollback', async () => {
+    vi.spyOn(db, 'query').mockImplementation(async (sql) => {
+      if (sql === authUserSql) return [[{ id: ADMIN_ID, user_type: 'admin', is_active: 1 }]];
+      return [[]];
+    });
+    const connection = {
+      beginTransaction: vi.fn(async () => {}),
+      rollback: vi.fn(async () => {}),
+      commit: vi.fn(async () => {}),
+      release: vi.fn(),
+      query: vi.fn(async (sql) => (String(sql).includes('FOR UPDATE')
+        ? [[{ id: 3, user_id: PROVIDER_ID, status: 'pending' }]]
+        : [{ affectedRows: 1 }])),
+    };
+    vi.spyOn(db, 'getConnection').mockResolvedValue(connection);
+
+    const res = await request(app)
+      .patch('/api/admin/verification-requests/3')
+      .set('Authorization', `Bearer ${signToken(ADMIN_ID)}`)
+      .send({ action: 'approve' });
+
+    expect(res.status).toBe(200);
+    expect(connection.commit).toHaveBeenCalledOnce();
+    expect(connection.rollback).not.toHaveBeenCalled();
+  });
+
   it('credential approval uses the credential-specific notification type', async () => {
     let insertedNotification = null;
     vi.spyOn(db, 'query').mockImplementation(async (sql, params) => {

@@ -62,7 +62,7 @@ function AdminSidebar({ isOpen, onClose }) {
 
         if (reportsResponse.success) {
           setActiveReports((reportsResponse.data || []).filter(
-            (report) => ['pending', 'under_review'].includes(report.status),
+            (report) => ['pending', 'investigating'].includes(report.status),
           ).length);
         }
       } catch {

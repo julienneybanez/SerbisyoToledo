@@ -1,22 +1,36 @@
 const request = require('supertest');
 const bcrypt = require('bcryptjs');
 
-const loadAppWithMandatoryVerification = async () => {
-  vi.resetModules();
-  process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-jwt-secret';
-  process.env.EMAIL_VERIFICATION_ENABLED = 'false';
+const previousVerificationFlag = process.env.EMAIL_VERIFICATION_ENABLED;
+const previousJwtSecret = process.env.JWT_SECRET;
+const TEST_PASSWORD = 'pass1234';
+const TEST_PASSWORD_HASH = bcrypt.hashSync(TEST_PASSWORD, 4);
 
-  const db = require('../config/database');
-  const app = require('../server');
+process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-jwt-secret';
+process.env.EMAIL_VERIFICATION_ENABLED = 'false';
 
-  return { db, app };
+const db = require('../config/database');
+const app = require('../server');
+
+const restoreEnvironment = () => {
+  if (previousVerificationFlag === undefined) {
+    delete process.env.EMAIL_VERIFICATION_ENABLED;
+  } else {
+    process.env.EMAIL_VERIFICATION_ENABLED = previousVerificationFlag;
+  }
+
+  if (previousJwtSecret === undefined) {
+    delete process.env.JWT_SECRET;
+  } else {
+    process.env.JWT_SECRET = previousJwtSecret;
+  }
 };
 
-const buildUser = async (overrides = {}) => ({
+const buildUser = (overrides = {}) => ({
   id: overrides.id || 1,
   full_name: overrides.full_name || 'Test User',
   email: overrides.email || 'user@example.com',
-  password: overrides.password || await bcrypt.hash('pass1234', 10),
+  password: overrides.password || TEST_PASSWORD_HASH,
   user_type: overrides.user_type || 'client',
   preferred_services: null,
   profession: null,
@@ -35,12 +49,12 @@ const buildUser = async (overrides = {}) => ({
 describe('Auth verification policy', () => {
   afterEach(() => {
     vi.restoreAllMocks();
-    delete process.env.EMAIL_VERIFICATION_ENABLED;
   });
 
+  afterAll(restoreEnvironment);
+
   it('allows verified admin login', async () => {
-    const { db, app } = await loadAppWithMandatoryVerification();
-    const admin = await buildUser({
+    const admin = buildUser({
       id: 2,
       email: 'serbisyotoledo@gmail.com',
       user_type: 'admin',
@@ -56,7 +70,7 @@ describe('Auth verification policy', () => {
 
     const res = await request(app)
       .post('/api/auth/login')
-      .send({ email: admin.email, password: 'pass1234' });
+      .send({ email: admin.email, password: TEST_PASSWORD });
 
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
@@ -65,8 +79,7 @@ describe('Auth verification policy', () => {
   });
 
   it('blocks verified-state disclosure for wrong password on unverified client', async () => {
-    const { db, app } = await loadAppWithMandatoryVerification();
-    const user = await buildUser({
+    const user = buildUser({
       email: 'client.unverified@example.com',
       user_type: 'client',
       email_verified: 0,
@@ -87,8 +100,7 @@ describe('Auth verification policy', () => {
   });
 
   it('blocks unverified client after correct password even when the legacy verification flag is false', async () => {
-    const { db, app } = await loadAppWithMandatoryVerification();
-    const user = await buildUser({
+    const user = buildUser({
       email: 'client.pending@example.com',
       user_type: 'client',
       email_verified: 0,
@@ -101,15 +113,14 @@ describe('Auth verification policy', () => {
 
     const res = await request(app)
       .post('/api/auth/login')
-      .send({ email: user.email, password: 'pass1234' });
+      .send({ email: user.email, password: TEST_PASSWORD });
 
     expect(res.status).toBe(403);
     expect(res.body.code).toBe('EMAIL_NOT_VERIFIED');
   });
 
   it('blocks unverified provider after correct password', async () => {
-    const { db, app } = await loadAppWithMandatoryVerification();
-    const user = await buildUser({
+    const user = buildUser({
       email: 'provider.pending@example.com',
       user_type: 'tradesperson',
       profession: 'Plumber',
@@ -123,15 +134,14 @@ describe('Auth verification policy', () => {
 
     const res = await request(app)
       .post('/api/auth/login')
-      .send({ email: user.email, password: 'pass1234' });
+      .send({ email: user.email, password: TEST_PASSWORD });
 
     expect(res.status).toBe(403);
     expect(res.body.code).toBe('EMAIL_NOT_VERIFIED');
   });
 
   it('allows verified legacy client login', async () => {
-    const { db, app } = await loadAppWithMandatoryVerification();
-    const user = await buildUser({
+    const user = buildUser({
       email: 'client.verified@example.com',
       user_type: 'client',
       email_verified: 1,
@@ -145,7 +155,7 @@ describe('Auth verification policy', () => {
 
     const res = await request(app)
       .post('/api/auth/login')
-      .send({ email: user.email, password: 'pass1234' });
+      .send({ email: user.email, password: TEST_PASSWORD });
 
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
@@ -153,8 +163,7 @@ describe('Auth verification policy', () => {
   });
 
   it('allows verified legacy provider login', async () => {
-    const { db, app } = await loadAppWithMandatoryVerification();
-    const user = await buildUser({
+    const user = buildUser({
       email: 'provider.verified@example.com',
       user_type: 'tradesperson',
       profession: 'Electrician',
@@ -169,7 +178,7 @@ describe('Auth verification policy', () => {
 
     const res = await request(app)
       .post('/api/auth/login')
-      .send({ email: user.email, password: 'pass1234' });
+      .send({ email: user.email, password: TEST_PASSWORD });
 
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
@@ -177,8 +186,6 @@ describe('Auth verification policy', () => {
   });
 
   it('rejects public admin registration', async () => {
-    const { app } = await loadAppWithMandatoryVerification();
-
     const res = await request(app)
       .post('/api/auth/register')
       .send({
