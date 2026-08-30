@@ -3,7 +3,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://serbisyotoledo-backend.railway.app/api/:path*"
+      "destination": "https://backend-api-production-5f17.up.railway.app/api/:path*"
     },
     {
       "source": "/((?!api/).*)",
