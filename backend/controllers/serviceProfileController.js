@@ -13,6 +13,7 @@ const {
 const {
   hasCloudinaryConfig,
   uploadImageBuffer,
+  getSignedDeliveryUrl,
   deleteImageByPublicId,
 } = require('../utils/cloudinaryService');
 const {
@@ -94,20 +95,11 @@ const ACTIVE_BOOKING_EXISTS_SQL = `
 `;
 
 const FUTURE_AVAILABILITY_CONFIGURED_SQL = `
-  (
-    EXISTS (
-      SELECT 1
-      FROM provider_availability_exceptions pae_future
-      WHERE pae_future.service_profile_id = sp.id
-        AND pae_future.exception_type = 'available'
-        AND pae_future.exception_date >= DATE(${TOLEDO_NOW_SQL})
-    )
-    OR EXISTS (
-      SELECT 1
-      FROM provider_weekly_availability pwa_future
-      WHERE pwa_future.service_profile_id = sp.id
-        AND pwa_future.is_available = TRUE
-    )
+  EXISTS (
+    SELECT 1
+    FROM provider_available_slots pas_future
+    WHERE pas_future.service_profile_id = sp.id
+      AND pas_future.available_date >= DATE(${TOLEDO_NOW_SQL})
   )
 `;
 
@@ -160,63 +152,37 @@ const findNextBookableSlot = async (queryable, profile) => {
   );
   const todayIso = getToledoTodayIso();
   const endIso = addDaysIso(todayIso, maxAdvanceDays);
-  const candidateDates = new Set();
 
   try {
-    const [specificRows] = await queryable.query(
-      `SELECT DISTINCT DATE_FORMAT(exception_date, '%Y-%m-%d') AS service_date
-       FROM provider_availability_exceptions
+    const [slotRows] = await queryable.query(
+      `SELECT DISTINCT DATE_FORMAT(available_date, '%Y-%m-%d') AS service_date
+       FROM provider_available_slots
        WHERE service_profile_id = ?
-         AND exception_type = 'available'
-         AND exception_date BETWEEN ? AND ?
-       ORDER BY exception_date ASC`,
+         AND available_date BETWEEN ? AND ?
+       ORDER BY available_date ASC`,
       [profile.id, todayIso, endIso]
     );
 
-    for (const row of specificRows) {
-      if (row.service_date) candidateDates.add(String(row.service_date));
-    }
-
-    const [weeklyRows] = await queryable.query(
-      `SELECT DISTINCT day_of_week
-       FROM provider_weekly_availability
-       WHERE service_profile_id = ?
-         AND is_available = TRUE`,
-      [profile.id]
-    );
-    const weeklyDays = new Set(weeklyRows.map((row) => Number(row.day_of_week)));
-
-    if (weeklyDays.size > 0) {
-      for (let offset = 0; offset <= maxAdvanceDays; offset += 1) {
-        const date = addDaysIso(todayIso, offset);
-        const parsed = parseDateOnly(date);
-        if (parsed && weeklyDays.has(parsed.getUTCDay())) {
-          candidateDates.add(date);
-        }
-      }
-    }
-
-    for (const date of Array.from(candidateDates).sort()) {
+    for (const row of slotRows) {
+      if (!row.service_date) continue;
       const slots = await getAvailableSlotsForDate(queryable, {
         serviceProfileId: profile.id,
         providerId: profile.user_id,
-        date,
+        date: row.service_date,
         durationMinutes: 30,
         slotStepMinutes: 30,
       });
 
       if (slots.length > 0) {
         return {
-          date,
+          date: row.service_date,
           time: slots[0].time,
           endTime: slots[0].endTime,
         };
       }
     }
-  } catch (error) {
-    if (!['ER_NO_SUCH_TABLE', 'ER_BAD_FIELD_ERROR'].includes(error.code)) {
-      throw error;
-    }
+  } catch {
+    return null;
   }
 
   return null;
@@ -237,36 +203,95 @@ const normalizeLanguageCodes = (payload) => Array.from(
   )
 );
 
-const parseMaybeJsonArray = (value) => {
-  if (Array.isArray(value)) {
-    return value;
-  }
+const populateCanonicalProfileFields = async (queryable, profile) => {
+  const profileId = profile.id;
+  const userId = profile.user_id;
 
-  if (typeof value === 'string') {
-    try {
-      const parsed = JSON.parse(value);
-      return Array.isArray(parsed) ? parsed : [parsed];
-    } catch {
-      return [value];
-    }
-  }
+  const [catRows] = await queryable.query(
+    'SELECT category_key FROM service_profile_categories WHERE service_profile_id = ? ORDER BY category_key',
+    [profileId]
+  );
+  const categoryKeys = catRows.map((r) => r.category_key);
+  const categories = normalizeCategoryLabels(categoryKeys, { preserveUnknown: true });
 
-  if (value == null) {
-    return [];
-  }
+  const [typeRows] = await queryable.query(
+    'SELECT service_type_key FROM service_profile_types WHERE service_profile_id = ? ORDER BY service_type_key',
+    [profileId]
+  );
+  const serviceTypeKeys = typeRows.map((r) => r.service_type_key);
+  const serviceTypes = getServiceTypesForProfile({
+    categoryLabels: categories,
+    serviceTypeKeys,
+  });
 
-  return [value];
+  const languages = await getPersonLanguages(queryable, userId);
+  const skills = await getProviderSkills(queryable, userId);
+
+  const [statsRows] = await queryable.query(
+    'SELECT rating, reviews_count, jobs_completed FROM service_profile_stats WHERE service_profile_id = ? LIMIT 1',
+    [profileId]
+  );
+  const stats = statsRows[0] || { rating: 0, reviews_count: 0, jobs_completed: 0 };
+
+  return {
+    categoryKeys,
+    categories,
+    serviceTypeKeys,
+    serviceTypes,
+    languages,
+    skills,
+    rating: parseFloat(stats.rating || 0).toFixed(1),
+    reviewsCount: Number(stats.reviews_count || 0),
+    jobsCompleted: Number(stats.jobs_completed || 0),
+  };
 };
 
-const applyProviderLanguages = async (serviceProfileId, languageCodes = []) => {
-  await db.query('DELETE FROM provider_languages WHERE service_profile_id = ?', [serviceProfileId]);
+const applyPersonLanguages = async (queryable, userId, languageCodes = []) => {
+  await queryable.query('DELETE FROM person_languages WHERE user_id = ?', [userId]);
 
   for (const languageCode of languageCodes) {
-    await db.query(
-      'INSERT INTO provider_languages (service_profile_id, language_code) VALUES (?, ?)',
-      [serviceProfileId, languageCode]
+    if (SUPPORTED_LANGUAGE_CODES.has(languageCode)) {
+      await queryable.query(
+        'INSERT INTO person_languages (user_id, language_code) VALUES (?, ?)',
+        [userId, languageCode]
+      );
+    }
+  }
+};
+
+const getPersonLanguages = async (queryable, userId) => {
+  const [rows] = await queryable.query(
+    'SELECT language_code FROM person_languages WHERE user_id = ? ORDER BY language_code',
+    [userId]
+  );
+  return rows.map((row) => row.language_code);
+};
+
+const applyProviderSkills = async (queryable, userId, skillLabels = []) => {
+  await queryable.query('DELETE FROM provider_skills WHERE user_id = ?', [userId]);
+
+  const uniqueSkills = Array.from(
+    new Set(
+      (Array.isArray(skillLabels) ? skillLabels : [])
+        .map((s) => String(s || '').trim())
+        .filter(Boolean)
+    )
+  );
+
+  for (const skillLabel of uniqueSkills) {
+    await queryable.query(
+      'INSERT INTO provider_skills (user_id, skill_label) VALUES (?, ?)',
+      [userId, skillLabel]
     );
   }
+};
+
+const getProviderSkills = async (queryable, userId) => {
+  const [rows] = await queryable.query(
+    'SELECT skill_label FROM provider_skills WHERE user_id = ? ORDER BY skill_label',
+    [userId]
+  );
+  return rows.map((row) => row.skill_label);
 };
 
 // Canonical: Apply category key assignments to relational table
@@ -597,19 +622,18 @@ exports.createOrUpdateProfile = async (req, res) => {
         // Create category and type assignments (transactional)
         await applyProfileCategories(connection, profileId, categoryKeys);
         await applyProfileServiceTypes(connection, profileId, validServiceTypeKeys);
+        await applyPersonLanguages(connection, userId, normalizedLanguages);
+
+        if (req.body.skills) {
+          const parsedSkills = parseMaybeJsonArray(req.body.skills);
+          await applyProviderSkills(connection, userId, parsedSkills);
+        }
 
         // Store profile ID for response
         existingProfile[0] = { id: profileId };
       }
 
       await connection.commit();
-
-      // Apply languages after transaction succeeds
-      if (normalizedLanguages.length > 0) {
-        if (existingProfile[0]?.id) {
-          await applyProviderLanguages(existingProfile[0].id, normalizedLanguages);
-        }
-      }
 
       // Delete old banner if new one uploaded
       if (bannerImagePublicId && existingProfile.length > 0 && existingProfile[0].banner_image_public_id) {
@@ -662,28 +686,24 @@ exports.getAllProfiles = async (req, res) => {
         u.last_seen_at,
         sp.barangay_address,
         sp.starting_price,
-        sp.pricing_unit,
-        sp.service_categories,
-        sp.service_types,
         sp.taxonomy_needs_review,
         sp.description,
         sp.about_me,
         sp.banner_image_url,
-        COALESCE(review_stats.rating, 0) AS rating,
-        COALESCE(review_stats.reviews_count, 0) AS reviews_count,
         sp.created_at,
         u.profession,
-        u.skills,
         u.is_verified,
         COALESCE(pas.availability_status, 'available') AS availability_status,
         COALESCE(pas.show_availability_status, TRUE) AS show_availability_status,
         COALESCE(pas.max_advance_booking_days, 60) AS max_advance_booking_days,
+        COALESCE(sps.rating, 0) AS rating,
+        COALESCE(sps.reviews_count, 0) AS reviews_count,
         ${ACTIVE_BOOKING_EXISTS_SQL} AS has_active_booking,
         ${FUTURE_AVAILABILITY_CONFIGURED_SQL} AS has_future_availability_config
       FROM service_profiles sp
       JOIN users u ON sp.user_id = u.id
       LEFT JOIN provider_availability_settings pas ON pas.service_profile_id = sp.id
-      ${REVIEW_STATS_JOIN}
+      LEFT JOIN service_profile_stats sps ON sps.service_profile_id = sp.id
       WHERE sp.is_published = TRUE
         AND u.is_verified = TRUE
         AND u.is_active = TRUE
@@ -708,70 +728,68 @@ exports.getAllProfiles = async (req, res) => {
     }
 
     if (minRating) {
-      query += ' AND COALESCE(review_stats.rating, 0) >= ?';
+      query += ' AND COALESCE(sps.rating, 0) >= ?';
       params.push(parseFloat(minRating));
     }
 
     if (search) {
-      query += ' AND (u.full_name LIKE ? OR u.profession LIKE ? OR u.skills LIKE ? OR sp.barangay_address LIKE ? OR sp.description LIKE ? OR sp.service_categories LIKE ?)';
-      params.push(`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`);
+      query += ' AND (u.full_name LIKE ? OR u.profession LIKE ? OR sp.barangay_address LIKE ? OR sp.description LIKE ? OR EXISTS (SELECT 1 FROM provider_skills ps WHERE ps.user_id = u.id AND ps.skill_label LIKE ?))';
+      params.push(`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`);
     }
 
     if (category && category !== 'All') {
       const categoryLabels = getCategoryFilterLabels(category);
       if (categoryLabels.length > 0) {
-        query += ` AND (${categoryLabels.map(() => 'JSON_CONTAINS(sp.service_categories, ?)').join(' OR ')})`;
+        const placeholders = categoryLabels.map(() => '?').join(', ');
+        query += ` AND EXISTS (SELECT 1 FROM service_profile_categories spc WHERE spc.service_profile_id = sp.id AND spc.category_key IN (${placeholders}))`;
         for (const label of categoryLabels) {
-          params.push(JSON.stringify(label));
+          const catObj = SERVICE_TAXONOMY.find((c) => c.label === label);
+          params.push(catObj ? catObj.key : label.toLowerCase());
         }
       }
     }
 
     if (serviceType) {
-      query += ' AND JSON_CONTAINS(sp.service_types, ?)';
-      params.push(JSON.stringify(String(serviceType).trim()));
+      query += ' AND EXISTS (SELECT 1 FROM service_profile_types spt WHERE spt.service_profile_id = sp.id AND spt.service_type_key = ?)';
+      params.push(String(serviceType).trim());
     }
 
-    query += ' ORDER BY COALESCE(review_stats.rating, 0) DESC, COALESCE(review_stats.reviews_count, 0) DESC';
+    query += ' ORDER BY COALESCE(sps.rating, 0) DESC, COALESCE(sps.reviews_count, 0) DESC';
 
     const [profiles] = await db.query(query, params);
 
     // Format response
-    const formattedProfiles = profiles.map(profile => {
-      const categories = normalizeCategoryLabels(parseJsonArray(profile.service_categories, []), { preserveUnknown: true });
-      const serviceTypeKeys = parseJsonArray(profile.service_types, []);
-      const serviceTypes = getServiceTypesForProfile({
-        categoryLabels: categories,
-        serviceTypeKeys,
-      });
-      const skills = parseJsonArray(profile.skills, []);
-
-      return {
+    const formattedProfiles = [];
+    for (const profile of profiles) {
+      const fields = await populateCanonicalProfileFields(db, profile);
+      formattedProfiles.push({
         id: profile.id,
         userId: profile.user_id,
         name: profile.provider_name,
         location: profile.barangay_address,
         startingPrice: toNullableNumber(profile.starting_price),
-        pricingUnit: profile.pricing_unit || 'per_day',
+        pricingUnit: 'per_day',
         description: profile.description,
         aboutMe: profile.about_me || '',
         image: profile.banner_image_url || null,
-        tags: [...skills, ...serviceTypes.map((item) => item.label), ...categories],
-        skills,
-        rating: toNullableNumber(profile.rating),
-        reviews: toCount(profile.reviews_count),
+        tags: [...fields.skills, ...fields.serviceTypes.map((item) => item.label), ...fields.categories],
+        skills: fields.skills,
+        languages: fields.languages,
+        rating: toNullableNumber(fields.rating),
+        reviews: fields.reviewsCount,
+        jobsCompleted: fields.jobsCompleted,
         online: deriveOnlineFromLastSeen(profile.last_seen_at),
         verified: Boolean(profile.is_verified),
         profession: profile.profession,
-        categories,
-        serviceTypes,
+        categories: fields.categories,
+        serviceTypes: fields.serviceTypes,
         taxonomyNeedsReview: Boolean(profile.taxonomy_needs_review),
         availabilityStatus: derivePublicAvailabilityStatus(profile),
         acceptingRequests: String(profile.availability_status || 'available').toLowerCase() !== 'unavailable',
         hasConfiguredAvailability: Boolean(profile.has_future_availability_config),
         showAvailabilityStatus: Boolean(profile.show_availability_status),
-      };
-    });
+      });
+    }
 
     res.json({
       success: true,
@@ -836,27 +854,23 @@ exports.getRecommendedProviders = async (req, res) => {
         u.last_seen_at,
         sp.barangay_address,
         sp.starting_price,
-        sp.pricing_unit,
-        sp.service_categories,
-        sp.service_types,
         sp.taxonomy_needs_review,
         sp.description,
         sp.about_me,
         sp.banner_image_url,
-        COALESCE(review_stats.rating, 0) AS rating,
-        COALESCE(review_stats.reviews_count, 0) AS reviews_count,
         u.profession,
-        u.skills,
         u.is_verified,
         COALESCE(pas.availability_status, 'available') AS availability_status,
         COALESCE(pas.show_availability_status, TRUE) AS show_availability_status,
         COALESCE(pas.max_advance_booking_days, 60) AS max_advance_booking_days,
+        COALESCE(sps.rating, 0) AS rating,
+        COALESCE(sps.reviews_count, 0) AS reviews_count,
         ${ACTIVE_BOOKING_EXISTS_SQL} AS has_active_booking,
         ${FUTURE_AVAILABILITY_CONFIGURED_SQL} AS has_future_availability_config
       FROM service_profiles sp
       JOIN users u ON sp.user_id = u.id
       LEFT JOIN provider_availability_settings pas ON pas.service_profile_id = sp.id
-      ${REVIEW_STATS_JOIN}
+      LEFT JOIN service_profile_stats sps ON sps.service_profile_id = sp.id
       WHERE sp.is_published = TRUE
         AND u.is_verified = TRUE
         AND u.is_active = TRUE
@@ -876,31 +890,33 @@ exports.getRecommendedProviders = async (req, res) => {
     }
 
     if (minRating) {
-      query += ' AND COALESCE(review_stats.rating, 0) >= ?';
+      query += ' AND COALESCE(sps.rating, 0) >= ?';
       params.push(parseFloat(minRating));
     }
 
     if (search) {
-      query += ' AND (u.full_name LIKE ? OR u.profession LIKE ? OR u.skills LIKE ? OR sp.description LIKE ? OR sp.service_categories LIKE ?)';
+      query += ' AND (u.full_name LIKE ? OR u.profession LIKE ? OR sp.barangay_address LIKE ? OR sp.description LIKE ? OR EXISTS (SELECT 1 FROM provider_skills ps WHERE ps.user_id = u.id AND ps.skill_label LIKE ?))';
       params.push(`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`);
     }
 
     if (category && category !== 'All') {
       const categoryLabels = getCategoryFilterLabels(category);
       if (categoryLabels.length > 0) {
-        query += ` AND (${categoryLabels.map(() => 'JSON_CONTAINS(sp.service_categories, ?)').join(' OR ')})`;
+        const placeholders = categoryLabels.map(() => '?').join(', ');
+        query += ` AND EXISTS (SELECT 1 FROM service_profile_categories spc WHERE spc.service_profile_id = sp.id AND spc.category_key IN (${placeholders}))`;
         for (const label of categoryLabels) {
-          params.push(JSON.stringify(label));
+          const catObj = SERVICE_TAXONOMY.find((c) => c.label === label);
+          params.push(catObj ? catObj.key : label.toLowerCase());
         }
       }
     }
 
     if (normalizedLanguage) {
-      query += ' AND EXISTS (SELECT 1 FROM provider_languages pl WHERE pl.service_profile_id = sp.id AND pl.language_code = ?)';
+      query += ' AND EXISTS (SELECT 1 FROM person_languages pl WHERE pl.user_id = u.id AND pl.language_code = ?)';
       params.push(normalizedLanguage);
     }
 
-    query += ' ORDER BY COALESCE(review_stats.rating, 0) DESC, COALESCE(review_stats.reviews_count, 0) DESC LIMIT 30';
+    query += ' ORDER BY COALESCE(sps.rating, 0) DESC, COALESCE(sps.reviews_count, 0) DESC LIMIT 30';
 
     const [profiles] = await connection.query(query, params);
 
@@ -925,18 +941,7 @@ exports.getRecommendedProviders = async (req, res) => {
         }
       }
 
-      const [languageRows] = await connection.query(
-        'SELECT language_code FROM provider_languages WHERE service_profile_id = ? ORDER BY language_code ASC',
-        [profile.id]
-      );
-
-      const categories = normalizeCategoryLabels(parseJsonArray(profile.service_categories, []), { preserveUnknown: true });
-      const serviceTypeKeys = parseJsonArray(profile.service_types, []);
-      const serviceTypes = getServiceTypesForProfile({
-        categoryLabels: categories,
-        serviceTypeKeys,
-      });
-      const skills = parseJsonArray(profile.skills, []);
+      const fields = await populateCanonicalProfileFields(connection, profile);
 
       recommended.push({
         id: profile.id,
@@ -944,21 +949,22 @@ exports.getRecommendedProviders = async (req, res) => {
         name: profile.provider_name,
         location: profile.barangay_address,
         startingPrice: toNullableNumber(profile.starting_price),
-        pricingUnit: profile.pricing_unit || 'per_day',
+        pricingUnit: 'per_day',
         description: profile.description,
         aboutMe: profile.about_me || '',
         image: profile.banner_image_url || null,
-        tags: [...skills, ...serviceTypes.map((item) => item.label), ...categories],
-        skills,
-        rating: toNullableNumber(profile.rating),
-        reviews: toCount(profile.reviews_count),
+        tags: [...fields.skills, ...fields.serviceTypes.map((item) => item.label), ...fields.categories],
+        skills: fields.skills,
+        languages: fields.languages,
+        rating: toNullableNumber(fields.rating),
+        reviews: fields.reviewsCount,
+        jobsCompleted: fields.jobsCompleted,
         online: deriveOnlineFromLastSeen(profile.last_seen_at),
         verified: Boolean(profile.is_verified),
         profession: profile.profession,
-        categories,
-        serviceTypes,
+        categories: fields.categories,
+        serviceTypes: fields.serviceTypes,
         taxonomyNeedsReview: Boolean(profile.taxonomy_needs_review),
-        languages: languageRows.map((row) => row.language_code),
         availabilityStatus: derivePublicAvailabilityStatus(profile),
         acceptingRequests: String(profile.availability_status || 'available').toLowerCase() !== 'unavailable',
         hasConfiguredAvailability: Boolean(profile.has_future_availability_config),
@@ -994,12 +1000,9 @@ exports.getProfileById = async (req, res) => {
     const [profiles] = await db.query(
       `SELECT 
         sp.*,
-        COALESCE(review_stats.rating, 0) AS rating,
-        COALESCE(review_stats.reviews_count, 0) AS reviews_count,
         u.full_name,
         u.last_seen_at,
         u.profession,
-        u.skills,
         u.email,
         u.phone,
         u.is_verified,
@@ -1011,7 +1014,6 @@ exports.getProfileById = async (req, res) => {
       FROM service_profiles sp
       JOIN users u ON sp.user_id = u.id
       LEFT JOIN provider_availability_settings pas ON pas.service_profile_id = sp.id
-      ${REVIEW_STATS_JOIN}
       WHERE sp.id = ? AND sp.is_published = TRUE AND u.is_verified = TRUE
         AND u.is_active = TRUE`,
       [id]
@@ -1025,91 +1027,64 @@ exports.getProfileById = async (req, res) => {
     }
 
     const profile = profiles[0];
+    const fields = await populateCanonicalProfileFields(db, profile);
     const nextBookableSlot = await findNextBookableSlot(db, profile);
 
-    // Fetch portfolio items; fall back for environments where Stage 1 columns are not migrated yet.
+    // Fetch portfolio items joined on service_requests
     let portfolioItems = [];
     try {
       const [rows] = await db.query(
-        `SELECT id, image_url, caption, display_order,
-                service_request_id, job_title, job_description, service_category,
-                completed_at, is_published, is_featured, completed_through_platform
-         FROM portfolio_items
-         WHERE service_profile_id = ?
-           AND is_published = TRUE
-           AND completed_through_platform = TRUE
-         ORDER BY is_featured DESC, display_order ASC, created_at DESC`,
+        `SELECT pi.id, pi.image_url, pi.caption, pi.display_order,
+                pi.is_published, pi.is_featured,
+                sr.service_type_key, sr.service_type_label, sr.updated_at AS completed_at
+         FROM portfolio_items pi
+         JOIN service_requests sr ON sr.id = pi.service_request_id
+         WHERE sr.service_profile_id = ?
+           AND pi.is_published = TRUE
+           AND sr.status = 'completed'
+         ORDER BY pi.is_featured DESC, pi.display_order ASC, pi.created_at DESC`,
         [id]
       );
       portfolioItems = rows;
-    } catch (portfolioError) {
-      if (!['ER_BAD_FIELD_ERROR', 'ER_NO_SUCH_TABLE'].includes(portfolioError.code)) {
-        throw portfolioError;
-      }
-
+    } catch {
       portfolioItems = [];
-
     }
 
     // Fetch reviews with client names
     const [reviews] = await db.query(
       `SELECT r.id, r.rating, r.comment, r.created_at, u.full_name as reviewer_name
        FROM reviews r
-       JOIN users u ON r.client_id = u.id
-       WHERE r.service_profile_id = ?
+       JOIN service_requests sr ON sr.id = r.service_request_id
+       JOIN users u ON sr.client_id = u.id
+       WHERE sr.service_profile_id = ?
        ORDER BY r.created_at DESC`,
       [id]
     );
 
-    let languages = [];
-    try {
-      const [rows] = await db.query(
-        `SELECT language_code
-         FROM provider_languages
-         WHERE service_profile_id = ?
-         ORDER BY language_code ASC`,
-        [id]
-      );
-      languages = rows;
-    } catch (languageError) {
-      if (!['ER_NO_SUCH_TABLE', 'ER_BAD_FIELD_ERROR'].includes(languageError.code)) {
-        throw languageError;
-      }
-    }
+    // Fetch verified credentials (public metadata only, omit private document proof)
+    const [credentialRows] = await db.query(
+      `SELECT id, credential_name, credential_type, issuing_organization, credential_id,
+              issue_date, expiration_date, does_not_expire, credential_url, related_skills, verification_status
+       FROM provider_credentials
+       WHERE service_profile_id = ?
+         AND verification_status = 'verified'
+         AND (does_not_expire = TRUE OR expiration_date IS NULL OR expiration_date >= CURDATE())
+       ORDER BY created_at DESC`,
+      [id]
+    );
 
-    let credentialRows = [];
-    try {
-      const [rows] = await db.query(
-        `SELECT id, credential_name, issuing_organization, issue_date, expiration_date, does_not_expire, related_skills, verification_status
-         FROM provider_credentials
-         WHERE service_profile_id = ?
-           AND verification_status = 'verified'
-           AND (does_not_expire = TRUE OR expiration_date IS NULL OR expiration_date >= CURDATE())
-         ORDER BY created_at DESC`,
-        [id]
-      );
-      credentialRows = rows;
-    } catch (credentialError) {
-      if (!['ER_NO_SUCH_TABLE', 'ER_BAD_FIELD_ERROR'].includes(credentialError.code)) {
-        throw credentialError;
-      }
-    }
-
-    // Format portfolio items
-    const formattedPortfolio = portfolioItems.map(item => ({
+    // Format portfolio items (safe public context)
+    const formattedPortfolio = portfolioItems.map((item) => ({
       id: item.id,
       src: item.image_url || null,
       caption: item.caption,
-      serviceLabel: item.job_title,
-      jobDescription: item.job_description,
-      serviceCategory: item.service_category,
+      serviceLabel: item.service_type_label || getServiceTypeByKey(item.service_type_key)?.label || 'Completed Service',
       completedAt: item.completed_at,
       isFeatured: Boolean(item.is_featured),
-      completedThroughPlatform: Boolean(item.completed_through_platform),
     }));
 
     // Format reviews
-    const formattedReviews = reviews.map(review => ({
+    const formattedReviews = reviews.map((review) => ({
       id: review.id,
       reviewer: review.reviewer_name,
       date: new Date(review.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
@@ -1117,35 +1092,27 @@ exports.getProfileById = async (req, res) => {
       comment: review.comment
     }));
 
-    const categories = normalizeCategoryLabels(parseJsonArray(profile.service_categories, []), { preserveUnknown: true });
-    const serviceTypeKeys = parseJsonArray(profile.service_types, []);
-    const serviceTypes = getServiceTypesForProfile({
-      categoryLabels: categories,
-      serviceTypeKeys,
-    });
-    const skills = parseJsonArray(profile.skills, []);
-
     const formattedProfile = {
       id: profile.id,
       userId: profile.user_id,
       name: profile.full_name,
       location: profile.barangay_address,
       startingPrice: toNullableNumber(profile.starting_price),
-      pricingUnit: profile.pricing_unit || 'per_day',
+      pricingUnit: 'per_day',
       description: profile.description,
       aboutMe: profile.about_me,
       responseTime: profile.response_time || 'Within 24 hours',
-      jobsCompleted: toCount(profile.jobs_completed),
+      jobsCompleted: fields.jobsCompleted,
       image: profile.banner_image_url || null,
-      tags: [...skills, ...serviceTypes.map((item) => item.label), ...categories],
-      skills,
-      rating: toNullableNumber(profile.rating),
-      reviewsCount: toCount(profile.reviews_count),
+      tags: [...fields.skills, ...fields.serviceTypes.map((item) => item.label), ...fields.categories],
+      skills: fields.skills,
+      rating: toNullableNumber(fields.rating),
+      reviewsCount: fields.reviewsCount,
       online: deriveOnlineFromLastSeen(profile.last_seen_at),
       verified: Boolean(profile.is_verified),
       profession: profile.profession,
-      categories,
-      serviceTypes,
+      categories: fields.categories,
+      serviceTypes: fields.serviceTypes,
       taxonomyNeedsReview: Boolean(profile.taxonomy_needs_review),
       isPublished: Boolean(profile.is_published),
       availabilityStatus: derivePublicAvailabilityStatus(profile, Boolean(nextBookableSlot)),
@@ -1155,7 +1122,7 @@ exports.getProfileById = async (req, res) => {
       nextAvailableDate: nextBookableSlot?.date || null,
       nextAvailableTime: nextBookableSlot?.time || null,
       showAvailabilityStatus: Boolean(profile.show_availability_status),
-      languages: languages.map((row) => row.language_code),
+      languages: fields.languages,
       credentials: credentialRows.map((credential) => {
         const issueYear = credential.issue_date ? new Date(credential.issue_date).getUTCFullYear() : null;
         const isExpired = !credential.does_not_expire
@@ -1190,7 +1157,6 @@ exports.getProfileById = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error fetching service profile',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };
@@ -1210,18 +1176,14 @@ exports.getMyProfile = async (req, res) => {
     const [profiles] = await db.query(
       `SELECT 
         sp.*,
-        COALESCE(review_stats.rating, 0) AS rating,
-        COALESCE(review_stats.reviews_count, 0) AS reviews_count,
         u.full_name,
         u.last_seen_at,
         u.profession,
-        u.skills,
         u.email,
         u.phone,
         u.is_verified
       FROM service_profiles sp
       JOIN users u ON sp.user_id = u.id
-      ${REVIEW_STATS_JOIN}
       WHERE sp.user_id = ?`,
       [userId]
     );
@@ -1234,17 +1196,7 @@ exports.getMyProfile = async (req, res) => {
     }
 
     const profile = profiles[0];
-    const categories = normalizeCategoryLabels(parseJsonArray(profile.service_categories, []), { preserveUnknown: true });
-    const serviceTypeKeys = parseJsonArray(profile.service_types, []);
-    const serviceTypes = getServiceTypesForProfile({
-      categoryLabels: categories,
-      serviceTypeKeys,
-    });
-    const skills = parseJsonArray(profile.skills, []);
-    const [languages] = await db.query(
-      'SELECT language_code FROM provider_languages WHERE service_profile_id = ? ORDER BY language_code',
-      [profile.id]
-    );
+    const fields = await populateCanonicalProfileFields(db, profile);
 
     const formattedProfile = {
       id: profile.id,
@@ -1252,20 +1204,23 @@ exports.getMyProfile = async (req, res) => {
       name: profile.full_name,
       location: profile.barangay_address,
       startingPrice: toNullableNumber(profile.starting_price),
-      pricingUnit: profile.pricing_unit || 'per_day',
+      pricingUnit: 'per_day',
       description: profile.description,
+      aboutMe: profile.about_me || '',
+      responseTime: profile.response_time || '',
       image: profile.banner_image_url || null,
-      tags: [...skills, ...serviceTypes.map((item) => item.label), ...categories],
-      skills,
-      rating: toNullableNumber(profile.rating),
-      reviews: toCount(profile.reviews_count),
+      tags: [...fields.skills, ...fields.serviceTypes.map((item) => item.label), ...fields.categories],
+      skills: fields.skills,
+      rating: toNullableNumber(fields.rating),
+      reviews: fields.reviewsCount,
+      jobsCompleted: fields.jobsCompleted,
       online: deriveOnlineFromLastSeen(profile.last_seen_at),
       verified: Boolean(profile.is_verified),
       profession: profile.profession,
-      categories,
-      serviceTypes,
+      categories: fields.categories,
+      serviceTypes: fields.serviceTypes,
       taxonomyNeedsReview: Boolean(profile.taxonomy_needs_review),
-      languages: languages.map((row) => row.language_code),
+      languages: fields.languages,
       isPublished: Boolean(profile.is_published),
       email: profile.email,
       phone: profile.phone,
@@ -1281,7 +1236,6 @@ exports.getMyProfile = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error fetching user profile',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };
@@ -1403,18 +1357,16 @@ exports.updatePortfolioDetails = async (req, res) => {
     const { aboutMe, responseTime } = req.body;
     let skills = req.body.skills;
 
-    // Parse skills if it's a string
     if (typeof skills === 'string') {
       try {
         skills = JSON.parse(skills);
       } catch {
-        skills = skills.split(',').map(s => s.trim());
+        skills = skills.split(',').map((s) => s.trim());
       }
     }
 
-    // Check if user has a service profile
     const [profiles] = await db.query(
-      'SELECT id FROM service_profiles WHERE user_id = ?',
+      'SELECT id FROM service_profiles WHERE user_id = ? LIMIT 1',
       [userId]
     );
 
@@ -1425,7 +1377,6 @@ exports.updatePortfolioDetails = async (req, res) => {
       });
     }
 
-    // Update the profile
     await db.query(
       `UPDATE service_profiles 
        SET about_me = ?, response_time = ?
@@ -1433,12 +1384,8 @@ exports.updatePortfolioDetails = async (req, res) => {
       [aboutMe || null, responseTime || 'Within 24 hours', userId]
     );
 
-    // Update skills in users table
-    if (skills && Array.isArray(skills)) {
-      await db.query(
-        'UPDATE users SET skills = ? WHERE id = ?',
-        [JSON.stringify(skills), userId]
-      );
+    if (Array.isArray(skills)) {
+      await applyProviderSkills(db, userId, skills);
     }
 
     res.json({
@@ -1478,11 +1425,10 @@ exports.deletePortfolioImage = async (req, res) => {
       });
     }
 
-    // Verify ownership
     const [images] = await db.query(
       `SELECT pi.id, pi.image_public_id FROM portfolio_items pi
-       JOIN service_profiles sp ON pi.service_profile_id = sp.id
-       WHERE pi.id = ? AND sp.user_id = ?`,
+       JOIN service_requests sr ON sr.id = pi.service_request_id
+       WHERE pi.id = ? AND sr.provider_id = ?`,
       [imageId, userId]
     );
 
@@ -1524,14 +1470,8 @@ exports.getMyPortfolio = async (req, res) => {
       });
     }
 
-    // Get profile with portfolio items
     const [profiles] = await db.query(
-      `SELECT 
-        sp.id, sp.about_me, sp.response_time, sp.jobs_completed,
-        u.skills
-      FROM service_profiles sp
-      JOIN users u ON sp.user_id = u.id
-      WHERE sp.user_id = ?`,
+      'SELECT id, about_me, response_time FROM service_profiles WHERE user_id = ? LIMIT 1',
       [userId]
     );
 
@@ -1543,30 +1483,32 @@ exports.getMyPortfolio = async (req, res) => {
     }
 
     const profile = profiles[0];
+    const skills = await getProviderSkills(db, userId);
 
-    // Get portfolio items
     const [portfolioItems] = await db.query(
-      `SELECT id, image_url, caption, display_order,
-              service_request_id, job_title, job_description, service_category,
-              completed_at, is_published, is_featured, completed_through_platform
-       FROM portfolio_items
-       WHERE service_profile_id = ?
-       ORDER BY display_order`,
+      `SELECT pi.id, pi.image_url, pi.caption, pi.display_order,
+              pi.is_published, pi.is_featured,
+              sr.id AS service_request_id, sr.service_type_key, sr.service_type_label
+       FROM portfolio_items pi
+       JOIN service_requests sr ON sr.id = pi.service_request_id
+       WHERE sr.provider_id = ?
+       ORDER BY pi.display_order`,
+      [userId]
+    );
+
+    const [statsRows] = await db.query(
+      'SELECT jobs_completed FROM service_profile_stats WHERE service_profile_id = ? LIMIT 1',
       [profile.id]
     );
 
-    const formattedPortfolio = portfolioItems.map(item => ({
+    const formattedPortfolio = portfolioItems.map((item) => ({
       id: item.id,
       src: item.image_url || null,
       caption: item.caption,
       serviceRequestId: item.service_request_id,
-      serviceLabel: item.job_title,
-      jobDescription: item.job_description,
-      serviceCategory: item.service_category,
-      completedAt: item.completed_at,
+      serviceLabel: item.service_type_label || getServiceTypeByKey(item.service_type_key)?.label || 'Completed Service',
       isPublished: Boolean(item.is_published),
       isFeatured: Boolean(item.is_featured),
-      completedThroughPlatform: Boolean(item.completed_through_platform),
     }));
 
     res.json({
@@ -1574,8 +1516,8 @@ exports.getMyPortfolio = async (req, res) => {
       data: {
         aboutMe: profile.about_me || '',
         responseTime: profile.response_time || 'Within 24 hours',
-        jobsCompleted: toCount(profile.jobs_completed),
-        skills: JSON.parse(profile.skills || '[]'),
+        jobsCompleted: toCount(statsRows[0]?.jobs_completed),
+        skills,
         portfolio: formattedPortfolio
       }
     });
@@ -1782,73 +1724,56 @@ exports.getMyAvailability = async (req, res) => {
     }
 
     const serviceProfileId = profiles[0].id;
-    const connection = await db.getConnection();
+    const settings = await ensureAvailabilitySettings(db, serviceProfileId);
 
-    try {
-      const settings = await ensureAvailabilitySettings(connection, serviceProfileId);
+    const [slots] = await db.query(
+      `SELECT id, DATE_FORMAT(available_date, '%Y-%m-%d') AS available_date,
+              TIME_FORMAT(start_time, '%H:%i') AS start_time,
+              TIME_FORMAT(end_time, '%H:%i') AS end_time
+       FROM provider_available_slots
+       WHERE service_profile_id = ?
+       ORDER BY available_date ASC, start_time ASC`,
+      [serviceProfileId]
+    );
 
-      // Weekly rows are returned only for backward compatibility with older
-      // provider data. New availability saves use explicit provider-selected dates.
-      const [weeklyBlocks] = await connection.query(
-        `SELECT id, day_of_week, start_time, end_time, is_available
-         FROM provider_weekly_availability
-         WHERE service_profile_id = ?
-         ORDER BY day_of_week, start_time`,
-        [serviceProfileId]
-      );
+    const [blackouts] = await db.query(
+      `SELECT id, DATE_FORMAT(blackout_date, '%Y-%m-%d') AS blackout_date,
+              TIME_FORMAT(start_time, '%H:%i') AS start_time,
+              TIME_FORMAT(end_time, '%H:%i') AS end_time,
+              reason
+       FROM provider_availability_blackouts
+       WHERE service_profile_id = ?
+       ORDER BY blackout_date ASC`,
+      [serviceProfileId]
+    );
 
-      const [exceptions] = await connection.query(
-        `SELECT id, exception_date, start_time, end_time, exception_type, reason
-         FROM provider_availability_exceptions
-         WHERE service_profile_id = ?
-         ORDER BY exception_date ASC, start_time ASC`,
-        [serviceProfileId]
-      );
-
-      const toledoNow = new Date(Date.now() + (8 * 60 * 60 * 1000));
-      const todayToledo = new Date(Date.UTC(
-        toledoNow.getUTCFullYear(),
-        toledoNow.getUTCMonth(),
-        toledoNow.getUTCDate()
-      ));
-      const todayString = formatDateOnly(todayToledo);
-
-      const availability = exceptions
-        .filter((item) => (
-          String(item.exception_type || '').toLowerCase() === 'available'
-          && item.start_time
-          && item.end_time
-        ))
-        .map((item) => ({
-          id: item.id,
-          date: toDateOnlyString(item.exception_date),
-          startTime: String(item.start_time).slice(0, 5),
-          endTime: String(item.end_time).slice(0, 5),
-        }))
-        .filter((item) => item.date && item.date >= todayString);
-
-      return res.json({
-        success: true,
-        data: {
-          acceptingBookings: String(settings.availability_status || 'available').toLowerCase() !== 'unavailable',
-          availability,
-          systemRules: {
-            allowSameDayBooking: false,
-            minAdvanceNoticeMinutes: 720,
-            maxAdvanceBookingDays: 60,
-          },
-
-          // Compatibility fields for existing dashboard/tests while the old
-          // weekly availability model is phased out.
-          settings,
-          weeklyBlocks,
-          exceptions,
-          specificAvailability: availability,
-        }
-      });
-    } finally {
-      connection.release();
-    }
+    return res.json({
+      success: true,
+      data: {
+        acceptingBookings: String(settings.availability_status || 'available').toLowerCase() !== 'unavailable',
+        availableSlots: slots.map((s) => ({
+          id: s.id,
+          date: s.available_date,
+          startTime: s.start_time,
+          endTime: s.end_time,
+        })),
+        blackouts: blackouts.map((b) => ({
+          id: b.id,
+          date: b.blackout_date,
+          startTime: b.start_time,
+          endTime: b.end_time,
+          reason: b.reason,
+        })),
+        settings,
+        exceptions: slots.map((s) => ({
+          id: s.id,
+          exception_date: s.available_date,
+          start_time: s.start_time,
+          end_time: s.end_time,
+          exception_type: 'available',
+        })),
+      }
+    });
   } catch (error) {
     console.error('Error fetching provider availability:', error);
     return res.status(500).json({
@@ -1865,9 +1790,10 @@ exports.saveMyAvailability = async (req, res) => {
     const userId = req.user?.userId;
     const {
       acceptingBookings,
+      availableSlots,
       availability,
+      blackouts,
       settings,
-      weeklyBlocks,
       specificAvailability,
     } = req.body;
 
@@ -1881,225 +1807,105 @@ exports.saveMyAvailability = async (req, res) => {
     }
 
     const serviceProfileId = profiles[0].id;
-    const usesSimpleContract = (
-      typeof acceptingBookings !== 'undefined'
-      || Array.isArray(availability)
-    );
-    const submittedAvailability = Array.isArray(availability)
-      ? availability
-      : specificAvailability;
+    const submittedSlots = Array.isArray(availableSlots)
+      ? availableSlots
+      : (Array.isArray(availability) ? availability : (Array.isArray(specificAvailability) ? specificAvailability : null));
 
     connection = await db.getConnection();
     await connection.beginTransaction();
 
     await ensureAvailabilitySettings(connection, serviceProfileId);
 
-    // New provider-facing flow uses system defaults. Legacy payloads are still
-    // accepted temporarily so old clients/tests do not break during rollout.
-    const allowSameDay = usesSimpleContract
-      ? false
-      : Boolean(settings?.allowSameDayBooking);
-    const minAdvanceNotice = usesSimpleContract
-      ? 720
-      : Number(settings?.minAdvanceNoticeMinutes ?? 720);
-    const maxAdvanceDays = usesSimpleContract
-      ? 60
-      : Number(settings?.maxAdvanceBookingDays ?? 60);
-    const availabilityStatus = usesSimpleContract
-      ? (acceptingBookings === false ? 'unavailable' : 'available')
-      : String(
-          settings?.availabilityStatus ?? settings?.availability_status ?? 'available'
-        ).trim().toLowerCase();
-    const showAvailabilityStatus = usesSimpleContract
-      ? true
-      : (() => {
-          const raw = settings?.showAvailabilityStatus ?? settings?.show_availability_status;
-          if (raw == null) return true;
-          return (
-            raw === true
-            || raw === 1
-            || raw === '1'
-            || String(raw).trim().toLowerCase() === 'true'
-          );
-        })();
-
-    if (!SUPPORTED_AVAILABILITY_STATUSES.has(availabilityStatus)) {
-      await connection.rollback();
-      return res.status(400).json({ success: false, message: 'Invalid availability status' });
-    }
-
-    if (minAdvanceNotice < 0 || minAdvanceNotice > 14 * 24 * 60) {
-      await connection.rollback();
-      return res.status(400).json({ success: false, message: 'Invalid minimum advance notice' });
-    }
-
-    if (maxAdvanceDays < 1 || maxAdvanceDays > 365) {
-      await connection.rollback();
-      return res.status(400).json({ success: false, message: 'Invalid maximum advance booking days' });
-    }
-
-    const hasExplicitAvailability = Array.isArray(submittedAvailability);
-    const normalizedAvailability = [];
-
-    if (hasExplicitAvailability) {
-      if (submittedAvailability.length > 500) {
-        await connection.rollback();
-        return res.status(400).json({ success: false, message: 'Too many availability slots' });
-      }
-
-      const toledoNow = new Date(Date.now() + (8 * 60 * 60 * 1000));
-      const todayToledo = new Date(Date.UTC(
-        toledoNow.getUTCFullYear(),
-        toledoNow.getUTCMonth(),
-        toledoNow.getUTCDate()
-      ));
-      const earliestAllowedDate = new Date(todayToledo);
-      if (usesSimpleContract) {
-        earliestAllowedDate.setUTCDate(earliestAllowedDate.getUTCDate() + 1);
-      }
-      const latestAllowedDate = new Date(todayToledo);
-      latestAllowedDate.setUTCDate(
-        latestAllowedDate.getUTCDate() + (usesSimpleContract ? 60 : 365)
-      );
-
-      const rangesByDate = new Map();
-
-      for (const item of submittedAvailability) {
-        const parsedDate = parseDateOnly(item?.date ?? item?.exceptionDate);
-        const slotStart = parseTimeInputToSql(item?.startTime);
-        const slotEnd = parseTimeInputToSql(item?.endTime);
-
-        if (
-          !parsedDate
-          || parsedDate < earliestAllowedDate
-          || parsedDate > latestAllowedDate
-        ) {
-          await connection.rollback();
-          return res.status(400).json({
-            success: false,
-            message: usesSimpleContract
-              ? 'Availability dates must be from tomorrow up to 60 days ahead'
-              : 'Availability dates must be between today and 365 days from today'
-          });
-        }
-
-        if (!slotStart || !slotEnd || slotEnd <= slotStart) {
-          await connection.rollback();
-          return res.status(400).json({
-            success: false,
-            message: 'Each availability slot must have a valid start and end time'
-          });
-        }
-
-        const date = formatDateOnly(parsedDate);
-        const ranges = rangesByDate.get(date) || [];
-
-        if (ranges.some((range) => slotStart < range.end && slotEnd > range.start)) {
-          await connection.rollback();
-          return res.status(400).json({
-            success: false,
-            message: `Availability slots overlap on ${date}`
-          });
-        }
-
-        ranges.push({ start: slotStart, end: slotEnd });
-        rangesByDate.set(date, ranges);
-        normalizedAvailability.push({ date, start: slotStart, end: slotEnd });
-      }
-    }
+    const availabilityStatus = acceptingBookings === false ? 'unavailable' : 'available';
 
     await connection.query(
       `UPDATE provider_availability_settings
-       SET allow_same_day_booking = ?,
-           min_advance_notice_minutes = ?,
-           max_advance_booking_days = ?,
-           availability_status = ?,
-           show_availability_status = ?
+       SET availability_status = ?
        WHERE service_profile_id = ?`,
-      [
-        allowSameDay,
-        minAdvanceNotice,
-        maxAdvanceDays,
-        availabilityStatus,
-        showAvailabilityStatus,
-        serviceProfileId
-      ]
+      [availabilityStatus, serviceProfileId]
     );
 
-    if (usesSimpleContract || hasExplicitAvailability) {
-      // Explicit provider-selected dates are now authoritative. Clear recurring
-      // weekly rules and future exceptions so no hidden legacy rule can make a
-      // client-facing date appear or disappear unexpectedly.
-      await connection.query(
-        'DELETE FROM provider_weekly_availability WHERE service_profile_id = ?',
-        [serviceProfileId]
-      );
+    let countInserted = 0;
+    if (Array.isArray(submittedSlots)) {
+      const slotsByDate = new Map();
+      for (const slot of submittedSlots) {
+        const parsedDate = parseDateOnly(slot.date || slot.availableDate || slot.exceptionDate);
+        const slotStart = parseTimeInputToSql(slot.startTime || slot.start_time);
+        const slotEnd = parseTimeInputToSql(slot.endTime || slot.end_time);
 
-      const toledoNow = new Date(Date.now() + (8 * 60 * 60 * 1000));
-      const todayToledo = new Date(Date.UTC(
-        toledoNow.getUTCFullYear(),
-        toledoNow.getUTCMonth(),
-        toledoNow.getUTCDate()
-      ));
-      const todayString = formatDateOnly(todayToledo);
+        if (parsedDate && slotStart && slotEnd) {
+          if (slotEnd <= slotStart) {
+            await connection.rollback();
+            return res.status(400).json({ success: false, message: 'End time must be after start time' });
+          }
 
-      await connection.query(
-        `DELETE FROM provider_availability_exceptions
-         WHERE service_profile_id = ? AND exception_date >= ?`,
-        [serviceProfileId, todayString]
-      );
+          const dateStr = formatDateOnly(parsedDate);
+          const ranges = slotsByDate.get(dateStr) || [];
 
-      for (const slot of normalizedAvailability) {
-        await connection.query(
-          `INSERT INTO provider_availability_exceptions
-           (service_profile_id, exception_date, start_time, end_time, exception_type, reason)
-           VALUES (?, ?, ?, ?, 'available', NULL)`,
-          [serviceProfileId, slot.date, slot.start, slot.end]
-        );
+          if (ranges.some((r) => slotStart < r.end && slotEnd > r.start)) {
+            await connection.rollback();
+            return res.status(400).json({
+              success: false,
+              message: `Availability slots overlap on ${dateStr}`
+            });
+          }
+
+          ranges.push({ start: slotStart, end: slotEnd });
+          slotsByDate.set(dateStr, ranges);
+        }
       }
-    } else {
-      // Legacy recurring-week payload support. New frontend code does not send
-      // this shape, but retaining it avoids a breaking API change during rollout.
+
       await connection.query(
-        'DELETE FROM provider_weekly_availability WHERE service_profile_id = ?',
+        'DELETE FROM provider_available_slots WHERE service_profile_id = ?',
         [serviceProfileId]
       );
 
-      const rangesByDay = new Map();
-      for (const block of Array.isArray(weeklyBlocks) ? weeklyBlocks : []) {
-        const dayOfWeek = Number(block.dayOfWeek);
-        const slotStart = parseTimeInputToSql(block.startTime);
-        const slotEnd = parseTimeInputToSql(block.endTime);
-        const isAvailable = block.isAvailable !== false;
-
-        if (!Number.isInteger(dayOfWeek) || dayOfWeek < 0 || dayOfWeek > 6) {
-          await connection.rollback();
-          return res.status(400).json({ success: false, message: 'Invalid day of week in availability block' });
-        }
-
-        if (!slotStart || !slotEnd || slotEnd <= slotStart) {
-          await connection.rollback();
-          return res.status(400).json({ success: false, message: 'Invalid time range in availability block' });
-        }
-
-        const ranges = rangesByDay.get(dayOfWeek) || [];
-        if (ranges.some((range) => slotStart < range.end && slotEnd > range.start)) {
-          await connection.rollback();
-          return res.status(400).json({
-            success: false,
-            message: 'Overlapping weekly availability blocks are not allowed'
-          });
-        }
-
-        ranges.push({ start: slotStart, end: slotEnd });
-        rangesByDay.set(dayOfWeek, ranges);
-
+      try {
         await connection.query(
-          `INSERT INTO provider_weekly_availability
-           (service_profile_id, day_of_week, start_time, end_time, is_available)
-           VALUES (?, ?, ?, ?, ?)`,
-          [serviceProfileId, dayOfWeek, slotStart, slotEnd, isAvailable]
+          'DELETE FROM provider_weekly_availability WHERE service_profile_id = ?',
+          [serviceProfileId]
         );
+        await connection.query(
+          'DELETE FROM provider_availability_exceptions WHERE service_profile_id = ?',
+          [serviceProfileId]
+        );
+      } catch {
+        // Ignore if legacy tables are dropped
+      }
+
+      for (const [dateStr, ranges] of slotsByDate.entries()) {
+        for (const range of ranges) {
+          await connection.query(
+            `INSERT INTO provider_available_slots
+             (service_profile_id, available_date, start_time, end_time)
+             VALUES (?, ?, ?, ?)
+             ON DUPLICATE KEY UPDATE updated_at = NOW()`,
+            [serviceProfileId, dateStr, range.start, range.end]
+          );
+          countInserted += 1;
+        }
+      }
+    }
+
+    if (Array.isArray(blackouts)) {
+      await connection.query(
+        'DELETE FROM provider_availability_blackouts WHERE service_profile_id = ?',
+        [serviceProfileId]
+      );
+
+      for (const b of blackouts) {
+        const parsedDate = parseDateOnly(b.date || b.blackoutDate);
+        const slotStart = b.startTime ? parseTimeInputToSql(b.startTime) : null;
+        const slotEnd = b.endTime ? parseTimeInputToSql(b.endTime) : null;
+
+        if (parsedDate) {
+          await connection.query(
+            `INSERT INTO provider_availability_blackouts
+             (service_profile_id, blackout_date, start_time, end_time, reason)
+             VALUES (?, ?, ?, ?, ?)`,
+            [serviceProfileId, formatDateOnly(parsedDate), slotStart, slotEnd, b.reason || null]
+          );
+        }
       }
     }
 
@@ -2110,14 +1916,12 @@ exports.saveMyAvailability = async (req, res) => {
       message: 'Availability saved successfully',
       data: {
         acceptingBookings: availabilityStatus !== 'unavailable',
-        availabilityCount: normalizedAvailability.length,
-        systemRules: usesSimpleContract
-          ? {
-              allowSameDayBooking: false,
-              minAdvanceNoticeMinutes: 720,
-              maxAdvanceBookingDays: 60,
-            }
-          : null,
+        availabilityCount: countInserted,
+        systemRules: {
+          allowSameDayBooking: false,
+          minAdvanceNoticeMinutes: 720,
+          maxAdvanceBookingDays: 60,
+        },
       }
     });
   } catch (error) {
@@ -2173,19 +1977,25 @@ exports.addAvailabilityException = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Service profile not found' });
     }
 
-    await db.query(
-      `INSERT INTO provider_availability_exceptions
-       (service_profile_id, exception_date, start_time, end_time, exception_type, reason)
-       VALUES (?, ?, ?, ?, ?, ?)`,
-      [
-        profiles[0].id,
-        formatDateOnly(parsedDate),
-        normalizedStart,
-        normalizedEnd,
-        exceptionType,
-        reason ? String(reason).trim().slice(0, 255) : null,
-      ]
-    );
+    const serviceProfileId = profiles[0].id;
+    const dateStr = formatDateOnly(parsedDate);
+
+    if (exceptionType === 'available') {
+      await db.query(
+        `INSERT INTO provider_available_slots
+         (service_profile_id, available_date, start_time, end_time)
+         VALUES (?, ?, ?, ?)
+         ON DUPLICATE KEY UPDATE updated_at = NOW()`,
+        [serviceProfileId, dateStr, normalizedStart, normalizedEnd]
+      );
+    } else {
+      await db.query(
+        `INSERT INTO provider_availability_blackouts
+         (service_profile_id, blackout_date, start_time, end_time, reason)
+         VALUES (?, ?, ?, ?, ?)`,
+        [serviceProfileId, dateStr, normalizedStart, normalizedEnd, reason ? String(reason).trim().slice(0, 255) : null]
+      );
+    }
 
     return res.status(201).json({
       success: true,
@@ -2209,15 +2019,23 @@ exports.deleteAvailabilityException = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Invalid exception id' });
     }
 
-    const [result] = await db.query(
-      `DELETE pae
-       FROM provider_availability_exceptions pae
-       JOIN service_profiles sp ON sp.id = pae.service_profile_id
-       WHERE pae.id = ? AND sp.user_id = ?`,
+    const [resSlots] = await db.query(
+      `DELETE pas
+       FROM provider_available_slots pas
+       JOIN service_profiles sp ON sp.id = pas.service_profile_id
+       WHERE pas.id = ? AND sp.user_id = ?`,
       [exceptionId, userId]
     );
 
-    if (result.affectedRows === 0) {
+    const [resBlackouts] = await db.query(
+      `DELETE pab
+       FROM provider_availability_blackouts pab
+       JOIN service_profiles sp ON sp.id = pab.service_profile_id
+       WHERE pab.id = ? AND sp.user_id = ?`,
+      [exceptionId, userId]
+    );
+
+    if (resSlots.affectedRows === 0 && resBlackouts.affectedRows === 0) {
       return res.status(404).json({ success: false, message: 'Exception not found' });
     }
 
@@ -2231,22 +2049,11 @@ exports.deleteAvailabilityException = async (req, res) => {
 exports.getMyLanguages = async (req, res) => {
   try {
     const userId = req.user?.userId;
-    const [profiles] = await db.query('SELECT id FROM service_profiles WHERE user_id = ? LIMIT 1', [userId]);
-
-    if (profiles.length === 0) {
-      return res.status(404).json({ success: false, message: 'Service profile not found' });
-    }
-
-    const [rows] = await db.query(
-      'SELECT language_code FROM provider_languages WHERE service_profile_id = ? ORDER BY language_code',
-      [profiles[0].id]
-    );
+    const languages = await getPersonLanguages(db, userId);
 
     return res.json({
       success: true,
-      data: {
-        languages: rows.map((row) => row.language_code)
-      }
+      data: { languages }
     });
   } catch (error) {
     console.error('Error fetching provider languages:', error);
@@ -2255,12 +2062,10 @@ exports.getMyLanguages = async (req, res) => {
 };
 
 exports.updateMyLanguages = async (req, res) => {
-  let connection;
-
   try {
     const userId = req.user?.userId;
     const payload = Array.isArray(req.body.languages) ? req.body.languages : [];
-    const normalized = Array.from(new Set(payload.map((value) => String(value || '').trim()).filter(Boolean)));
+    const normalized = Array.from(new Set(payload.map((value) => String(value || '').trim().toLowerCase()).filter(Boolean)));
 
     if (normalized.some((code) => !SUPPORTED_LANGUAGE_CODES.has(code))) {
       return res.status(400).json({
@@ -2269,25 +2074,7 @@ exports.updateMyLanguages = async (req, res) => {
       });
     }
 
-    const [profiles] = await db.query('SELECT id FROM service_profiles WHERE user_id = ? LIMIT 1', [userId]);
-    if (profiles.length === 0) {
-      return res.status(404).json({ success: false, message: 'Service profile not found' });
-    }
-
-    const serviceProfileId = profiles[0].id;
-    connection = await db.getConnection();
-    await connection.beginTransaction();
-
-    await connection.query('DELETE FROM provider_languages WHERE service_profile_id = ?', [serviceProfileId]);
-
-    for (const languageCode of normalized) {
-      await connection.query(
-        'INSERT INTO provider_languages (service_profile_id, language_code) VALUES (?, ?)',
-        [serviceProfileId, languageCode]
-      );
-    }
-
-    await connection.commit();
+    await applyPersonLanguages(db, userId, normalized);
 
     return res.json({
       success: true,
@@ -2295,16 +2082,8 @@ exports.updateMyLanguages = async (req, res) => {
       data: { languages: normalized }
     });
   } catch (error) {
-    if (connection) {
-      await connection.rollback();
-    }
-
     console.error('Error updating provider languages:', error);
     return res.status(500).json({ success: false, message: 'Failed to update languages' });
-  } finally {
-    if (connection) {
-      connection.release();
-    }
   }
 };
 
@@ -2643,13 +2422,11 @@ exports.createCredential = async (req, res) => {
           mimeType: req.file.mimetype,
           folder: 'serbisyo-toledo/credentials',
           resourceType: req.file.mimetype === 'application/pdf' ? 'raw' : 'image',
+          deliveryType: 'authenticated',
         });
 
         documentUrl = uploadResult.secure_url;
         documentPublicId = uploadResult.public_id;
-      } else {
-        documentData = req.file.buffer;
-        documentMime = req.file.mimetype;
       }
     }
 
@@ -2667,12 +2444,10 @@ exports.createCredential = async (req, res) => {
          related_skills,
          document_url,
          document_public_id,
-         document_data,
-         document_mime,
          verification_status,
          verification_notes
        )
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'unverified', NULL)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'unverified', NULL)`,
       [
         serviceProfileId,
         String(payload.credentialName || '').trim(),
@@ -2686,8 +2461,6 @@ exports.createCredential = async (req, res) => {
         JSON.stringify(relatedSkills),
         documentUrl,
         documentPublicId,
-        documentData,
-        documentMime,
       ]
     );
 

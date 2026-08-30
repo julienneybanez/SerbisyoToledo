@@ -326,8 +326,8 @@ describe('Canonical Request Lifecycle Hardening', () => {
       if (sql.includes('FROM provider_availability_settings')) {
         return [[{ availability_status: 'available', max_advance_booking_days: 36500 }]];
       }
-      if (sql.includes('FROM provider_weekly_availability')) {
-        return [[{ start_time: '08:00:00', end_time: '18:00:00', is_available: 1 }]];
+      if (sql.includes('FROM provider_available_slots')) {
+        return [[{ start_time: '08:00:00', end_time: '18:00:00' }]];
       }
       return [[]];
     });

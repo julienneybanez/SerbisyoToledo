@@ -1,4 +1,5 @@
 const db = require('../config/database');
+const { getSignedDeliveryUrl } = require('../utils/cloudinaryService');
 
 // Get dashboard statistics
 exports.getDashboardStats = async (req, res) => {
@@ -642,10 +643,9 @@ exports.getProviderCredentials = async (req, res) => {
       `SELECT pc.id, pc.service_profile_id, pc.credential_name, pc.credential_type,
               pc.issuing_organization, pc.credential_id, pc.issue_date, pc.expiration_date,
               pc.does_not_expire, pc.credential_url, pc.related_skills,
-              pc.document_url, pc.document_data, pc.document_mime,
+              pc.document_url, pc.document_public_id,
               pc.verification_status, pc.verification_notes, pc.created_at, pc.updated_at,
               pc.reviewed_by, pc.reviewed_at,
-              sp.full_name AS provider_profile_name,
               u.id AS provider_user_id,
               u.full_name AS provider_user_name,
               reviewer.full_name AS reviewer_name
@@ -671,7 +671,7 @@ exports.getProviderCredentials = async (req, res) => {
       provider: {
         userId: row.provider_user_id,
         name: row.provider_user_name,
-        profileName: row.provider_profile_name,
+        profileName: row.provider_user_name,
       },
       credentialName: row.credential_name,
       credentialType: row.credential_type,
@@ -695,11 +695,9 @@ exports.getProviderCredentials = async (req, res) => {
       reviewedAt: row.reviewed_at,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
-      document: row.document_url
-        ? row.document_url
-        : (row.document_data
-          ? `data:${row.document_mime || 'application/octet-stream'};base64,${Buffer.from(row.document_data).toString('base64')}`
-          : null),
+      document: row.document_public_id
+        ? getSignedDeliveryUrl(row.document_public_id)
+        : (row.document_url || null),
     }));
 
     return res.json({

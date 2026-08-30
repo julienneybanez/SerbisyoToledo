@@ -125,11 +125,7 @@ describe('bookingAvailability.checkScheduleConflict', () => {
           }]];
         }
 
-        if (text.includes('FROM provider_weekly_availability') && text.includes('day_of_week')) {
-          return [[]];
-        }
-
-        if (text.includes('FROM provider_availability_exceptions') && text.includes('exception_date = ?')) {
+        if (text.includes('FROM provider_available_slots')) {
           return [[]];
         }
 
@@ -171,15 +167,10 @@ describe('bookingAvailability.checkScheduleConflict', () => {
           }]];
         }
 
-        if (text.includes('FROM provider_weekly_availability') && text.includes('day_of_week')) {
-          return [[]];
-        }
-
-        if (text.includes('FROM provider_availability_exceptions') && text.includes('exception_date = ?')) {
+        if (text.includes('FROM provider_available_slots')) {
           return [[{
             start_time: '09:00:00',
             end_time: '12:00:00',
-            exception_type: 'available',
           }]];
         }
 

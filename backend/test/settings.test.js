@@ -193,7 +193,7 @@ describe('Settings-related backend endpoints', () => {
     const sqlCalls = connection.query.mock.calls.map(([sql]) => String(sql));
     expect(sqlCalls.some((sql) => sql.includes('DELETE FROM provider_weekly_availability'))).toBe(true);
     expect(sqlCalls.some((sql) => sql.includes('DELETE FROM provider_availability_exceptions'))).toBe(true);
-    expect(sqlCalls.filter((sql) => sql.includes('INSERT INTO provider_availability_exceptions'))).toHaveLength(2);
+    expect(sqlCalls.filter((sql) => sql.includes('INSERT INTO provider_available_slots'))).toHaveLength(2);
   });
 
   it('rejects overlapping provider-selected time slots on the same date', async () => {
