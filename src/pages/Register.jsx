@@ -22,6 +22,7 @@ const Register = () => {
   const [skills, setSkills] = useState([]);
   const [languages, setLanguages] = useState([]);
   const [currentSkill, setCurrentSkill] = useState('');
+  const [agreedToPolicies, setAgreedToPolicies] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -74,12 +75,26 @@ const Register = () => {
       return;
     }
 
+    if (formData.password.length < 10 || formData.password.length > 128) {
+      setError(t('passwordLengthRequirement'));
+      setIsLoading(false);
+      return;
+    }
+
+    if (!agreedToPolicies) {
+      setError(t('registerAgreementRequired'));
+      setIsLoading(false);
+      return;
+    }
+
     try {
       const registrationData = {
         fullName: formData.fullName,
         email: formData.email,
         password: formData.password,
         userType,
+        acceptedTerms: true,
+        acknowledgedPrivacy: true,
       };
 
       if (userType === 'tradesperson') {
@@ -144,7 +159,7 @@ const Register = () => {
             <div className="auth-field">
               <label htmlFor="register-password" className="form-label">{t('password')}</label>
               <div className="password-input-wrapper">
-                <input id="register-password" type={showPassword ? 'text' : 'password'} name="password" placeholder={t('createStrongPassword')} value={formData.password} onChange={handleInputChange} className="form-control" autoComplete="new-password" required />
+                <input id="register-password" type={showPassword ? 'text' : 'password'} name="password" placeholder={t('createStrongPassword')} value={formData.password} onChange={handleInputChange} className="form-control" autoComplete="new-password" minLength={10} maxLength={128} required />
                 <button type="button" className="password-toggle" onClick={() => setShowPassword((visible) => !visible)} aria-label={t('togglePasswordVisibility')}>
                   <i className={`bi ${showPassword ? 'bi-eye-slash' : 'bi-eye'}`} aria-hidden="true"></i>
                 </button>
@@ -198,6 +213,24 @@ const Register = () => {
                 </div>
               </section>
             )}
+
+            <div className="auth-field auth-agreement-field">
+              <label htmlFor="register-agree-policies" className="auth-agreement-label">
+                <input
+                  id="register-agree-policies"
+                  type="checkbox"
+                  checked={agreedToPolicies}
+                  onChange={(event) => setAgreedToPolicies(event.target.checked)}
+                  required
+                />
+                <span>
+                  {t('registerAgreementPrefix')}{' '}
+                  <Link to="/terms" target="_blank" rel="noopener noreferrer">{t('termsAndConditions')}</Link>
+                  {' '}{t('registerAgreementAnd')}{' '}
+                  <Link to="/privacy" target="_blank" rel="noopener noreferrer">{t('privacyNotice')}</Link>.
+                </span>
+              </label>
+            </div>
 
             <button type="submit" className="btn btn-primary auth-submit" disabled={isLoading}>
               {isLoading ? <><span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>{t('creatingAccount')}</> : t('createAccount')}

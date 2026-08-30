@@ -44,7 +44,7 @@ router.post(
   ]),
   validateMultiFieldUploads({
     governmentId: { allowedKinds: ['image', 'pdf'], required: true, maxCount: 1 },
-    certifications: { allowedKinds: ['image', 'pdf'], required: true, maxCount: 1 },
+    certifications: { allowedKinds: ['image', 'pdf'], required: false, maxCount: 1 },
   }),
   userController.submitVerificationRequest
 );

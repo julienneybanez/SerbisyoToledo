@@ -217,8 +217,11 @@ export default function EditProfileModal({ onClose, onProfileUpdated }) {
                 name="phone"
                 value={formData.phone}
                 onChange={handleInputChange}
-                placeholder="Enter your phone number"
+                placeholder="e.g. 09123456789"
+                inputMode="tel"
+                maxLength={20}
               />
+              <small className="form-help">Private by default. Your number is shown to a booking participant only after you approve their phone-number request.</small>
             </div>
 
             <div className="form-group">

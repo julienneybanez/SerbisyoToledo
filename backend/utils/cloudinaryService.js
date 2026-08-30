@@ -21,7 +21,7 @@ const ensureCloudinaryConfigured = () => {
   return true;
 };
 
-const uploadImageBuffer = async ({ buffer, mimeType, folder, resourceType = 'image' }) => {
+const uploadImageBuffer = async ({ buffer, mimeType, folder, resourceType = 'image', deliveryType = 'upload' }) => {
   if (!buffer || !mimeType) {
     throw new Error('Image buffer and mime type are required for upload');
   }
@@ -35,6 +35,24 @@ const uploadImageBuffer = async ({ buffer, mimeType, folder, resourceType = 'ima
   return cloudinary.uploader.upload(dataUri, {
     folder,
     resource_type: resourceType,
+    type: deliveryType,
+  });
+};
+
+// Short-lived signed URL for assets stored with deliveryType='authenticated'
+// (e.g. provider credential documents, which must never resolve to a
+// permanent public URL even if the stored public_id ever leaks).
+const getSignedDeliveryUrl = (publicId, { resourceType = 'image', expiresInSeconds = 300 } = {}) => {
+  if (!publicId || !ensureCloudinaryConfigured()) {
+    return null;
+  }
+
+  const expiresAt = Math.floor(Date.now() / 1000) + expiresInSeconds;
+
+  return cloudinary.utils.private_download_url(publicId, undefined, {
+    resource_type: resourceType,
+    type: 'authenticated',
+    expires_at: expiresAt,
   });
 };
 
@@ -53,5 +71,6 @@ const deleteImageByPublicId = async (publicId, resourceType = 'image') => {
 module.exports = {
   hasCloudinaryConfig,
   uploadImageBuffer,
+  getSignedDeliveryUrl,
   deleteImageByPublicId,
 };

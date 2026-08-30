@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { clearAuthSession, getUser } from '../../services/api';
+import { authAPI, getUser } from '../../services/api';
 import NotificationDropdown from '../common/NotificationDropdown';
 import ThemeToggle from '../common/ThemeToggle';
 
@@ -8,9 +8,8 @@ export default function WorkspaceTopbar({ role }) {
   const user = getUser();
   const settingsPath = role === 'tradesperson' ? '/provider-settings' : '/client-settings';
 
-  const handleLogout = () => {
-    clearAuthSession({ preserveRedirect: false });
-    window.dispatchEvent(new Event('authChange'));
+  const handleLogout = async () => {
+    await authAPI.logout();
     navigate('/');
   };
 

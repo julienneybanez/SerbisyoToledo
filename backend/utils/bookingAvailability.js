@@ -2,32 +2,7 @@ const BLOCKING_STATUSES = ['accepted', 'on_the_way', 'in_progress'];
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
-const requestDatesTableSupport = new WeakMap();
-
-const supportsRequestDatesTable = async (connection) => {
-  if (!connection || typeof connection.query !== 'function') {
-    return false;
-  }
-
-  if (requestDatesTableSupport.has(connection)) {
-    return requestDatesTableSupport.get(connection);
-  }
-
-  try {
-    const [rows] = await connection.query(
-      `SELECT COUNT(*) AS table_count
-       FROM information_schema.tables
-       WHERE table_schema = DATABASE()
-         AND table_name = 'service_request_dates'`
-    );
-    const supported = Number(rows?.[0]?.table_count || 0) > 0;
-    requestDatesTableSupport.set(connection, supported);
-    return supported;
-  } catch {
-    requestDatesTableSupport.set(connection, false);
-    return false;
-  }
-};
+const supportsRequestDatesTable = async () => true;
 
 const parseDateOnly = (dateString) => {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(String(dateString || ''))) {
@@ -131,18 +106,8 @@ const calculateDurationDays = (startDate, endDate) => {
   return diffDays > 0 ? diffDays : null;
 };
 
-const dateRangeOverlaps = (existingStart, existingEnd, requestedStart, requestedEnd) => {
-  return existingStart <= requestedEnd && existingEnd >= requestedStart;
-};
-
 const timeRangesOverlap = (existingStartMinutes, existingEndMinutes, requestedStartMinutes, requestedEndMinutes) => {
   return existingStartMinutes < requestedEndMinutes && existingEndMinutes > requestedStartMinutes;
-};
-
-const dayOfWeekFromDate = (dateString) => {
-  const date = parseDateOnly(dateString);
-  if (!date) return null;
-  return date.getUTCDay();
 };
 
 const getDurationMinutesFromScheduledTimestamps = (startValue, endValue) => {
@@ -173,47 +138,43 @@ const getEffectiveBookingDurationMinutes = (row = {}) => {
 const ensureAvailabilitySchema = async (connection) => {
   await connection.query(
     `CREATE TABLE IF NOT EXISTS provider_availability_settings (
-      id INT PRIMARY KEY AUTO_INCREMENT,
-      service_profile_id INT NOT NULL UNIQUE,
+      id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+      service_profile_id INT UNSIGNED NOT NULL UNIQUE,
       allow_same_day_booking BOOLEAN NOT NULL DEFAULT FALSE,
       min_advance_notice_minutes INT NOT NULL DEFAULT 720,
       max_advance_booking_days INT NOT NULL DEFAULT 60,
-      availability_status VARCHAR(255) NOT NULL DEFAULT 'available',
+      availability_status ENUM('available','unavailable') NOT NULL DEFAULT 'available',
       show_availability_status BOOLEAN NOT NULL DEFAULT TRUE,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
       FOREIGN KEY (service_profile_id) REFERENCES service_profiles(id) ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`
   );
 
   await connection.query(
-    `CREATE TABLE IF NOT EXISTS provider_weekly_availability (
-      id INT PRIMARY KEY AUTO_INCREMENT,
-      service_profile_id INT NOT NULL,
-      day_of_week TINYINT NOT NULL,
+    `CREATE TABLE IF NOT EXISTS provider_available_slots (
+      id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+      service_profile_id INT UNSIGNED NOT NULL,
+      available_date DATE NOT NULL,
       start_time TIME NOT NULL,
       end_time TIME NOT NULL,
-      is_available BOOLEAN NOT NULL DEFAULT TRUE,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-      FOREIGN KEY (service_profile_id) REFERENCES service_profiles(id) ON DELETE CASCADE,
-      UNIQUE KEY uniq_provider_weekly_block (service_profile_id, day_of_week, start_time, end_time)
+      UNIQUE KEY uq_available_slot (service_profile_id, available_date, start_time, end_time),
+      KEY idx_available_slots_profile_date (service_profile_id, available_date),
+      FOREIGN KEY (service_profile_id) REFERENCES service_profiles(id) ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`
   );
 
   await connection.query(
-    `CREATE TABLE IF NOT EXISTS provider_availability_exceptions (
-      id INT PRIMARY KEY AUTO_INCREMENT,
-      service_profile_id INT NOT NULL,
-      exception_date DATE NOT NULL,
+    `CREATE TABLE IF NOT EXISTS provider_availability_blackouts (
+      id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+      service_profile_id INT UNSIGNED NOT NULL,
+      blackout_date DATE NOT NULL,
       start_time TIME NULL,
       end_time TIME NULL,
-      exception_type ENUM('available', 'unavailable', 'booked', 'vacation') NOT NULL,
       reason VARCHAR(255) NULL,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-      FOREIGN KEY (service_profile_id) REFERENCES service_profiles(id) ON DELETE CASCADE,
-      INDEX idx_provider_exception_lookup (service_profile_id, exception_date)
+      KEY idx_blackouts_profile_date (service_profile_id, blackout_date),
+      FOREIGN KEY (service_profile_id) REFERENCES service_profiles(id) ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`
   );
 };
@@ -321,69 +282,48 @@ const getBookingRowStartTime = (row = {}) => {
   return null;
 };
 
-const isExceptionBlockingWholeDay = (exception) => {
-  const type = String(exception.exception_type || '').toLowerCase();
-  const hasTimeBlock = Boolean(exception.start_time && exception.end_time);
-  return ['unavailable', 'booked', 'vacation'].includes(type) && !hasTimeBlock;
-};
-
 const getAvailabilityWindowsForDate = async (connection, serviceProfileId, dateString) => {
-  const dayOfWeek = dayOfWeekFromDate(dateString);
-  if (dayOfWeek == null) {
-    return [];
-  }
-
-  const [weeklyRows] = await connection.query(
-    `SELECT start_time, end_time, is_available
-     FROM provider_weekly_availability
-     WHERE service_profile_id = ? AND day_of_week = ?
-     ORDER BY start_time ASC`,
-    [serviceProfileId, dayOfWeek]
-  );
-
-  let windows = weeklyRows
-    .filter((row) => Boolean(row.is_available))
-    .map((row) => ({
-      startMinutes: timeToMinutes(row.start_time),
-      endMinutes: timeToMinutes(row.end_time),
-    }))
-    .filter((row) => row.startMinutes != null && row.endMinutes != null && row.endMinutes > row.startMinutes);
-
-  const [exceptions] = await connection.query(
-    `SELECT start_time, end_time, exception_type
-     FROM provider_availability_exceptions
-     WHERE service_profile_id = ? AND exception_date = ?
+  const [slotRows] = await connection.query(
+    `SELECT start_time, end_time
+     FROM provider_available_slots
+     WHERE service_profile_id = ? AND available_date = ?
      ORDER BY start_time ASC`,
     [serviceProfileId, dateString]
   );
 
-  if (exceptions.some(isExceptionBlockingWholeDay)) {
+  const safeSlotRows = Array.isArray(slotRows) ? slotRows : [];
+
+  let windows = safeSlotRows
+    .map((row) => ({
+      startMinutes: timeToMinutes(row.start_time),
+      endMinutes: timeToMinutes(row.end_time),
+    }))
+    .filter((row) => row.startMinutes != null && row.endMinutes != null && row.endMinutes > row.startMinutes);
+
+  if (windows.length === 0) {
     return [];
   }
 
-  const specificAvailable = exceptions
-    .filter((row) => String(row.exception_type).toLowerCase() === 'available' && row.start_time && row.end_time)
-    .map((row) => ({
-      startMinutes: timeToMinutes(row.start_time),
-      endMinutes: timeToMinutes(row.end_time),
-      // Exact provider-selected availability should surface as one client-facing
-      // start-time option, rather than being expanded into hourly starts.
-      explicitStartOnly: true,
-    }))
-    .filter((row) => row.startMinutes != null && row.endMinutes != null && row.endMinutes > row.startMinutes);
+  const [blackoutRows] = await connection.query(
+    `SELECT start_time, end_time
+     FROM provider_availability_blackouts
+     WHERE service_profile_id = ? AND blackout_date = ?`,
+    [serviceProfileId, dateString]
+  );
 
-  if (specificAvailable.length > 0) {
-    windows = specificAvailable;
+  const safeBlackoutRows = Array.isArray(blackoutRows) ? blackoutRows : [];
+
+  if (safeBlackoutRows.some((b) => !b.start_time && !b.end_time)) {
+    return [];
   }
 
-  // Subtract explicit unavailable windows.
-  const unavailableWindows = exceptions
-    .filter((row) => ['unavailable', 'vacation', 'booked'].includes(String(row.exception_type).toLowerCase()) && row.start_time && row.end_time)
-    .map((row) => ({
-      startMinutes: timeToMinutes(row.start_time),
-      endMinutes: timeToMinutes(row.end_time),
+  const unavailableWindows = safeBlackoutRows
+    .filter((b) => b.start_time && b.end_time)
+    .map((b) => ({
+      startMinutes: timeToMinutes(b.start_time),
+      endMinutes: timeToMinutes(b.end_time),
     }))
-    .filter((row) => row.startMinutes != null && row.endMinutes != null && row.endMinutes > row.startMinutes);
+    .filter((b) => b.startMinutes != null && b.endMinutes != null && b.endMinutes > b.startMinutes);
 
   if (unavailableWindows.length === 0) {
     return windows;
@@ -400,12 +340,6 @@ const getAvailabilityWindowsForDate = async (connection, serviceProfileId, dateS
       for (const segment of segments) {
         if (blocked.endMinutes <= segment.startMinutes || blocked.startMinutes >= segment.endMinutes) {
           nextSegments.push(segment);
-          continue;
-        }
-
-        // A provider-selected exact slot is atomic. If a blocking window overlaps
-        // it, remove the option rather than inventing a new start time.
-        if (segment.explicitStartOnly) {
           continue;
         }
 
@@ -591,15 +525,10 @@ const getAvailableSlotsForDate = async (
   const slots = [];
 
   for (const window of windows) {
-    const candidateStarts = window.explicitStartOnly
-      ? [window.startMinutes]
-      : (() => {
-          const starts = [];
-          for (let start = window.startMinutes; start + duration <= window.endMinutes; start += slotStepMinutes) {
-            starts.push(start);
-          }
-          return starts;
-        })();
+    const candidateStarts = [];
+    for (let start = window.startMinutes; start + duration <= window.endMinutes; start += slotStepMinutes) {
+      candidateStarts.push(start);
+    }
 
     for (const start of candidateStarts) {
       const end = start + duration;
@@ -823,17 +752,13 @@ const isScheduleAvailableForRange = async (
   // configuration must never create client-bookable dates.
   await ensureAvailabilitySchema(connection);
   const [availabilityConfigRows] = await connection.query(
-    `SELECT
-       (SELECT COUNT(*) FROM provider_weekly_availability WHERE service_profile_id = ?) AS weekly_count,
-       (SELECT COUNT(*) FROM provider_availability_exceptions WHERE service_profile_id = ?) AS exception_count`,
-    [serviceProfileId, serviceProfileId]
+    `SELECT COUNT(*) AS slot_count FROM provider_available_slots WHERE service_profile_id = ?`,
+    [serviceProfileId]
   );
 
-  const availabilityConfig = availabilityConfigRows[0] || {};
-  const weeklyCount = Number(availabilityConfig.weekly_count || 0);
-  const exceptionCount = Number(availabilityConfig.exception_count || 0);
+  const slotCount = Number(availabilityConfigRows[0]?.slot_count || 0);
 
-  if (weeklyCount === 0 && exceptionCount === 0) {
+  if (slotCount === 0) {
     return {
       available: false,
       reason: 'availability_not_configured',

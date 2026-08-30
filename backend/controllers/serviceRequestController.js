@@ -1,23 +1,16 @@
 const db = require('../config/database');
-const { parseJsonArray } = require('../utils/jsonHelpers');
 const {
   normalizeCategoryLabels,
   getServiceTypesForProfile,
   getServiceTypeByKey,
-  toCategoryKey,
 } = require('../config/serviceTaxonomy');
 const {
   BLOCKING_STATUSES,
   parseDateOnly,
-  formatDateOnly,
   parseTimeInputToSql,
-  calculateDurationDays,
-  checkScheduleConflict,
   checkScheduleConflictForDates,
   normalizeBookingDates,
   isScheduleAvailableForDates,
-  isScheduleAvailableForRange,
-  supportsRequestDatesTable,
 } = require('../utils/bookingAvailability');
 
 const MAX_JOB_DETAILS_LENGTH = 2000;
@@ -54,8 +47,6 @@ const getProviderProfile = async (connection, serviceProfileId) => {
       sp.id AS service_profile_id,
       sp.user_id AS provider_id,
       sp.starting_price,
-      sp.service_categories,
-      sp.service_types,
       sp.is_published,
       u.user_type,
       u.is_active
@@ -154,20 +145,6 @@ const normalizeRequestSchedule = (requestRow) => {
   };
 };
 
-const getRequestCategoryKeys = (requestRow = {}) => {
-  const serviceType = getServiceTypeByKey(requestRow.service_type_key);
-  if (serviceType?.categoryKey) {
-    return [serviceType.categoryKey];
-  }
-
-  return normalizeCategoryLabels(
-    parseJsonArray(requestRow.service_categories, []),
-    { preserveUnknown: false }
-  )
-    .map((label) => toCategoryKey(label))
-    .filter(Boolean);
-};
-
 const getRequestDisplayLabel = (requestRow = {}) => {
   const storedLabel = String(requestRow.service_type_label || '').trim();
   if (storedLabel) return storedLabel;
@@ -179,7 +156,7 @@ const getRequestDisplayLabel = (requestRow = {}) => {
 };
 
 const getPersistedRequestDates = async (queryable, requestRow = {}) => {
-  if (await supportsRequestDatesTable(queryable)) {
+  try {
     const [rows] = await queryable.query(
       `SELECT DATE_FORMAT(service_date, '%Y-%m-%d') AS service_date
        FROM service_request_dates
@@ -195,6 +172,8 @@ const getPersistedRequestDates = async (queryable, requestRow = {}) => {
     if (exactDates.length > 0) {
       return exactDates;
     }
+  } catch {
+    // Fall back to schedule derivation
   }
 
   return normalizeBookingDates({
@@ -210,7 +189,7 @@ const attachBookingDates = async (queryable, requestRows = []) => {
 
   let exactDatesByRequest = new Map();
 
-  if (await supportsRequestDatesTable(queryable)) {
+  try {
     const ids = rows.map((row) => Number(row.id)).filter(Number.isFinite);
     if (ids.length > 0) {
       const placeholders = ids.map(() => '?').join(', ');
@@ -229,6 +208,8 @@ const attachBookingDates = async (queryable, requestRows = []) => {
         return map;
       }, new Map());
     }
+  } catch {
+    // Ignore if exact dates table query fails
   }
 
   return rows.map((row) => {
@@ -265,42 +246,23 @@ const attachBookingDates = async (queryable, requestRows = []) => {
   });
 };
 
-const supportsSpecificRescheduleStorage = async (connection) => {
-  try {
-    const [rows] = await connection.query(
-      `SELECT COUNT(*) AS column_count
-       FROM information_schema.columns
-       WHERE table_schema = DATABASE()
-         AND table_name = 'service_request_reschedules'
-         AND column_name IN ('proposed_multi_day_mode', 'proposed_specific_dates_json')`
-    );
-    return Number(rows?.[0]?.column_count || 0) === 2;
-  } catch {
-    return false;
-  }
-};
-
-const supportsRequestBookingMetadata = async (connection) => {
-  try {
-    const [rows] = await connection.query(
-      `SELECT COUNT(*) AS column_count
-       FROM information_schema.columns
-       WHERE table_schema = DATABASE()
-         AND table_name = 'service_requests'
-         AND column_name IN ('multi_day_mode', 'requested_dates_count')`
-    );
-    return Number(rows?.[0]?.column_count || 0) === 2;
-  } catch {
-    return false;
-  }
-};
-
-const getRescheduleProposalDates = (proposal = {}) => {
-  if (String(proposal.proposed_multi_day_mode || '').toLowerCase() === 'specific_dates') {
-    return normalizeBookingDates({
-      bookingType: 'specific_dates',
-      dates: parseJsonArray(proposal.proposed_specific_dates_json, []),
-    });
+const getRescheduleProposalDates = async (queryable, proposal = {}) => {
+  if (proposal.id) {
+    try {
+      const [rows] = await queryable.query(
+        `SELECT DATE_FORMAT(proposed_date, '%Y-%m-%d') AS proposed_date
+         FROM service_request_reschedule_dates
+         WHERE reschedule_id = ?
+         ORDER BY proposed_date ASC`,
+        [proposal.id]
+      );
+      const exactDates = rows.map((r) => String(r.proposed_date || '').trim()).filter(Boolean);
+      if (exactDates.length > 0) {
+        return exactDates;
+      }
+    } catch {
+      // Fall through to date range derivation
+    }
   }
 
   const startDate = proposal.proposed_start_date;
@@ -331,9 +293,11 @@ exports.createRequest = async (req, res) => {
       scheduledDate,
       scheduledTime,
       estimatedDurationMinutes,
+      serviceLocation,
     } = req.body;
 
     const jobDetails = String(req.body.jobDetails || '').trim();
+    const normalizedServiceLocation = String(serviceLocation || '').trim();
 
     if (req.user.userType !== 'client') {
       return res.status(403).json({
@@ -342,10 +306,17 @@ exports.createRequest = async (req, res) => {
       });
     }
 
-    if (!serviceProfileId || !jobDetails) {
+    if (!serviceProfileId || !jobDetails || !normalizedServiceLocation) {
       return res.status(400).json({
         success: false,
-        message: 'Service profile and job details are required'
+        message: 'Service profile, job details, and service location are required'
+      });
+    }
+
+    if (normalizedServiceLocation.length > 500) {
+      return res.status(400).json({
+        success: false,
+        message: 'Service location must not exceed 500 characters'
       });
     }
 
@@ -419,8 +390,16 @@ exports.createRequest = async (req, res) => {
       });
     }
 
-    const profileCategories = normalizeCategoryLabels(parseJsonArray(profile.service_categories, []), { preserveUnknown: true });
-    const profileServiceTypeKeys = parseJsonArray(profile.service_types, []);
+    const profileCategories = await connection.query(
+      'SELECT category_key FROM service_profile_categories WHERE service_profile_id = ? ORDER BY category_key',
+      [profile.service_profile_id]
+    ).then(([rows]) => normalizeCategoryLabels(rows.map((row) => row.category_key), { preserveUnknown: true }));
+
+    const [profileTypeRows] = await connection.query(
+      'SELECT service_type_key FROM service_profile_types WHERE service_profile_id = ? ORDER BY service_type_key',
+      [profile.service_profile_id]
+    );
+    const profileServiceTypeKeys = profileTypeRows.map((row) => row.service_type_key);
     const offeredServiceTypes = getServiceTypesForProfile({
       categoryLabels: profileCategories,
       serviceTypeKeys: profileServiceTypeKeys,
@@ -448,109 +427,56 @@ exports.createRequest = async (req, res) => {
       });
     }
 
+    if (profileServiceTypeKeys.length === 0) {
+      await connection.rollback();
+      return res.status(400).json({
+        success: false,
+        message: 'This service profile does not have any service types configured',
+      });
+    }
+
     const effectiveServiceType = requestedServiceTypeKey
-      ? offeredServiceTypeByKey.get(requestedServiceTypeKey)
-      : (offeredServiceTypes[0] || null);
+      ? offeredServiceTypeByKey.get(requestedServiceTypeKey) || getServiceTypeByKey(requestedServiceTypeKey)
+      : (offeredServiceTypes[0] || getServiceTypeByKey(profileServiceTypeKeys[0]) || null);
     const serviceRequestLabel = String(
       effectiveServiceType?.label || profileCategories[0] || 'Service Request'
     ).trim() || 'Service Request';
 
-    // Serialize booking creation for the client and provider. This prevents
-    // simultaneous requests from racing past category and schedule checks.
     const participantIds = [Number(clientId), Number(profile.provider_id)].sort((a, b) => a - b);
     await connection.query(
       'SELECT id FROM users WHERE id IN (?, ?) ORDER BY id FOR UPDATE',
       participantIds
     );
 
-    const targetCategoryKey = effectiveServiceType?.categoryKey
-      || profileCategories.map((label) => toCategoryKey(label)).find(Boolean)
-      || null;
+    const targetServiceTypeKey = (effectiveServiceType?.key || requestedServiceTypeKey || profileServiceTypeKeys[0] || null);
 
-    if (targetCategoryKey) {
+    if (targetServiceTypeKey) {
       const activeStatusPlaceholders = ACTIVE_REQUEST_STATUSES.map(() => '?').join(', ');
       const [activeClientRequests] = await connection.query(
-        `SELECT sr.id, sr.provider_id, sr.service_type_key, sr.status, sp.service_categories
+        `SELECT sr.id, sr.provider_id, sr.service_type_key, sr.status
          FROM service_requests sr
-         JOIN service_profiles sp ON sp.id = sr.service_profile_id
          WHERE sr.client_id = ?
+           AND sr.service_type_key = ?
            AND sr.status IN (${activeStatusPlaceholders})`,
-        [clientId, ...ACTIVE_REQUEST_STATUSES]
+        [clientId, targetServiceTypeKey, ...ACTIVE_REQUEST_STATUSES]
       );
 
-      const activeCategoryConflict = activeClientRequests.find((row) => (
+      const activeServiceConflict = activeClientRequests.find((row) => (
         Number(row.provider_id) !== Number(profile.provider_id)
-        && getRequestCategoryKeys(row).includes(targetCategoryKey)
       ));
 
-      if (activeCategoryConflict) {
+      if (activeServiceConflict) {
         await connection.rollback();
         return res.status(409).json({
           success: false,
-          code: 'ACTIVE_SERVICE_CATEGORY_REQUEST_EXISTS',
-          message: `You already have an active ${effectiveServiceType?.categoryLabel || 'service'} request with another provider. Finish, cancel, or wait for that request to close before requesting the same service category from a different provider.`,
+          code: 'ACTIVE_SERVICE_TYPE_REQUEST_EXISTS',
+          message: 'You already have an active request for this same service with another provider. Finish, cancel, or wait for that request to close first.',
           data: {
-            existingRequestId: activeCategoryConflict.id,
-            categoryKey: targetCategoryKey,
+            existingRequestId: activeServiceConflict.id,
+            serviceTypeKey: targetServiceTypeKey,
           },
         });
       }
-    }
-
-    const requestDatesStorageAvailable = await supportsRequestDatesTable(connection);
-    if (normalized.canonicalBookingType === 'specific_dates' && !requestDatesStorageAvailable) {
-      await connection.rollback();
-      return res.status(503).json({
-        success: false,
-        code: 'BOOKING_DATES_SCHEMA_REQUIRED',
-        message: 'Specific-date booking is prepared in the frontend/backend, but the booking-dates database migration still needs to be applied.',
-      });
-    }
-
-    const scheduleAvailability = await isScheduleAvailableForDates(connection, {
-      serviceProfileId: profile.service_profile_id,
-      providerId: profile.provider_id,
-      dates: normalized.normalizedDates,
-      startTime: normalized.normalizedStartTime,
-      durationMinutes: normalized.normalizedDurationMinutes,
-    });
-
-    if (!scheduleAvailability.available) {
-      await connection.rollback();
-      return res.status(409).json({
-        success: false,
-        message: scheduleAvailability.message || 'The selected schedule is not available for this provider.',
-        code: 'SCHEDULE_UNAVAILABLE',
-      });
-    }
-
-    const [duplicateRows] = await connection.query(
-      `SELECT id
-       FROM service_requests
-       WHERE client_id = ?
-         AND provider_id = ?
-         AND service_profile_id = ?
-         AND start_date = ?
-         AND end_date = ?
-         AND start_time = ?
-         AND status IN ('pending', 'accepted', 'on_the_way', 'in_progress')
-       LIMIT 1`,
-      [
-        clientId,
-        profile.provider_id,
-        profile.service_profile_id,
-        normalized.normalizedStartDate,
-        normalized.normalizedEndDate,
-        normalized.normalizedStartTime,
-      ]
-    );
-
-    if (duplicateRows.length > 0) {
-      await connection.rollback();
-      return res.status(409).json({
-        success: false,
-        message: 'A similar booking request already exists for this schedule.'
-      });
     }
 
     const conflict = await checkScheduleConflictForDates(connection, {
@@ -568,6 +494,7 @@ exports.createRequest = async (req, res) => {
       });
     }
 
+    const requestMultiDayMode = normalized.canonicalBookingType === 'specific_dates' ? 'specific_dates' : 'continuous';
     const dailyRate = Number(profile.starting_price || 0);
     const estimatedTotal = dailyRate * normalized.durationDays;
 
@@ -578,46 +505,49 @@ exports.createRequest = async (req, res) => {
          service_profile_id,
          service_type_key,
          service_type_label,
-         job_title,
          job_details,
-         booking_type,
-         start_date,
-         end_date,
+         service_location,
+         multi_day_mode,
          start_time,
-         scheduled_start_at,
-         scheduled_end_at,
          estimated_duration_minutes,
-         duration_days,
+         pricing_unit_snapshot,
          daily_rate_snapshot,
-         estimated_total
+         estimated_total,
+         status
        )
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         clientId,
         profile.provider_id,
         profile.service_profile_id,
-        effectiveServiceType?.key || null,
-        serviceRequestLabel,
-        // Temporary DB compatibility only: job_title is no longer client input
-        // and should be dropped when the later database migration is applied.
+        targetServiceTypeKey,
         serviceRequestLabel,
         jobDetails,
-        normalized.storageBookingType,
-        normalized.normalizedStartDate,
-        normalized.normalizedEndDate,
+        normalizedServiceLocation,
+        requestMultiDayMode,
         normalized.normalizedStartTime,
-        `${normalized.normalizedStartDate} ${normalized.normalizedStartTime}`,
-        `${normalized.normalizedEndDate} ${normalized.normalizedStartTime}`,
         normalized.normalizedDurationMinutes,
-        normalized.durationDays,
+        'per_day',
         dailyRate,
         estimatedTotal,
+        'pending',
       ]
     );
 
     const requestId = result.insertId;
 
-    if (requestDatesStorageAvailable) {
+    await connection.query(
+      `INSERT INTO service_request_status_history (
+         service_request_id,
+         from_status,
+         to_status,
+         changed_by,
+         record_source
+       ) VALUES (?, NULL, 'pending', ?, 'live')`,
+      [requestId, clientId]
+    );
+
+    if (normalized.normalizedDates.length > 0) {
       const valuesSql = normalized.normalizedDates.map(() => '(?, ?)').join(', ');
       const values = normalized.normalizedDates.flatMap((date) => [requestId, date]);
       await connection.query(
@@ -654,6 +584,7 @@ exports.createRequest = async (req, res) => {
         durationDays: normalized.durationDays,
         dailyRateSnapshot: dailyRate,
         estimatedTotal,
+        serviceLocation: normalizedServiceLocation,
       }
     });
   } catch (error) {
@@ -682,20 +613,22 @@ exports.getClientRequests = async (req, res) => {
       `SELECT sr.*, 
               sp.full_name as provider_name, 
               sp.barangay_address as provider_location,
-              u.phone as provider_phone,
               (SELECT COUNT(*) FROM reviews rv WHERE rv.service_request_id = sr.id AND rv.client_id = sr.client_id) as has_review
        FROM service_requests sr
        JOIN service_profiles sp ON sr.service_profile_id = sp.id
        JOIN users u ON sr.provider_id = u.id
        WHERE sr.client_id = ?
+         AND NOT EXISTS (
+           SELECT 1 FROM service_request_archives archive
+           WHERE archive.service_request_id = sr.id AND archive.user_id = ?
+         )
        ORDER BY sr.created_at DESC`,
-      [clientId]
+      [clientId, clientId]
     );
 
     const requestsWithDates = await attachBookingDates(db, requests);
     const processedRequests = requestsWithDates.map((request) => ({
       ...request,
-      provider_phone: request.discussion_accepted ? request.provider_phone : null,
       has_review: request.has_review > 0,
     }));
 
@@ -719,13 +652,16 @@ exports.getProviderRequests = async (req, res) => {
 
     const [requests] = await db.query(
       `SELECT sr.*, 
-              u.full_name as client_name,
-              u.email as client_email
+              u.full_name as client_name
        FROM service_requests sr
        JOIN users u ON sr.client_id = u.id
        WHERE sr.provider_id = ?
+         AND NOT EXISTS (
+           SELECT 1 FROM service_request_archives archive
+           WHERE archive.service_request_id = sr.id AND archive.user_id = ?
+         )
        ORDER BY sr.created_at DESC`,
-      [providerId]
+      [providerId, providerId]
     );
 
     const requestsWithDates = await attachBookingDates(db, requests);
@@ -804,11 +740,6 @@ exports.updateRequestStatus = async (req, res) => {
         });
       }
 
-      await connection.query(
-        'SELECT id FROM service_profiles WHERE id = ? AND user_id = ? FOR UPDATE',
-        [request.service_profile_id, request.provider_id]
-      );
-
       const schedule = normalizeRequestSchedule(request);
       const requestDates = await getPersistedRequestDates(connection, request);
       const conflict = await checkScheduleConflictForDates(connection, {
@@ -864,6 +795,10 @@ exports.updateRequestStatus = async (req, res) => {
         });
       }
 
+      const effectiveReasonText = normalizedCancellationReason === 'Other'
+        ? normalizedCancellationReasonOther
+        : normalizedCancellationReason;
+
       await connection.query(
         `UPDATE service_requests
          SET status = 'cancelled',
@@ -878,6 +813,25 @@ exports.updateRequestStatus = async (req, res) => {
           normalizedCancellationReason === 'Other' ? normalizedCancellationReasonOther : null,
           requestId,
         ]
+      );
+
+      await connection.query(
+        `INSERT INTO service_request_status_history (
+           service_request_id,
+           from_status,
+           to_status,
+           changed_by,
+           reason,
+           record_source
+         ) VALUES (?, ?, 'cancelled', ?, ?, 'live')`,
+        [Number(requestId), currentStatus, userId, effectiveReasonText]
+      );
+
+      await connection.query(
+        `UPDATE service_request_reschedules
+         SET reschedule_status = 'declined', responded_at = NOW()
+         WHERE service_request_id = ? AND reschedule_status = 'pending'`,
+        [requestId]
       );
 
       const otherUserId = request.client_id === userId ? request.provider_id : request.client_id;
@@ -934,7 +888,13 @@ exports.updateRequestStatus = async (req, res) => {
           await connection.rollback();
           return res.status(409).json({ success: false, message: 'You have already confirmed completion' });
         }
-        await connection.query('UPDATE service_requests SET provider_completed = TRUE WHERE id = ?', [requestId]);
+        await connection.query(
+          `UPDATE service_requests
+           SET provider_completed = TRUE,
+               provider_completed_at = COALESCE(provider_completed_at, NOW())
+           WHERE id = ? AND provider_completed = FALSE`,
+          [requestId]
+        );
       }
 
       if (isClientAction) {
@@ -942,30 +902,47 @@ exports.updateRequestStatus = async (req, res) => {
           await connection.rollback();
           return res.status(409).json({ success: false, message: 'You have already confirmed completion' });
         }
-        await connection.query('UPDATE service_requests SET client_completed = TRUE WHERE id = ?', [requestId]);
+        await connection.query(
+          `UPDATE service_requests
+           SET client_completed = TRUE,
+               client_completed_at = COALESCE(client_completed_at, NOW())
+           WHERE id = ? AND client_completed = FALSE`,
+          [requestId]
+        );
       }
 
-      const [updated] = await connection.query('SELECT provider_completed, client_completed FROM service_requests WHERE id = ? FOR UPDATE', [requestId]);
+      const [updated] = await connection.query(
+        'SELECT status, provider_completed, client_completed FROM service_requests WHERE id = ? FOR UPDATE',
+        [requestId]
+      );
       const bothConfirmed = updated[0].provider_completed && updated[0].client_completed;
 
       if (bothConfirmed) {
-        await connection.query('UPDATE service_requests SET status = ? WHERE id = ?', ['completed', requestId]);
+        if (updated[0].status !== 'completed') {
+          await connection.query('UPDATE service_requests SET status = ? WHERE id = ? AND status <> \'completed\'', ['completed', requestId]);
 
-        await connection.query(
-          'UPDATE service_profiles SET jobs_completed = jobs_completed + 1 WHERE user_id = ?',
-          [request.provider_id]
-        );
+          await connection.query(
+            `INSERT INTO service_request_status_history (
+               service_request_id,
+               from_status,
+               to_status,
+               changed_by,
+               record_source
+             ) VALUES (?, 'in_progress', 'completed', ?, 'live')`,
+            [Number(requestId), userId]
+          );
 
-        await connection.query(
-          `INSERT INTO notifications (user_id, type, title, message, related_request_id)
-           VALUES (?, 'service_completed', ?, ?, ?)`,
-          [request.client_id, 'Service Completed', `Your service request "${getRequestDisplayLabel(request)}" has been completed! You can now leave a review.`, requestId]
-        );
-        await connection.query(
-          `INSERT INTO notifications (user_id, type, title, message, related_request_id)
-           VALUES (?, 'service_completed', ?, ?, ?)`,
-          [request.provider_id, 'Service Completed', `The service "${getRequestDisplayLabel(request)}" has been marked as completed by both parties.`, requestId]
-        );
+          await connection.query(
+            `INSERT INTO notifications (user_id, type, title, message, related_request_id)
+             VALUES (?, 'service_completed', ?, ?, ?)`,
+            [request.client_id, 'Service Completed', `Your service request "${getRequestDisplayLabel(request)}" has been completed! You can now leave a review.`, requestId]
+          );
+          await connection.query(
+            `INSERT INTO notifications (user_id, type, title, message, related_request_id)
+             VALUES (?, 'service_completed', ?, ?, ?)`,
+            [request.provider_id, 'Service Completed', `The service "${getRequestDisplayLabel(request)}" has been marked as completed by both parties.`, requestId]
+          );
+        }
 
         await connection.commit();
 
@@ -992,8 +969,8 @@ exports.updateRequestStatus = async (req, res) => {
         message: 'Completion confirmed! Waiting for the other party to confirm.',
         data: {
           fullyCompleted: false,
-          provider_completed: isProviderAction ? true : request.provider_completed,
-          client_completed: isClientAction ? true : request.client_completed,
+          provider_completed: isProviderAction ? true : Boolean(request.provider_completed),
+          client_completed: isClientAction ? true : Boolean(request.client_completed),
         }
       });
     }
@@ -1024,17 +1001,45 @@ exports.updateRequestStatus = async (req, res) => {
           message: 'Reason for declining must not exceed 500 characters'
         });
       }
-    }
 
-    if (status === 'declined') {
       await connection.query(
         'UPDATE service_requests SET status = ?, decline_reason = ? WHERE id = ?',
         [status, trimmedReason, requestId]
+      );
+      await connection.query(
+        `INSERT INTO service_request_status_history (
+           service_request_id,
+           from_status,
+           to_status,
+           changed_by,
+           reason,
+           record_source
+         ) VALUES (?, ?, 'declined', ?, ?, 'live')`,
+        [Number(requestId), currentStatus, userId, trimmedReason]
       );
     } else {
       await connection.query(
         'UPDATE service_requests SET status = ? WHERE id = ?',
         [status, requestId]
+      );
+      await connection.query(
+        `INSERT INTO service_request_status_history (
+           service_request_id,
+           from_status,
+           to_status,
+           changed_by,
+           record_source
+         ) VALUES (?, ?, ?, ?, 'live')`,
+        [Number(requestId), currentStatus, status, userId]
+      );
+    }
+
+    if (status !== 'accepted') {
+      await connection.query(
+        `UPDATE service_request_reschedules
+         SET reschedule_status = 'declined', responded_at = NOW()
+         WHERE service_request_id = ? AND reschedule_status = 'pending'`,
+        [requestId]
       );
     }
 
@@ -1187,13 +1192,20 @@ exports.proposeReschedule = async (req, res) => {
       });
     }
 
-    const supportsSpecificMetadata = await supportsSpecificRescheduleStorage(connection);
-    if (canonicalBookingType === 'specific_dates' && !supportsSpecificMetadata) {
+    const [pendingReschedules] = await connection.query(
+      `SELECT id
+       FROM service_request_reschedules
+       WHERE service_request_id = ? AND reschedule_status = 'pending'
+       LIMIT 1
+       FOR UPDATE`,
+      [request.id]
+    );
+
+    if (pendingReschedules.length > 0) {
       await connection.rollback();
-      return res.status(503).json({
+      return res.status(409).json({
         success: false,
-        code: 'RESCHEDULE_DATES_SCHEMA_REQUIRED',
-        message: 'Specific-date rescheduling is prepared in the frontend/backend, but the reschedule-date database migration still needs to be applied.',
+        message: 'This booking already has a pending reschedule proposal. Resolve it before proposing another.'
       });
     }
 
@@ -1234,67 +1246,47 @@ exports.proposeReschedule = async (req, res) => {
     const proposedStartDateIso = normalizedProposedDates[0];
     const proposedEndDateIso = normalizedProposedDates[normalizedProposedDates.length - 1];
 
-    if (supportsSpecificMetadata) {
+    const [rescheduleResult] = await connection.query(
+      `INSERT INTO service_request_reschedules (
+         service_request_id,
+         original_start_date,
+         original_end_date,
+         original_start_time,
+         proposed_start_date,
+         proposed_end_date,
+         proposed_start_time,
+         proposed_estimated_duration_minutes,
+         proposed_multi_day_mode,
+         proposed_by,
+         reschedule_reason,
+         reschedule_status
+       )
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
+      [
+        request.id,
+        existingSchedule.startDate,
+        existingSchedule.endDate,
+        existingSchedule.startTime,
+        proposedStartDateIso,
+        proposedEndDateIso,
+        normalizedProposedTime,
+        normalizedDurationMinutes,
+        canonicalBookingType === 'specific_dates' ? 'specific_dates' : 'continuous',
+        actorId,
+        trimmedReason,
+      ]
+    );
+
+    const rescheduleId = rescheduleResult.insertId;
+
+    if (normalizedProposedDates.length > 0) {
+      const placeholders = normalizedProposedDates.map(() => '(?, ?)').join(', ');
+      const dateValues = normalizedProposedDates.flatMap((date) => [rescheduleId, date]);
       await connection.query(
-        `INSERT INTO service_request_reschedules (
-           service_request_id,
-           original_start_date,
-           original_end_date,
-           original_start_time,
-           proposed_start_date,
-           proposed_end_date,
-           proposed_start_time,
-           proposed_estimated_duration_minutes,
-           proposed_multi_day_mode,
-           proposed_specific_dates_json,
-           proposed_by,
-           reschedule_reason,
-           reschedule_status
-         )
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
-        [
-          request.id,
-          existingSchedule.startDate,
-          existingSchedule.endDate,
-          existingSchedule.startTime,
-          proposedStartDateIso,
-          proposedEndDateIso,
-          normalizedProposedTime,
-          normalizedDurationMinutes,
-          canonicalBookingType === 'specific_dates' ? 'specific_dates' : 'continuous',
-          canonicalBookingType === 'specific_dates' ? JSON.stringify(normalizedProposedDates) : null,
-          actorId,
-          trimmedReason,
-        ]
-      );
-    } else {
-      await connection.query(
-        `INSERT INTO service_request_reschedules (
-           service_request_id,
-           original_start_date,
-           original_end_date,
-           original_start_time,
-           proposed_start_date,
-           proposed_end_date,
-           proposed_start_time,
-           proposed_estimated_duration_minutes,
-           proposed_by,
-           reschedule_reason,
-           reschedule_status
-         )
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
-        [
-          request.id,
-          existingSchedule.startDate,
-          existingSchedule.endDate,
-          existingSchedule.startTime,
-          proposedStartDateIso,
-          proposedEndDateIso,
-          normalizedProposedTime,
-          normalizedDurationMinutes,
-          actorId,
-          trimmedReason,
-        ]
+        `INSERT INTO service_request_reschedule_dates (reschedule_id, proposed_date)
+         VALUES ${placeholders}
+         ON DUPLICATE KEY UPDATE proposed_date = VALUES(proposed_date)`,
+        dateValues
       );
     }
 
@@ -1372,6 +1364,14 @@ exports.respondToReschedule = async (req, res) => {
 
     const request = requests[0];
 
+    if (request.status !== 'accepted') {
+      await connection.rollback();
+      return res.status(409).json({
+        success: false,
+        message: 'This reschedule proposal is no longer valid because the booking is not in Accepted status.'
+      });
+    }
+
     const [reschedules] = await connection.query(
       `SELECT *
        FROM service_request_reschedules
@@ -1398,7 +1398,7 @@ exports.respondToReschedule = async (req, res) => {
     }
 
     if (action === 'accepted') {
-      const proposedDates = getRescheduleProposalDates(proposal);
+      const proposedDates = await getRescheduleProposalDates(connection, proposal);
       if (proposedDates.length === 0) {
         await connection.rollback();
         return res.status(409).json({ success: false, message: 'The proposed schedule has no valid service dates.' });
@@ -1444,62 +1444,36 @@ exports.respondToReschedule = async (req, res) => {
       const durationDays = proposedDates.length;
       const dailyRateSnapshot = Number(request.daily_rate_snapshot || 0);
       const estimatedTotal = dailyRateSnapshot * durationDays;
-      const proposedStartDate = proposedDates[0];
-      const proposedEndDate = proposedDates[proposedDates.length - 1];
-      const proposedStartAt = `${proposedStartDate} ${proposal.proposed_start_time}`;
-      const proposedEndAt = `${proposedEndDate} ${proposal.proposed_start_time}`;
-      const storageBookingType = durationDays > 1 ? 'multi_day' : 'one_day';
-      const specificMode = String(proposal.proposed_multi_day_mode || '').toLowerCase() === 'specific_dates';
-      const hasRequestMetadata = await supportsRequestBookingMetadata(connection);
+      const specificMode = String(proposal.proposed_multi_day_mode || '').toLowerCase() === 'specific_dates' ? 'specific_dates' : 'continuous';
 
-      const updateFields = [
-        'booking_type = ?',
-        'start_date = ?',
-        'end_date = ?',
-        'start_time = ?',
-        'scheduled_start_at = ?',
-        'scheduled_end_at = ?',
-        'estimated_duration_minutes = ?',
-        'duration_days = ?',
-        'estimated_total = ?',
-      ];
-      const updateValues = [
-        storageBookingType,
-        proposedStartDate,
-        proposedEndDate,
-        proposal.proposed_start_time,
-        proposedStartAt,
-        proposedEndAt,
-        proposedDurationMinutes,
-        durationDays,
-        estimatedTotal,
-      ];
-
-      if (hasRequestMetadata) {
-        updateFields.push('multi_day_mode = ?', 'requested_dates_count = ?');
-        updateValues.push(specificMode ? 'specific_dates' : 'continuous', durationDays);
-      }
-
-      updateValues.push(request.id);
       await connection.query(
-        `UPDATE service_requests SET ${updateFields.join(', ')} WHERE id = ?`,
-        updateValues
+        `UPDATE service_requests
+         SET start_time = ?,
+             estimated_duration_minutes = ?,
+             estimated_total = ?,
+             multi_day_mode = ?
+         WHERE id = ?`,
+        [
+          proposal.proposed_start_time,
+          proposedDurationMinutes,
+          estimatedTotal,
+          specificMode,
+          request.id,
+        ]
       );
 
-      if (await supportsRequestDatesTable(connection)) {
-        await connection.query(
-          'DELETE FROM service_request_dates WHERE service_request_id = ?',
-          [request.id]
-        );
+      await connection.query(
+        'DELETE FROM service_request_dates WHERE service_request_id = ?',
+        [request.id]
+      );
 
-        const placeholders = proposedDates.map(() => '(?, ?)').join(', ');
-        const dateValues = proposedDates.flatMap((date) => [request.id, date]);
-        await connection.query(
-          `INSERT INTO service_request_dates (service_request_id, service_date)
-           VALUES ${placeholders}`,
-          dateValues
-        );
-      }
+      const placeholders = proposedDates.map(() => '(?, ?)').join(', ');
+      const dateValues = proposedDates.flatMap((date) => [request.id, date]);
+      await connection.query(
+        `INSERT INTO service_request_dates (service_request_id, service_date)
+         VALUES ${placeholders}`,
+        dateValues
+      );
     }
 
     await connection.query(
@@ -1547,134 +1521,6 @@ exports.respondToReschedule = async (req, res) => {
   }
 };
 
-// Request discussion (client requests to discuss details)
-exports.requestDiscussion = async (req, res) => {
-  try {
-    const { requestId } = req.params;
-    const clientId = req.user.userId;
-
-    const [requests] = await db.query(
-      `SELECT sr.*, u.full_name as client_name, p.full_name as provider_name
-       FROM service_requests sr
-       JOIN users u ON sr.client_id = u.id
-       JOIN users p ON sr.provider_id = p.id
-       WHERE sr.id = ? AND sr.client_id = ?`,
-      [requestId, clientId]
-    );
-
-    if (requests.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: 'Request not found'
-      });
-    }
-
-    const request = requests[0];
-
-    if (!['accepted', 'on_the_way', 'in_progress'].includes(request.status)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Discussion can only be requested for accepted requests'
-      });
-    }
-
-    if (request.discussion_requested) {
-      return res.status(400).json({
-        success: false,
-        message: 'Discussion already requested'
-      });
-    }
-
-    await db.query(
-      'UPDATE service_requests SET discussion_requested = TRUE WHERE id = ?',
-      [requestId]
-    );
-
-    await db.query(
-      `INSERT INTO notifications (user_id, type, title, message, related_request_id)
-       VALUES (?, 'discussion_requested', ?, ?, ?)`,
-      [request.provider_id, 'Discussion Request', `${request.client_name} wants to discuss details for: ${getRequestDisplayLabel(request)}`, requestId]
-    );
-
-    res.json({
-      success: true,
-      message: 'Discussion request sent successfully'
-    });
-  } catch (error) {
-    console.error('Request discussion error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to request discussion'
-    });
-  }
-};
-
-// Accept discussion request (provider accepts, revealing their phone)
-exports.acceptDiscussion = async (req, res) => {
-  try {
-    const { requestId } = req.params;
-    const providerId = req.user.userId;
-
-    const [requests] = await db.query(
-      `SELECT sr.*, u.full_name as provider_name, c.full_name as client_name
-       FROM service_requests sr
-       JOIN users u ON sr.provider_id = u.id
-       JOIN users c ON sr.client_id = c.id
-       WHERE sr.id = ? AND sr.provider_id = ?`,
-      [requestId, providerId]
-    );
-
-    if (requests.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: 'Request not found'
-      });
-    }
-
-    const request = requests[0];
-
-    if (!request.discussion_requested) {
-      return res.status(400).json({
-        success: false,
-        message: 'No discussion request pending'
-      });
-    }
-
-    const [providerData] = await db.query('SELECT phone FROM users WHERE id = ?', [providerId]);
-    const providerPhone = providerData[0]?.phone;
-
-    if (!providerPhone || providerPhone.trim() === '') {
-      return res.status(400).json({
-        success: false,
-        code: 'NO_PHONE',
-        message: 'Please set your phone number in Edit Profile before accepting a discussion request.'
-      });
-    }
-
-    await db.query(
-      'UPDATE service_requests SET discussion_accepted = TRUE, provider_phone_revealed = TRUE WHERE id = ?',
-      [requestId]
-    );
-
-    await db.query(
-      `INSERT INTO notifications (user_id, type, title, message, related_request_id)
-       VALUES (?, 'discussion_accepted', ?, ?, ?)`,
-      [request.client_id, 'Discussion Accepted', `${request.provider_name} accepted your discussion request. You can now contact them at: ${providerPhone}`, requestId]
-    );
-
-    res.json({
-      success: true,
-      message: 'Discussion accepted, phone number revealed to client'
-    });
-  } catch (error) {
-    console.error('Accept discussion error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to accept discussion'
-    });
-  }
-};
-
 // Get single request details
 exports.getRequestById = async (req, res) => {
   try {
@@ -1685,9 +1531,7 @@ exports.getRequestById = async (req, res) => {
       `SELECT sr.*, 
               sp.full_name as provider_name,
               sp.barangay_address as provider_location,
-              u.phone as provider_phone,
-              c.full_name as client_name,
-              c.email as client_email
+              c.full_name as client_name
        FROM service_requests sr
        JOIN service_profiles sp ON sr.service_profile_id = sp.id
        JOIN users u ON sr.provider_id = u.id
@@ -1705,10 +1549,6 @@ exports.getRequestById = async (req, res) => {
 
     const [request] = await attachBookingDates(db, requests);
 
-    if (!request.discussion_accepted) {
-      request.provider_phone = null;
-    }
-
     const [reschedules] = await db.query(
       `SELECT *
        FROM service_request_reschedules
@@ -1717,8 +1557,8 @@ exports.getRequestById = async (req, res) => {
       [requestId]
     );
 
-    const formattedReschedules = reschedules.map((item) => {
-      const specificDates = parseJsonArray(item.proposed_specific_dates_json, []);
+    const formattedReschedules = await Promise.all(reschedules.map(async (item) => {
+      const dates = await getRescheduleProposalDates(db, item);
       const isSpecific = String(item.proposed_multi_day_mode || '').toLowerCase() === 'specific_dates';
       const bookingMode = isSpecific
         ? 'specific_dates'
@@ -1727,9 +1567,9 @@ exports.getRequestById = async (req, res) => {
       return {
         ...item,
         proposed_booking_mode: bookingMode,
-        proposed_specific_dates: isSpecific ? specificDates : [],
+        proposed_specific_dates: dates,
       };
-    });
+    }));
 
     res.json({
       success: true,
@@ -1750,11 +1590,19 @@ exports.createReview = async (req, res) => {
     const { requestId } = req.params;
     const clientId = req.user.userId;
     const { rating, comment } = req.body;
+    const trimmedComment = String(comment || '').trim();
 
     if (!rating || rating < 0.5 || rating > 5 || (rating * 2) % 1 !== 0) {
       return res.status(400).json({
         success: false,
         message: 'Rating must be between 0.5 and 5, in half-star increments'
+      });
+    }
+
+    if (trimmedComment.length > 2000) {
+      return res.status(400).json({
+        success: false,
+        message: 'Review comment must not exceed 2000 characters'
       });
     }
 
@@ -1784,8 +1632,8 @@ exports.createReview = async (req, res) => {
     }
 
     const [existingReview] = await db.query(
-      'SELECT id FROM reviews WHERE service_request_id = ? AND client_id = ?',
-      [requestId, clientId]
+      'SELECT id FROM reviews WHERE service_request_id = ?',
+      [requestId]
     );
 
     if (existingReview.length > 0) {
@@ -1796,23 +1644,9 @@ exports.createReview = async (req, res) => {
     }
 
     await db.query(
-      `INSERT INTO reviews (service_profile_id, client_id, service_request_id, rating, comment)
-       VALUES (?, ?, ?, ?, ?)`,
-      [request.profile_id, clientId, requestId, rating, comment || null]
-    );
-
-    const [ratingResult] = await db.query(
-      `SELECT AVG(rating) as avg_rating, COUNT(*) as total_reviews 
-       FROM reviews WHERE service_profile_id = ?`,
-      [request.profile_id]
-    );
-
-    const avgRating = parseFloat(ratingResult[0].avg_rating).toFixed(1);
-    const totalReviews = ratingResult[0].total_reviews;
-
-    await db.query(
-      'UPDATE service_profiles SET rating = ?, reviews_count = ? WHERE id = ?',
-      [avgRating, totalReviews, request.profile_id]
+      `INSERT INTO reviews (service_request_id, rating, comment)
+       VALUES (?, ?, ?)`,
+      [requestId, rating, trimmedComment || null]
     );
 
     await db.query(
@@ -1824,9 +1658,16 @@ exports.createReview = async (req, res) => {
     res.status(201).json({
       success: true,
       message: 'Review submitted successfully',
-      data: { avgRating, totalReviews }
+      data: { rating }
     });
   } catch (error) {
+    if (error.code === 'ER_DUP_ENTRY') {
+      return res.status(400).json({
+        success: false,
+        message: 'You have already reviewed this service request'
+      });
+    }
+
     console.error('Create review error:', error);
     res.status(500).json({
       success: false,

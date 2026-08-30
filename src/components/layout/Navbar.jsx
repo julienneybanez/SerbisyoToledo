@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 import { useState, useEffect, useRef } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { isAuthenticated, getUser, removeToken, serviceProfileAPI } from '../../services/api';
+import { authAPI, isAuthenticated, getUser, serviceProfileAPI } from '../../services/api';
 import NotificationDropdown from '../common/NotificationDropdown';
 import EditProfileModal from '../common/EditProfileModal';
 import EditPortfolioModal from '../common/EditPortfolioModal';
@@ -127,12 +127,11 @@ function Navbar() {
     };
   }, []);
 
-  const handleLogout = () => {
-    removeToken();
+  const handleLogout = async () => {
+    await authAPI.logout();
     setLoggedIn(false);
     setUser(null);
     setDropdownOpen(false);
-    window.dispatchEvent(new Event('authChange'));
     navigate('/');
   };
 

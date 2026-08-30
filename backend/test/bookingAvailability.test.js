@@ -125,11 +125,7 @@ describe('bookingAvailability.checkScheduleConflict', () => {
           }]];
         }
 
-        if (text.includes('FROM provider_weekly_availability') && text.includes('day_of_week')) {
-          return [[]];
-        }
-
-        if (text.includes('FROM provider_availability_exceptions') && text.includes('exception_date = ?')) {
+        if (text.includes('FROM provider_available_slots')) {
           return [[]];
         }
 
@@ -155,7 +151,7 @@ describe('bookingAvailability.checkScheduleConflict', () => {
     expect(slots).toEqual([]);
   });
 
-  it('returns only the exact provider-selected start time for explicit availability', async () => {
+  it('returns every usable slot within the provider-selected availability window', async () => {
     const connection = {
       query: vi.fn(async (sql) => {
         const text = String(sql);
@@ -171,15 +167,10 @@ describe('bookingAvailability.checkScheduleConflict', () => {
           }]];
         }
 
-        if (text.includes('FROM provider_weekly_availability') && text.includes('day_of_week')) {
-          return [[]];
-        }
-
-        if (text.includes('FROM provider_availability_exceptions') && text.includes('exception_date = ?')) {
+        if (text.includes('FROM provider_available_slots')) {
           return [[{
             start_time: '09:00:00',
             end_time: '12:00:00',
-            exception_type: 'available',
           }]];
         }
 
@@ -206,6 +197,14 @@ describe('bookingAvailability.checkScheduleConflict', () => {
       {
         time: '09:00:00',
         endTime: '10:00:00',
+      },
+      {
+        time: '10:00:00',
+        endTime: '11:00:00',
+      },
+      {
+        time: '11:00:00',
+        endTime: '12:00:00',
       },
     ]);
   });

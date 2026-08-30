@@ -243,8 +243,11 @@ function ClientSettings() {
                   onChange={(e) => handleChange('phone', e.target.value)}
                   placeholder="+63 912 345 6789"
                   autoComplete="tel"
+                  inputMode="tel"
+                  maxLength={20}
                   disabled={isLoadingProfile || isSaving}
                 />
+                <small className="settings-help">{t('phonePrivacyHelp')}</small>
               </div>
 
               <div className="settings-group">

@@ -1,12 +1,15 @@
 const jwt = require('jsonwebtoken');
 const db = require('../config/database');
 const { getJwtSecret } = require('../utils/jwt');
+const { getSessionTokenFromRequest } = require('../utils/sessionCookies');
 
 // Middleware to authenticate JWT token
 exports.authenticateToken = async (req, res, next) => {
-  // Get token from header
+  // Prefer the HttpOnly session cookie. Bearer auth remains as a transitional
+  // compatibility path for tests/API clients while the browser no longer stores JWTs.
   const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
+  const bearerToken = authHeader && authHeader.split(' ')[1];
+  const token = getSessionTokenFromRequest(req) || bearerToken;
 
   if (!token) {
     return res.status(401).json({

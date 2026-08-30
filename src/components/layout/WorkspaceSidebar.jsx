@@ -7,11 +7,13 @@ const ROLE_ITEMS = {
     { to: '/client-dashboard', labelKey: 'dashboardShort', icon: 'bi-grid-1x2' },
     { to: '/feed', labelKey: 'browseServices', icon: 'bi-search' },
     { to: '/requests', labelKey: 'clientSidebarRequests', icon: 'bi-inbox' },
+    { to: '/messages', labelKey: 'messages', icon: 'bi-chat-dots' },
     { to: '/notifications', labelKey: 'notifications', icon: 'bi-bell' },
   ],
   tradesperson: [
     { to: '/dashboard', labelKey: 'dashboardShort', icon: 'bi-grid-1x2' },
     { to: '/requests', labelKey: 'requests', icon: 'bi-inbox' },
+    { to: '/messages', labelKey: 'messages', icon: 'bi-chat-dots' },
     { to: '/provider-schedule', labelKey: 'schedule', icon: 'bi-calendar3' },
     { to: '/notifications', labelKey: 'notifications', icon: 'bi-bell' },
   ],

@@ -4,6 +4,12 @@ const {
   uploadImageBuffer,
   deleteImageByPublicId,
 } = require('../utils/cloudinaryService');
+const { normalizePhilippinePhone } = require('../utils/phone');
+const {
+  VERIFICATION_CONSENT_VERSION,
+  LEGAL_ACCEPTANCE_TYPES,
+  LEGAL_CONTEXTS,
+} = require('../constants/legalDocuments');
 
 const isUrlLikeImageValue = (value) => {
   if (!value) {
@@ -154,8 +160,16 @@ exports.updateProfile = async (req, res) => {
     }
 
     if (phone !== undefined) {
+      const normalizedPhone = normalizePhilippinePhone(phone);
+      if (normalizedPhone === undefined) {
+        return res.status(400).json({
+          success: false,
+          code: 'INVALID_PHONE',
+          message: 'Enter a valid Philippine mobile number (09XXXXXXXXX or +639XXXXXXXXX).'
+        });
+      }
       updates.push('phone = ?');
-      params.push(phone || null);
+      params.push(normalizedPhone);
     }
 
     if (address !== undefined) {
@@ -309,15 +323,25 @@ exports.submitVerificationRequest = async (req, res) => {
       phoneNumber,
       address,
       serviceDescription,
+      verificationConsent,
     } = req.body;
+
+    if (verificationConsent !== true && verificationConsent !== 'true') {
+      return res.status(400).json({
+        success: false,
+        code: 'VERIFICATION_CONSENT_REQUIRED',
+        message: 'You must consent to the collection and processing of your verification information, including your government ID.'
+      });
+    }
 
     const governmentIdFile = req.files?.governmentId?.[0];
     const certificationsFile = req.files?.certifications?.[0];
 
-    if (!fullName || !phoneNumber || !address || !serviceDescription || !governmentIdFile || !certificationsFile) {
+    const normalizedPhone = normalizePhilippinePhone(phoneNumber, { allowEmpty: false });
+    if (!fullName || !normalizedPhone || !address || !serviceDescription || !governmentIdFile) {
       return res.status(400).json({
         success: false,
-        message: 'All fields and required documents must be provided'
+        message: 'Name, valid phone number, address, service description, and government ID are required.'
       });
     }
 
@@ -334,22 +358,46 @@ exports.submitVerificationRequest = async (req, res) => {
       });
     }
 
-    await db.query(
-      `INSERT INTO verification_requests
-       (user_id, full_name, phone_number, address, service_description, government_id_data, government_id_mime, certifications_data, certifications_mime, status)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
-      [
-        userId,
-        fullName,
-        phoneNumber,
-        address,
-        serviceDescription,
-        governmentIdFile.buffer,
-        governmentIdFile.mimetype || 'application/octet-stream',
-        certificationsFile.buffer,
-        certificationsFile.mimetype || 'application/octet-stream'
-      ]
-    );
+    const connection = await db.getConnection();
+    try {
+      await connection.beginTransaction();
+
+      const [insertResult] = await connection.query(
+        `INSERT INTO verification_requests
+         (user_id, full_name, phone_number, address, service_description, government_id_data, government_id_mime, certifications_data, certifications_mime, status)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
+        [
+          userId,
+          fullName,
+          normalizedPhone,
+          address,
+          serviceDescription,
+          governmentIdFile.buffer,
+          governmentIdFile.mimetype || 'application/octet-stream',
+          certificationsFile ? certificationsFile.buffer : null,
+          certificationsFile ? (certificationsFile.mimetype || 'application/octet-stream') : null
+        ]
+      );
+
+      await connection.query(
+        `INSERT INTO legal_acceptances (user_id, acceptance_type, document_version, context, verification_request_id)
+         VALUES (?, ?, ?, ?, ?)`,
+        [
+          userId,
+          LEGAL_ACCEPTANCE_TYPES.VERIFICATION_DATA_CONSENT,
+          VERIFICATION_CONSENT_VERSION,
+          LEGAL_CONTEXTS.PROVIDER_VERIFICATION,
+          insertResult.insertId,
+        ]
+      );
+
+      await connection.commit();
+    } catch (transactionError) {
+      await connection.rollback();
+      throw transactionError;
+    } finally {
+      connection.release();
+    }
 
     res.status(201).json({
       success: true,

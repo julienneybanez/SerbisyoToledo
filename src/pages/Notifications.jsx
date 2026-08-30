@@ -8,6 +8,10 @@ function resolveNotificationDestination(notification) {
   const requestId = notification?.related_request_id;
   const type = String(notification?.type || '').toLowerCase();
 
+  if (requestId && type === 'message_received') {
+    return `/messages?request=${encodeURIComponent(requestId)}`;
+  }
+
   if (requestId && [
     'request_received',
     'request_accepted',
@@ -17,6 +21,9 @@ function resolveNotificationDestination(notification) {
     'service_completed',
     'discussion_requested',
     'discussion_accepted',
+    'phone_share_requested',
+    'phone_shared',
+    'phone_share_declined',
     'reschedule_proposed',
     'reschedule_accepted',
     'reschedule_declined',
@@ -24,6 +31,10 @@ function resolveNotificationDestination(notification) {
     'review_received',
   ].includes(type)) {
     return `/requests?request=${encodeURIComponent(requestId)}`;
+  }
+
+  if (['credential_approved', 'credential_rejected', 'credential_expired'].includes(type)) {
+    return '/provider-credentials';
   }
 
   if (['verification_approved', 'verification_rejected'].includes(type)) {
@@ -66,6 +77,14 @@ function getNotificationIcon(type) {
       return <i className="bi bi-chat-dots-fill notification-icon icon-discussion"></i>;
     case 'discussion_accepted':
       return <i className="bi bi-telephone-fill notification-icon icon-phone"></i>;
+    case 'message_received':
+      return <i className="bi bi-chat-square-text-fill notification-icon icon-discussion"></i>;
+    case 'phone_share_requested':
+      return <i className="bi bi-telephone-inbound-fill notification-icon icon-phone"></i>;
+    case 'phone_shared':
+      return <i className="bi bi-telephone-check-fill notification-icon icon-phone"></i>;
+    case 'phone_share_declined':
+      return <i className="bi bi-telephone-x-fill notification-icon icon-declined"></i>;
     case 'reschedule_proposed':
       return <i className="bi bi-calendar2-plus-fill notification-icon icon-discussion"></i>;
     case 'reschedule_accepted':
@@ -76,6 +95,12 @@ function getNotificationIcon(type) {
       return <i className="bi bi-patch-check-fill notification-icon icon-accepted"></i>;
     case 'verification_rejected':
       return <i className="bi bi-shield-x notification-icon icon-declined"></i>;
+    case 'credential_approved':
+      return <i className="bi bi-award-fill notification-icon icon-accepted"></i>;
+    case 'credential_rejected':
+      return <i className="bi bi-award notification-icon icon-declined"></i>;
+    case 'credential_expired':
+      return <i className="bi bi-calendar-x-fill notification-icon icon-declined"></i>;
     default:
       return <i className="bi bi-bell-fill notification-icon"></i>;
   }

@@ -376,8 +376,11 @@ function ServiceProviderSettings() {
                   value={settings.phone}
                   onChange={(e) => handleChange('phone', e.target.value)}
                   placeholder={t('providerPlaceholderPhone')}
+                  inputMode="tel"
+                  maxLength={20}
                   disabled={isLoadingProfile || isSaving}
                 />
+                <small className="settings-help">{t('phonePrivacyHelp')}</small>
               </div>
 
               <div className="settings-section-divider"></div>

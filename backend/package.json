@@ -10,6 +10,7 @@
     "seed:admin": "node config/seed-admin.js",
     "migrate:cloudinary": "node config/migrate-images-to-cloudinary.js",
     "email:test": "node scripts/test-email.js",
+    "db:migrate": "node scripts/migrate.js",
     "db:migrate:file": "node scripts/run-sql-file.js",
     "db:phase-a": "node scripts/run-sql-file.js migrations/20260807_002_canonical_phase_a_add_backfill.sql",
     "db:phase-b": "node scripts/run-sql-file.js migrations/20260807_003_canonical_phase_b_indexes_resync.sql",
@@ -28,7 +29,8 @@
     "jsonwebtoken": "^9.0.2",
     "multer": "^2.0.2",
     "mysql2": "^3.11.0",
-    "nodemailer": "^8.0.1"
+    "nodemailer": "^8.0.1",
+    "socket.io": "^4.8.1"
   },
   "devDependencies": {
     "nodemon": "^3.1.4",

@@ -1,9 +1,13 @@
 const express = require('express');
+const http = require('http');
+const { Server } = require('socket.io');
 const cors = require('cors');
 const helmet = require('helmet');
 const dotenv = require('dotenv');
 const { validateEmailConfiguration } = require('./utils/emailService');
 const { assertJwtConfiguration } = require('./utils/jwt');
+const { requireCsrfForCookieAuth } = require('./middleware/csrf');
+const configureSocket = require('./realtime/socket');
 
 // Load environment variables
 dotenv.config();
@@ -35,6 +39,7 @@ const serviceRequestRoutes = require('./routes/serviceRequests');
 const notificationRoutes = require('./routes/notifications');
 const userRoutes = require('./routes/user');
 const assistantRoutes = require('./routes/assistant');
+const messageRoutes = require('./routes/messages');
 
 // Import database connection
 const db = require('./config/database');
@@ -88,6 +93,7 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(requireCsrfForCookieAuth);
 
 // Test route
 app.get('/', (req, res) => {
@@ -119,6 +125,7 @@ app.use('/api/service-requests', serviceRequestRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/assistant', assistantRoutes);
+app.use('/api/messages', messageRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
@@ -162,14 +169,29 @@ app.use((req, res) => {
 
 const PORT = process.env.PORT || 5000;
 
+const createHttpServer = () => {
+  const server = http.createServer(app);
+  const io = new Server(server, {
+    cors: {
+      origin: allowedOrigins,
+      credentials: true,
+    },
+  });
+  configureSocket(io);
+  app.set('io', io);
+  return server;
+};
+
 if (require.main === module) {
-  // Test database connection and start server
+  const server = createHttpServer();
+
+  // Test database connection and start the HTTP + Socket.IO server.
   db.getConnection()
     .then((connection) => {
       console.log('✅ Database connected successfully');
       connection.release();
-      
-      app.listen(PORT, () => {
+
+      server.listen(PORT, () => {
         console.log(`🚀 Server running on port ${PORT}`);
         console.log(`📍 API URL: http://localhost:${PORT}`);
       });
@@ -182,8 +204,8 @@ if (require.main === module) {
       }
 
       console.log('⚠️  Starting server without database connection (development only)...');
-      
-      app.listen(PORT, () => {
+
+      server.listen(PORT, () => {
         console.log(`🚀 Server running on port ${PORT}`);
         console.log(`📍 API URL: http://localhost:${PORT}`);
       });
@@ -191,3 +213,4 @@ if (require.main === module) {
 }
 
 module.exports = app;
+module.exports.createHttpServer = createHttpServer;

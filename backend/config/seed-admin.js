@@ -43,24 +43,30 @@ async function seedAdmin() {
 
     console.log('Connected to database');
 
-    // First, ensure the ENUM includes 'admin'
-    console.log('Updating user_type ENUM to include admin...');
-    try {
-      await connection.query(`
-        ALTER TABLE users 
-        MODIFY COLUMN user_type ENUM('client', 'tradesperson', 'admin') NOT NULL
-      `);
-      console.log('✅ ENUM updated successfully');
-    } catch {
-      // ENUM might already be updated, continue
-      console.log('ℹ️  ENUM already includes admin or table structure is correct');
+    // The canonical baseline schema already declares user_type as
+    // ENUM('client','tradesperson','admin'), so no legacy ALTER TABLE
+    // migration is needed here.
+
+    // Admin credentials — no hard-coded fallback secrets. Both ADMIN_EMAIL
+    // and ADMIN_PASSWORD must be provided via environment variables so a
+    // weak, publicly-known default password is never seeded anywhere.
+    if (!process.env.ADMIN_EMAIL || !process.env.ADMIN_PASSWORD) {
+      console.error('❌ ADMIN_EMAIL and ADMIN_PASSWORD environment variables are required to seed an admin account.');
+      console.error('   Example: ADMIN_EMAIL=admin@example.com ADMIN_PASSWORD="a-strong-password" node config/seed-admin.js');
+      process.exitCode = 1;
+      return;
     }
 
-    // Admin credentials
+    if (process.env.ADMIN_PASSWORD.length < 12) {
+      console.error('❌ ADMIN_PASSWORD must be at least 12 characters long.');
+      process.exitCode = 1;
+      return;
+    }
+
     const adminData = {
       fullName: process.env.ADMIN_FULL_NAME || 'Admin User',
-      email: process.env.ADMIN_EMAIL || 'toledoserbisyo@gmail.com',
-      password: process.env.ADMIN_PASSWORD || 'admin123', // Change this in production!
+      email: process.env.ADMIN_EMAIL,
+      password: process.env.ADMIN_PASSWORD,
       userType: 'admin'
     };
 
@@ -85,8 +91,7 @@ async function seedAdmin() {
         );
         console.log('\n✅ Admin account user_type updated successfully!');
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-        console.log(`   Email:    ${adminData.email}`);
-        console.log(`   Password: (unchanged)`);
+        console.log(`   Email: ${adminData.email}`);
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
       } else {
         await connection.query(
@@ -127,8 +132,8 @@ async function seedAdmin() {
 
     console.log('\n✅ Admin account created successfully!');
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log(`   Email:    ${adminData.email}`);
-    console.log(`   Password: ${adminData.password}`);
+    console.log(`   Email: ${adminData.email}`);
+    console.log('   Password: (the value you provided via ADMIN_PASSWORD)');
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     console.log('\n⚠️  Please change the password after first login!\n');
 

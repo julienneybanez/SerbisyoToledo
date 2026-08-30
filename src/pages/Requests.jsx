@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { getUser, serviceProfileAPI, serviceRequestAPI } from '../services/api';
 import RequestDetailsModal from '../components/common/RequestDetailsModal';
 import ReviewModal from '../components/common/ReviewModal';
@@ -8,41 +8,6 @@ import NextStepHelp from '../components/common/NextStepHelp';
 import { BOOKING_TYPE, REQUEST_STATUS, SPECIFIC_DATE_BOOKING_ENABLED } from '../constants/domain';
 import { useLanguage } from '../context/LanguageContext';
 import './Requests.css';
-
-const getHiddenRequestsStorageKey = (user) => {
-  if (!user?.id || !user?.userType) {
-    return null;
-  }
-
-  return `hiddenRequests_${user.id}_${user.userType}`;
-};
-
-const getHiddenRequestIds = (user) => {
-  const key = getHiddenRequestsStorageKey(user);
-  if (!key) {
-    return [];
-  }
-
-  try {
-    const parsed = JSON.parse(localStorage.getItem(key) || '[]');
-    if (!Array.isArray(parsed)) {
-      return [];
-    }
-
-    return parsed.map((id) => Number(id)).filter((id) => Number.isFinite(id));
-  } catch {
-    return [];
-  }
-};
-
-const saveHiddenRequestIds = (user, ids) => {
-  const key = getHiddenRequestsStorageKey(user);
-  if (!key) {
-    return;
-  }
-
-  localStorage.setItem(key, JSON.stringify(ids));
-};
 
 const addDaysIso = (days) => {
   const date = new Date();
@@ -96,6 +61,7 @@ const CANCELLATION_REASONS = {
 
 export default function Requests() {
   const { t } = useLanguage();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const user = getUser();
   const isProvider = user?.userType === 'tradesperson';
@@ -148,9 +114,7 @@ export default function Requests() {
         : await serviceRequestAPI.getClientRequests();
       
       if (response.success) {
-        const hiddenIds = new Set(getHiddenRequestIds({ id: user?.id, userType: user?.userType }));
-        const visibleRequests = (response.data.requests || []).filter((req) => !hiddenIds.has(Number(req.id)));
-        setRequests(visibleRequests);
+        setRequests(response.data.requests || []);
       }
     } catch (err) {
       setError(t('requestsLoadFailed'));
@@ -158,7 +122,7 @@ export default function Requests() {
     } finally {
       setLoading(false);
     }
-  }, [isProvider, t, user?.id, user?.userType]);
+  }, [isProvider, t]);
 
   useEffect(() => {
     fetchRequests();
@@ -676,65 +640,25 @@ export default function Requests() {
     }));
   };
 
-  const handleRequestDiscussion = async (requestId) => {
-    setActionLoading(requestId);
-    try {
-      const response = await serviceRequestAPI.requestDiscussion(requestId);
-      if (response.success) {
-        setRequests(prev =>
-          prev.map(req =>
-            req.id === requestId ? { ...req, discussion_requested: true } : req
-          )
-        );
-        alert(t('requestsDiscussionRequestedSuccess'));
-      }
-    } catch (err) {
-      console.error('Request discussion error:', err);
-      alert(err.message || t('requestsDiscussionRequestFailed'));
-    } finally {
-      setActionLoading(null);
-    }
-  };
-
-  const handleAcceptDiscussion = async (requestId) => {
-    setActionLoading(requestId);
-    try {
-      const response = await serviceRequestAPI.acceptDiscussion(requestId);
-      if (response.success) {
-        setRequests(prev =>
-          prev.map(req =>
-            req.id === requestId 
-              ? { ...req, discussion_accepted: true, provider_phone_revealed: true } 
-              : req
-          )
-        );
-        alert(t('requestsDiscussionAcceptedSuccess'));
-      }
-    } catch (err) {
-      console.error('Accept discussion error:', err);
-      if (err.code === 'NO_PHONE') {
-        alert(t('requestsNoPhoneWarning'));
-      } else {
-        alert(err.message || t('requestsDiscussionAcceptFailed'));
-      }
-    } finally {
-      setActionLoading(null);
-    }
-  };
-
-  const handleHideRequest = (requestId) => {
-    const shouldHide = window.confirm(t('requestsHideConfirm'));
-    if (!shouldHide) {
+  const handleHideRequest = async (requestId) => {
+    const shouldArchive = window.confirm(t('requestsHideConfirm'));
+    if (!shouldArchive) {
       return;
     }
 
     const numericRequestId = Number(requestId);
-    const currentIds = getHiddenRequestIds(user);
-    const nextIds = Array.from(new Set([...currentIds, numericRequestId]));
-    saveHiddenRequestIds(user, nextIds);
-
-    setRequests((prev) => prev.filter((req) => Number(req.id) !== numericRequestId));
-    setSelectedRequest((prev) => (prev && Number(prev.id) === numericRequestId ? null : prev));
+    setActionLoading(numericRequestId);
+    try {
+      const response = await serviceRequestAPI.archiveRequest(numericRequestId);
+      if (response?.success) {
+        setRequests((prev) => prev.filter((req) => Number(req.id) !== numericRequestId));
+        setSelectedRequest((prev) => (prev && Number(prev.id) === numericRequestId ? null : prev));
+      }
+    } catch (err) {
+      alert(err.message || t('requestsArchiveFailed'));
+    } finally {
+      setActionLoading(null);
+    }
   };
 
   const handleSubmitReview = async ({ rating, comment }) => {
@@ -1051,66 +975,19 @@ export default function Requests() {
                   <p className="request-decline-reason"><strong>{t('reasonForCancellation')}:</strong> {request.cancellation_reason_other || request.cancellation_reason.replaceAll('_', ' ')}</p>
                 )}
 
-                {/* Discussion/Phone Section */}
-                {[REQUEST_STATUS.ACCEPTED, REQUEST_STATUS.ON_THE_WAY, REQUEST_STATUS.IN_PROGRESS].includes(request.status) && (
+                {/* Booking communication */}
+                {[REQUEST_STATUS.PENDING, REQUEST_STATUS.ACCEPTED, REQUEST_STATUS.ON_THE_WAY, REQUEST_STATUS.IN_PROGRESS].includes(request.status) && (
                   <div className="request-discussion-section">
-                    {!isProvider ? (
-                      // Client view
-                      <>
-                        {request.discussion_accepted && request.provider_phone ? (
-                          <div className="phone-revealed">
-                            <i className="bi bi-telephone-fill"></i>
-                            <div>
-                              <span className="phone-label">{t('requestsProviderPhoneLabel')}</span>
-                              <a href={`tel:${request.provider_phone}`} className="phone-number">
-                                {request.provider_phone}
-                              </a>
-                            </div>
-                          </div>
-                        ) : request.discussion_requested ? (
-                          <div className="discussion-pending">
-                            <i className="bi bi-hourglass-split"></i>
-                            <span>{t('requestsWaitingProviderDiscussion')}</span>
-                          </div>
-                        ) : (
-                          <button
-                            className="btn-request-discussion"
-                            onClick={() => handleRequestDiscussion(request.id)}
-                            disabled={actionLoading === request.id}
-                          >
-                            {actionLoading === request.id ? (
-                              <><span className="spinner-btn"></span> {t('requestsSending')}</>
-                            ) : (
-                              <><i className="bi bi-chat-dots"></i> {t('requestsRequestDiscussion')}</>
-                            )}
-                          </button>
-                        )}
-                      </>
-                    ) : (
-                      // Provider view
-                      <>
-                        {request.discussion_accepted ? (
-                          <div className="discussion-accepted-badge">
-                            <i className="bi bi-check-circle-fill"></i>
-                            <span>{t('requestsPhoneSharedWithClient')}</span>
-                          </div>
-                        ) : request.discussion_requested ? (
-                          <div className="discussion-request-pending">
-                            <p><i className="bi bi-chat-dots-fill"></i> {t('requestsClientWantsDiscuss')}</p>
-                            <button
-                              className="btn-accept-discussion"
-                              onClick={() => handleAcceptDiscussion(request.id)}
-                              disabled={actionLoading === request.id}
-                            >
-                              {actionLoading === request.id ? (
-                                <><span className="spinner-btn"></span> {t('requestsAccepting')}</>
-                              ) : (
-                                <><i className="bi bi-telephone"></i> {t('requestsAcceptAndSharePhone')}</>
-                              )}
-                            </button>
-                          </div>
-                        ) : null}
-                      </>
+                    <button
+                      type="button"
+                      className="btn-request-discussion"
+                      onClick={() => navigate('/messages?request=' + request.id)}
+                    >
+                      <i className="bi bi-chat-dots-fill"></i>
+                      {isProvider ? t('messageClient') : t('messageProvider')}
+                    </button>
+                    {[REQUEST_STATUS.ACCEPTED, REQUEST_STATUS.ON_THE_WAY, REQUEST_STATUS.IN_PROGRESS].includes(request.status) && (
+                      <span className="request-communication-help">{t('phoneShareOpenDetailsHelp')}</span>
                     )}
                   </div>
                 )}
@@ -1288,14 +1165,6 @@ export default function Requests() {
           onOpenCancel={(request) => openCancelDialog(request.id)}
           onOpenReschedule={(request) => openRescheduleDialog(request)}
           onRespondReschedule={handleRespondReschedule}
-          onRequestDiscussion={async (requestId) => {
-            await handleRequestDiscussion(requestId);
-            setSelectedRequest(prev => prev ? { ...prev, discussion_requested: true } : null);
-          }}
-          onAcceptDiscussion={async (requestId) => {
-            await handleAcceptDiscussion(requestId);
-            setSelectedRequest(prev => prev ? { ...prev, discussion_accepted: true, provider_phone_revealed: true } : null);
-          }}
           onOpenReview={(request) => {
             setReviewRequest(request);
           }}

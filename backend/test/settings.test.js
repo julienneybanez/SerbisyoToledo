@@ -73,6 +73,32 @@ describe('Settings-related backend endpoints', () => {
       return [[]];
     });
 
+    const conn = {
+      beginTransaction: vi.fn(async () => {}),
+      commit: vi.fn(async () => {}),
+      rollback: vi.fn(async () => {}),
+      release: vi.fn(() => {}),
+      query: vi.fn(async (sql) => {
+        if (String(sql).includes('FROM users WHERE id = ?')) {
+          return [[{ is_verified: 1 }]];
+        }
+        if (String(sql).includes('FROM service_profiles WHERE id = ?') || String(sql).includes('FROM service_profiles WHERE user_id = ?')) {
+          return [[{ id: 7, is_active: 1 }]];
+        }
+        if (String(sql).includes('FROM service_profile_categories')) {
+          return [[{ count: 1 }]];
+        }
+        if (String(sql).includes('FROM service_profile_types')) {
+          return [[{ count: 1 }]];
+        }
+        if (String(sql).includes('UPDATE service_profiles SET is_published')) {
+          return [{ affectedRows: 1 }];
+        }
+        return [[]];
+      }),
+    };
+    vi.spyOn(db, 'getConnection').mockResolvedValue(conn);
+
     const res = await request(app)
       .patch('/api/service-profiles/toggle-publish')
       .set('Authorization', `Bearer ${signToken(21)}`)
@@ -167,7 +193,7 @@ describe('Settings-related backend endpoints', () => {
     const sqlCalls = connection.query.mock.calls.map(([sql]) => String(sql));
     expect(sqlCalls.some((sql) => sql.includes('DELETE FROM provider_weekly_availability'))).toBe(true);
     expect(sqlCalls.some((sql) => sql.includes('DELETE FROM provider_availability_exceptions'))).toBe(true);
-    expect(sqlCalls.filter((sql) => sql.includes('INSERT INTO provider_availability_exceptions'))).toHaveLength(2);
+    expect(sqlCalls.filter((sql) => sql.includes('INSERT INTO provider_available_slots'))).toHaveLength(2);
   });
 
   it('rejects overlapping provider-selected time slots on the same date', async () => {
