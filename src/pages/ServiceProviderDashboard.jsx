@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { authAPI, getUser, serviceProfileAPI, serviceRequestAPI } from '../services/api';
 import ProfileCompletionChecklist from '../components/common/ProfileCompletionChecklist';
@@ -102,11 +102,6 @@ export default function ServiceProviderDashboard() {
     error: '',
   });
 
-  useEffect(() => {
-    fetchRequests();
-    fetchChecklistData();
-  }, []);
-
   const fetchRequests = async () => {
     try {
       setLoadingRequests(true);
@@ -150,7 +145,7 @@ export default function ServiceProviderDashboard() {
     }
   };
 
-  const fetchChecklistData = async () => {
+  const fetchChecklistData = useCallback(async () => {
     setChecklistLoading(true);
     setChecklistError('');
 
@@ -183,7 +178,12 @@ export default function ServiceProviderDashboard() {
     } finally {
       setChecklistLoading(false);
     }
-  };
+  }, [t]);
+
+  useEffect(() => {
+    fetchRequests();
+    fetchChecklistData();
+  }, [fetchChecklistData]);
 
   const handleOpenServiceListing = async () => {
     if (myProfile?.id) {
@@ -228,7 +228,7 @@ export default function ServiceProviderDashboard() {
       key: 'taxonomy-refresh',
       label: t('providerChecklistTaxonomyLabel'),
       description: t('providerChecklistTaxonomyDescription'),
-      completed: !Boolean(myProfile?.taxonomyNeedsReview),
+      completed: !myProfile?.taxonomyNeedsReview,
       isApplicable: Boolean(myProfile?.taxonomyNeedsReview),
       actionType: 'button',
       actionLabel: t('providerChecklistUpdateServices'),

@@ -146,9 +146,9 @@ const Login = () => {
                   setResendingVerification(true);
                   setError('');
                   try {
-                    const response = await verificationAPI.resendVerification({ email: verificationEmail });
+                    await verificationAPI.resendVerification({ email: verificationEmail });
                     setVerificationNotice(t('emailVerificationSent'));
-                  } catch (err) {
+                  } catch {
                     setError(t('emailVerificationResendFailed'));
                   } finally {
                     setResendingVerification(false);

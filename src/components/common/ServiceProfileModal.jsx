@@ -69,7 +69,7 @@ export default function ServiceProfileModal({ onClose }) {
     };
 
     fetchExistingProfile();
-  }, []);
+  }, [getCategory, getServiceTypesForCategory]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;

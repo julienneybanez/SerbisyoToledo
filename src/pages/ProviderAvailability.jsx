@@ -175,7 +175,7 @@ export default function ProviderAvailability() {
         const accepting = response.data?.acceptingBookings
           ?? (String(response.data?.settings?.availability_status || 'available').toLowerCase() !== 'unavailable');
         setAcceptingBookings(Boolean(accepting));
-      } catch (error) {
+      } catch {
         setFlash({
           type: 'error',
           message: t('availabilityLoadFailed'),
@@ -336,7 +336,7 @@ export default function ProviderAvailability() {
     try {
       setSaving(true);
       setFlash({ type: 'info', message: '' });
-      const response = await serviceProfileAPI.saveMyAvailability({
+      await serviceProfileAPI.saveMyAvailability({
         acceptingBookings,
         availability,
       });
@@ -345,7 +345,7 @@ export default function ProviderAvailability() {
         type: 'success',
         message: t('availabilitySaveSuccess'),
       });
-    } catch (error) {
+    } catch {
       setFlash({
         type: 'error',
         message: t('availabilitySaveFailed'),

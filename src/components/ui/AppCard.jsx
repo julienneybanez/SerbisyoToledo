@@ -1,5 +1,7 @@
+import { createElement } from 'react';
+
 export default function AppCard({
-  as: Component = 'div',
+  as: component = 'div',
   flat = false,
   interactive = false,
   className = '',
@@ -13,9 +15,5 @@ export default function AppCard({
     className,
   ].filter(Boolean).join(' ');
 
-  return (
-    <Component className={classes} {...props}>
-      {children}
-    </Component>
-  );
+  return createElement(component, { className: classes, ...props }, children);
 }
