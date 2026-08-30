@@ -90,7 +90,7 @@ export default function ClientDashboard() {
         <section className="client-dashboard-grid">
           <div className="client-dashboard-panel client-current-panel">
             <div className="client-panel-heading">
-              <div><span className="client-panel-kicker">{t('clientDashboardBookings')}</span><h2>{t('clientDashboardCurrentRequests')}</h2></div>
+              <div><h2>{t('clientDashboardCurrentRequests')}</h2></div>
               <Link to="/requests">{t('clientDashboardViewAll')}</Link>
             </div>
             {loading ? (
@@ -114,7 +114,7 @@ export default function ClientDashboard() {
           </div>
 
           <aside className="client-dashboard-panel client-quick-panel">
-            <div className="client-panel-heading"><div><span className="client-panel-kicker">{t('clientDashboardShortcuts')}</span><h2>{t('clientDashboardQuickActions')}</h2></div></div>
+            <div className="client-panel-heading"><div><h2>{t('clientDashboardQuickActions')}</h2></div></div>
             <div className="client-quick-actions">
               <Link to="/feed"><i className="bi bi-search"></i><span><strong>{t('browseServices')}</strong><small>{t('clientDashboardBrowseDescription')}</small></span></Link>
               <Link to="/requests"><i className="bi bi-inbox"></i><span><strong>{t('clientSidebarRequests')}</strong><small>{t('clientDashboardRequestsDescription')}</small></span></Link>

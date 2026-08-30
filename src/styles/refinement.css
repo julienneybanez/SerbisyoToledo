@@ -1,0 +1,136 @@
+/* Trusted Local Guide refinement: task clarity before decorative containment. */
+
+::selection {
+  background: color-mix(in srgb, var(--brand-primary) 22%, transparent);
+  color: var(--color-text-primary);
+}
+
+html {
+  scrollbar-color: var(--color-border-strong) var(--color-page-bg);
+}
+
+body {
+  overflow-x: clip;
+}
+
+.st-card,
+.ui-card,
+.availability-card,
+.client-dashboard-panel,
+.admin-page .request-card,
+.admin-page .stat-card {
+  box-shadow: none;
+}
+
+.st-card--interactive:hover,
+.client-stat-card:hover,
+.admin-page .request-card:hover,
+.admin-page .stat-card:hover {
+  box-shadow: var(--shadow-sm);
+}
+
+.st-page-subtitle,
+.availability-status-copy p,
+.availability-card-heading p,
+.client-request-main small,
+.client-quick-actions small,
+.admin-page .request-detail {
+  font-size: var(--text-sm);
+}
+
+.client-panel-heading h2 {
+  font-size: var(--text-lg);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.client-request-main strong,
+.client-request-main small,
+.client-quick-actions strong,
+.client-quick-actions small {
+  overflow-wrap: anywhere;
+}
+
+.client-request-status,
+.availability-date-copy strong,
+.availability-date-copy span,
+.availability-selected-count span {
+  font-size: var(--text-sm);
+}
+
+.st-status-badge,
+.client-request-status,
+.status-pill {
+  min-height: 28px;
+  padding: 0.3rem 0.55rem;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+}
+
+.btn-filter,
+.availability-primary-button,
+.availability-save-button,
+.admin-page .btn-view-details,
+.admin-page .btn-approve,
+.admin-page .btn-reject,
+.admin-page .btn-investigate {
+  min-height: 46px;
+}
+
+.btn-filter,
+.availability-save-bar,
+.mobile-topbar,
+.mobile-bottom-nav,
+.admin-navbar {
+  backdrop-filter: none;
+}
+
+.home-hero-image,
+.home-editorial-image,
+.home-provider-image {
+  box-shadow: var(--shadow-sm);
+}
+
+.client-stat-card,
+.provider-schedule-summary > div {
+  box-shadow: none;
+}
+
+@media (hover: none) {
+  .st-card--interactive:hover,
+  .client-stat-card:hover,
+  .admin-page .request-card:hover,
+  .admin-page .stat-card:hover {
+    box-shadow: none;
+    transform: none;
+  }
+}
+
+@media (max-width: 430px) {
+  .st-page-container,
+  .provider-availability-page,
+  .client-dashboard-page,
+  .admin-page {
+    padding-inline: 0.75rem;
+  }
+
+  .client-request-main small,
+  .client-quick-actions small,
+  .availability-adjustments-summary,
+  .admin-page .request-detail {
+    font-size: 0.875rem;
+  }
+
+  .st-page-title {
+    overflow-wrap: anywhere;
+  }
+
+  .mobile-bottom-nav {
+    padding-inline: 0.35rem;
+  }
+
+  .mobile-bottom-nav-item {
+    min-width: 0;
+    font-size: 0.75rem;
+  }
+}

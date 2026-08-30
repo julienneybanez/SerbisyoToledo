@@ -1,5 +1,6 @@
 /* Public homepage: scoped to .home-page so authenticated workspaces are unaffected. */
 .home-page {
+  min-width: 0;
   overflow-x: clip;
   background: var(--color-page-bg);
   color: var(--color-text-primary);
@@ -21,6 +22,12 @@
   grid-template-columns: minmax(0, 0.96fr) minmax(420px, 1.04fr);
   gap: clamp(2.5rem, 6vw, 5.5rem);
   align-items: center;
+}
+
+.home-page .container,
+.home-page .landing-search-wrap,
+.home-page .search-box-home {
+  min-width: 0;
 }
 
 .home-hero-copy {
@@ -437,6 +444,19 @@
 
   .home-category-card-footer {
     padding-top: 0.72rem;
+  }
+}
+
+@media (max-width: 359px) {
+  .home-hero,
+  .home-popular-section,
+  .home-trust-section,
+  .home-provider-section {
+    padding: 2.5rem 0;
+  }
+
+  .home-hero-title {
+    font-size: 2.2rem;
   }
 }
 

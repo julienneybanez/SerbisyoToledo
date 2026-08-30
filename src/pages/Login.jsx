@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { authAPI, verificationAPI } from '../services/api';
 import { useLanguage } from '../context/LanguageContext';
-import loginServiceImage from '../assets/man-installs-heating-system-house-checks-pipes-with-wrench.jpg';
+import loginServiceImage from '../assets/carpenter.jpg';
 import logo from '../assets/logo.png';
 
 const DEFAULT_ROUTE_BY_ROLE = {

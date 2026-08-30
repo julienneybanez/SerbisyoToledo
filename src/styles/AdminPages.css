@@ -28,6 +28,8 @@
 .admin-page {
   max-width: 1400px;
   margin: 0 auto;
+  display: flex;
+  flex-direction: column;
   color: var(--admin-text);
   min-width: 0;
   background: transparent;
@@ -68,6 +70,9 @@
   grid-template-columns: repeat(4, 1fr);
   gap: 1rem;
   margin-bottom: 1.5rem;
+  order: 2;
+  margin-top: 1.5rem;
+  margin-bottom: 0;
 }
 
 .stat-card {
@@ -132,18 +137,19 @@
   display: flex;
   gap: 0.5rem;
   margin-bottom: 1.5rem;
+  order: 0;
 }
 
 .admin-tab {
   padding: 0.6rem 1.25rem;
   border: none;
   background: var(--admin-surface);
-  border-radius: 20px;
+  border-radius: var(--radius-control);
   font-size: 0.9rem;
   font-weight: 500;
   color: var(--admin-muted);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: color var(--motion-fast) var(--motion-ease), background-color var(--motion-fast) var(--motion-ease), border-color var(--motion-fast) var(--motion-ease);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
@@ -152,9 +158,11 @@
 }
 
 .admin-tab.active {
-  background: #1e293b;
-  color: white;
+  background: var(--admin-primary);
+  color: var(--color-text-inverse);
 }
+
+.admin-tab-content { order: 1; }
 
 /* ===================================
    REQUEST CARDS
@@ -1563,6 +1571,7 @@ input:checked + .slider:before {
   gap: 1.5rem;
   margin-top: 1.5rem;
   flex-wrap: wrap;
+  order: 3;
 }
 
 .quick-link {

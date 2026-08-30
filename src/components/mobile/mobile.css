@@ -82,7 +82,7 @@
   }
 
   .mobile-topbar-subtitle {
-    font-size: 0.72rem;
+    font-size: 0.78rem;
     color: var(--color-text-secondary, #64748b);
   }
 
@@ -267,7 +267,7 @@
     justify-content: center;
     gap: 0.22rem;
     color: var(--color-text-secondary, #64748b);
-    font-size: 0.74rem;
+    font-size: 0.78rem;
     font-weight: 600;
     transition: background-color 0.18s ease, color 0.18s ease;
   }
@@ -323,7 +323,7 @@
     border-radius: 999px;
     background: #ef4444;
     color: #fff;
-    font-size: 0.62rem;
+    font-size: 0.72rem;
     display: inline-flex;
     align-items: center;
     justify-content: center;

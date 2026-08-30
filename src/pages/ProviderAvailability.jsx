@@ -21,6 +21,10 @@ const TIME_PRESETS = [
   { key: 'custom', labelKey: 'availabilityTimeCustom', startTime: null, endTime: null },
 ];
 
+const getTimePresetKey = (startTime, endTime) => (
+  TIME_PRESETS.find((preset) => preset.startTime === startTime && preset.endTime === endTime)?.key || 'custom'
+);
+
 const WEEKDAYS = [
   { value: 1, labelKey: 'availabilityDayMon' },
   { value: 2, labelKey: 'availabilityDayTue' },
@@ -129,8 +133,8 @@ export default function ProviderAvailability() {
   const [selectedDateKeys, setSelectedDateKeys] = useState([]);
   const [datePreset, setDatePreset] = useState('weekdays');
   const [selectedWeekdays, setSelectedWeekdays] = useState([1, 2, 3, 4, 5]);
-  const [timePreset, setTimePreset] = useState('custom');
-  const [defaultStartTime, setDefaultStartTime] = useState('09:00');
+  const [timePreset, setTimePreset] = useState('whole_day');
+  const [defaultStartTime, setDefaultStartTime] = useState('08:00');
   const [defaultEndTime, setDefaultEndTime] = useState('17:00');
   const [hourOverrides, setHourOverrides] = useState({});
   const [editingDate, setEditingDate] = useState('');
@@ -162,6 +166,7 @@ export default function ProviderAvailability() {
         const hours = inferHours(normalizedEntries);
         setDefaultStartTime(hours.startTime);
         setDefaultEndTime(hours.endTime);
+        setTimePreset(getTimePresetKey(hours.startTime, hours.endTime));
         setHourOverrides(hours.overrides);
         setSelectedDateKeys(
           [...new Set(normalizedEntries.map((entry) => entry.date))]
@@ -454,33 +459,35 @@ export default function ProviderAvailability() {
               ))}
             </div>
 
-            <div className="availability-time-row">
-              <label>
-                <span>{t('start')}</span>
-                <input
-                  type="time"
-                  value={defaultStartTime}
-                  onChange={(event) => {
-                    setDefaultStartTime(event.target.value);
-                    setTimePreset('custom');
-                  }}
-                  disabled={loading || saving}
-                />
-              </label>
-              <span className="availability-time-separator">{t('to')}</span>
-              <label>
-                <span>{t('end')}</span>
-                <input
-                  type="time"
-                  value={defaultEndTime}
-                  onChange={(event) => {
-                    setDefaultEndTime(event.target.value);
-                    setTimePreset('custom');
-                  }}
-                  disabled={loading || saving}
-                />
-              </label>
-            </div>
+            {timePreset === 'custom' && (
+              <div className="availability-time-row">
+                <label>
+                  <span>{t('start')}</span>
+                  <input
+                    type="time"
+                    value={defaultStartTime}
+                    onChange={(event) => {
+                      setDefaultStartTime(event.target.value);
+                      setTimePreset('custom');
+                    }}
+                    disabled={loading || saving}
+                  />
+                </label>
+                <span className="availability-time-separator">{t('to')}</span>
+                <label>
+                  <span>{t('end')}</span>
+                  <input
+                    type="time"
+                    value={defaultEndTime}
+                    onChange={(event) => {
+                      setDefaultEndTime(event.target.value);
+                      setTimePreset('custom');
+                    }}
+                    disabled={loading || saving}
+                  />
+                </label>
+              </div>
+            )}
           </div>
 
           <div className="availability-system-rule">
@@ -528,7 +535,12 @@ export default function ProviderAvailability() {
           </div>
 
           {selectedDateKeys.length > 0 && (
-            <div className="availability-list-section">
+            <details className="availability-date-adjustments">
+              <summary>
+                <span>{t('availabilitySelectedDates')}</span>
+                <span className="availability-adjustments-summary">{customHoursCount > 0 ? t('availabilityCustomHoursCount', { count: customHoursCount }) : t('availabilityAllUsualHours')}</span>
+              </summary>
+              <div className="availability-list-section">
               <div className="availability-list-heading">
                 <div>
                   <h3>{t('availabilitySelectedDates')}</h3>
@@ -593,7 +605,8 @@ export default function ProviderAvailability() {
                   );
                 })}
               </div>
-            </div>
+              </div>
+            </details>
           )}
         </section>
 

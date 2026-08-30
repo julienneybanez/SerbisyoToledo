@@ -30,18 +30,6 @@
   background: color-mix(in srgb, var(--brand-primary) 5%, var(--surface));
 }
 
-.welcome-section::after {
-  content: '';
-  position: absolute;
-  width: 180px;
-  height: 180px;
-  right: -88px;
-  bottom: -112px;
-  border-radius: 50%;
-  background: color-mix(in srgb, var(--brand-secondary, var(--brand-primary)) 12%, transparent);
-  pointer-events: none;
-}
-
 .provider-welcome-identity {
   min-width: 0;
   display: flex;

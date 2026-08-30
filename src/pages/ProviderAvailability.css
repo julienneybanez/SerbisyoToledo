@@ -30,8 +30,7 @@
   justify-content: space-between;
   gap: 1rem;
   border-color: color-mix(in srgb, var(--brand-primary) 34%, var(--color-border-strong));
-  background:
-    linear-gradient(135deg, color-mix(in srgb, var(--brand-primary) 9%, var(--color-surface)) 0%, var(--color-surface) 72%);
+  background: color-mix(in srgb, var(--brand-primary) 5%, var(--color-surface));
 }
 
 .availability-status-copy {
@@ -52,7 +51,7 @@
   background: var(--brand-primary);
   color: #fff;
   font-size: 1.25rem;
-  box-shadow: 0 6px 14px color-mix(in srgb, var(--brand-primary) 28%, transparent);
+  box-shadow: none;
 }
 
 .availability-status-copy h2,
@@ -420,6 +419,39 @@
   border-top: 1px solid var(--color-border);
 }
 
+.availability-date-adjustments {
+  margin-top: 1rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.availability-date-adjustments > summary {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.85rem 0;
+  color: var(--color-text-primary);
+  font-size: 0.95rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.availability-date-adjustments > summary::marker {
+  color: var(--brand-primary);
+}
+
+.availability-adjustments-summary {
+  color: var(--color-text-secondary);
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-align: right;
+}
+
+.availability-date-adjustments[open] > summary {
+  border-bottom: 1px solid var(--color-border);
+}
+
 .availability-list-heading {
   display: flex;
   justify-content: space-between;
@@ -680,7 +712,8 @@
   }
 
   .availability-date-editor input {
-    width: calc(50% - 1.2rem);
+    flex: 1 1 calc(50% - 0.75rem);
+    min-width: 0;
   }
 
   .availability-save-bar {
@@ -691,6 +724,15 @@
 
   .availability-save-button {
     width: 100%;
+  }
+
+  .availability-date-adjustments > summary {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .availability-adjustments-summary {
+    text-align: left;
   }
 }
 
@@ -705,8 +747,7 @@
 }
 
 [data-theme='dark'] .availability-status-card {
-  background:
-    linear-gradient(135deg, color-mix(in srgb, var(--brand-primary) 13%, var(--color-surface)) 0%, var(--color-surface) 72%);
+  background: color-mix(in srgb, var(--brand-primary) 8%, var(--color-surface));
 }
 
 [data-theme='dark'] .availability-calendar-shell {

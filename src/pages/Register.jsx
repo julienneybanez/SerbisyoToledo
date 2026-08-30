@@ -3,7 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { authAPI } from '../services/api';
 import RoleSelectionCards from '../components/common/RoleSelectionCards';
 import { useLanguage } from '../context/LanguageContext';
-import registerServiceImage from '../assets/electric.jpg';
+import registerServiceImage from '../assets/electrician.png';
 import logo from '../assets/logo.png';
 
 const LANGUAGE_OPTIONS = [

@@ -187,10 +187,7 @@
 .booking-title {
   font-size: 2rem;
   font-weight: 700;
-  background: linear-gradient(90deg, #1f8ef1, #21c06e);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  color: var(--brand-text);
 }
 
 .booking-subtitle {
@@ -1603,10 +1600,7 @@ body {
 .page-title {
   font-size: 2rem;
   font-weight: 700;
-  background: linear-gradient(120deg, #1a74ff 0%, #20b87a 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  color: var(--color-text-primary);
 }
 
 .search-filter-row {
@@ -1666,7 +1660,7 @@ body {
 }
 
 .btn-filter.active {
-  background: linear-gradient(120deg, #4a9ff5 0%, #44c9a0 100%);
+  background: var(--brand-primary);
   color: white;
 }
 

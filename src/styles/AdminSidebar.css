@@ -68,8 +68,8 @@
 
 .admin-sidebar-wordmark small {
   margin-top: 0.2rem;
-  color: rgba(203,213,225,0.72);
-  font-size: 0.68rem;
+  color: rgba(226,232,240,0.9);
+  font-size: 0.78rem;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -109,8 +109,8 @@
 .admin-sidebar .nav-title {
   margin-top: 0.4rem;
   padding: 0.75rem 1rem 0.38rem;
-  color: rgba(148,163,184,0.9);
-  font-size: 0.68rem;
+  color: rgba(203,213,225,0.95);
+  font-size: 0.78rem;
   font-weight: 750;
   letter-spacing: 0.055em;
   text-transform: uppercase;

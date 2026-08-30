@@ -1,0 +1,84 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-30T00:00:00.000Z",
+  "title": "Design System: SerbisyoToledo",
+  "extensions": {
+    "colorMeta": {
+      "civic-blue": { "role": "primary", "displayName": "Clear Civic Blue", "canonical": "#2f80ed", "tonalRamp": ["#102039", "#153a72", "#1f6fd8", "#2f80ed", "#74baf5", "#b9dcff", "#e2efff", "#f4f9ff"] },
+      "trust-teal": { "role": "secondary", "displayName": "Trust Teal", "canonical": "#0aa68f", "tonalRamp": ["#0b3633", "#0f5f73", "#078775", "#0aa68f", "#4cd5c4", "#9aeee3", "#e2f7f3", "#f2fcfa"] },
+      "page-bg": { "role": "neutral", "displayName": "Cool Page Blue", "canonical": "#eaf2fa", "tonalRamp": ["#0f172a", "#162238", "#40546d", "#60758e", "#aebfd2", "#c9d7e6", "#eaf2fa", "#ffffff"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Operational Display", "purpose": "Page titles and primary workspace headings." },
+      "body": { "displayName": "Readable Body", "purpose": "Requests, forms, descriptions, and task content." },
+      "label": { "displayName": "Direct Label", "purpose": "Controls, field labels, and compact operational headings." }
+    },
+    "shadows": [
+      { "name": "working-surface", "value": "0 2px 0 rgba(15, 23, 42, 0.04), 0 8px 20px rgba(15, 23, 42, 0.10)", "purpose": "Standard cards and contained work surfaces." },
+      { "name": "active-surface", "value": "0 3px 0 rgba(15, 23, 42, 0.05), 0 16px 34px rgba(15, 23, 42, 0.15)", "purpose": "Dialogs and strong contextual elevation." }
+    ],
+    "motion": [
+      { "name": "fast", "value": "150ms ease", "purpose": "Compact state feedback." },
+      { "name": "normal", "value": "220ms ease", "purpose": "Default theme and component transitions." },
+      { "name": "slow", "value": "350ms ease", "purpose": "Deliberate surface transitions." }
+    ],
+    "breakpoints": [
+      { "name": "mobile", "value": "768px" },
+      { "name": "minimum-mobile", "value": "320px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Primary action for booking, saving, and advancing a workflow.",
+      "html": "<button class=\"ds-btn-primary\">Request service</button>",
+      "css": ".ds-btn-primary { min-height: 46px; padding: 0 16px; background: #2f80ed; color: #fff; border: 1px solid #2f80ed; border-radius: 12px; font: 600 14px Inter, sans-serif; cursor: pointer; transition: background 150ms ease, border-color 150ms ease, transform 150ms ease; } .ds-btn-primary:hover { background: #1f6fd8; border-color: #1f6fd8; } .ds-btn-primary:active { transform: translateY(1px); } .ds-btn-primary:focus-visible { outline: 3px solid rgba(47,128,237,.45); outline-offset: 2px; }"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Standard field for direct, readable task entry.",
+      "html": "<label class=\"ds-field\">Service location<input class=\"ds-input\" placeholder=\"Enter barangay or address\"></label>",
+      "css": ".ds-field { display: grid; gap: 6px; color: #162238; font: 600 14px Inter, sans-serif; } .ds-input { min-height: 46px; padding: 0 12px; color: #1e293b; background: #fff; border: 1px solid #c9d7e6; border-radius: 11px; font: 400 16px Inter, sans-serif; } .ds-input::placeholder { color: #687c94; } .ds-input:focus { outline: none; border-color: #2f80ed; box-shadow: 0 0 0 3px rgba(47,128,237,.2); }"
+    },
+    {
+      "name": "Working Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Contained unit for provider, request, or operational information.",
+      "html": "<article class=\"ds-card\"><strong>Provider availability</strong><p>Available dates and time slots are shown here.</p></article>",
+      "css": ".ds-card { padding: 20px; background: #fff; color: #162238; border: 1px solid #c9d7e6; border-radius: 15px; box-shadow: 0 2px 0 rgba(15,23,42,.04), 0 8px 20px rgba(15,23,42,.10); font: 400 14px/1.5 Inter, sans-serif; } .ds-card strong { display: block; font-weight: 700; } .ds-card p { margin: 6px 0 0; color: #40546d; }"
+    },
+    {
+      "name": "Status Chip",
+      "kind": "chip",
+      "refersTo": "status-pending",
+      "description": "Explicit text status with a quiet semantic background.",
+      "html": "<span class=\"ds-status\">Pending</span>",
+      "css": ".ds-status { display: inline-flex; align-items: center; min-height: 28px; padding: 0 10px; background: #fff7e6; color: #9a6100; border-radius: 999px; font: 600 12px Inter, sans-serif; }"
+    },
+    {
+      "name": "Navigation Link",
+      "kind": "nav",
+      "refersTo": "navigation",
+      "description": "Direct route choice with a visible active state.",
+      "html": "<nav class=\"ds-nav\"><a class=\"ds-nav-link ds-nav-link-active\" href=\"#\">Browse services</a><a class=\"ds-nav-link\" href=\"#\">My requests</a></nav>",
+      "css": ".ds-nav { display: flex; gap: 8px; font: 600 14px Inter, sans-serif; } .ds-nav-link { padding: 9px 10px; color: #40546d; border-radius: 10px; text-decoration: none; } .ds-nav-link:hover { color: #1f6fd8; background: #e2efff; } .ds-nav-link:focus-visible { outline: 3px solid rgba(47,128,237,.45); outline-offset: 2px; } .ds-nav-link-active { color: #1f6fd8; background: #e2efff; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Trusted Local Guide",
+    "overview": "SerbisyoToledo is a clear, practical interface for helping Toledo City residents make dependable local-service decisions. It pairs civic blue for discovery and primary action with trust teal for success, completion, and confidence. The system feels service-oriented rather than corporate.\n\nThe visual rhythm is deliberately operational. Information is organized into readable task surfaces, with short page titles, useful status color, and direct controls. It should feel grounded in local community work, not like a generic SaaS dashboard or social feed.",
+    "keyCharacteristics": ["Cool, readable surfaces with blue discovery and teal confirmation signals.", "Calmly layered working surfaces, not floating page sections.", "Rounded but disciplined controls sized for repeated desktop and mobile use.", "Compact, approachable typography that favors scanning and task completion."],
+    "rules": [
+      { "name": "Signal-Not-Decoration Rule", "body": "Use blue and teal to explain state, action, or trust. Do not add accent color merely to decorate neutral operational content.", "section": "colors" },
+      { "name": "Plain-Language Rule", "body": "Interface language must remain legible and direct for users with varied technical familiarity; use hierarchy to clarify work, not to create visual drama.", "section": "typography" },
+      { "name": "Working-Surface Rule", "body": "Lift only elements that users work in or actively manipulate. Do not turn whole page sections into floating cards.", "section": "elevation" }
+    ],
+    "dos": ["Do use Civic Blue for discovery and primary action, and Trust Teal for confirmed positive state.", "Do preserve clear visual hierarchy with short page titles, direct labels, and compact supporting metadata.", "Do keep working surfaces readable in both light and dark themes.", "Do preserve 46px minimum interactive controls and account for longer Cebuano strings on small screens."],
+    "donts": ["Don't make the product resemble a generic SaaS dashboard, social feed, or impersonal national marketplace.", "Don't use decorative gradients, nested card stacks, oversized headings, or status-pill clutter to compensate for weak information hierarchy.", "Don't use low contrast, very small type, or ambiguous icon-only controls for critical workflows."]
+  }
+}
