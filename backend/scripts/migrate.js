@@ -113,22 +113,10 @@ async function bootstrapDatabase(connection) {
       );
     }
     
-    // STATE A: Empty schema, baseline permitted
+    // STATE A: Empty schema, baseline permitted. The baseline owns creation
+    // and recording of schema_migrations; do not duplicate that definition.
     console.log('✓ STATE A: Fresh database detected (no tables, no schema_migrations)');
-    console.log('  Baseline migration (0000_baseline_canonical_schema.sql) will be permitted.');
-    
-    // Create schema_migrations table (will be filled by baseline)
-    await connection.query(`
-      CREATE TABLE schema_migrations (
-        id          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-        filename    VARCHAR(255)    NOT NULL,
-        applied_at  TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        PRIMARY KEY (id),
-        UNIQUE KEY uq_schema_migrations_filename (filename)
-      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-    `);
-    
-    return true; // Proceed with migrations (baseline first)
+    return { isFresh: true };
   }
   
   // STATE B or D: schema_migrations table exists
@@ -156,7 +144,7 @@ async function bootstrapDatabase(connection) {
   
   // STATE B: schema_migrations exists with baseline record
   console.log('✓ STATE B: Canonical database detected (schema_migrations with baseline record present)');
-  return true; // Proceed with pending migrations
+  return { isFresh: false };
 }
 
 async function run() {
@@ -167,8 +155,31 @@ async function run() {
   try {
     connection = await mysql.createConnection(getConnectionConfig());
     
-    // Bootstrap and detect database state
-    await bootstrapDatabase(connection);
+    // Bootstrap and detect database state.
+    const bootstrap = await bootstrapDatabase(connection);
+
+    if (bootstrap.isFresh) {
+      const baselineFilename = '0000_baseline_canonical_schema.sql';
+      const baselinePath = path.join(MIGRATIONS_DIR, baselineFilename);
+      const baselineSql = fs.readFileSync(baselinePath, 'utf8');
+
+      console.log(`\nApplying ${baselineFilename} to the empty database...`);
+      if (!isDryRun) {
+        await connection.query(baselineSql);
+        const baselineCreatedSchemaMigrations = await schemaMigrationsTableExists(connection);
+        const [baselineRecords] = await connection.query(
+          `SELECT filename FROM schema_migrations WHERE filename = '0000_baseline_canonical_schema.sql'`
+        );
+
+        if (!baselineCreatedSchemaMigrations || baselineRecords.length !== 1) {
+          throw new Error('Baseline completed without creating and recording schema_migrations.');
+        }
+        console.log(`  ✅ ${baselineFilename} applied and recorded by the baseline`);
+      } else {
+        console.log('  --dry-run: baseline was not executed.');
+        return;
+      }
+    }
     
     // Get applied migrations
     const applied = await getAppliedFilenames(connection);

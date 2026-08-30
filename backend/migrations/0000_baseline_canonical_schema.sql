@@ -246,10 +246,10 @@ CREATE TABLE verification_requests (
 -- Authoritative evidence of an affirmative consent/acceptance action.
 -- Retention-safe: legal evidence must not disappear because an account is
 -- later suspended/deactivated (suspension never hard-deletes), so this
--- table uses RESTRICT on user_id (an accidental hard-delete of a user row
--- fails loudly instead of silently erasing consent evidence) and SET NULL
--- on verification_request_id (the acceptance record itself still matters
--- even in the should-never-happen case its verification request is gone).
+-- table uses RESTRICT on user_id and verification_request_id. An accidental
+-- hard-delete fails loudly instead of silently erasing consent evidence;
+-- a verification request referenced by consent cannot be hard-deleted.
+-- Suspension and deactivation remain unaffected.
 -- No IP address / browser fingerprint / device fingerprint columns are
 -- collected — not required for this capstone consent system.
 --
@@ -276,7 +276,7 @@ CREATE TABLE legal_acceptances (
   KEY idx_legal_acceptance_user_type (user_id, acceptance_type),
   KEY idx_legal_acceptance_verification_request (verification_request_id),
   CONSTRAINT fk_legal_acceptance_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE RESTRICT,
-  CONSTRAINT fk_legal_acceptance_verification FOREIGN KEY (verification_request_id) REFERENCES verification_requests(id) ON DELETE SET NULL
+  CONSTRAINT fk_legal_acceptance_verification FOREIGN KEY (verification_request_id) REFERENCES verification_requests(id) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ----------------------------------------------------------------------------

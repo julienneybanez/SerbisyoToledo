@@ -1,4 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const backendRoot = path.resolve(__dirname, '..');
+const migrationsRoot = path.join(backendRoot, 'migrations');
+const baselinePath = path.join(migrationsRoot, '0000_baseline_canonical_schema.sql');
+const runnerPath = path.join(backendRoot, 'scripts', 'migrate.js');
 
 // Mock database connection responses for bootstrap state testing
 // Note: These are UNIT tests using mocks. No real MySQL connection is used.
@@ -40,17 +47,13 @@ describe('Migration Runner Bootstrap States', () => {
       console.log('✓ STATE A detected: fresh database, baseline permitted');
     });
 
-    it('should create schema_migrations table in fresh database', async () => {
-      const connection = createMockConnection({
-        'schema_migrations': [[], []],
-        'information_schema.TABLES': [[], []],
-        'CREATE TABLE': [[[]]],  // Mock successful table creation
-      });
+    it('leaves schema_migrations creation and baseline recording to the baseline SQL', () => {
+      const runnerSource = fs.readFileSync(runnerPath, 'utf8');
+      const baselineSource = fs.readFileSync(baselinePath, 'utf8');
 
-      // Should not throw
-      expect(async () => {
-        await connection.query('CREATE TABLE IF NOT EXISTS schema_migrations (...)');
-      }).not.toThrow();
+      expect(runnerSource).not.toMatch(/CREATE TABLE schema_migrations/);
+      expect(baselineSource).toMatch(/CREATE TABLE schema_migrations/);
+      expect(baselineSource).toMatch(/INSERT INTO schema_migrations \(filename\) VALUES \('0000_baseline_canonical_schema\.sql'\)/);
     });
   });
 
@@ -165,6 +168,17 @@ describe('Migration Runner Bootstrap States', () => {
       });
     });
 
+    it('discovers only active top-level canonical migration SQL', () => {
+      const activeMigrationFiles = fs.readdirSync(migrationsRoot)
+        .filter((name) => name.endsWith('.sql') && !name.endsWith('.rollback.sql'));
+      const legacyMigrationFiles = fs.readdirSync(path.join(migrationsRoot, 'legacy'))
+        .filter((name) => name.endsWith('.sql'));
+
+      expect(activeMigrationFiles).toEqual(['0000_baseline_canonical_schema.sql']);
+      expect(legacyMigrationFiles.length).toBeGreaterThan(0);
+      expect(activeMigrationFiles.some((name) => name.startsWith('2026'))).toBe(false);
+    });
+
     it('should block migration runner from running 0000 against legacy database', () => {
       // Simulate: app has old tables but schema_migrations doesn't exist
       const hasLegacyTables = true;
@@ -189,6 +203,16 @@ describe('Migration Runner Bootstrap States', () => {
       expect(errorD).toContain('ERROR');
       expect(errorD).toContain('baseline record not found');
       expect(errorD).toContain('Cannot determine');
+    });
+
+    it('uses RESTRICT for a verification request referenced by legal acceptance evidence', () => {
+      const baselineSource = fs.readFileSync(baselinePath, 'utf8');
+      const constraintLine = baselineSource.split('\n').find((line) => (
+        line.includes('fk_legal_acceptance_verification')
+      ));
+
+      expect(constraintLine).toContain('ON DELETE RESTRICT');
+      expect(constraintLine).not.toContain('ON DELETE SET NULL');
     });
   });
 });
