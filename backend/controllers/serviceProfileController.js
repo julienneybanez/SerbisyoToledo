@@ -15,6 +15,7 @@ const {
   uploadImageBuffer,
   deleteImageByPublicId,
 } = require('../utils/cloudinaryService');
+const credentialCloudinaryService = require('../utils/cloudinaryService');
 const {
   parseDateOnly,
   formatDateOnly,
@@ -2360,6 +2361,8 @@ exports.getMyCredentials = async (req, res) => {
 };
 
 exports.createCredential = async (req, res) => {
+  let uploadedDocumentPublicId = null;
+
   try {
     const userId = req.user?.userId;
 
@@ -2405,18 +2408,24 @@ exports.createCredential = async (req, res) => {
     let documentPublicId = null;
 
     if (req.file) {
-      if (hasCloudinaryConfig()) {
-        const uploadResult = await uploadImageBuffer({
-          buffer: req.file.buffer,
-          mimeType: req.file.mimetype,
-          folder: 'serbisyo-toledo/credentials',
-          resourceType: req.file.mimetype === 'application/pdf' ? 'raw' : 'image',
-          deliveryType: 'authenticated',
+      if (!credentialCloudinaryService.hasCloudinaryConfig()) {
+        return res.status(503).json({
+          success: false,
+          message: 'Credential document storage is temporarily unavailable',
         });
-
-        documentUrl = uploadResult.secure_url;
-        documentPublicId = uploadResult.public_id;
       }
+
+      const uploadResult = await credentialCloudinaryService.uploadImageBuffer({
+        buffer: req.file.buffer,
+        mimeType: req.file.mimetype,
+        folder: 'serbisyo-toledo/credentials',
+        resourceType: req.file.mimetype === 'application/pdf' ? 'raw' : 'image',
+        deliveryType: 'authenticated',
+      });
+
+      documentUrl = uploadResult.secure_url;
+      documentPublicId = uploadResult.public_id;
+      uploadedDocumentPublicId = uploadResult.public_id;
     }
 
     const [result] = await db.query(
@@ -2453,12 +2462,17 @@ exports.createCredential = async (req, res) => {
       ]
     );
 
+      uploadedDocumentPublicId = null;
+
     return res.status(201).json({
       success: true,
       message: 'Credential created successfully',
       data: { id: result.insertId }
     });
   } catch (error) {
+    if (uploadedDocumentPublicId) {
+      await credentialCloudinaryService.deleteImageByPublicId(uploadedDocumentPublicId);
+    }
     console.error('Error creating credential:', error);
     return res.status(500).json({ success: false, message: 'Failed to create credential' });
   }

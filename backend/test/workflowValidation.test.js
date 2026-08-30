@@ -166,4 +166,56 @@ describe('credential and review application validation', () => {
     await serviceRequestController.createReview({ params: { requestId: 1 }, user: { userId: 1 }, body: { rating } }, res);
     expect(res.statusCode).toBe(201);
   });
+
+  it('creates a credential without a document when Cloudinary is unavailable', async () => {
+    vi.spyOn(cloudinaryService, 'hasCloudinaryConfig').mockReturnValue(false);
+    vi.spyOn(db, 'query').mockImplementation(async (sql) => {
+      if (String(sql).startsWith('SELECT id FROM service_profiles')) return [[{ id: 7 }]];
+      if (String(sql).includes('INSERT INTO provider_credentials')) return [{ insertId: 1 }];
+      return [[]];
+    });
+    const res = response();
+    await serviceProfileController.createCredential({ user: { userId: 2 }, body: { credentialName: 'License', credentialType: 'professional_license' } }, res);
+    expect(res.statusCode).toBe(201);
+  });
+
+  it('uploads a credential document and stores its secure URL', async () => {
+    let insertParams;
+    vi.spyOn(cloudinaryService, 'hasCloudinaryConfig').mockReturnValue(true);
+    const upload = vi.spyOn(cloudinaryService, 'uploadImageBuffer').mockResolvedValue({ secure_url: 'https://images.test/credential.png', public_id: 'credential-new' });
+    vi.spyOn(db, 'query').mockImplementation(async (sql, params) => {
+      if (String(sql).startsWith('SELECT id FROM service_profiles')) return [[{ id: 7 }]];
+      if (String(sql).includes('INSERT INTO provider_credentials')) { insertParams = params; return [{ insertId: 1 }]; }
+      return [[]];
+    });
+    const res = response();
+    await serviceProfileController.createCredential({ user: { userId: 2 }, body: { credentialName: 'License', credentialType: 'professional_license' }, file: { buffer: Buffer.from('png'), mimetype: 'image/png' } }, res);
+    expect(res.statusCode).toBe(201);
+    expect(upload).toHaveBeenCalledOnce();
+    expect(insertParams).toContain('https://images.test/credential.png');
+  });
+
+  it('cleans up an uploaded credential document after insert failure', async () => {
+    vi.spyOn(cloudinaryService, 'hasCloudinaryConfig').mockReturnValue(true);
+    vi.spyOn(cloudinaryService, 'uploadImageBuffer').mockResolvedValue({ secure_url: 'https://images.test/credential.png', public_id: 'credential-new' });
+    const cleanup = vi.spyOn(cloudinaryService, 'deleteImageByPublicId').mockResolvedValue();
+    vi.spyOn(db, 'query').mockImplementation(async (sql) => {
+      if (String(sql).startsWith('SELECT id FROM service_profiles')) return [[{ id: 7 }]];
+      if (String(sql).includes('INSERT INTO provider_credentials')) throw new Error('insert failed');
+      return [[]];
+    });
+    const res = response();
+    await serviceProfileController.createCredential({ user: { userId: 2 }, body: { credentialName: 'License', credentialType: 'professional_license' }, file: { buffer: Buffer.from('png'), mimetype: 'image/png' } }, res);
+    expect(res.statusCode).toBe(500);
+    expect(cleanup).toHaveBeenCalledWith('credential-new');
+  });
+
+  it('rejects a selected credential document when storage is unavailable without inserting', async () => {
+    vi.spyOn(cloudinaryService, 'hasCloudinaryConfig').mockReturnValue(false);
+    const query = vi.spyOn(db, 'query').mockResolvedValue([[{ id: 7 }]]);
+    const res = response();
+    await serviceProfileController.createCredential({ user: { userId: 2 }, body: { credentialName: 'License', credentialType: 'professional_license' }, file: { buffer: Buffer.from('png'), mimetype: 'image/png' } }, res);
+    expect(res.statusCode).toBe(503);
+    expect(query).toHaveBeenCalledTimes(1);
+  });
 });

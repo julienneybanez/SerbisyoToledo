@@ -109,10 +109,6 @@ describe('canonical MySQL runtime integration', () => {
       'INSERT INTO provider_available_slots (service_profile_id, available_date, start_time, end_time) VALUES (?, ?, ?, ?), (?, ?, ?, ?)',
       [profileId, secondDate, '08:00:00', '12:00:00', profileId, dateAtOffset(12), '08:00:00', '12:00:00']
     );
-    await adminConnection.query(
-      'INSERT INTO provider_available_slots (service_profile_id, available_date, start_time, end_time) VALUES (?, ?, ?, ?), (?, ?, ?, ?), (?, ?, ?, ?)',
-      [profileId, '2026-09-05', '08:00:00', '12:00:00', profileId, '2026-09-08', '08:00:00', '12:00:00', profileId, '2026-09-12', '08:00:00', '12:00:00']
-    );
   });
 
   afterAll(async () => {
@@ -196,7 +192,11 @@ describe('canonical MySQL runtime integration', () => {
     const [storedContinuous] = await adminConnection.query("SELECT DATE_FORMAT(service_date, '%Y-%m-%d') AS service_date FROM service_request_dates WHERE service_request_id = ? ORDER BY service_date", [continuous.body.data.requestId]);
     expect(storedContinuous.map((row) => row.service_date)).toEqual(continuousDates);
 
-    const specificDates = ['2026-09-05', '2026-09-08', '2026-09-12'];
+    const specificDates = [dateAtOffset(37), dateAtOffset(40), dateAtOffset(44)];
+    await adminConnection.query(
+      'INSERT INTO provider_available_slots (service_profile_id, available_date, start_time, end_time) VALUES (?, ?, ?, ?), (?, ?, ?, ?), (?, ?, ?, ?)',
+      [profileId, specificDates[0], '08:00:00', '12:00:00', profileId, specificDates[1], '08:00:00', '12:00:00', profileId, specificDates[2], '08:00:00', '12:00:00']
+    );
     const specific = await createRequest({ clientId, providerId, profileId, date: specificDates[0], dates: specificDates, startTime: '10:00', bookingType: 'specific_dates' });
     expect(specific).toMatchObject({ statusCode: 201, body: { data: { bookingType: 'specific_dates', durationDays: 3, estimatedTotal: 1500 } } });
     const [storedSpecific] = await adminConnection.query("SELECT DATE_FORMAT(service_date, '%Y-%m-%d') AS service_date FROM service_request_dates WHERE service_request_id = ? ORDER BY service_date", [specific.body.data.requestId]);

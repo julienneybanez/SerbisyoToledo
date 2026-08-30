@@ -374,6 +374,7 @@ exports.reviewVerificationRequest = async (req, res) => {
     );
 
     if (requests.length === 0) {
+      await connection.rollback();
       return res.status(404).json({
         success: false,
         message: 'Verification request not found'
@@ -381,6 +382,7 @@ exports.reviewVerificationRequest = async (req, res) => {
     }
 
     if (requests[0].status !== 'pending') {
+      await connection.rollback();
       return res.status(400).json({
         success: false,
         message: 'Only pending requests can be reviewed'
