@@ -367,6 +367,10 @@ exports.updateProfile = async (req, res) => {
       params.push(profilePhotoUrl);
       updates.push('profile_photo_public_id = ?');
       params.push(profilePhotoPublicId);
+      // A newly uploaded Cloudinary image becomes the canonical account photo.
+      // Clear legacy copies so later reads/removals cannot resurrect an old image.
+      updates.push('profile_image = NULL');
+      updates.push('profile_photo = NULL');
     }
 
     if (updates.length === 0) {
@@ -392,7 +396,7 @@ exports.updateProfile = async (req, res) => {
 
     // Fetch updated user data
     const [users] = await db.query(
-      `SELECT id, full_name, email, email_verified, user_type, phone, address, bio, profile_photo, profile_photo_url
+      `SELECT id, full_name, email, email_verified, user_type, phone, address, bio, profile_photo, profile_photo_url, profile_image
        FROM users WHERE id = ?`,
       [userId]
     );
@@ -446,7 +450,7 @@ exports.removeProfilePhoto = async (req, res) => {
     const previousPublicId = existingUsers[0]?.profile_photo_public_id;
 
     await db.query(
-      'UPDATE users SET profile_photo_url = NULL, profile_photo_public_id = NULL WHERE id = ?',
+      'UPDATE users SET profile_photo_url = NULL, profile_photo_public_id = NULL, profile_image = NULL, profile_photo = NULL WHERE id = ?',
       [userId]
     );
 
