@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { DayPicker } from 'react-day-picker';
 import 'react-day-picker/style.css';
 import { serviceProfileAPI } from '../services/api';
@@ -388,9 +389,9 @@ export default function ProviderAvailability() {
               </div>
             </div>
             <p>{t('availabilityListingRequiredDescription')}</p>
-            <a className="st-button st-button--primary st-button--md" href="/dashboard">
+            <Link className="st-button st-button--primary st-button--md" to="/dashboard">
               {t('availabilityGoToDashboard')}
-            </a>
+            </Link>
           </section>
         </div>
       </div>
