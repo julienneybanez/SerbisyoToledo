@@ -44,6 +44,32 @@ describe('Gemini assistant provider', () => {
     expect(result.action.filters).toMatchObject({ category: 'Plumbing', location: 'Poblacion', language: 'ceb', duration: 120 });
   });
 
+  it.each([
+    ['infers Plumbing from a Cebuano tubero message', null, 'Unsaon nako pagpangita og tubero duol sa Poblacion?', 'Plumbing'],
+    ['replaces an invalid category using a Cebuano tubero message', 'Pipe Wizardry', 'Unsaon nako pagpangita og tubero duol sa Poblacion?', 'Plumbing'],
+    ['infers Plumbing from an English plumber message', null, 'I need a plumber near Poblacion', 'Plumbing'],
+    ['infers Electrical from Cebuano', null, 'Pangita kog elektrisyan', 'Electrical'],
+    ['infers Carpentry from Cebuano', null, 'Kinahanglan kog karpintero', 'Carpentry'],
+    ['leaves ambiguous repair requests uncategorized', null, 'I need someone to repair something', null],
+    ['rejects malicious categories without service evidence', 'DROP TABLE users', 'I need help with something', null],
+  ])('%s', (_name, category, message, expectedCategory) => {
+    const result = normalizeAiResult({
+      reply: 'I can help find a provider.',
+      intent: 'service_discovery',
+      action: {
+        type: 'recommend_providers',
+        query: '',
+        filters: { category, location: 'Poblacion', maxPrice: 900, minRating: 4.5, language: 'ceb', availabilityDate: '2026-09-01', duration: 120, search: null },
+      },
+    }, { message });
+
+    expect(result.action.filters.category).toBe(expectedCategory);
+    expect(result.action.filters.location).toBe('Poblacion');
+    expect(result.action.filters.maxPrice).toBe(900);
+    expect(result.action.filters.language).toBe('ceb');
+    expect(result.action.filters.duration).toBe(120);
+  });
+
   it('keeps Cebuano locale and falls back after provider failure', async () => {
     process.env.AI_PROVIDER = 'gemini';
     process.env.AI_MODEL = 'gemini-test';

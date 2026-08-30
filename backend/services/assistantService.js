@@ -4,6 +4,18 @@ const { toCategoryKey, getCategoryByKey } = require('../config/serviceTaxonomy')
 const SUPPORTED_LOCALES = new Set(['en', 'ceb']);
 const SUPPORTED_FILTER_LANGUAGES = new Set(['en', 'ceb', 'fil']);
 const SUPPORTED_INTENTS = new Set(['general', 'about_platform', 'help', 'booking_help', 'availability_help', 'provider_onboarding', 'service_discovery']);
+const CATEGORY_INFERENCE_RULES = [
+  { key: 'plumbing', pattern: /\b(plumbing|plumber|tubero)\b/i },
+  { key: 'electrical', pattern: /\b(electrical|electrician|elektrisyan)\b/i },
+  { key: 'carpentry', pattern: /\b(carpentry|carpenter|karpintero)\b/i },
+  { key: 'cleaning', pattern: /\b(cleaning|cleaner|limpyo|pagpanglimpyo)\b/i },
+  { key: 'gardening_landscaping', pattern: /\b(gardening|gardener|landscaping)\b/i },
+  { key: 'aircon_refrigeration', pattern: /\b(aircon|air conditioning|refrigeration)\b/i },
+  { key: 'laundry', pattern: /\blaundry\b/i },
+  { key: 'locksmith', pattern: /\blocksmith\b/i },
+  { key: 'beauty_wellness', pattern: /\b(massage|hilot)\b/i },
+  { key: 'tech_repair', pattern: /\b(computer repair|laptop repair|phone repair|tech repair)\b/i },
+];
 let geminiAdapterFactory = createGeminiAdapter;
 
 const normalizeLocale = (locale) => (
@@ -37,7 +49,13 @@ const numberOrNull = (value, min, max) => {
 
 const dateOrNull = (value) => (/^\d{4}-\d{2}-\d{2}$/.test(String(value || '')) ? String(value) : null);
 
-const normalizeAiResult = (value) => {
+const inferCategoryFromText = (...values) => {
+  const text = values.map((value) => String(value || '')).join(' ');
+  const match = CATEGORY_INFERENCE_RULES.find((rule) => rule.pattern.test(text));
+  return match ? getCategoryByKey(match.key)?.label || null : null;
+};
+
+const normalizeAiResult = (value, { message = '' } = {}) => {
   if (!value || typeof value !== 'object') throw new Error('malformed_output');
   const reply = stringOrNull(value.reply, 1200);
   const intent = SUPPORTED_INTENTS.has(value.intent) ? value.intent : 'general';
@@ -48,7 +66,9 @@ const normalizeAiResult = (value) => {
   }
   const filters = value.action.filters && typeof value.action.filters === 'object' ? value.action.filters : {};
   const categoryKey = toCategoryKey(filters.category);
-  const category = categoryKey ? getCategoryByKey(categoryKey)?.label || null : null;
+  const category = categoryKey
+    ? getCategoryByKey(categoryKey)?.label || null
+    : inferCategoryFromText(filters.search, value.action.query, message);
   const language = SUPPORTED_FILTER_LANGUAGES.has(filters.language) ? filters.language : null;
   const action = {
     type: 'recommend_providers',
@@ -158,7 +178,10 @@ const generateAssistantReply = async ({ message, locale = 'en', context = {}, hi
   if (config.providerConfigured) {
     try {
       const adapter = geminiAdapterFactory({ apiKey: process.env.AI_API_KEY, model: config.model });
-      const result = normalizeAiResult(await adapter.generate({ message, locale: normalizedLocale, context: getContextAccepted(context, history), history }));
+      const result = normalizeAiResult(
+        await adapter.generate({ message, locale: normalizedLocale, context: getContextAccepted(context, history), history }),
+        { message }
+      );
       return { mode: 'ai', providerConfigured: true, ...result, locale: normalizedLocale, contextAccepted: getContextAccepted(context, history) };
     } catch (error) {
       console.warn('Assistant provider fallback:', { provider: config.provider, category: error.category || 'invalid_response', timeout: error.category === 'timeout' });
@@ -179,6 +202,7 @@ module.exports = {
   generateAssistantReply,
   normalizeLocale,
   normalizeAiResult,
+  inferCategoryFromText,
   setGeminiAdapterFactoryForTests: (factory) => {
     geminiAdapterFactory = factory || createGeminiAdapter;
   },
