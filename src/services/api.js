@@ -3,7 +3,13 @@ import { normalizeStoredUser } from '../utils/runtimeGuards';
 
 // API Configuration
 const isLocalHost = typeof window !== 'undefined' && ['localhost', '127.0.0.1'].includes(window.location.hostname);
-export const API_BASE_URL = import.meta.env.VITE_API_URL || (isLocalHost ? 'http://localhost:5000/api' : '/api');
+const configuredApiUrl = String(import.meta.env.VITE_API_URL || '').trim();
+
+// Production browser traffic must stay same-origin so HttpOnly session cookies are
+// first-party on Vercel. VITE_API_URL remains useful for local development only.
+export const API_BASE_URL = isLocalHost
+  ? (configuredApiUrl || 'http://localhost:5000/api')
+  : '/api';
 
 let csrfToken = null;
 let csrfBootstrapPromise = null;
