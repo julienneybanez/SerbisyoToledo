@@ -86,7 +86,7 @@ export default function ClientDashboard() {
         : t('feedChecklistFirstBookingDescription', 'Submit your first service request'),
       completed: task.completed,
       actionType: 'link',
-      to: task.actionPath === '/feed' ? '/feed' : '/settings',
+      to: task.actionPath || (task.id === 'first_request' ? '/feed' : '/client-settings'),
       actionLabel: task.id === 'first_request' ? t('feedChecklistFindProviders', 'Find Providers') : t('feedChecklistOpenSettings', 'Open Settings'),
     }));
   }, [onboardingData, t]);

@@ -1,23 +1,36 @@
 import { io } from 'socket.io-client';
 import { API_BASE_URL, authAPI } from './api';
 
-const socketOrigin = (() => {
+export const getSocketOrigin = () => {
+  const envSocketUrl = import.meta.env.VITE_SOCKET_URL;
+  if (envSocketUrl && typeof envSocketUrl === 'string' && envSocketUrl.trim()) {
+    try {
+      const url = new URL(envSocketUrl.trim());
+      return url.origin;
+    } catch {
+      return envSocketUrl.trim();
+    }
+  }
+
   try {
-    if (API_BASE_URL.startsWith('http')) {
+    if (typeof API_BASE_URL === 'string' && API_BASE_URL.startsWith('http')) {
       const url = new URL(API_BASE_URL);
       return url.origin;
     }
   } catch {
-    // Fall back to the current browser origin.
+    // Fall back to current window location origin
   }
-  return window.location.origin;
-})();
+
+  return typeof window !== 'undefined' && window.location?.origin
+    ? window.location.origin
+    : 'http://localhost:5000';
+};
 
 let socket = null;
 
 export const getMessagingSocket = () => {
   if (!socket) {
-    socket = io(socketOrigin, {
+    socket = io(getSocketOrigin(), {
       autoConnect: false,
       withCredentials: true,
       transports: ['websocket', 'polling'],
@@ -57,5 +70,6 @@ export const connectMessagingSocket = async () => {
 export const disconnectMessagingSocket = () => {
   if (socket) {
     socket.disconnect();
+    socket = null;
   }
 };
