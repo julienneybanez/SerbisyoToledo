@@ -470,20 +470,19 @@ exports.getUserActivity = async (req, res) => {
 exports.getReports = async (req, res) => {
   try {
     const [rows] = await db.query(
-      `SELECT r.id, r.request_id, r.reason, r.description, r.status, r.priority, r.resolution_notes,
-              r.report_status, r.action_taken, r.moderation_notes,
-              r.screenshot_data, r.screenshot_mime, r.created_at,
+      `SELECT r.id, r.request_id, r.reason, r.description, r.status, r.resolution,
+              r.screenshot_url, r.created_at,
               reporter.full_name as reporter_name, reporter.user_type as reporter_type,
               reported.full_name as reported_user_name, reported.user_type as reported_user_type,
               COALESCE(sr.service_type_label, 'Service Request') AS service_label
        FROM user_reports r
        JOIN users reporter ON r.reporter_id = reporter.id
        JOIN users reported ON r.reported_user_id = reported.id
-       JOIN service_requests sr ON r.request_id = sr.id
+       LEFT JOIN service_requests sr ON r.request_id = sr.id
        ORDER BY
-         CASE COALESCE(r.report_status, r.status)
+         CASE r.status
            WHEN 'pending' THEN 1
-           WHEN 'under_review' THEN 2
+           WHEN 'investigating' THEN 2
            WHEN 'dismissed' THEN 3
            WHEN 'resolved' THEN 4
            ELSE 6
@@ -496,20 +495,15 @@ exports.getReports = async (req, res) => {
       requestId: row.request_id,
       reportedUser: row.reported_user_name,
       reportedUserType: row.reported_user_type,
-      status: row.report_status || row.status,
-      actionTaken: row.action_taken || 'none',
+      status: row.status,
       reportedBy: row.reporter_name,
       reporterType: row.reporter_type,
       reason: row.reason,
       description: row.description,
-      priority: row.priority,
-      resolution: row.resolution_notes,
-      moderationNotes: row.moderation_notes,
+      resolution: row.resolution,
       date: row.created_at,
       serviceLabel: row.service_label,
-      screenshot: row.screenshot_data
-        ? `data:${row.screenshot_mime || 'image/jpeg'};base64,${Buffer.from(row.screenshot_data).toString('base64')}`
-        : null,
+      screenshot: row.screenshot_url || null,
     }));
 
     res.json({
@@ -530,7 +524,7 @@ exports.getReports = async (req, res) => {
 exports.updateReportStatus = async (req, res) => {
   try {
     const { id } = req.params;
-    const { action, resolutionNotes, moderationNotes } = req.body;
+    const { action, resolutionNotes } = req.body;
     const adminId = req.user.userId;
 
     if (!['investigate', 'dismiss', 'resolve', 'warn', 'suspend', 'ban'].includes(action)) {
@@ -541,7 +535,7 @@ exports.updateReportStatus = async (req, res) => {
     }
 
     const [reports] = await db.query(
-      'SELECT id, reported_user_id, COALESCE(report_status, status) AS lifecycle_status FROM user_reports WHERE id = ?',
+      'SELECT id, reported_user_id, status AS lifecycle_status FROM user_reports WHERE id = ?',
       [id]
     );
 
@@ -561,13 +555,12 @@ exports.updateReportStatus = async (req, res) => {
     }
 
     const trimmedResolution = String(resolutionNotes || '').trim();
-    const trimmedModeration = String(moderationNotes || '').trim();
 
     let nextStatus = currentStatus;
     let nextActionTaken = 'none';
 
     if (action === 'investigate') {
-      nextStatus = 'under_review';
+      nextStatus = 'investigating';
     }
 
     if (action === 'dismiss') {
@@ -599,14 +592,11 @@ exports.updateReportStatus = async (req, res) => {
 
     await db.query(
       `UPDATE user_reports
-       SET report_status = ?,
-           action_taken = ?,
-           resolution_notes = ?,
-           moderation_notes = ?,
-           handled_by = ?,
-           handled_at = NOW()
+       SET status = ?,
+           resolution = ?,
+           handled_by = ?
        WHERE id = ?`,
-      [nextStatus, nextActionTaken, trimmedResolution || null, trimmedModeration || null, adminId, id]
+      [nextStatus, trimmedResolution || null, adminId, id]
     );
 
     if (action === 'ban') {
