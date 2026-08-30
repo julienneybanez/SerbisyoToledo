@@ -61,6 +61,24 @@ const SERVICE_KEYWORDS = [
   { keyword: 'locksmith', category: 'Locksmith' },
 ];
 
+const ALLOWED_RECOMMENDATION_CATEGORIES = new Set([
+  'Carpentry',
+  'Plumbing',
+  'Electrical',
+  'Cleaning',
+  'Gardening & Landscaping',
+  'Appliance Repair',
+  'Aircon & Refrigeration',
+  'Beauty & Wellness',
+  'Locksmith',
+  'Laundry',
+  'Painting',
+  'Masonry & Minor Construction',
+  'Welding & Metalwork',
+  'Tech Repair',
+  'Other Services',
+]);
+
 const buildRecommendationFilters = (rawInput, locale) => {
   const input = String(rawInput || '').toLowerCase();
   const serviceMatch = SERVICE_KEYWORDS.find((item) => input.includes(item.keyword));
@@ -118,14 +136,14 @@ const buildStructuredRecommendationFilters = (filters, rawInput, locale) => {
     : undefined;
 
   return {
-    category: typeof safe.category === 'string' && safe.category.length <= 80 ? safe.category : fallback.category,
+    category: ALLOWED_RECOMMENDATION_CATEGORIES.has(safe.category) ? safe.category : fallback.category,
     location: typeof safe.location === 'string' && safe.location.length <= 120 ? safe.location : fallback.location,
     maxPrice: safeNumber(safe.maxPrice, 0, 1000000) ?? fallback.maxPrice,
     minRating: safeNumber(safe.minRating, 0, 5) ?? fallback.minRating,
     language: allowedLanguages.has(safe.language) ? safe.language : fallback.language,
     availabilityDate: safeDate || fallback.availabilityDate,
     duration: safeNumber(safe.duration, 30, 1440) ?? fallback.duration,
-    search: typeof safe.search === 'string' && safe.search.length <= 120 ? safe.search : fallback.search,
+    search: typeof safe.search === 'string' && safe.search.length <= 120 ? safe.search : undefined,
     limit: 3,
   };
 };
