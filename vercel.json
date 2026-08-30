@@ -2,8 +2,8 @@
   "framework": "vite",
   "rewrites": [
     {
-      "source": "/api/(.*)",
-      "destination": "https://serbisyotoledo-backend.railway.app/api/$1"
+      "source": "/api/:path*",
+      "destination": "https://serbisyotoledo-backend.railway.app/api/:path*"
     },
     {
       "source": "/((?!api/).*)",
