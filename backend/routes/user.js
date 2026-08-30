@@ -27,6 +27,9 @@ router.get('/profile', userController.getProfile);
 // Get user onboarding progress
 router.get('/onboarding-progress', userController.getOnboardingProgress);
 
+// Get the service provider's latest verification state and rejection reason
+router.get('/verification-status', requireUserType('tradesperson'), userController.getVerificationStatus);
+
 // Update user profile (with optional photo upload)
 router.patch('/profile', uploadLimiter, upload.single('profilePhoto'), validateSingleUpload({ allowedKinds: ['image'], required: false, fieldName: 'profilePhoto' }), userController.updateProfile);
 
