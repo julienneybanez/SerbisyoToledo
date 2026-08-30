@@ -113,6 +113,128 @@ exports.getProfile = async (req, res) => {
   }
 };
 
+// Get user onboarding progress
+exports.getOnboardingProgress = async (req, res) => {
+  try {
+    const userId = req.user?.userId;
+    if (!userId) {
+      return res.status(401).json({ success: false, message: 'Authentication required' });
+    }
+
+    const [users] = await db.query(
+      `SELECT id, user_type, email_verified, phone, address, is_verified FROM users WHERE id = ? LIMIT 1`,
+      [userId]
+    );
+
+    if (users.length === 0) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    const user = users[0];
+    let tasks = [];
+
+    if (user.user_type === 'client') {
+      const [requests] = await db.query(
+        `SELECT COUNT(*) AS count FROM service_requests WHERE client_id = ?`,
+        [userId]
+      );
+      const hasRequest = requests[0].count > 0;
+      const hasPhoneAddress = Boolean(user.phone && String(user.phone).trim() && user.address && String(user.address).trim());
+
+      tasks = [
+        {
+          id: 'email_verified',
+          titleKey: 'checklistVerifyEmail',
+          defaultTitle: 'Verify your email address',
+          completed: Boolean(user.email_verified),
+          actionPath: '/client-settings',
+        },
+        {
+          id: 'profile_info',
+          titleKey: 'checklistCompleteProfile',
+          defaultTitle: 'Add contact phone and Toledo address',
+          completed: hasPhoneAddress,
+          actionPath: '/client-settings',
+        },
+        {
+          id: 'first_request',
+          titleKey: 'checklistFirstRequest',
+          defaultTitle: 'Submit your first service request',
+          completed: hasRequest,
+          actionPath: '/feed',
+        },
+      ];
+    } else {
+      const [profiles] = await db.query(
+        `SELECT COUNT(*) AS count FROM service_profiles WHERE user_id = ?`,
+        [userId]
+      );
+      const [schedules] = await db.query(
+        `SELECT COUNT(*) AS count FROM provider_availability_schedules WHERE user_id = ?`,
+        [userId]
+      );
+      const [verifications] = await db.query(
+        `SELECT COUNT(*) AS count FROM verification_requests WHERE user_id = ?`,
+        [userId]
+      );
+
+      tasks = [
+        {
+          id: 'email_verified',
+          titleKey: 'checklistVerifyEmail',
+          defaultTitle: 'Verify your email address',
+          completed: Boolean(user.email_verified),
+          actionPath: '/provider-settings',
+        },
+        {
+          id: 'service_profile',
+          titleKey: 'checklistServiceProfile',
+          defaultTitle: 'Set up service profile',
+          completed: profiles[0].count > 0,
+          actionPath: '/provider-settings',
+        },
+        {
+          id: 'availability',
+          titleKey: 'checklistAvailability',
+          defaultTitle: 'Configure weekly availability',
+          completed: schedules[0].count > 0,
+          actionPath: '/provider-availability',
+        },
+        {
+          id: 'verification',
+          titleKey: 'checklistVerification',
+          defaultTitle: 'Submit verification documents',
+          completed: Boolean(user.is_verified) || verifications[0].count > 0,
+          actionPath: '/provider-credentials',
+        },
+      ];
+    }
+
+    const completedCount = tasks.filter((t) => t.completed).length;
+    const totalCount = tasks.length;
+    const isComplete = completedCount === totalCount;
+    const completionPercentage = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 100;
+
+    return res.json({
+      success: true,
+      data: {
+        userType: user.user_type,
+        isComplete,
+        completedCount,
+        totalCount,
+        completionPercentage,
+        tasks,
+      },
+    });
+  } catch (error) {
+    console.error('Error fetching onboarding progress:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch onboarding progress',
+    });
+  }
+};
+
 // Update user profile (name, photo, phone, address, bio)
 exports.updateProfile = async (req, res) => {
   try {

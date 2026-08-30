@@ -5,14 +5,13 @@ import { normalizeStoredUser } from '../utils/runtimeGuards';
 const isLocalHost = typeof window !== 'undefined' && ['localhost', '127.0.0.1'].includes(window.location.hostname);
 export const API_BASE_URL = import.meta.env.VITE_API_URL || (isLocalHost ? 'http://localhost:5000/api' : '/api');
 
-const nativeFetch = globalThis.fetch.bind(globalThis);
 let csrfToken = null;
 let csrfBootstrapPromise = null;
 
 const getCsrfToken = async () => {
   if (csrfToken) return csrfToken;
   if (!csrfBootstrapPromise) {
-    csrfBootstrapPromise = nativeFetch(`${API_BASE_URL}/auth/csrf`, {
+    csrfBootstrapPromise = globalThis.fetch(`${API_BASE_URL}/auth/csrf`, {
       method: 'GET',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
@@ -45,7 +44,7 @@ const apiFetch = async (url, options = {}, retryCsrf = true) => {
     headers.set('X-CSRF-Token', token);
   }
 
-  const response = await nativeFetch(url, {
+  const response = await globalThis.fetch(url, {
     ...options,
     headers,
     credentials: 'include',
@@ -116,12 +115,10 @@ const handleResponse = async (response) => {
   return data;
 };
 
-// Authentication is cookie-based. Browser JavaScript never receives or stores the JWT.
-// getToken remains as a temporary compatibility hint for older API helper branches that
-// still conditionally build an Authorization header; the backend prefers the HttpOnly cookie.
+// Authentication is strictly HttpOnly cookie-based. Browser JavaScript never receives or stores the JWT.
 export const getToken = () => {
   localStorage.removeItem('authToken');
-  return localStorage.getItem('user') ? 'cookie-session' : null;
+  return null;
 };
 
 export const setToken = () => {
@@ -273,19 +270,20 @@ export const authAPI = {
     }
   },
 
+  getSocketTicket: async () => {
+    const response = await apiFetch(`${API_BASE_URL}/auth/socket-ticket`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    return handleResponse(response);
+  },
+
   // Update user profile
   updateProfile: async (profileData) => {
-    const token = getToken();
-    
-    if (!token) {
-      throw new ApiError('No authentication token found', { code: 'AUTH_TOKEN_MISSING' });
-    }
-    
     const response = await apiFetch(`${API_BASE_URL}/auth/update-profile`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
       },
       body: JSON.stringify(profileData),
     });
@@ -331,247 +329,145 @@ export const verificationAPI = {
 export const adminAPI = {
   // Get dashboard statistics
   getDashboardStats: async () => {
-    const token = getToken();
-    
-    if (!token) {
-      throw new ApiError('No authentication token found', { code: 'AUTH_TOKEN_MISSING' });
-    }
-    
     const response = await apiFetch(`${API_BASE_URL}/admin/dashboard-stats`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
       },
     });
-    
     return handleResponse(response);
   },
 
   // Get all users
   getAllUsers: async () => {
-    const token = getToken();
-    
-    if (!token) {
-      throw new ApiError('No authentication token found', { code: 'AUTH_TOKEN_MISSING' });
-    }
-    
     const response = await apiFetch(`${API_BASE_URL}/admin/users`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
       },
     });
-    
     return handleResponse(response);
   },
 
   // Get user by ID
   getUserById: async (id) => {
-    const token = getToken();
-    
-    if (!token) {
-      throw new ApiError('No authentication token found', { code: 'AUTH_TOKEN_MISSING' });
-    }
-    
     const response = await apiFetch(`${API_BASE_URL}/admin/users/${id}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
       },
     });
-    
     return handleResponse(response);
   },
 
   // Update user status
   updateUserStatus: async (id, statusData) => {
-    const token = getToken();
-    
-    if (!token) {
-      throw new ApiError('No authentication token found', { code: 'AUTH_TOKEN_MISSING' });
-    }
-    
     const response = await apiFetch(`${API_BASE_URL}/admin/users/${id}/status`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
       },
       body: JSON.stringify(statusData),
     });
-    
     return handleResponse(response);
   },
 
   // Get user activity summary
   getUserActivity: async (id) => {
-    const token = getToken();
-
-    if (!token) {
-      throw new ApiError('No authentication token found', { code: 'AUTH_TOKEN_MISSING' });
-    }
-
     const response = await apiFetch(`${API_BASE_URL}/admin/users/${id}/activity`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
       },
     });
-
     return handleResponse(response);
   },
 
   // Get all verification requests
   getVerificationRequests: async () => {
-    const token = getToken();
-
-    if (!token) {
-      throw new ApiError('No authentication token found', { code: 'AUTH_TOKEN_MISSING' });
-    }
-
     const response = await apiFetch(`${API_BASE_URL}/admin/verification-requests`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
       },
     });
-
     return handleResponse(response);
   },
 
   getVerificationDocument: async (id, documentType) => {
-    const token = getToken();
-    if (!token) {
-      throw new ApiError('No authentication token found', { code: 'AUTH_TOKEN_MISSING' });
-    }
-
     const response = await apiFetch(`${API_BASE_URL}/admin/verification-requests/${id}/documents/${documentType}`, {
       method: 'GET',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      headers: { 'Content-Type': 'application/json' },
     });
-
     return handleResponse(response);
   },
 
   // Review verification request
   reviewVerificationRequest: async (id, reviewData) => {
-    const token = getToken();
-
-    if (!token) {
-      throw new ApiError('No authentication token found', { code: 'AUTH_TOKEN_MISSING' });
-    }
-
     const response = await apiFetch(`${API_BASE_URL}/admin/verification-requests/${id}`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
       },
       body: JSON.stringify(reviewData),
     });
-
     return handleResponse(response);
   },
 
   // Get all reports
   getReports: async () => {
-    const token = getToken();
-
-    if (!token) {
-      throw new ApiError('No authentication token found', { code: 'AUTH_TOKEN_MISSING' });
-    }
-
     const response = await apiFetch(`${API_BASE_URL}/admin/reports`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
       },
     });
-
     return handleResponse(response);
   },
 
   // Get provider credentials for admin review
   getProviderCredentials: async () => {
-    const token = getToken();
-
-    if (!token) {
-      throw new ApiError('No authentication token found', { code: 'AUTH_TOKEN_MISSING' });
-    }
-
     const response = await apiFetch(`${API_BASE_URL}/admin/provider-credentials`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
       },
     });
-
     return handleResponse(response);
   },
 
   // Review provider credential (approve/reject/expire)
   reviewProviderCredential: async (id, payload) => {
-    const token = getToken();
-
-    if (!token) {
-      throw new ApiError('No authentication token found', { code: 'AUTH_TOKEN_MISSING' });
-    }
-
     const response = await apiFetch(`${API_BASE_URL}/admin/provider-credentials/${id}`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
       },
       body: JSON.stringify(payload),
     });
-
     return handleResponse(response);
   },
 
   // Update report status
   updateReportStatus: async (id, updateData) => {
-    const token = getToken();
-
-    if (!token) {
-      throw new ApiError('No authentication token found', { code: 'AUTH_TOKEN_MISSING' });
-    }
-
     const response = await apiFetch(`${API_BASE_URL}/admin/reports/${id}`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
       },
       body: JSON.stringify(updateData),
     });
-
     return handleResponse(response);
   },
 
   // Delete user
   deleteUser: async (id) => {
-    const token = getToken();
-    
-    if (!token) {
-      throw new ApiError('No authentication token found', { code: 'AUTH_TOKEN_MISSING' });
-    }
-    
     const response = await apiFetch(`${API_BASE_URL}/admin/users/${id}`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
       },
     });
-    
     return handleResponse(response);
   },
 };
@@ -580,12 +476,8 @@ export const adminAPI = {
 export const serviceProfileAPI = {
   // Create or update service profile
   createProfile: async (formData) => {
-    const token = getToken();
     const response = await apiFetch(`${API_BASE_URL}/service-profiles/create`, {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
       body: formData,
     });
     
@@ -702,12 +594,10 @@ export const serviceProfileAPI = {
 
   // Get current user's profile
   getMyProfile: async () => {
-    const token = getToken();
     const response = await apiFetch(`${API_BASE_URL}/service-profiles/user/me`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
       },
     });
     
@@ -716,12 +606,10 @@ export const serviceProfileAPI = {
 
   // Toggle profile publish status
   togglePublish: async (isPublished) => {
-    const token = getToken();
     const response = await apiFetch(`${API_BASE_URL}/service-profiles/toggle-publish`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
       },
       body: JSON.stringify({ isPublished }),
     });
@@ -731,24 +619,20 @@ export const serviceProfileAPI = {
 
   // Provider availability
   getMyAvailability: async () => {
-    const token = getToken();
     const response = await apiFetch(`${API_BASE_URL}/service-profiles/availability/me`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
       },
     });
     return handleResponse(response);
   },
 
   saveMyAvailability: async (payload) => {
-    const token = getToken();
     const response = await apiFetch(`${API_BASE_URL}/service-profiles/availability/me`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
       },
       body: JSON.stringify(payload),
     });
@@ -756,12 +640,10 @@ export const serviceProfileAPI = {
   },
 
   addAvailabilityException: async (payload) => {
-    const token = getToken();
     const response = await apiFetch(`${API_BASE_URL}/service-profiles/availability/me/exceptions`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
       },
       body: JSON.stringify(payload),
     });
@@ -769,12 +651,10 @@ export const serviceProfileAPI = {
   },
 
   deleteAvailabilityException: async (exceptionId) => {
-    const token = getToken();
     const response = await apiFetch(`${API_BASE_URL}/service-profiles/availability/me/exceptions/${exceptionId}`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
       },
     });
     return handleResponse(response);
@@ -782,24 +662,20 @@ export const serviceProfileAPI = {
 
   // Provider languages
   getMyLanguages: async () => {
-    const token = getToken();
     const response = await apiFetch(`${API_BASE_URL}/service-profiles/languages/me`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
       },
     });
     return handleResponse(response);
   },
 
   updateMyLanguages: async (languages) => {
-    const token = getToken();
     const response = await apiFetch(`${API_BASE_URL}/service-profiles/languages/me`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
       },
       body: JSON.stringify({ languages }),
     });
@@ -808,36 +684,28 @@ export const serviceProfileAPI = {
 
   // Provider credentials
   getMyCredentials: async () => {
-    const token = getToken();
     const response = await apiFetch(`${API_BASE_URL}/service-profiles/credentials/me`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
       },
     });
     return handleResponse(response);
   },
 
   createCredential: async (formData) => {
-    const token = getToken();
     const response = await apiFetch(`${API_BASE_URL}/service-profiles/credentials/me`, {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
       body: formData,
     });
     return handleResponse(response);
   },
 
   submitCredentialForReview: async (credentialId) => {
-    const token = getToken();
     const response = await apiFetch(`${API_BASE_URL}/service-profiles/credentials/me/${credentialId}/submit`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
       },
     });
     return handleResponse(response);
@@ -845,23 +713,18 @@ export const serviceProfileAPI = {
 
   // Completed request linkage for portfolio
   getEligibleCompletedRequests: async () => {
-    const token = getToken();
     const response = await apiFetch(`${API_BASE_URL}/service-profiles/portfolio/completed-requests`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
       },
     });
     return handleResponse(response);
   },
 
   createPortfolioFromRequest: async (payload) => {
-    const token = getToken();
     const isFormData = typeof FormData !== 'undefined' && payload instanceof FormData;
-    const headers = {
-      'Authorization': `Bearer ${token}`,
-    };
+    const headers = {};
 
     if (!isFormData) {
       headers['Content-Type'] = 'application/json';
@@ -876,12 +739,8 @@ export const serviceProfileAPI = {
   },
 
   updateCompletedPortfolioItemImage: async (itemId, formData) => {
-    const token = getToken();
     const response = await apiFetch(`${API_BASE_URL}/service-profiles/portfolio/item/${itemId}/image`, {
       method: 'PUT',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
       body: formData,
     });
     return handleResponse(response);
@@ -889,12 +748,10 @@ export const serviceProfileAPI = {
 
   // Get portfolio for editing
   getMyPortfolio: async () => {
-    const token = getToken();
     const response = await apiFetch(`${API_BASE_URL}/service-profiles/portfolio/me`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
       },
     });
     return handleResponse(response);
@@ -902,12 +759,10 @@ export const serviceProfileAPI = {
 
   // Update portfolio details (about me, skills, response time)
   updatePortfolioDetails: async (data) => {
-    const token = getToken();
     const response = await apiFetch(`${API_BASE_URL}/service-profiles/portfolio/details`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
       },
       body: JSON.stringify(data),
     });
@@ -916,12 +771,8 @@ export const serviceProfileAPI = {
 
   // Add portfolio image
   addPortfolioImage: async (formData) => {
-    const token = getToken();
     const response = await apiFetch(`${API_BASE_URL}/service-profiles/portfolio/image`, {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
       body: formData,
     });
     return handleResponse(response);
@@ -929,12 +780,10 @@ export const serviceProfileAPI = {
 
   // Delete portfolio image
   deletePortfolioImage: async (imageId) => {
-    const token = getToken();
     const response = await apiFetch(`${API_BASE_URL}/service-profiles/portfolio/image/${imageId}`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
       },
     });
     return handleResponse(response);
@@ -965,12 +814,10 @@ export const assistantAPI = {
 export const serviceRequestAPI = {
   // Create a new service request
   createRequest: async (requestData) => {
-    const token = getToken();
     const response = await apiFetch(`${API_BASE_URL}/service-requests/create`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
       },
       body: JSON.stringify(requestData),
     });
@@ -979,12 +826,10 @@ export const serviceRequestAPI = {
 
   // Get client's sent requests
   getClientRequests: async () => {
-    const token = getToken();
     const response = await apiFetch(`${API_BASE_URL}/service-requests/client`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
       },
     });
     return handleResponse(response);
@@ -992,12 +837,10 @@ export const serviceRequestAPI = {
 
   // Get provider's received requests
   getProviderRequests: async () => {
-    const token = getToken();
     const response = await apiFetch(`${API_BASE_URL}/service-requests/provider`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
       },
     });
     return handleResponse(response);
@@ -1005,12 +848,10 @@ export const serviceRequestAPI = {
 
   // Get single request by ID
   getRequestById: async (requestId) => {
-    const token = getToken();
     const response = await apiFetch(`${API_BASE_URL}/service-requests/${requestId}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
       },
     });
     return handleResponse(response);
@@ -1018,7 +859,6 @@ export const serviceRequestAPI = {
 
   // Update request status
   updateStatus: async (requestId, status, reason = null, cancellation = null) => {
-    const token = getToken();
     const payload = reason == null ? { status } : { status, reason };
     if (cancellation && typeof cancellation === 'object') {
       payload.cancellationReason = cancellation.cancellationReason;
@@ -1028,7 +868,6 @@ export const serviceRequestAPI = {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
       },
       body: JSON.stringify(payload),
     });
@@ -1037,12 +876,10 @@ export const serviceRequestAPI = {
 
   // Create reschedule proposal
   proposeReschedule: async (requestId, payload) => {
-    const token = getToken();
     const response = await apiFetch(`${API_BASE_URL}/service-requests/${requestId}/reschedules`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
       },
       body: JSON.stringify(payload),
     });
@@ -1051,12 +888,10 @@ export const serviceRequestAPI = {
 
   // Respond to reschedule proposal
   respondReschedule: async (requestId, rescheduleId, action) => {
-    const token = getToken();
     const response = await apiFetch(`${API_BASE_URL}/service-requests/${requestId}/reschedules/${rescheduleId}/respond`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
       },
       body: JSON.stringify({ action }),
     });
@@ -1106,12 +941,10 @@ export const serviceRequestAPI = {
 
   // Create a review for a completed request (client)
   createReview: async (requestId, { rating, comment }) => {
-    const token = getToken();
     const response = await apiFetch(`${API_BASE_URL}/service-requests/${requestId}/review`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
       },
       body: JSON.stringify({ rating, comment }),
     });
@@ -1120,12 +953,8 @@ export const serviceRequestAPI = {
 
   // Report user for a request interaction
   createReport: async (requestId, formData) => {
-    const token = getToken();
     const response = await apiFetch(`${API_BASE_URL}/service-requests/${requestId}/report`, {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
       body: formData,
     });
 
@@ -1190,12 +1019,10 @@ export const messageAPI = {
 export const notificationAPI = {
   // Get all notifications
   getNotifications: async (limit = 20, offset = 0) => {
-    const token = getToken();
     const response = await apiFetch(`${API_BASE_URL}/notifications?limit=${limit}&offset=${offset}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
       },
     });
     return handleResponse(response);
@@ -1203,12 +1030,10 @@ export const notificationAPI = {
 
   // Get unread count
   getUnreadCount: async () => {
-    const token = getToken();
     const response = await apiFetch(`${API_BASE_URL}/notifications/unread-count`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
       },
     });
     return handleResponse(response);
@@ -1216,12 +1041,10 @@ export const notificationAPI = {
 
   // Mark single notification as read
   markAsRead: async (notificationId) => {
-    const token = getToken();
     const response = await apiFetch(`${API_BASE_URL}/notifications/${notificationId}/read`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
       },
     });
     return handleResponse(response);
@@ -1229,12 +1052,10 @@ export const notificationAPI = {
 
   // Mark all as read
   markAllAsRead: async () => {
-    const token = getToken();
     const response = await apiFetch(`${API_BASE_URL}/notifications/read-all`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
       },
     });
     return handleResponse(response);
@@ -1242,12 +1063,10 @@ export const notificationAPI = {
 
   // Delete notification
   deleteNotification: async (notificationId) => {
-    const token = getToken();
     const response = await apiFetch(`${API_BASE_URL}/notifications/${notificationId}`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
       },
     });
     return handleResponse(response);
@@ -1255,12 +1074,10 @@ export const notificationAPI = {
 
   // Clear all notifications
   clearAll: async () => {
-    const token = getToken();
     const response = await apiFetch(`${API_BASE_URL}/notifications`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
       },
     });
     return handleResponse(response);
@@ -1271,24 +1088,31 @@ export const notificationAPI = {
 export const userProfileAPI = {
   // Get current user profile with photo
   getProfile: async () => {
-    const token = getToken();
     const response = await apiFetch(`${API_BASE_URL}/user/profile`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
+      },
+    });
+    return handleResponse(response);
+  },
+
+  // Get role-aware onboarding progress
+  getOnboardingProgress: async () => {
+    const response = await apiFetch(`${API_BASE_URL}/user/onboarding-progress`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
       },
     });
     return handleResponse(response);
   },
 
   updatePresence: async (online = true) => {
-    const token = getToken();
     const response = await apiFetch(`${API_BASE_URL}/user/presence`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
       },
       body: JSON.stringify({ online: Boolean(online) }),
     });
@@ -1298,13 +1122,8 @@ export const userProfileAPI = {
 
   // Update profile (name, phone, address, bio, photo)
   updateProfile: async (formData) => {
-    const token = getToken();
     const response = await apiFetch(`${API_BASE_URL}/user/profile`, {
       method: 'PATCH',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        // Don't set Content-Type - let browser set it for FormData
-      },
       body: formData,
     });
     const data = await handleResponse(response);
@@ -1330,12 +1149,10 @@ export const userProfileAPI = {
 
   // Remove profile photo
   removePhoto: async () => {
-    const token = getToken();
     const response = await apiFetch(`${API_BASE_URL}/user/profile/photo`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
       },
     });
     const data = await handleResponse(response);
@@ -1356,12 +1173,8 @@ export const userProfileAPI = {
 
   // Submit verification request (service provider)
   submitVerificationRequest: async (formData) => {
-    const token = getToken();
     const response = await apiFetch(`${API_BASE_URL}/user/verification-request`, {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
       body: formData,
     });
 

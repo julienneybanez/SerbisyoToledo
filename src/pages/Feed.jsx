@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { getUser, isAuthenticated, serviceProfileAPI, serviceRequestAPI } from "../services/api";
+import { getUser, serviceProfileAPI } from "../services/api";
 import useServiceTaxonomy from '../hooks/useServiceTaxonomy';
-import ProfileCompletionChecklist from "../components/common/ProfileCompletionChecklist";
 import NextStepHelp from "../components/common/NextStepHelp";
 import { useLanguage } from "../context/LanguageContext";
 import {
@@ -51,9 +50,6 @@ export default function Feed() {
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [searchParams, setSearchParams] = useSearchParams();
-  const [clientChecklistLoading, setClientChecklistLoading] = useState(false);
-  const [clientChecklistError, setClientChecklistError] = useState('');
-  const [hasClientRequest, setHasClientRequest] = useState(false);
   const [brokenImageIds, setBrokenImageIds] = useState(() => new Set());
   const [filters, setFilters] = useState({
     location: "",
@@ -133,84 +129,6 @@ export default function Feed() {
       window.removeEventListener('profileCreated', fetchProfiles);
     };
   }, [activeCategory, activeServiceType, debouncedFilters, debouncedSearchTerm, t]);
-
-  useEffect(() => {
-    const fetchClientChecklistData = async () => {
-      if (!isAuthenticated() || !isClient) return;
-
-      setClientChecklistLoading(true);
-      setClientChecklistError('');
-
-      try {
-        const response = await serviceRequestAPI.getClientRequests();
-        if (response.success) {
-          setHasClientRequest((response.data.requests || []).length > 0);
-        }
-      } catch {
-        setClientChecklistError(t('feedChecklistLoadError'));
-      } finally {
-        setClientChecklistLoading(false);
-      }
-    };
-
-    fetchClientChecklistData();
-  }, [isClient, t]);
-
-  const clientChecklistTasks = [
-    {
-      key: 'basic-profile',
-      label: t('feedChecklistBasicProfileLabel'),
-      description: t('feedChecklistBasicProfileDescription'),
-      completed: Boolean(user?.fullName && user?.email),
-      actionType: 'link',
-      to: '/client-settings',
-      actionLabel: t('feedChecklistOpenSettings'),
-    },
-    {
-      key: 'contact-info',
-      label: t('feedChecklistContactLabel'),
-      description: t('feedChecklistContactDescription'),
-      completed: Boolean(user?.phone),
-      actionType: 'link',
-      to: '/client-settings',
-      actionLabel: t('feedChecklistAddContact'),
-    },
-    {
-      key: 'location',
-      label: t('feedChecklistLocationLabel'),
-      description: t('feedChecklistLocationDescription'),
-      completed: Boolean(user?.address),
-      actionType: 'link',
-      to: '/client-settings?section=address',
-      actionLabel: t('feedChecklistUpdateLocation'),
-    },
-    {
-      key: 'browse-services',
-      label: t('feedChecklistBrowseLabel'),
-      description: t('feedChecklistBrowseDescription'),
-      completed: true,
-      actionType: 'link',
-      to: '/feed',
-      actionLabel: t('browseShort'),
-    },
-    {
-      key: 'first-booking',
-      label: t('feedChecklistFirstBookingLabel'),
-      description: t('feedChecklistFirstBookingDescription'),
-      completed: hasClientRequest,
-      actionType: 'button',
-      onAction: () => {
-        document.getElementById('providers-list')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      },
-      actionLabel: t('feedChecklistFindProviders'),
-    },
-  ];
-
-  const visibleClientChecklistTasks = clientChecklistTasks.filter(
-    (task) => task && task.isApplicable !== false,
-  );
-  const isClientChecklistComplete = visibleClientChecklistTasks.length > 0
-    && visibleClientChecklistTasks.every((task) => task.completed);
 
   const clientBrowseGuidance = {
     title: t('feedGuideTitle'),
@@ -400,18 +318,6 @@ export default function Feed() {
             </div>
             <p className="feed-page-subtitle">{t('feedSubtitle')}</p>
           </div>
-
-          {isClient && !isClientChecklistComplete && (
-            <div className="feed-onboarding-panel">
-              <ProfileCompletionChecklist
-                title={t('feedGettingStarted')}
-                tasks={clientChecklistTasks}
-                loading={clientChecklistLoading}
-                error={clientChecklistError}
-                initiallyCollapsed={false}
-              />
-            </div>
-          )}
 
           <section className="feed-discovery-panel" aria-label={t('browseServices')}>
             <div className="search-filter-row" data-tour="feed-search-filters">

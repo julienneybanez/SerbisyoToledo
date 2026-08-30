@@ -24,6 +24,9 @@ router.use(authenticateToken);
 // Get current user profile
 router.get('/profile', userController.getProfile);
 
+// Get user onboarding progress
+router.get('/onboarding-progress', userController.getOnboardingProgress);
+
 // Update user profile (with optional photo upload)
 router.patch('/profile', uploadLimiter, upload.single('profilePhoto'), validateSingleUpload({ allowedKinds: ['image'], required: false, fieldName: 'profilePhoto' }), userController.updateProfile);
 

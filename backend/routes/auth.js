@@ -130,4 +130,7 @@ router.post('/logout', authenticateToken, authController.logout);
 // PUT /api/auth/update-profile - Update user profile (protected)
 router.put('/update-profile', authenticateToken, authController.updateProfile);
 
+// GET /api/auth/socket-ticket - Issue short-lived ticket for Socket.IO (protected)
+router.get('/socket-ticket', authenticateToken, authController.getSocketTicket);
+
 module.exports = router;

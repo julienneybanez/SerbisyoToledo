@@ -658,6 +658,36 @@ exports.logout = async (req, res) => {
   }
 };
 
+// Issue short-lived socket ticket for realtime socket connection
+exports.getSocketTicket = async (req, res) => {
+  try {
+    const userId = req.user?.userId;
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required'
+      });
+    }
+
+    const ticket = jwt.sign(
+      { userId, scope: 'socket' },
+      getJwtSecret(),
+      { expiresIn: '60s' }
+    );
+
+    return res.json({
+      success: true,
+      data: { ticket }
+    });
+  } catch (error) {
+    console.error('Socket ticket error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to generate socket ticket'
+    });
+  }
+};
+
 // Update user profile
 exports.updateProfile = async (req, res) => {
   try {

@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { getUser, serviceRequestAPI } from '../services/api';
+import { getUser, serviceRequestAPI, userProfileAPI } from '../services/api';
 import { PageHeader } from '../components/ui';
+import ProfileCompletionChecklist from '../components/common/ProfileCompletionChecklist';
 import { useLanguage } from '../context/LanguageContext';
 import './ClientDashboard.css';
 
@@ -31,6 +32,9 @@ export default function ClientDashboard() {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [onboardingData, setOnboardingData] = useState(null);
+  const [onboardingLoading, setOnboardingLoading] = useState(false);
+  const [onboardingError, setOnboardingError] = useState('');
 
   useEffect(() => {
     let mounted = true;
@@ -49,6 +53,43 @@ export default function ClientDashboard() {
     load();
     return () => { mounted = false; };
   }, [t]);
+
+  useEffect(() => {
+    let mounted = true;
+    const loadOnboarding = async () => {
+      try {
+        setOnboardingLoading(true);
+        setOnboardingError('');
+        const response = await userProfileAPI.getOnboardingProgress();
+        if (mounted && response?.success) {
+          setOnboardingData(response.data);
+        }
+      } catch {
+        if (mounted) setOnboardingError(t('feedChecklistLoadError', 'Unable to load onboarding progress right now.'));
+      } finally {
+        if (mounted) setOnboardingLoading(false);
+      }
+    };
+    loadOnboarding();
+    return () => { mounted = false; };
+  }, [t]);
+
+  const checklistTasks = useMemo(() => {
+    if (!onboardingData?.tasks) return [];
+    return onboardingData.tasks.map((task) => ({
+      key: task.id,
+      label: t(task.titleKey, task.defaultTitle),
+      description: task.id === 'email_verified'
+        ? t('feedChecklistBasicProfileDescription', 'Ensure your email address is verified')
+        : task.id === 'profile_info'
+        ? t('feedChecklistContactDescription', 'Add contact phone and Toledo address')
+        : t('feedChecklistFirstBookingDescription', 'Submit your first service request'),
+      completed: task.completed,
+      actionType: 'link',
+      to: task.actionPath || (task.id === 'first_request' ? '/feed' : '/client-settings'),
+      actionLabel: task.id === 'first_request' ? t('feedChecklistFindProviders', 'Find Providers') : t('feedChecklistOpenSettings', 'Open Settings'),
+    }));
+  }, [onboardingData, t]);
 
   const summary = useMemo(() => {
     const pending = requests.filter((item) => item.status === 'pending').length;
@@ -71,6 +112,18 @@ export default function ClientDashboard() {
           className="client-dashboard-header"
           action={<Link className="st-button st-button--primary st-button--md" to="/feed"><i className="bi bi-search" aria-hidden="true"></i> {t('clientDashboardFindService')}</Link>}
         />
+
+        {onboardingData && !onboardingData.isComplete && (
+          <div className="client-dashboard-onboarding">
+            <ProfileCompletionChecklist
+              title={t('feedGettingStarted', 'Getting Started as a Client')}
+              tasks={checklistTasks}
+              loading={onboardingLoading}
+              error={onboardingError}
+              initiallyCollapsed={false}
+            />
+          </div>
+        )}
 
         <section className="client-dashboard-stats" aria-label={t('clientDashboardBookingSummary')}>
           <Link to="/requests" className="client-stat-card">

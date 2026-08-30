@@ -6,16 +6,38 @@ const { parseCookies, AUTH_COOKIE_NAME } = require('../utils/sessionCookies');
 const configureSocket = (io) => {
   io.use(async (socket, next) => {
     try {
-      const cookies = parseCookies(socket.handshake.headers?.cookie || '');
-      const token = cookies[AUTH_COOKIE_NAME];
-      if (!token) {
+      let userId = null;
+
+      // 1. Try ticket in handshake auth first
+      const ticket = socket.handshake.auth?.ticket;
+      if (ticket) {
+        try {
+          const decoded = jwt.verify(ticket, getJwtSecret());
+          if (decoded.scope === 'socket' && decoded.userId) {
+            userId = decoded.userId;
+          }
+        } catch {
+          // Ticket verification failed; fall back to cookie
+        }
+      }
+
+      // 2. Fallback to HttpOnly session cookie
+      if (!userId) {
+        const cookies = parseCookies(socket.handshake.headers?.cookie || '');
+        const token = cookies[AUTH_COOKIE_NAME];
+        if (token) {
+          const decoded = jwt.verify(token, getJwtSecret());
+          userId = decoded.userId;
+        }
+      }
+
+      if (!userId) {
         return next(new Error('Authentication required'));
       }
 
-      const decoded = jwt.verify(token, getJwtSecret());
       const [users] = await db.query(
         'SELECT id, user_type, is_active FROM users WHERE id = ? LIMIT 1',
-        [decoded.userId]
+        [userId]
       );
 
       if (users.length === 0 || !users[0].is_active) {
