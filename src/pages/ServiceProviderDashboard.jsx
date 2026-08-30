@@ -236,12 +236,20 @@ export default function ServiceProviderDashboard() {
     {
       key: 'verification',
       label: t('providerChecklistVerificationLabel'),
-      description: t('providerChecklistVerificationDescription'),
-      completed: Boolean(user?.isVerified) || verificationStatus?.status === 'pending',
+      description: verificationStatus?.status === 'pending'
+        ? t('providerVerificationPendingDescription')
+        : verificationStatus?.status === 'rejected'
+          ? t('providerVerificationRejectedDescription')
+          : t('providerChecklistVerificationDescription'),
+      completed: Boolean(user?.isVerified),
       isApplicable: !myProfile?.id || !user?.isVerified,
-      actionType: 'button',
-      actionLabel: t('verification'),
-      onAction: () => setShowVerificationRequest(true),
+      actionType: verificationStatus?.status === 'pending' ? null : 'button',
+      actionLabel: verificationStatus?.status === 'rejected'
+        ? t('providerVerificationResubmit')
+        : t('verification'),
+      onAction: verificationStatus?.status === 'pending'
+        ? undefined
+        : () => setShowVerificationRequest(true),
     },
     {
       key: 'taxonomy-refresh',
