@@ -152,6 +152,21 @@ describe('Migration Runner Bootstrap States', () => {
   });
 
   describe('Bootstrap State Logic Decisions', () => {
+    it('uses the active connection database for metadata checks when URI configuration omits DB_NAME', () => {
+      const runnerSource = fs.readFileSync(runnerPath, 'utf8');
+
+      expect(runnerSource).toContain("SELECT DATABASE() AS database_name");
+      expect(runnerSource).toContain('schemaMigrationsTableExists(connection, databaseName)');
+      expect(runnerSource).toContain('getApplicationTableNames(connection, databaseName)');
+      expect(runnerSource).toContain('[databaseName]');
+    });
+
+    it('retains explicit DB_NAME configuration for local connection selection', () => {
+      const runnerSource = fs.readFileSync(runnerPath, 'utf8');
+
+      expect(runnerSource).toContain("database: process.env.DB_NAME || 'serbisyo_toledo'");
+    });
+
     it('should permit baseline only when database is completely empty', () => {
       // Logic: permit baseline ONLY if schema_migrations does NOT exist AND no app tables
       const states = {

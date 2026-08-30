@@ -63,21 +63,32 @@ function listMigrationFiles() {
     .sort();
 }
 
-async function schemaMigrationsTableExists(connection) {
+async function getCurrentDatabaseName(connection) {
+  const [rows] = await connection.query('SELECT DATABASE() AS database_name');
+  const databaseName = String(rows[0]?.database_name || '').trim();
+
+  if (!databaseName) {
+    throw new Error('Migration connection has no selected database.');
+  }
+
+  return databaseName;
+}
+
+async function schemaMigrationsTableExists(connection, databaseName) {
   const [tables] = await connection.query(
     `SELECT TABLE_NAME FROM information_schema.TABLES 
      WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'schema_migrations'`,
-    [process.env.DB_NAME || 'serbisyo_toledo']
+    [databaseName]
   );
   return tables.length > 0;
 }
 
-async function getApplicationTableNames(connection) {
+async function getApplicationTableNames(connection, databaseName) {
   const [tables] = await connection.query(
     `SELECT TABLE_NAME FROM information_schema.TABLES 
      WHERE TABLE_SCHEMA = ? 
      AND TABLE_NAME NOT IN ('information_schema', 'mysql', 'performance_schema', 'sys')`,
-    [process.env.DB_NAME || 'serbisyo_toledo']
+    [databaseName]
   );
   return tables.map((row) => row.TABLE_NAME);
 }
@@ -92,8 +103,9 @@ async function bootstrapDatabase(connection) {
   // STATE C: Application tables exist but no schema_migrations
   // STATE D: schema_migrations exists but baseline missing
   
-  const schemaExists = await schemaMigrationsTableExists(connection);
-  const appTables = await getApplicationTableNames(connection);
+  const databaseName = await getCurrentDatabaseName(connection);
+  const schemaExists = await schemaMigrationsTableExists(connection, databaseName);
+  const appTables = await getApplicationTableNames(connection, databaseName);
   
   if (!schemaExists) {
     if (appTables.length > 0) {
@@ -116,7 +128,7 @@ async function bootstrapDatabase(connection) {
     // STATE A: Empty schema, baseline permitted. The baseline owns creation
     // and recording of schema_migrations; do not duplicate that definition.
     console.log('✓ STATE A: Fresh database detected (no tables, no schema_migrations)');
-    return { isFresh: true };
+    return { isFresh: true, databaseName };
   }
   
   // STATE B or D: schema_migrations table exists
@@ -144,7 +156,7 @@ async function bootstrapDatabase(connection) {
   
   // STATE B: schema_migrations exists with baseline record
   console.log('✓ STATE B: Canonical database detected (schema_migrations with baseline record present)');
-  return { isFresh: false };
+  return { isFresh: false, databaseName };
 }
 
 async function run() {
@@ -166,7 +178,10 @@ async function run() {
       console.log(`\nApplying ${baselineFilename} to the empty database...`);
       if (!isDryRun) {
         await connection.query(baselineSql);
-        const baselineCreatedSchemaMigrations = await schemaMigrationsTableExists(connection);
+        const baselineCreatedSchemaMigrations = await schemaMigrationsTableExists(
+          connection,
+          bootstrap.databaseName
+        );
         const [baselineRecords] = await connection.query(
           `SELECT filename FROM schema_migrations WHERE filename = '0000_baseline_canonical_schema.sql'`
         );
