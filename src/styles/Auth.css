@@ -887,3 +887,9 @@ button.auth-layout-back {
   font-family: inherit;
   cursor: pointer;
 }
+
+/* Keep the auth-page identity centered while form labels/fields stay left aligned. */
+.auth-page-login .auth-heading,
+.auth-page-register .auth-heading {
+  text-align: center;
+}
