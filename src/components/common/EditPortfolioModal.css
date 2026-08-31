@@ -786,3 +786,69 @@
 .provider-profile-language-option input {
   accent-color: var(--primary, #167aa8);
 }
+
+.provider-profile-photo-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.provider-profile-photo-preview {
+  width: 92px;
+  height: 92px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  flex: 0 0 92px;
+  border: 2px solid var(--border, #d8e2ea);
+  background: var(--surface-subtle, #eef6f8);
+  color: var(--primary, #167aa8);
+  font-size: 1.35rem;
+  font-weight: 800;
+}
+
+.provider-profile-photo-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.provider-profile-photo-actions {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+  flex: 1 1 240px;
+}
+
+.provider-profile-photo-remove {
+  min-height: 42px;
+  border: 1px solid var(--border, #d8e2ea);
+  border-radius: 9px;
+  padding: 0.55rem 0.8rem;
+  background: var(--surface, #fff);
+  color: var(--color-danger, #b42318);
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.provider-profile-photo-pending {
+  flex-basis: 100%;
+  font-size: 0.82rem;
+  color: var(--text-muted, #667085);
+}
+
+@media (max-width: 520px) {
+  .provider-profile-photo-row {
+    align-items: flex-start;
+  }
+
+  .provider-profile-photo-actions {
+    flex-basis: 100%;
+  }
+}
