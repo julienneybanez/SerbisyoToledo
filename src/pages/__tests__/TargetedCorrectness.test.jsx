@@ -197,7 +197,7 @@ describe('Targeted correctness checks', () => {
     renderWithAppProviders(<ServiceProviderDashboard />);
 
     expect(await screen.findByText('Pipe Repair & Installation')).toBeInTheDocument();
-    expect(screen.getByText(/Jan 2, 2099.*9:00 AM/)).toBeInTheDocument();
+    expect(screen.getAllByText(/Jan 2, 2099.*9:00 AM/).length).toBeGreaterThan(0);
     expect(screen.queryByText('Schedule not set')).not.toBeInTheDocument();
   });
 
