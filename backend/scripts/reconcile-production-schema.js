@@ -97,25 +97,6 @@ async function ensureTable(table, ddl) {
   await schedule('create table ' + table, ddl);
 }
 
-async function ensureBackfilledTimestampColumn({ table, column, sourceSql, finalDefinition, label }) {
-  if (await getColumn(table, column)) return;
-
-  if (!APPLY) {
-    plan.push({
-      label,
-      sql: '[add nullable timestamp, backfill from historical parent timestamp, normalize column]',
-    });
-    return;
-  }
-
-  await db.query('ALTER TABLE ' + quote(table) + ' ADD COLUMN ' + quote(column) + ' TIMESTAMP NULL');
-  await db.query(sourceSql);
-  await db.query(
-    'ALTER TABLE ' + quote(table) + ' MODIFY COLUMN ' + quote(column) + ' ' + finalDefinition
-  );
-  changes.push(label);
-}
-
 function parseJsonArray(value) {
   if (Array.isArray(value)) return value;
   if (!value) return [];
@@ -204,6 +185,64 @@ async function preflightProductionData() {
   }
 }
 
+// Read-only aggregate counts only (no customer names/addresses/descriptions)
+// so the exact scope of the booking reconstruction below can be reviewed
+// before an apply is ever run.
+async function reportBookingReconstructionAggregates() {
+  if (!(await tableExists('service_requests'))) return;
+
+  const [[totals]] = await db.query('SELECT COUNT(*) AS total FROM service_requests');
+  const hasDatesTable = await tableExists('service_request_dates');
+
+  const dateAgg = hasDatesTable
+    ? (await db.query(
+        `SELECT
+           SUM(CASE WHEN agg.date_count = 1 THEN 1 ELSE 0 END) AS one_date_row,
+           SUM(CASE WHEN agg.date_count > 1 THEN 1 ELSE 0 END) AS multi_date_rows,
+           SUM(CASE WHEN agg.date_count IS NULL OR agg.date_count = 0 THEN 1 ELSE 0 END) AS zero_date_rows
+           FROM service_requests sr
+           LEFT JOIN (
+             SELECT service_request_id, COUNT(DISTINCT service_date) AS date_count
+               FROM service_request_dates
+              GROUP BY service_request_id
+           ) agg ON agg.service_request_id = sr.id`
+      ))[0][0]
+    : { one_date_row: 0, multi_date_rows: 0, zero_date_rows: totals.total };
+
+  const hasScheduledDate = Boolean(await getColumn('service_requests', 'scheduled_date'));
+  const hasScheduledStartAt = Boolean(await getColumn('service_requests', 'scheduled_start_at'));
+  let legacyFallbackAvailable = 0;
+  let noHistoricalEvidence = Number(dateAgg?.zero_date_rows || 0);
+
+  if ((hasScheduledDate || hasScheduledStartAt) && Number(dateAgg?.zero_date_rows || 0) > 0) {
+    const legacyConditions = [];
+    if (hasScheduledDate) legacyConditions.push('sr.scheduled_date IS NOT NULL');
+    if (hasScheduledStartAt) legacyConditions.push('sr.scheduled_start_at IS NOT NULL');
+    const legacyPredicate = legacyConditions.join(' OR ');
+    const zeroDatesPredicate = hasDatesTable
+      ? 'NOT EXISTS (SELECT 1 FROM service_request_dates srd WHERE srd.service_request_id = sr.id)'
+      : '1 = 1';
+
+    const [[legacyAgg]] = await db.query(
+      `SELECT
+         SUM(CASE WHEN (${legacyPredicate}) THEN 1 ELSE 0 END) AS with_legacy_fields,
+         SUM(CASE WHEN NOT (${legacyPredicate}) THEN 1 ELSE 0 END) AS without_legacy_fields
+         FROM service_requests sr
+        WHERE ${zeroDatesPredicate}`
+    );
+    legacyFallbackAvailable = Number(legacyAgg?.with_legacy_fields || 0);
+    noHistoricalEvidence = Number(legacyAgg?.without_legacy_fields || 0);
+  }
+
+  console.log('\nBooking reconstruction preflight (aggregate counts only, no customer data):');
+  console.log(' - total existing service requests: ' + Number(totals?.total || 0));
+  console.log(' - requests with exactly one service_request_dates row: ' + Number(dateAgg?.one_date_row || 0));
+  console.log(' - requests with multiple service_request_dates rows: ' + Number(dateAgg?.multi_date_rows || 0));
+  console.log(' - requests with no service_request_dates rows: ' + Number(dateAgg?.zero_date_rows || 0));
+  console.log('   - of those, with legacy scheduling fields available as fallback: ' + legacyFallbackAvailable);
+  console.log('   - of those, with no historical scheduling evidence at all (falls back to request created_at): ' + noHistoricalEvidence);
+}
+
 async function ensureCoreColumns() {
   // service_profiles: current code no longer writes legacy full_name/service_categories.
   await ensureColumn('service_profiles', 'taxonomy_needs_review', 'BOOLEAN NOT NULL DEFAULT FALSE');
@@ -229,6 +268,9 @@ async function ensureCoreColumns() {
   }
 
   // Current request creation no longer writes the retired job-title or scheduled_* fields.
+  // booking_type/start_date/end_date/duration_days start nullable so a NOT NULL
+  // DEFAULT cannot masquerade as historical evidence before reconstruction runs;
+  // reconstructBookingFields() and normalizeBookingFieldShapes() tighten them later.
   const requestColumns = [
     ['service_type_key', 'VARCHAR(120) NULL'],
     ['service_type_label', 'VARCHAR(255) NULL'],
@@ -239,7 +281,7 @@ async function ensureCoreColumns() {
     ['start_time', 'TIME NULL'],
     ['estimated_duration_minutes', 'INT NULL'],
     ['duration_days', 'INT NULL'],
-    ['multi_day_mode', "ENUM('continuous','specific_dates') NOT NULL DEFAULT 'continuous'"],
+    ['multi_day_mode', "ENUM('continuous','specific_dates') NULL"],
     ['pricing_unit_snapshot', "ENUM('per_job','per_hour','per_day') NULL"],
     ['daily_rate_snapshot', 'DECIMAL(10,2) NULL'],
     ['estimated_total', 'DECIMAL(10,2) NULL'],
@@ -597,17 +639,6 @@ async function ensureSupportingTables() {
       CONSTRAINT fk_service_request_dates_request FOREIGN KEY (service_request_id) REFERENCES service_requests(id) ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
 
-  await ensureBackfilledTimestampColumn({
-    table: 'service_request_dates',
-    column: 'created_at',
-    label: 'add/backfill service_request_dates.created_at from parent request timestamps',
-    sourceSql: `UPDATE service_request_dates d
-                JOIN service_requests sr ON sr.id = d.service_request_id
-                   SET d.created_at = sr.created_at
-                 WHERE d.created_at IS NULL`,
-    finalDefinition: 'TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP',
-  });
-
   await ensureTable('service_request_reschedules', `
     CREATE TABLE service_request_reschedules (
       id BIGINT NOT NULL AUTO_INCREMENT,
@@ -638,15 +669,6 @@ async function ensureSupportingTables() {
 
   await ensureColumn('service_request_reschedules', 'proposed_estimated_duration_minutes', 'INT NULL');
   await ensureColumn('service_request_reschedules', 'proposed_multi_day_mode', "ENUM('continuous','specific_dates') NULL");
-  await ensureBackfilledTimestampColumn({
-    table: 'service_request_reschedules',
-    column: 'updated_at',
-    label: 'add/backfill service_request_reschedules.updated_at from historical reschedule timestamps',
-    sourceSql: `UPDATE service_request_reschedules
-                   SET updated_at = COALESCE(responded_at, created_at)
-                 WHERE updated_at IS NULL`,
-    finalDefinition: 'TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP',
-  });
   await ensureColumn(
     'service_request_reschedules',
     'pending_marker',
@@ -670,17 +692,6 @@ async function ensureSupportingTables() {
       UNIQUE KEY uq_reschedule_date (reschedule_id, proposed_date),
       CONSTRAINT fk_reschedule_date_parent FOREIGN KEY (reschedule_id) REFERENCES service_request_reschedules(id) ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
-
-  await ensureBackfilledTimestampColumn({
-    table: 'service_request_reschedule_dates',
-    column: 'created_at',
-    label: 'add/backfill service_request_reschedule_dates.created_at from parent reschedule timestamps',
-    sourceSql: `UPDATE service_request_reschedule_dates d
-                JOIN service_request_reschedules r ON r.id = d.reschedule_id
-                   SET d.created_at = r.created_at
-                 WHERE d.created_at IS NULL`,
-    finalDefinition: 'TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP',
-  });
 
   await ensureTable('service_request_status_history', `
     CREATE TABLE service_request_status_history (
@@ -800,74 +811,98 @@ async function ensureIndexes() {
   await ensureIndex('portfolio_items', 'idx_portfolio_request', '(service_request_id)');
 }
 
-async function reportAndPreflightBookingReconstruction() {
-  const hasScheduledDate = Boolean(await getColumn('service_requests', 'scheduled_date'));
-  const hasScheduledStartAt = Boolean(await getColumn('service_requests', 'scheduled_start_at'));
+// CREATE TABLE only supplies these columns on brand-new tables; existing
+// production tables never receive them without an explicit ADD COLUMN, so
+// timestamps are reconstructed from their parent row's real historical time
+// instead of defaulting to the moment reconciliation happens to run.
+async function ensureHistoricalTimestampColumn(table, column, finalDefinition, backfillSql) {
+  if (!(await tableExists(table))) return;
 
-  const fallbackChecks = [];
-  if (hasScheduledDate) fallbackChecks.push('sr.scheduled_date IS NOT NULL');
-  if (hasScheduledStartAt) fallbackChecks.push('sr.scheduled_start_at IS NOT NULL');
-  const hasFallback = fallbackChecks.length > 0 ? '(' + fallbackChecks.join(' OR ') + ')' : 'FALSE';
+  const current = await getColumn(table, column);
+  const alreadyNormalized = current
+    && current.IS_NULLABLE === 'NO'
+    && /CURRENT_TIMESTAMP/i.test(String(current.COLUMN_DEFAULT || ''));
+  if (alreadyNormalized) return;
 
-  const [rows] = await db.query(
-    `SELECT
-       COUNT(*) AS total_requests,
-       SUM(CASE WHEN COALESCE(d.date_count, 0) = 1 THEN 1 ELSE 0 END) AS one_date_requests,
-       SUM(CASE WHEN COALESCE(d.date_count, 0) > 1 THEN 1 ELSE 0 END) AS multi_date_requests,
-       SUM(CASE WHEN COALESCE(d.date_count, 0) = 0 THEN 1 ELSE 0 END) AS no_date_requests,
-       SUM(CASE WHEN COALESCE(d.date_count, 0) = 0 AND ${hasFallback} THEN 1 ELSE 0 END) AS fallback_available,
-       SUM(CASE WHEN COALESCE(d.date_count, 0) = 0 AND NOT (${hasFallback}) THEN 1 ELSE 0 END) AS unresolved_requests
-     FROM service_requests sr
-     LEFT JOIN (
-       SELECT service_request_id, COUNT(DISTINCT service_date) AS date_count
-       FROM service_request_dates
-       GROUP BY service_request_id
-     ) d ON d.service_request_id = sr.id`
+  if (!current) {
+    await ensureColumn(table, column, 'TIMESTAMP NULL');
+  }
+
+  if (!APPLY) {
+    plan.push({
+      label: 'reconstruct ' + table + '.' + column + ' from historical parent timestamp, then normalize to NOT NULL',
+      sql: '[data backfill + schema normalize]',
+    });
+    return;
+  }
+
+  await db.query(backfillSql);
+  // Any row a historical source could not resolve (e.g. an orphaned child
+  // row) is timestamped now rather than left NULL, since no earlier fact exists.
+  await db.query('UPDATE ' + quote(table) + ' SET ' + quote(column) + ' = CURRENT_TIMESTAMP WHERE ' + quote(column) + ' IS NULL');
+  await db.query('ALTER TABLE ' + quote(table) + ' MODIFY COLUMN ' + quote(column) + ' ' + finalDefinition);
+  changes.push('reconstructed ' + table + '.' + column + ' from historical parent timestamp and normalized to ' + finalDefinition);
+}
+
+async function ensureHistoricalTimestampColumns() {
+  await ensureHistoricalTimestampColumn(
+    'service_request_dates',
+    'created_at',
+    'TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP',
+    `UPDATE service_request_dates srd
+     JOIN service_requests sr ON sr.id = srd.service_request_id
+        SET srd.created_at = sr.created_at
+      WHERE srd.created_at IS NULL`
   );
 
-  const summary = rows[0] || {};
-  console.log('Booking reconstruction summary:', {
-    totalRequests: Number(summary.total_requests || 0),
-    oneDateRequests: Number(summary.one_date_requests || 0),
-    multiDateRequests: Number(summary.multi_date_requests || 0),
-    noDateRequests: Number(summary.no_date_requests || 0),
-    fallbackAvailable: Number(summary.fallback_available || 0),
-    unresolvedRequests: Number(summary.unresolved_requests || 0),
-  });
+  await ensureHistoricalTimestampColumn(
+    'service_request_reschedule_dates',
+    'created_at',
+    'TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP',
+    `UPDATE service_request_reschedule_dates rrd
+     JOIN service_request_reschedules rr ON rr.id = rrd.reschedule_id
+        SET rrd.created_at = rr.created_at
+      WHERE rrd.created_at IS NULL`
+  );
 
-  if (Number(summary.unresolved_requests || 0) > 0) {
-    throw new Error(
-      'Preflight failed: some historical service requests have neither service_request_dates nor a legacy scheduled date source. '
-      + 'Reconstruction would require guessing, so production apply is blocked.'
-    );
-  }
+  await ensureHistoricalTimestampColumn(
+    'service_request_reschedules',
+    'updated_at',
+    'TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP',
+    `UPDATE service_request_reschedules
+        SET updated_at = COALESCE(responded_at, created_at)
+      WHERE updated_at IS NULL`
+  );
 }
 
 async function backfillTaxonomyAndSkills() {
   if (!APPLY) {
     plan.push({
-      label: 'conditionally recover missing canonical taxonomy/skills/languages from legacy sources',
-      sql: '[only when the provider/user currently has zero canonical rows]',
+      label: 'conditionally recover taxonomy/skills/languages from legacy sources, only for profiles or users with zero existing canonical rows',
+      sql: '[conditional data recovery]',
     });
     return;
   }
 
+  // Legacy one-time source; absent on fresh canonical databases and on
+  // production installs where this backfill already ran previously.
   if (await getColumn('service_profiles', 'service_categories')) {
-    const [profiles] = await db.query('SELECT id, user_id, service_categories FROM service_profiles');
+    const [profiles] = await db.query(
+      `SELECT sp.id, sp.service_categories,
+              (SELECT COUNT(*) FROM service_profile_categories spc WHERE spc.service_profile_id = sp.id) AS category_count,
+              (SELECT COUNT(*) FROM service_profile_types spt WHERE spt.service_profile_id = sp.id) AS type_count
+       FROM service_profiles sp`
+    );
+
     for (const row of profiles) {
-      const [[state]] = await db.query(
-        `SELECT
-           (SELECT COUNT(*) FROM service_profile_categories WHERE service_profile_id = ?) AS category_count,
-           (SELECT COUNT(*) FROM service_profile_types WHERE service_profile_id = ?) AS type_count`,
-        [row.id, row.id]
-      );
-      if (Number(state.category_count || 0) > 0 || Number(state.type_count || 0) > 0) continue;
+      // A profile with any canonical rows already reflects the provider's
+      // current (possibly deliberately edited) taxonomy; never reintroduce
+      // legacy values over an existing canonical selection.
+      if (Number(row.category_count) > 0 || Number(row.type_count) > 0) continue;
 
       const legacyCategories = parseJsonArray(row.service_categories);
-      const canonicalLabels = normalizeCategoryLabels(
-        normalizeCategoryLabels(legacyCategories, { preserveUnknown: true }),
-        { preserveUnknown: false }
-      );
+      const normalizedLabels = normalizeCategoryLabels(legacyCategories, { preserveUnknown: true });
+      const canonicalLabels = normalizeCategoryLabels(normalizedLabels, { preserveUnknown: false });
       const categoryKeys = canonicalLabels.map(toCategoryKey).filter(Boolean);
       const derivedTypes = getServiceTypesForProfile({ categoryLabels: canonicalLabels, serviceTypeKeys: [] });
 
@@ -891,11 +926,16 @@ async function backfillTaxonomyAndSkills() {
     }
   }
 
+  // Legacy one-time source; absent on fresh canonical databases and on
+  // production installs where this backfill already ran previously.
   if (await getColumn('users', 'skills')) {
-    const [users] = await db.query('SELECT id, skills FROM users');
+    const [users] = await db.query(
+      `SELECT u.id, u.skills
+         FROM users u
+        WHERE u.skills IS NOT NULL
+          AND NOT EXISTS (SELECT 1 FROM provider_skills ps WHERE ps.user_id = u.id)`
+    );
     for (const user of users) {
-      const [[state]] = await db.query('SELECT COUNT(*) AS count FROM provider_skills WHERE user_id = ?', [user.id]);
-      if (Number(state.count || 0) > 0) continue;
       for (const skill of parseJsonArray(user.skills).map((value) => String(value || '').trim()).filter(Boolean)) {
         await db.query(
           'INSERT IGNORE INTO provider_skills (user_id, skill_label) VALUES (?, ?)',
@@ -906,32 +946,24 @@ async function backfillTaxonomyAndSkills() {
   }
 
   if (await tableExists('provider_languages')) {
-    const [rows] = await db.query(
-      `SELECT DISTINCT sp.user_id
+    await db.query(
+      `INSERT IGNORE INTO person_languages (user_id, language_code)
+       SELECT sp.user_id, pl.language_code
        FROM provider_languages pl
-       JOIN service_profiles sp ON sp.id = pl.service_profile_id`
+       JOIN service_profiles sp ON sp.id = pl.service_profile_id
+       WHERE NOT EXISTS (SELECT 1 FROM person_languages existing WHERE existing.user_id = sp.user_id)`
     );
-    for (const row of rows) {
-      const [[state]] = await db.query('SELECT COUNT(*) AS count FROM person_languages WHERE user_id = ?', [row.user_id]);
-      if (Number(state.count || 0) > 0) continue;
-      await db.query(
-        `INSERT IGNORE INTO person_languages (user_id, language_code)
-         SELECT sp.user_id, pl.language_code
-         FROM provider_languages pl
-         JOIN service_profiles sp ON sp.id = pl.service_profile_id
-         WHERE sp.user_id = ?`,
-        [row.user_id]
-      );
-    }
   }
 
-  if (await getColumn('users', 'registration_languages')) {
+  const registrationLanguages = await getColumn('users', 'registration_languages');
+  if (registrationLanguages) {
     const [rows] = await db.query(
-      'SELECT id, registration_languages FROM users WHERE registration_languages IS NOT NULL'
+      `SELECT u.id, u.registration_languages
+         FROM users u
+        WHERE u.registration_languages IS NOT NULL
+          AND NOT EXISTS (SELECT 1 FROM person_languages pl WHERE pl.user_id = u.id)`
     );
     for (const row of rows) {
-      const [[state]] = await db.query('SELECT COUNT(*) AS count FROM person_languages WHERE user_id = ?', [row.id]);
-      if (Number(state.count || 0) > 0) continue;
       for (const code of parseJsonArray(row.registration_languages)) {
         const normalized = String(code || '').trim().toLowerCase();
         if (!['en', 'ceb', 'fil'].includes(normalized)) continue;
@@ -943,18 +975,21 @@ async function backfillTaxonomyAndSkills() {
     }
   }
 
-  changes.push('conditionally recovered missing canonical taxonomy, skills, and languages');
+  changes.push('conditionally recovered taxonomy, skills, and languages for profiles/users with zero canonical rows');
 }
 
-async function backfillRequestCompatibility() {
+
+// service_request_dates is the authoritative historical source for what a
+// client actually booked; legacy scheduled_* fields (a single appointment,
+// never multi-day) are only used when no service_request_dates rows exist.
+// booking_type/start_date/end_date/duration_days start nullable (see
+// ensureCoreColumns) specifically so this reconstruction can distinguish
+// "never recorded" from "already correct" and never overwrite a real value.
+async function reconstructBookingFields() {
   if (!APPLY) {
     plan.push({
-      label: 'reconstruct canonical booking dates/type/duration from existing request-date rows and legacy schedule fields',
-      sql: '[preserve existing canonical values and historical totals]',
-    });
-    plan.push({
-      label: 'normalize reconstructed booking columns to canonical NOT NULL shape',
-      sql: '[only after every historical request has deterministic dates]',
+      label: 'reconstruct booking_type/start_date/end_date/duration_days/estimated_total from service_request_dates (preferred) or legacy scheduled_* fields',
+      sql: '[conditional data reconstruction]',
     });
     return;
   }
@@ -963,129 +998,162 @@ async function backfillRequestCompatibility() {
   const hasScheduledStartAt = Boolean(await getColumn('service_requests', 'scheduled_start_at'));
   const hasScheduledEndAt = Boolean(await getColumn('service_requests', 'scheduled_end_at'));
 
-  const fallbackStart = hasScheduledDate && hasScheduledStartAt
-    ? 'COALESCE(sr.scheduled_date, DATE(sr.scheduled_start_at))'
-    : hasScheduledDate
-      ? 'sr.scheduled_date'
-      : hasScheduledStartAt
-        ? 'DATE(sr.scheduled_start_at)'
-        : 'NULL';
+  // DATE_FORMAT converts every date to a plain 'YYYY-MM-DD' string inside
+  // MySQL itself, so no JS Date/timezone conversion can shift a calendar day.
+  const legacySelect = [
+    hasScheduledDate ? "DATE_FORMAT(sr.scheduled_date, '%Y-%m-%d') AS scheduled_date" : 'NULL AS scheduled_date',
+    hasScheduledStartAt ? "DATE_FORMAT(sr.scheduled_start_at, '%Y-%m-%d') AS scheduled_start_at" : 'NULL AS scheduled_start_at',
+    hasScheduledEndAt ? "DATE_FORMAT(sr.scheduled_end_at, '%Y-%m-%d') AS scheduled_end_at" : 'NULL AS scheduled_end_at',
+  ].join(', ');
 
-  const fallbackEnd = hasScheduledDate && hasScheduledEndAt && hasScheduledStartAt
-    ? 'COALESCE(sr.scheduled_date, DATE(sr.scheduled_end_at), DATE(sr.scheduled_start_at))'
-    : hasScheduledDate && hasScheduledEndAt
-      ? 'COALESCE(sr.scheduled_date, DATE(sr.scheduled_end_at))'
-      : hasScheduledDate
-        ? 'sr.scheduled_date'
-        : hasScheduledEndAt && hasScheduledStartAt
-          ? 'COALESCE(DATE(sr.scheduled_end_at), DATE(sr.scheduled_start_at))'
-          : hasScheduledEndAt
-            ? 'DATE(sr.scheduled_end_at)'
-            : hasScheduledStartAt
-              ? 'DATE(sr.scheduled_start_at)'
-              : 'NULL';
+  const [rows] = await db.query(
+    `SELECT sr.id,
+            DATE_FORMAT(sr.start_date, '%Y-%m-%d') AS start_date,
+            DATE_FORMAT(sr.end_date, '%Y-%m-%d') AS end_date,
+            sr.booking_type, sr.multi_day_mode,
+            sr.duration_days, sr.estimated_total, sr.daily_rate_snapshot,
+            DATE_FORMAT(sr.created_at, '%Y-%m-%d') AS created_at_date,
+            sp.starting_price,
+            agg.date_count,
+            DATE_FORMAT(agg.min_date, '%Y-%m-%d') AS min_date,
+            DATE_FORMAT(agg.max_date, '%Y-%m-%d') AS max_date,
+            ${legacySelect}
+       FROM service_requests sr
+       LEFT JOIN service_profiles sp ON sp.id = sr.service_profile_id
+       LEFT JOIN (
+         SELECT service_request_id, COUNT(DISTINCT service_date) AS date_count,
+                MIN(service_date) AS min_date, MAX(service_date) AS max_date
+           FROM service_request_dates
+          GROUP BY service_request_id
+       ) agg ON agg.service_request_id = sr.id
+      WHERE sr.start_date IS NULL OR sr.end_date IS NULL OR sr.booking_type IS NULL OR sr.duration_days IS NULL`
+  );
 
-  const durationMinutesFallback = hasScheduledStartAt && hasScheduledEndAt
-    ? 'TIMESTAMPDIFF(MINUTE, sr.scheduled_start_at, sr.scheduled_end_at)'
-    : '120';
+  for (const row of rows) {
+    let startDate = row.start_date || null;
+    let endDate = row.end_date || null;
+    let bookingType = row.booking_type;
+    let multiDayMode = row.multi_day_mode;
+    let durationDays = row.duration_days;
+    const dateCount = Number(row.date_count || 0);
+    // service_requests.multi_day_mode already existed pre-migration as
+    // NOT NULL DEFAULT 'continuous', so a non-NULL value here proves nothing
+    // by itself; only trust it when booking_type also already had a real
+    // (non-defaulted) value, meaning canonical-aware code actually wrote it.
+    const bookingTypeWasRecorded = bookingType != null;
+
+    if (dateCount > 0) {
+      const minDate = row.min_date || null;
+      const maxDate = row.max_date || null;
+      startDate = startDate || minDate;
+      endDate = endDate || maxDate;
+      if (durationDays == null) durationDays = dateCount;
+      if (bookingType == null) {
+        bookingType = (dateCount > 1 || (minDate && maxDate && maxDate > minDate)) ? 'multi_day' : 'one_day';
+      }
+      if (!bookingTypeWasRecorded && bookingType === 'multi_day' && minDate && maxDate) {
+        const spanDays = Math.round((new Date(maxDate + 'T00:00:00Z') - new Date(minDate + 'T00:00:00Z')) / 86400000) + 1;
+        multiDayMode = spanDays === dateCount ? 'continuous' : 'specific_dates';
+      }
+    } else {
+      // No service_request_dates evidence; the legacy schema only ever
+      // recorded a single appointment, never a multi-day span.
+      const legacyStart = row.scheduled_date || row.scheduled_start_at || null;
+      const legacyEnd = row.scheduled_date || row.scheduled_end_at || row.scheduled_start_at || null;
+      startDate = startDate || legacyStart || row.created_at_date;
+      endDate = endDate || legacyEnd || startDate;
+      if (durationDays == null) durationDays = 1;
+      if (bookingType == null) bookingType = 'one_day';
+    }
+
+    if (multiDayMode == null) multiDayMode = 'continuous';
+    if (durationDays == null) durationDays = 1;
+
+    const dailyRate = row.daily_rate_snapshot != null
+      ? row.daily_rate_snapshot
+      : (row.starting_price != null ? row.starting_price : 0);
+
+    // Never recompute a total that already exists; only derive one after the
+    // real duration above has been established.
+    const estimatedTotal = row.estimated_total != null
+      ? row.estimated_total
+      : Number(dailyRate) * Number(durationDays);
+
+    await db.query(
+      `UPDATE service_requests
+          SET start_date = COALESCE(start_date, ?),
+              end_date = COALESCE(end_date, ?),
+              booking_type = COALESCE(booking_type, ?),
+              multi_day_mode = ?,
+              duration_days = COALESCE(duration_days, ?),
+              daily_rate_snapshot = COALESCE(daily_rate_snapshot, ?),
+              estimated_total = COALESCE(estimated_total, ?)
+        WHERE id = ?`,
+      [startDate, endDate, bookingType, multiDayMode, durationDays, dailyRate, estimatedTotal, row.id]
+    );
+  }
+
+  changes.push('reconstructed booking_type/start_date/end_date/duration_days for ' + rows.length + ' legacy request(s)');
+}
+
+// Only tightens nullability/defaults after reconstruction has given every
+// row a real value; a second run sees NOT NULL columns already and no-ops.
+async function normalizeBookingFieldShapes() {
+  const normalizations = [
+    ['booking_type', "ENUM('one_day','multi_day') NOT NULL DEFAULT 'one_day'"],
+    ['start_date', 'DATE NOT NULL'],
+    ['end_date', 'DATE NOT NULL'],
+    ['duration_days', 'INT NOT NULL DEFAULT 1'],
+    ['multi_day_mode', "ENUM('continuous','specific_dates') NOT NULL DEFAULT 'continuous'"],
+  ];
+
+  for (const [column, definition] of normalizations) {
+    const current = await getColumn('service_requests', column);
+    if (!current || current.IS_NULLABLE === 'NO') continue;
+    await schedule(
+      'normalize service_requests.' + column + ' to ' + definition,
+      'ALTER TABLE service_requests MODIFY COLUMN ' + quote(column) + ' ' + definition
+    );
+  }
+}
+
+async function backfillRequestCompatibility() {
+  if (!APPLY) {
+    plan.push({
+      label: 'backfill remaining legacy request duration/pricing metadata and derive missing service_request_dates rows',
+      sql: '[data backfill]',
+    });
+    return;
+  }
+
+  // Legacy one-time sources; absent on fresh canonical databases and on
+  // production installs where this backfill already ran previously.
+  const hasScheduledStartAt = Boolean(await getColumn('service_requests', 'scheduled_start_at'));
+  const hasScheduledEndAt = Boolean(await getColumn('service_requests', 'scheduled_end_at'));
+
+  const durationSources = ['estimated_duration_minutes'];
+  if (hasScheduledStartAt && hasScheduledEndAt) {
+    durationSources.push('TIMESTAMPDIFF(MINUTE, scheduled_start_at, scheduled_end_at)');
+  }
+  durationSources.push('120');
 
   await db.query(
-    `UPDATE service_requests sr
-     LEFT JOIN service_profiles sp ON sp.id = sr.service_profile_id
-     LEFT JOIN (
-       SELECT service_request_id,
-              MIN(service_date) AS min_date,
-              MAX(service_date) AS max_date,
-              COUNT(DISTINCT service_date) AS date_count
-       FROM service_request_dates
-       GROUP BY service_request_id
-     ) d ON d.service_request_id = sr.id
-     SET sr.start_date = COALESCE(sr.start_date, d.min_date, ${fallbackStart}),
-         sr.end_date = COALESCE(sr.end_date, d.max_date, ${fallbackEnd}, d.min_date, ${fallbackStart}),
-         sr.booking_type = COALESCE(
-           sr.booking_type,
-           CASE
-             WHEN COALESCE(d.date_count, 0) > 1
-               OR COALESCE(d.max_date, ${fallbackEnd}) > COALESCE(d.min_date, ${fallbackStart})
-             THEN 'multi_day'
-             ELSE 'one_day'
-           END
-         ),
-         sr.duration_days = COALESCE(
-           sr.duration_days,
-           CASE
-             WHEN COALESCE(d.date_count, 0) > 0 AND sr.multi_day_mode = 'specific_dates'
-               THEN d.date_count
-             WHEN COALESCE(d.date_count, 0) > 0
-               THEN DATEDIFF(d.max_date, d.min_date) + 1
-             ELSE GREATEST(DATEDIFF(${fallbackEnd}, ${fallbackStart}) + 1, 1)
-           END
-         ),
-         sr.estimated_duration_minutes = COALESCE(sr.estimated_duration_minutes, ${durationMinutesFallback}, 120),
-         sr.multi_day_mode = COALESCE(sr.multi_day_mode, 'continuous'),
-         sr.pricing_unit_snapshot = COALESCE(sr.pricing_unit_snapshot, 'per_day'),
-         sr.daily_rate_snapshot = COALESCE(sr.daily_rate_snapshot, sp.starting_price, 0),
-         sr.estimated_total = COALESCE(
-           sr.estimated_total,
-           COALESCE(sr.daily_rate_snapshot, sp.starting_price, 0)
-           * COALESCE(
-               sr.duration_days,
-               CASE
-                 WHEN COALESCE(d.date_count, 0) > 0 AND sr.multi_day_mode = 'specific_dates' THEN d.date_count
-                 WHEN COALESCE(d.date_count, 0) > 0 THEN DATEDIFF(d.max_date, d.min_date) + 1
-                 ELSE GREATEST(DATEDIFF(${fallbackEnd}, ${fallbackStart}) + 1, 1)
-               END
-             )
-         )
-     WHERE sr.booking_type IS NULL
-        OR sr.start_date IS NULL
-        OR sr.end_date IS NULL
-        OR sr.duration_days IS NULL
-        OR sr.estimated_duration_minutes IS NULL
-        OR sr.daily_rate_snapshot IS NULL
-        OR sr.estimated_total IS NULL`
+    `UPDATE service_requests
+        SET estimated_duration_minutes = COALESCE(${durationSources.join(', ')}),
+            pricing_unit_snapshot = COALESCE(pricing_unit_snapshot, 'per_day')
+      WHERE estimated_duration_minutes IS NULL OR pricing_unit_snapshot IS NULL`
   );
 
-  const [[remaining]] = await db.query(
-    `SELECT COUNT(*) AS count
-     FROM service_requests
-     WHERE booking_type IS NULL
-        OR start_date IS NULL
-        OR end_date IS NULL
-        OR duration_days IS NULL`
-  );
-  if (Number(remaining.count || 0) > 0) {
-    throw new Error('Booking reconstruction left unresolved canonical booking fields. Refusing to normalize schema.');
-  }
-
-  const bookingTypeColumn = await getColumn('service_requests', 'booking_type');
-  if (bookingTypeColumn?.IS_NULLABLE === 'YES') {
-    await db.query(
-      "ALTER TABLE service_requests MODIFY COLUMN booking_type ENUM('one_day','multi_day') NOT NULL DEFAULT 'one_day'"
-    );
-    changes.push('normalized service_requests.booking_type');
-  }
-  const startDateColumn = await getColumn('service_requests', 'start_date');
-  if (startDateColumn?.IS_NULLABLE === 'YES') {
-    await db.query('ALTER TABLE service_requests MODIFY COLUMN start_date DATE NOT NULL');
-    changes.push('normalized service_requests.start_date');
-  }
-  const endDateColumn = await getColumn('service_requests', 'end_date');
-  if (endDateColumn?.IS_NULLABLE === 'YES') {
-    await db.query('ALTER TABLE service_requests MODIFY COLUMN end_date DATE NOT NULL');
-    changes.push('normalized service_requests.end_date');
-  }
-  const durationDaysColumn = await getColumn('service_requests', 'duration_days');
-  if (durationDaysColumn?.IS_NULLABLE === 'YES') {
-    await db.query('ALTER TABLE service_requests MODIFY COLUMN duration_days INT NOT NULL DEFAULT 1');
-    changes.push('normalized service_requests.duration_days');
-  }
-
+  // Requests that still have zero service_request_dates rows (typically ones
+  // that predate that table entirely) get a single entry for their
+  // reconstructed start_date so availability/busy-date checks stay accurate.
+  // Requests that already have date rows are never touched.
   await db.query(
     `INSERT IGNORE INTO service_request_dates (service_request_id, service_date)
-     SELECT id, start_date
-     FROM service_requests
-     WHERE start_date IS NOT NULL`
+     SELECT sr.id, sr.start_date
+       FROM service_requests sr
+      WHERE sr.start_date IS NOT NULL
+        AND NOT EXISTS (SELECT 1 FROM service_request_dates srd WHERE srd.service_request_id = sr.id)`
   );
 
   await db.query(
@@ -1097,7 +1165,7 @@ async function backfillRequestCompatibility() {
      WHERE h.id IS NULL`
   );
 
-  changes.push('reconstructed legacy request booking compatibility data');
+  changes.push('backfilled remaining request duration/pricing metadata and derived missing service_request_dates rows');
 }
 
 async function ensureStatsView() {
@@ -1137,6 +1205,7 @@ async function verifyCriticalRuntime() {
     ['availability', "SELECT COUNT(*) AS count FROM provider_available_slots"],
     ['admin reports', "SELECT COUNT(*) AS count FROM user_reports WHERE status IN ('pending','investigating','resolved','dismissed')"],
     ['profile photo compatibility', "SELECT COUNT(*) AS count FROM users WHERE profile_photo_url IS NOT NULL OR profile_image IS NOT NULL OR profile_photo IS NOT NULL"],
+    ['booking reconstruction remaining gaps', "SELECT COUNT(*) AS count FROM service_requests WHERE start_date IS NULL OR end_date IS NULL OR booking_type IS NULL OR duration_days IS NULL"],
   ];
 
   const results = [];
@@ -1188,14 +1257,17 @@ async function run() {
   }
 
   await preflightProductionData();
-  await reportAndPreflightBookingReconstruction();
+  await reportBookingReconstructionAggregates();
   await ensureCoreColumns();
   await ensureUserProfilePhotoCompatibility();
   await ensureReportsSchema();
   await ensureSupportingTables();
   await ensureIndexes();
+  await ensureHistoricalTimestampColumns();
   await backfillTaxonomyAndSkills();
+  await reconstructBookingFields();
   await backfillRequestCompatibility();
+  await normalizeBookingFieldShapes();
   await ensureStatsView();
 
   if (!APPLY) {
