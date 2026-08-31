@@ -415,7 +415,7 @@ async function ensureSupportingTables() {
   await ensureColumn('service_request_reschedules', 'proposed_estimated_duration_minutes', 'INT NULL');
   await ensureColumn('service_request_reschedules', 'proposed_multi_day_mode', "ENUM('continuous','specific_dates') NULL");
 
-  const rescheduleId = await idType('service_request_reschedules');
+  const rescheduleId = await tableExists('service_request_reschedules') ? await idType('service_request_reschedules') : 'BIGINT';
   await ensureTable('service_request_reschedule_dates', `
     CREATE TABLE service_request_reschedule_dates (
       id BIGINT NOT NULL AUTO_INCREMENT,
@@ -455,7 +455,7 @@ async function ensureSupportingTables() {
       CONSTRAINT fk_conversation_request FOREIGN KEY (service_request_id) REFERENCES service_requests(id) ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
 
-  const conversationId = await idType('conversations');
+  const conversationId = await tableExists('conversations') ? await idType('conversations') : 'INT';
   await ensureTable('messages', `
     CREATE TABLE messages (
       id BIGINT NOT NULL AUTO_INCREMENT,
