@@ -180,6 +180,7 @@ async function ensureCoreColumns() {
   // Portfolio and review writes now use service_request_id as the canonical link.
   const portfolioColumns = [
     ['service_request_id', 'INT NULL'],
+    ['caption', 'VARCHAR(255) NULL'],
     ['is_published', 'BOOLEAN NOT NULL DEFAULT TRUE'],
     ['is_featured', 'BOOLEAN NOT NULL DEFAULT FALSE'],
     ['updated_at', 'TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'],
