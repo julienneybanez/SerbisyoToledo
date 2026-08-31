@@ -502,21 +502,36 @@ async function ensureSupportingTables() {
     const requesterUserId = await getColumn('service_request_contact_shares', 'requester_user_id');
     const legacyRequesterId = await getColumn('service_request_contact_shares', 'requester_id');
 
-    if (!requesterUserId) {
-      await ensureColumn('service_request_contact_shares', 'requester_user_id', userId + ' NULL');
-      if (APPLY && legacyRequesterId) {
+    if (!requesterUserId && legacyRequesterId) {
+      // The historical messaging migration called this requester_id. Rename it
+      // in place so existing rows, FK/index metadata, and future inserts all use
+      // the same canonical column instead of keeping two competing fields.
+      await schedule(
+        'rename service_request_contact_shares.requester_id to requester_user_id',
+        'ALTER TABLE service_request_contact_shares CHANGE COLUMN requester_id requester_user_id ' + userId + ' NOT NULL'
+      );
+    } else if (!requesterUserId) {
+      await ensureColumn('service_request_contact_shares', 'requester_user_id', userId + ' NOT NULL');
+    } else if (legacyRequesterId) {
+      // Defensive recovery for a partially-reconciled table containing both
+      // columns: preserve values but stop the legacy NOT NULL field from
+      // blocking current inserts that only provide requester_user_id.
+      if (APPLY) {
         await db.query(
-          'UPDATE service_request_contact_shares SET requester_user_id = requester_id WHERE requester_user_id IS NULL'
+          'UPDATE service_request_contact_shares SET requester_user_id = COALESCE(requester_user_id, requester_id)'
         );
-        await db.query(
-          'ALTER TABLE service_request_contact_shares MODIFY COLUMN requester_user_id ' + userId + ' NOT NULL'
-        );
-        changes.push('backfilled service_request_contact_shares.requester_user_id');
-      } else if (!APPLY) {
+      } else {
         plan.push({
-          label: 'backfill service_request_contact_shares.requester_user_id from legacy requester_id',
+          label: 'backfill canonical requester_user_id from duplicate legacy requester_id',
           sql: '[data backfill]',
         });
+      }
+
+      if (legacyRequesterId.IS_NULLABLE === 'NO') {
+        await schedule(
+          'make duplicate legacy requester_id nullable',
+          'ALTER TABLE service_request_contact_shares MODIFY COLUMN requester_id ' + userId + ' NULL'
+        );
       }
     }
   }
