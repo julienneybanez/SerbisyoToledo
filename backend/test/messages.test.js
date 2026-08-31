@@ -315,6 +315,76 @@ describe('Messages authorization and lifecycle', () => {
 
     expect(res.status).toBe(404);
   });
+  it('returns request decisions and phone-sharing changes in the durable conversation timeline', async () => {
+    vi.spyOn(db, 'query').mockImplementation(async (sql) => {
+      const text = String(sql);
+      if (sql === authUserSql) {
+        return [[{ id: CLIENT_ID, user_type: 'client', is_active: 1 }]];
+      }
+      if (text.includes('WHERE c.id = ?') && text.includes('client_photo')) {
+        return [[{
+          id: 5,
+          service_request_id: 55,
+          client_id: CLIENT_ID,
+          provider_id: PROVIDER_ID,
+          status: 'accepted',
+          service_label: 'Plumbing Repair',
+          client_name: 'Client One',
+          provider_name: 'Provider One',
+          client_photo: null,
+          provider_photo: null,
+        }]];
+      }
+      if (text.includes('FROM messages m') && text.includes('JOIN users sender')) {
+        return [[{
+          id: 1,
+          conversation_id: 5,
+          sender_id: CLIENT_ID,
+          sender_name: 'Client One',
+          message_text: 'Can we confirm the schedule?',
+          read_at: null,
+          created_at: '2026-08-31T01:00:00.000Z',
+        }]];
+      }
+      if (text.includes('FROM service_request_status_history h')) {
+        return [[{
+          id: 11,
+          to_status: 'accepted',
+          changed_by: PROVIDER_ID,
+          reason: null,
+          created_at: '2026-08-31T01:05:00.000Z',
+          actor_name: 'Provider One',
+        }]];
+      }
+      if (text.includes('FROM service_request_contact_shares pcs')) {
+        return [[{
+          id: 12,
+          requester_user_id: CLIENT_ID,
+          owner_user_id: PROVIDER_ID,
+          status: 'shared',
+          requested_at: '2026-08-31T01:10:00.000Z',
+          responded_at: '2026-08-31T01:12:00.000Z',
+          requester_name: 'Client One',
+          owner_name: 'Provider One',
+        }]];
+      }
+      return [[]];
+    });
+
+    const res = await request(app)
+      .get('/api/messages/5/messages')
+      .set('Authorization', `Bearer ${signToken(CLIENT_ID)}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.conversation.viewerRole).toBe('client');
+    expect(res.body.data.timeline.map((item) => item.eventType || item.kind)).toEqual([
+      'message',
+      'request_accepted',
+      'phone_requested',
+      'phone_shared',
+    ]);
+  });
+
   it('includes the other participant profile photo in the conversation list', async () => {
     vi.spyOn(db, 'query').mockImplementation(async (sql) => {
       if (sql === authUserSql) {

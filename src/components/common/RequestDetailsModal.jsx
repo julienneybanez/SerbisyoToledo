@@ -1,6 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { serviceRequestAPI } from '../../services/api';
 import { useLanguage } from '../../context/LanguageContext';
 import './RequestDetailsModal.css';
 
@@ -21,60 +19,6 @@ export default function RequestDetailsModal({
 }) {
   const navigate = useNavigate();
   const { t } = useLanguage();
-  const [phoneShare, setPhoneShare] = useState(null);
-  const [phoneShareLoading, setPhoneShareLoading] = useState(false);
-  const [phoneShareError, setPhoneShareError] = useState('');
-
-  const loadPhoneShare = useCallback(async () => {
-    if (!request?.id || !['accepted', 'on_the_way', 'in_progress'].includes(request.status)) {
-      setPhoneShare(null);
-      return;
-    }
-
-    setPhoneShareLoading(true);
-    setPhoneShareError('');
-    try {
-      const response = await serviceRequestAPI.getPhoneShare(request.id);
-      if (response?.success) {
-        setPhoneShare(response.data);
-      }
-    } catch (error) {
-      setPhoneShareError(error.message || t('phoneShareLoadFailed'));
-    } finally {
-      setPhoneShareLoading(false);
-    }
-  }, [request?.id, request?.status, t]);
-
-  useEffect(() => {
-    loadPhoneShare();
-  }, [loadPhoneShare]);
-
-  const handleRequestPhone = async () => {
-    setPhoneShareLoading(true);
-    setPhoneShareError('');
-    try {
-      await serviceRequestAPI.requestPhoneShare(request.id);
-      await loadPhoneShare();
-    } catch (error) {
-      setPhoneShareError(error.message || t('phoneShareRequestFailed'));
-    } finally {
-      setPhoneShareLoading(false);
-    }
-  };
-
-  const handlePhoneResponse = async (action) => {
-    setPhoneShareLoading(true);
-    setPhoneShareError('');
-    try {
-      await serviceRequestAPI.respondPhoneShare(request.id, action);
-      await loadPhoneShare();
-    } catch (error) {
-      setPhoneShareError(error.message || t('phoneShareResponseFailed'));
-    } finally {
-      setPhoneShareLoading(false);
-    }
-  };
-
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       weekday: 'long',
@@ -339,8 +283,7 @@ export default function RequestDetailsModal({
             </div>
           )}
 
-          {/* Internal Messages are always available while a request is active.
-              Phone sharing is a separate, explicit consent flow after acceptance. */}
+          {/* Keep booking communication inside Messages; phone sharing lives there too. */}
           {['pending', 'accepted', 'on_the_way', 'in_progress'].includes(request.status) && (
             <div className="detail-card full-width contact-card">
               <div className="detail-card-header">
@@ -364,65 +307,6 @@ export default function RequestDetailsModal({
                     <i className="bi bi-chat-dots-fill"></i> {isProvider ? t('messageClient') : t('messageProvider')}
                   </button>
                 </div>
-
-                {['accepted', 'on_the_way', 'in_progress'].includes(request.status) && (
-                  <div className="phone-sharing-section">
-                    <div className="phone-sharing-heading">
-                      <strong>{t('phoneNumber')}</strong>
-                      <span>{t('phoneSharePrivateHelp')}</span>
-                    </div>
-
-                    {phoneShareError && <div className="alert alert-danger">{phoneShareError}</div>}
-                    {phoneShareLoading && !phoneShare ? (
-                      <div className="contact-pending-notice"><span>{t('loading')}</span></div>
-                    ) : (
-                      <>
-                        {phoneShare?.requestedFromMe?.status === 'pending' && (
-                          <div className="discussion-request-modal">
-                            <div className="discussion-request-info">
-                              <i className="bi bi-telephone-inbound"></i>
-                              <span>{t('phoneShareIncomingRequest')}</span>
-                            </div>
-                            <div className="reschedule-actions">
-                              <button type="button" className="action-btn btn-accept" onClick={() => handlePhoneResponse('share')} disabled={phoneShareLoading}>
-                                {t('sharePhoneNumber')}
-                              </button>
-                              <button type="button" className="action-btn btn-decline" onClick={() => handlePhoneResponse('decline')} disabled={phoneShareLoading}>
-                                {t('decline')}
-                              </button>
-                            </div>
-                          </div>
-                        )}
-
-                        {phoneShare?.sharedPhone ? (
-                          <div className="phone-display">
-                            <i className="bi bi-telephone-fill"></i>
-                            <div>
-                              <span className="phone-label">{isProvider ? t('clientPhone') : t('providerPhone')}</span>
-                              <a href={'tel:' + phoneShare.sharedPhone.e164} className="phone-number">
-                                {phoneShare.sharedPhone.display}
-                              </a>
-                            </div>
-                          </div>
-                        ) : phoneShare?.requestedByMe?.status === 'pending' ? (
-                          <div className="discussion-pending-modal">
-                            <i className="bi bi-hourglass-split"></i>
-                            <span>{t('phoneSharePending')}</span>
-                          </div>
-                        ) : (
-                          <button
-                            type="button"
-                            className="btn-request-discussion-modal"
-                            onClick={handleRequestPhone}
-                            disabled={phoneShareLoading}
-                          >
-                            <i className="bi bi-telephone-plus"></i> {t('requestPhoneNumber')}
-                          </button>
-                        )}
-                      </>
-                    )}
-                  </div>
-                )}
               </div>
             </div>
           )}

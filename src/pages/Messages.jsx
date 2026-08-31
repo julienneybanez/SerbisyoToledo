@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { getUser, messageAPI } from '../services/api';
+import { getUser, messageAPI, serviceRequestAPI } from '../services/api';
 import { connectMessagingSocket } from '../services/socket';
 import { useLanguage } from '../context/LanguageContext';
 import './Messages.css';
@@ -15,6 +15,19 @@ const formatTime = (value) => {
     hour: 'numeric',
     minute: '2-digit',
   });
+};
+
+const formatSystemEvent = (event, t) => {
+  const name = event.actorName || t('user');
+  const keyByType = {
+    request_accepted: 'messagesEventRequestAccepted',
+    request_declined: 'messagesEventRequestDeclined',
+    phone_requested: 'messagesEventPhoneRequested',
+    phone_shared: 'messagesEventPhoneShared',
+    phone_declined: 'messagesEventPhoneDeclined',
+  };
+  const key = keyByType[event.eventType];
+  return key ? t(key, { name }) : '';
 };
 
 export default function Messages() {
@@ -33,6 +46,12 @@ export default function Messages() {
   const [threadLoading, setThreadLoading] = useState(false);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
+  const [requestActionLoading, setRequestActionLoading] = useState(false);
+  const [declineOpen, setDeclineOpen] = useState(false);
+  const [declineReason, setDeclineReason] = useState('');
+  const [phoneShare, setPhoneShare] = useState(null);
+  const [phoneShareLoading, setPhoneShareLoading] = useState(false);
+  const [phoneShareError, setPhoneShareError] = useState('');
   const bottomRef = useRef(null);
 
   const loadConversations = useCallback(async () => {
@@ -49,6 +68,29 @@ export default function Messages() {
       setListLoading(false);
     }
     return [];
+  }, [t]);
+
+  const loadPhoneShare = useCallback(async (requestId, requestStatus) => {
+    if (!requestId || !['accepted', 'on_the_way', 'in_progress'].includes(requestStatus)) {
+      setPhoneShare(null);
+      setPhoneShareError('');
+      return null;
+    }
+
+    setPhoneShareLoading(true);
+    setPhoneShareError('');
+    try {
+      const response = await serviceRequestAPI.getPhoneShare(requestId);
+      const nextState = response?.success ? response.data : null;
+      setPhoneShare(nextState);
+      return nextState;
+    } catch (err) {
+      setPhoneShare(null);
+      setPhoneShareError(err.message || t('phoneShareLoadFailed'));
+      return null;
+    } finally {
+      setPhoneShareLoading(false);
+    }
   }, [t]);
 
   useEffect(() => {
@@ -99,8 +141,12 @@ export default function Messages() {
       try {
         const response = await messageAPI.getMessages(activeConversationId);
         if (!mounted || !response?.success) return;
-        setConversation(response.data.conversation);
-        setMessages(response.data.messages || []);
+        const nextConversation = response.data.conversation;
+        setConversation(nextConversation);
+        setMessages(response.data.timeline || response.data.messages || []);
+        setDeclineOpen(false);
+        setDeclineReason('');
+        await loadPhoneShare(nextConversation?.serviceRequestId, nextConversation?.requestStatus);
         await messageAPI.markRead(activeConversationId);
         await loadConversations();
       } catch (err) {
@@ -114,7 +160,7 @@ export default function Messages() {
     return () => {
       mounted = false;
     };
-  }, [activeConversationId, loadConversations, t]);
+  }, [activeConversationId, loadConversations, loadPhoneShare, t]);
 
   useEffect(() => {
     let cancelled = false;
@@ -123,9 +169,9 @@ export default function Messages() {
     const handleNewMessage = (incoming) => {
       if (Number(incoming.conversationId) === Number(activeConversationId)) {
         setMessages((current) => (
-          current.some((message) => Number(message.id) === Number(incoming.id))
+          current.some((message) => message.kind === 'message' && Number(message.id) === Number(incoming.id))
             ? current
-            : [...current, { ...incoming, mine: Number(incoming.senderId) === Number(user?.id) }]
+            : [...current, { ...incoming, kind: 'message', mine: Number(incoming.senderId) === Number(user?.id) }]
         ));
         messageAPI.markRead(activeConversationId).catch(() => {});
       }
@@ -136,6 +182,22 @@ export default function Messages() {
       loadConversations();
     };
 
+    const handleConversationUpdated = async (payload) => {
+      loadConversations();
+      if (Number(payload?.conversationId) !== Number(activeConversationId)) return;
+
+      try {
+        const response = await messageAPI.getMessages(activeConversationId);
+        if (!response?.success) return;
+        const nextConversation = response.data.conversation;
+        setConversation(nextConversation);
+        setMessages(response.data.timeline || response.data.messages || []);
+        await loadPhoneShare(nextConversation?.serviceRequestId, nextConversation?.requestStatus);
+      } catch {
+        // The next normal thread refresh will recover if this realtime refresh fails.
+      }
+    };
+
     const connect = async () => {
       try {
         const connectedSocket = await connectMessagingSocket();
@@ -144,6 +206,7 @@ export default function Messages() {
         socket = connectedSocket;
         socket.on('message:new', handleNewMessage);
         socket.on('messages:unread-changed', handleUnreadChanged);
+        socket.on('conversation:updated', handleConversationUpdated);
 
         if (activeConversationId) {
           socket.emit('conversation:join', activeConversationId);
@@ -164,8 +227,9 @@ export default function Messages() {
       }
       socket.off('message:new', handleNewMessage);
       socket.off('messages:unread-changed', handleUnreadChanged);
+      socket.off('conversation:updated', handleConversationUpdated);
     };
-  }, [activeConversationId, loadConversations, user?.id]);
+  }, [activeConversationId, loadConversations, loadPhoneShare, user?.id]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
@@ -195,7 +259,7 @@ export default function Messages() {
         setMessages((current) => (
           current.some((message) => Number(message.id) === Number(sent.id))
             ? current
-            : [...current, { ...sent, mine: true }]
+            : [...current, { ...sent, kind: 'message', mine: true }]
         ));
         setDraft('');
         await loadConversations();
@@ -204,6 +268,68 @@ export default function Messages() {
       setError(err.message || t('messagesSendFailed'));
     } finally {
       setSending(false);
+    }
+  };
+
+  const refreshConversation = useCallback(async () => {
+    if (!activeConversationId) return;
+    const response = await messageAPI.getMessages(activeConversationId);
+    if (!response?.success) return;
+    const nextConversation = response.data.conversation;
+    setConversation(nextConversation);
+    setMessages(response.data.timeline || response.data.messages || []);
+    await loadPhoneShare(nextConversation?.serviceRequestId, nextConversation?.requestStatus);
+    await loadConversations();
+  }, [activeConversationId, loadConversations, loadPhoneShare]);
+
+  const handleRequestDecision = async (status) => {
+    if (!conversation?.serviceRequestId || requestActionLoading) return;
+
+    const reason = status === 'declined' ? declineReason.trim() : null;
+    if (status === 'declined' && !reason) {
+      setError(t('requestsDeclineReasonRequired'));
+      return;
+    }
+
+    setRequestActionLoading(true);
+    setError('');
+    try {
+      await serviceRequestAPI.updateStatus(conversation.serviceRequestId, status, reason);
+      setDeclineOpen(false);
+      setDeclineReason('');
+      await refreshConversation();
+    } catch (err) {
+      setError(err.message || t('requestsStatusUpdateFailed'));
+    } finally {
+      setRequestActionLoading(false);
+    }
+  };
+
+  const handleRequestPhone = async () => {
+    if (!conversation?.serviceRequestId || phoneShareLoading) return;
+    setPhoneShareLoading(true);
+    setPhoneShareError('');
+    try {
+      await serviceRequestAPI.requestPhoneShare(conversation.serviceRequestId);
+      await refreshConversation();
+    } catch (err) {
+      setPhoneShareError(err.message || t('phoneShareRequestFailed'));
+    } finally {
+      setPhoneShareLoading(false);
+    }
+  };
+
+  const handlePhoneResponse = async (action) => {
+    if (!conversation?.serviceRequestId || phoneShareLoading) return;
+    setPhoneShareLoading(true);
+    setPhoneShareError('');
+    try {
+      await serviceRequestAPI.respondPhoneShare(conversation.serviceRequestId, action);
+      await refreshConversation();
+    } catch (err) {
+      setPhoneShareError(err.message || t('phoneShareResponseFailed'));
+    } finally {
+      setPhoneShareLoading(false);
     }
   };
 
@@ -300,6 +426,134 @@ export default function Messages() {
                 </span>
               </header>
 
+              {conversation && (
+                <div className="messages-booking-actions">
+                  {conversation.viewerRole === 'provider' && conversation.requestStatus === 'pending' && (
+                    <div className="messages-request-decision">
+                      <div className="messages-action-copy">
+                        <strong>{t('messagesPendingRequestTitle')}</strong>
+                        <span>{t('messagesPendingRequestHelp')}</span>
+                      </div>
+                      {!declineOpen ? (
+                        <div className="messages-action-buttons">
+                          <button
+                            type="button"
+                            className="messages-action-primary"
+                            onClick={() => handleRequestDecision('accepted')}
+                            disabled={requestActionLoading}
+                          >
+                            <i className="bi bi-check-lg" aria-hidden="true"></i>
+                            {t('requestsAcceptRequest')}
+                          </button>
+                          <button
+                            type="button"
+                            className="messages-action-secondary danger"
+                            onClick={() => setDeclineOpen(true)}
+                            disabled={requestActionLoading}
+                          >
+                            <i className="bi bi-x-lg" aria-hidden="true"></i>
+                            {t('requestsDeclineRequest')}
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="messages-decline-form">
+                          <label htmlFor="messages-decline-reason">{t('requestsDeclineReasonLabel')}</label>
+                          <textarea
+                            id="messages-decline-reason"
+                            rows="2"
+                            maxLength={500}
+                            value={declineReason}
+                            onChange={(event) => setDeclineReason(event.target.value)}
+                            placeholder={t('requestsDeclineReasonPlaceholder')}
+                          />
+                          <div className="messages-action-buttons">
+                            <button
+                              type="button"
+                              className="messages-action-secondary danger"
+                              onClick={() => handleRequestDecision('declined')}
+                              disabled={requestActionLoading || !declineReason.trim()}
+                            >
+                              {t('requestsConfirmDecline')}
+                            </button>
+                            <button
+                              type="button"
+                              className="messages-action-secondary"
+                              onClick={() => {
+                                setDeclineOpen(false);
+                                setDeclineReason('');
+                              }}
+                              disabled={requestActionLoading}
+                            >
+                              {t('cancel')}
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {['accepted', 'on_the_way', 'in_progress'].includes(conversation.requestStatus) && (
+                    <div className="messages-phone-share">
+                      <div className="messages-action-copy">
+                        <strong>{t('messagesPhoneShareTitle')}</strong>
+                        <span>{t('messagesPhoneShareHelp')}</span>
+                      </div>
+
+                      {phoneShareError && <div className="messages-inline-error">{phoneShareError}</div>}
+
+                      {phoneShare?.requestedFromMe?.status === 'pending' && (
+                        <div className="messages-phone-request-card">
+                          <span><i className="bi bi-telephone-inbound" aria-hidden="true"></i>{t('phoneShareIncomingRequest')}</span>
+                          <div className="messages-action-buttons">
+                            <button
+                              type="button"
+                              className="messages-action-primary"
+                              onClick={() => handlePhoneResponse('share')}
+                              disabled={phoneShareLoading}
+                            >
+                              {t('sharePhoneNumber')}
+                            </button>
+                            <button
+                              type="button"
+                              className="messages-action-secondary"
+                              onClick={() => handlePhoneResponse('decline')}
+                              disabled={phoneShareLoading}
+                            >
+                              {t('decline')}
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
+                      {phoneShare?.sharedPhone ? (
+                        <div className="messages-shared-phone">
+                          <i className="bi bi-telephone-fill" aria-hidden="true"></i>
+                          <div>
+                            <span>{conversation.viewerRole === 'provider' ? t('clientPhone') : t('providerPhone')}</span>
+                            <a href={'tel:' + phoneShare.sharedPhone.e164}>{phoneShare.sharedPhone.display}</a>
+                          </div>
+                        </div>
+                      ) : phoneShare?.requestedFromMe?.status === 'pending' ? null : phoneShare?.requestedByMe?.status === 'pending' ? (
+                        <div className="messages-phone-pending">
+                          <i className="bi bi-hourglass-split" aria-hidden="true"></i>
+                          <span>{t('phoneSharePending')}</span>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          className="messages-request-phone-button"
+                          onClick={handleRequestPhone}
+                          disabled={phoneShareLoading}
+                        >
+                          <i className="bi bi-telephone-plus" aria-hidden="true"></i>
+                          {phoneShareLoading ? t('loading') : t('requestPhoneNumber')}
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div className="messages-thread">
                 {messages.length === 0 ? (
                   <div className="messages-empty">
@@ -309,6 +563,17 @@ export default function Messages() {
                   </div>
                 ) : (
                   messages.map((message) => {
+                    if (message.kind === 'system') {
+                      const eventText = formatSystemEvent(message, t);
+                      if (!eventText) return null;
+                      return (
+                        <div key={message.id} className="message-system-event" role="status">
+                          <span>{eventText}</span>
+                          <time>{formatTime(message.createdAt)}</time>
+                        </div>
+                      );
+                    }
+
                     const rowPhoto = message.mine
                       ? user?.profileImage
                       : (conversation?.otherUser?.profilePhoto || selectedItem?.otherUser?.profilePhoto);

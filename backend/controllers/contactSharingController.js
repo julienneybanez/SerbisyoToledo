@@ -23,6 +23,34 @@ const counterpartId = (request, userId) => (
   request.client_id === userId ? request.provider_id : request.client_id
 );
 
+const emitConversationUpdated = async (req, request, eventType) => {
+  const io = req.app.get('io');
+  if (!io) return;
+
+  try {
+    const [rows] = await db.query(
+      'SELECT id FROM conversations WHERE service_request_id = ? LIMIT 1',
+      [request.id]
+    );
+    const payload = {
+      conversationId: rows[0]?.id || null,
+      serviceRequestId: request.id,
+      requestStatus: request.status,
+      eventType,
+    };
+
+    // User rooms reach both participants whether or not they currently have the
+    // conversation open. Avoid also emitting to the conversation room so one
+    // browser does not process the same refresh twice.
+    io.to('user:' + request.client_id).emit('conversation:updated', payload);
+    io.to('user:' + request.provider_id).emit('conversation:updated', payload);
+  } catch (error) {
+    // Realtime refresh is best-effort; the successful privacy mutation must not
+    // be turned into a 500 if Socket.IO metadata lookup fails.
+    console.error('Conversation phone-share broadcast error:', error);
+  }
+};
+
 exports.getPhoneShareState = async (req, res) => {
   try {
     const requestId = Number(req.params.requestId);
@@ -136,6 +164,7 @@ exports.requestPhoneShare = async (req, res) => {
       ]
     );
 
+    await emitConversationUpdated(req, request, 'phone_requested');
     return res.status(201).json({ success: true, message: 'Phone-number request sent.' });
   } catch (error) {
     console.error('Request phone share error:', error);
@@ -208,6 +237,8 @@ exports.respondToPhoneShare = async (req, res) => {
         requestId,
       ]
     );
+
+    await emitConversationUpdated(req, request, action === 'share' ? 'phone_shared' : 'phone_declined');
 
     return res.json({
       success: true,

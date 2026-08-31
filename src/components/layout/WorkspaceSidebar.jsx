@@ -1,6 +1,9 @@
+import { useEffect, useState } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import logo from '../../assets/logo.png';
 import { useLanguage } from '../../context/LanguageContext';
+import { messageAPI } from '../../services/api';
+import { connectMessagingSocket } from '../../services/socket';
 
 const ROLE_ITEMS = {
   client: [
@@ -30,6 +33,56 @@ export default function WorkspaceSidebar({
   const { t } = useLanguage();
   const isProvider = role === 'tradesperson';
   const items = ROLE_ITEMS[role] || ROLE_ITEMS.client;
+  const [unreadMessages, setUnreadMessages] = useState(0);
+
+  useEffect(() => {
+    if (!['client', 'tradesperson'].includes(role)) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- reset badge for roles without Messages
+      setUnreadMessages(0);
+      return undefined;
+    }
+
+    let mounted = true;
+    let socket = null;
+
+    const loadUnread = async () => {
+      try {
+        const response = await messageAPI.getUnreadCount();
+        if (mounted && response?.success) {
+          setUnreadMessages(Number(response.data?.count || 0));
+        }
+      } catch {
+        if (mounted) setUnreadMessages(0);
+      }
+    };
+
+    const handleUnreadChanged = () => {
+      loadUnread();
+    };
+
+    loadUnread();
+
+    const connect = async () => {
+      try {
+        const connectedSocket = await connectMessagingSocket();
+        if (!mounted || !connectedSocket) return;
+        socket = connectedSocket;
+        socket.on('message:new', handleUnreadChanged);
+        socket.on('messages:unread-changed', handleUnreadChanged);
+      } catch {
+        // REST count remains the fallback if realtime is unavailable.
+      }
+    };
+
+    connect();
+
+    return () => {
+      mounted = false;
+      if (!socket) return;
+      socket.off('message:new', handleUnreadChanged);
+      socket.off('messages:unread-changed', handleUnreadChanged);
+    };
+  }, [role]);
 
   return (
     <aside className="workspace-sidebar" aria-label={`${t(isProvider ? 'serviceProvider' : 'client')} ${t('navigation')}`}>
@@ -53,6 +106,11 @@ export default function WorkspaceSidebar({
           >
             <i className={`bi ${item.icon}`} aria-hidden="true"></i>
             <span>{t(item.labelKey)}</span>
+            {item.to === '/messages' && unreadMessages > 0 && (
+              <span className="workspace-nav-badge" aria-label={String(unreadMessages) + ' ' + t('messagesUnread')}>
+                {unreadMessages > 99 ? '99+' : unreadMessages}
+              </span>
+            )}
           </NavLink>
         ))}
       </nav>
