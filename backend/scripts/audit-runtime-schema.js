@@ -59,7 +59,7 @@ const REQUIRED_COLUMNS = {
   reviews: ['id', 'service_request_id', 'rating', 'comment', 'created_at'],
   notifications: ['id', 'user_id', 'type', 'title', 'message', 'related_request_id', 'is_read', 'created_at'],
   verification_requests: [
-    'id', 'user_id', 'status', 'rejection_reason', 'admin_notes',
+    'id', 'user_id', 'status', 'is_active_pending', 'rejection_reason', 'admin_notes',
     'reviewed_by', 'reviewed_at', 'certifications_data', 'certifications_mime',
   ],
   service_request_contact_shares: [
