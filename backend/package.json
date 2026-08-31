@@ -16,7 +16,9 @@
     "db:phase-a": "node scripts/run-sql-file.js migrations/20260807_002_canonical_phase_a_add_backfill.sql",
     "db:phase-b": "node scripts/run-sql-file.js migrations/20260807_003_canonical_phase_b_indexes_resync.sql",
     "db:phase-c": "node scripts/run-sql-file.js migrations/20260807_004_canonical_phase_c_drop_legacy.sql",
-    "taxonomy:backfill": "node scripts/backfill-service-taxonomy.js"
+    "taxonomy:backfill": "node scripts/backfill-service-taxonomy.js",
+    "db:audit:runtime": "node scripts/audit-runtime-schema.js",
+    "db:reconcile:production": "node scripts/reconcile-production-schema.js"
   },
   "dependencies": {
     "@google/genai": "^2.19.0",
