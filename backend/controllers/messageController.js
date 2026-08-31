@@ -164,6 +164,85 @@ exports.getConversationMessages = async (req, res) => {
 
     const [messages] = await db.query(query, params);
 
+    // Conversation system events are derived from the existing authoritative
+    // request/contact-share history. This keeps the chat timeline durable
+    // without duplicating request state into the messages table.
+    const [statusEvents] = await db.query(
+      `SELECT h.id, h.to_status, h.changed_by, h.reason, h.created_at,
+              actor.full_name AS actor_name
+       FROM service_request_status_history h
+       LEFT JOIN users actor ON actor.id = h.changed_by
+       WHERE h.service_request_id = ?
+         AND h.to_status IN ('accepted', 'declined')
+       ORDER BY h.created_at ASC, h.id ASC`,
+      [conversation.service_request_id]
+    );
+
+    const [phoneEvents] = await db.query(
+      `SELECT pcs.id, pcs.requester_user_id, pcs.owner_user_id, pcs.status,
+              pcs.requested_at, pcs.responded_at,
+              requester.full_name AS requester_name,
+              owner.full_name AS owner_name
+       FROM service_request_contact_shares pcs
+       JOIN users requester ON requester.id = pcs.requester_user_id
+       JOIN users owner ON owner.id = pcs.owner_user_id
+       WHERE pcs.service_request_id = ?
+         AND pcs.contact_type = 'phone'
+       ORDER BY pcs.requested_at ASC, pcs.id ASC`,
+      [conversation.service_request_id]
+    );
+
+    const messageTimeline = messages.reverse().map((message) => ({
+      kind: 'message',
+      id: message.id,
+      conversationId: message.conversation_id,
+      senderId: message.sender_id,
+      senderName: message.sender_name,
+      text: message.message_text,
+      readAt: message.read_at,
+      createdAt: message.created_at,
+      mine: message.sender_id === userId,
+    }));
+
+    const systemTimeline = statusEvents.map((event) => ({
+      kind: 'system',
+      id: `status-${event.id}`,
+      eventType: event.to_status === 'accepted' ? 'request_accepted' : 'request_declined',
+      actorUserId: event.changed_by,
+      actorName: event.actor_name,
+      reason: event.reason || null,
+      createdAt: event.created_at,
+    }));
+
+    for (const event of phoneEvents) {
+      systemTimeline.push({
+        kind: 'system',
+        id: `phone-requested-${event.id}`,
+        eventType: 'phone_requested',
+        actorUserId: event.requester_user_id,
+        actorName: event.requester_name,
+        createdAt: event.requested_at,
+      });
+
+      if (event.responded_at && ['shared', 'declined'].includes(event.status)) {
+        systemTimeline.push({
+          kind: 'system',
+          id: `phone-${event.status}-${event.id}`,
+          eventType: event.status === 'shared' ? 'phone_shared' : 'phone_declined',
+          actorUserId: event.owner_user_id,
+          actorName: event.owner_name,
+          createdAt: event.responded_at,
+        });
+      }
+    }
+
+    const timeline = [...messageTimeline, ...systemTimeline].sort((a, b) => {
+      const aTime = new Date(a.createdAt || 0).getTime();
+      const bTime = new Date(b.createdAt || 0).getTime();
+      if (aTime !== bTime) return aTime - bTime;
+      return String(a.id).localeCompare(String(b.id));
+    });
+
     return res.json({
       success: true,
       data: {
@@ -173,6 +252,7 @@ exports.getConversationMessages = async (req, res) => {
           requestStatus: conversation.status,
           serviceLabel: conversation.service_label,
           writable: WRITABLE_STATUSES.has(conversation.status),
+          viewerRole: conversation.provider_id === userId ? 'provider' : 'client',
           otherUser: conversation.client_id === userId
             ? {
                 id: conversation.provider_id,
@@ -185,16 +265,8 @@ exports.getConversationMessages = async (req, res) => {
                 profilePhoto: normalizeProfilePhoto(conversation.client_photo),
               },
         },
-        messages: messages.reverse().map((message) => ({
-          id: message.id,
-          conversationId: message.conversation_id,
-          senderId: message.sender_id,
-          senderName: message.sender_name,
-          text: message.message_text,
-          readAt: message.read_at,
-          createdAt: message.created_at,
-          mine: message.sender_id === userId,
-        })),
+        messages: messageTimeline,
+        timeline,
       },
     });
   } catch (error) {
@@ -336,6 +408,7 @@ exports.markConversationRead = async (req, res) => {
         conversationId,
         readerId: userId,
       });
+      io.to('user:' + userId).emit('messages:unread-changed', { conversationId });
     }
 
     return res.json({ success: true });
