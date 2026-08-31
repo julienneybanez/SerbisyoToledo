@@ -236,9 +236,10 @@ describe('canonical MySQL runtime integration', () => {
   });
 
   it('uses canonical report and phone-share columns', async () => {
+    const reportJobDate = dateAtOffset(70);
     const [requestResult] = await adminConnection.query(
-      "INSERT INTO service_requests (client_id, provider_id, service_profile_id, service_type_key, job_details, service_location, start_time, estimated_duration_minutes, pricing_unit_snapshot, daily_rate_snapshot, status) VALUES (?, ?, ?, 'leak_repair', 'Completed plumbing job', 'Poblacion', '09:00', 60, 'per_day', 500, 'accepted')",
-      [clientId, providerId, profileId]
+      "INSERT INTO service_requests (client_id, provider_id, service_profile_id, service_type_key, job_details, service_location, booking_type, start_date, end_date, duration_days, start_time, estimated_duration_minutes, pricing_unit_snapshot, daily_rate_snapshot, status) VALUES (?, ?, ?, 'leak_repair', 'Completed plumbing job', 'Poblacion', 'one_day', ?, ?, 1, '09:00', 60, 'per_day', 500, 'accepted')",
+      [clientId, providerId, profileId, reportJobDate, reportJobDate]
     );
     const requestId = requestResult.insertId;
     const reportResponse = response();
@@ -260,9 +261,10 @@ describe('canonical MySQL runtime integration', () => {
   });
 
   it('uses canonical report statuses and Admin activity dates', async () => {
+    const activityJobDate = dateAtOffset(71);
     const [requestResult] = await adminConnection.query(
-      "INSERT INTO service_requests (client_id, provider_id, service_profile_id, service_type_key, job_details, service_location, start_time, estimated_duration_minutes, pricing_unit_snapshot, daily_rate_snapshot, status) VALUES (?, ?, ?, 'leak_repair', 'Activity job', 'Poblacion', '09:00', 60, 'per_day', 500, 'completed')",
-      [clientId, providerId, profileId]
+      "INSERT INTO service_requests (client_id, provider_id, service_profile_id, service_type_key, job_details, service_location, booking_type, start_date, end_date, duration_days, start_time, estimated_duration_minutes, pricing_unit_snapshot, daily_rate_snapshot, status) VALUES (?, ?, ?, 'leak_repair', 'Activity job', 'Poblacion', 'one_day', ?, ?, 1, '09:00', 60, 'per_day', 500, 'completed')",
+      [clientId, providerId, profileId, activityJobDate, activityJobDate]
     );
     await adminConnection.query('INSERT INTO service_request_dates (service_request_id, service_date) VALUES (?, ?)', [requestResult.insertId, secondDate]);
     const [report] = await adminConnection.query("INSERT INTO user_reports (reporter_id, reported_user_id, request_id, reason, description, status) VALUES (?, ?, ?, 'Test', 'Lifecycle', 'pending')", [clientId, providerId, requestResult.insertId]);
@@ -279,9 +281,10 @@ describe('canonical MySQL runtime integration', () => {
   });
 
   it('uses canonical completed-job portfolio ownership rows', async () => {
+    const portfolioJobDate = dateAtOffset(72);
     const [completed] = await adminConnection.query(
-      "INSERT INTO service_requests (client_id, provider_id, service_profile_id, service_type_key, job_details, service_location, start_time, estimated_duration_minutes, pricing_unit_snapshot, daily_rate_snapshot, status) VALUES (?, ?, ?, 'leak_repair', 'Portfolio job', 'Poblacion', '09:00', 60, 'per_day', 500, 'completed')",
-      [clientId, providerId, profileId]
+      "INSERT INTO service_requests (client_id, provider_id, service_profile_id, service_type_key, job_details, service_location, booking_type, start_date, end_date, duration_days, start_time, estimated_duration_minutes, pricing_unit_snapshot, daily_rate_snapshot, status) VALUES (?, ?, ?, 'leak_repair', 'Portfolio job', 'Poblacion', 'one_day', ?, ?, 1, '09:00', 60, 'per_day', 500, 'completed')",
+      [clientId, providerId, profileId, portfolioJobDate, portfolioJobDate]
     );
     const [portfolio] = await adminConnection.query('INSERT INTO portfolio_items (service_request_id) VALUES (?)', [completed.insertId]);
     const [owned] = await adminConnection.query("SELECT pi.id FROM portfolio_items pi JOIN service_requests sr ON sr.id = pi.service_request_id WHERE pi.id = ? AND sr.provider_id = ? AND sr.status = 'completed'", [portfolio.insertId, providerId]);

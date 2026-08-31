@@ -61,9 +61,6 @@ export default function WorkspaceSidebar({
         <>
           <div className="workspace-nav-section-label">{t('profile')}</div>
           <nav className="workspace-nav workspace-nav-secondary">
-            <button type="button" className="workspace-nav-link workspace-nav-action" onClick={onEditClientProfile}>
-              <i className="bi bi-pencil-square" aria-hidden="true"></i><span>{t('editProfile')}</span>
-            </button>
             <button type="button" className="workspace-nav-link workspace-nav-action" onClick={onManageServiceProfile}>
               <i className={`bi ${hasServiceProfile ? 'bi-card-list' : 'bi-plus-circle'}`} aria-hidden="true"></i>
               <span>{t(hasServiceProfile ? 'serviceListing' : 'postServiceListing')}</span>

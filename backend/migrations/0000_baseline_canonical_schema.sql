@@ -26,6 +26,12 @@ CREATE TABLE users (
   profession                  VARCHAR(255)     NULL,
   profile_photo_url           VARCHAR(500)     NULL,
   profile_photo_public_id     VARCHAR(255)     NULL,
+  -- Compatibility columns: active code still reads these as a fallback for
+  -- accounts photographed before the Cloudinary migration and still writes
+  -- NULL to them whenever a canonical profile_photo_url is saved. Do not
+  -- remove without first removing every backend read/write reference.
+  profile_image                VARCHAR(500)     NULL,
+  profile_photo                LONGBLOB         NULL,
   is_verified                 BOOLEAN          NOT NULL DEFAULT FALSE,
   is_active                   BOOLEAN          NOT NULL DEFAULT TRUE,
   email_verified              BOOLEAN          NOT NULL DEFAULT FALSE,
@@ -291,6 +297,10 @@ CREATE TABLE service_requests (
   service_type_label            VARCHAR(255)   NULL,
   job_details                   TEXT           NOT NULL,
   service_location              VARCHAR(500)   NOT NULL,
+  booking_type                  ENUM('one_day','multi_day') NOT NULL DEFAULT 'one_day',
+  start_date                    DATE           NOT NULL,
+  end_date                      DATE           NOT NULL,
+  duration_days                 INT            NOT NULL DEFAULT 1,
   multi_day_mode                ENUM('continuous','specific_dates') NOT NULL DEFAULT 'continuous',
   start_time                    TIME           NOT NULL,
   estimated_duration_minutes    INT            NOT NULL,
@@ -330,6 +340,7 @@ CREATE TABLE service_request_dates (
   id                   BIGINT UNSIGNED  NOT NULL AUTO_INCREMENT,
   service_request_id   INT UNSIGNED     NOT NULL,
   service_date         DATE             NOT NULL,
+  created_at           TIMESTAMP        NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
   UNIQUE KEY uq_srd_request_date (service_request_id, service_date),
   KEY idx_srd_date (service_date),
@@ -357,6 +368,7 @@ CREATE TABLE service_request_reschedules (
   responded_by                          BIGINT UNSIGNED  NULL,
   responded_at                          TIMESTAMP        NULL,
   created_at                            TIMESTAMP        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at                            TIMESTAMP        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
   UNIQUE KEY uq_reschedule_pending (service_request_id, pending_marker),
   KEY idx_reschedule_request_status (service_request_id, reschedule_status),
@@ -372,6 +384,7 @@ CREATE TABLE service_request_reschedule_dates (
   id              BIGINT UNSIGNED  NOT NULL AUTO_INCREMENT,
   reschedule_id   BIGINT UNSIGNED  NOT NULL,
   proposed_date   DATE             NOT NULL,
+  created_at      TIMESTAMP        NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
   UNIQUE KEY uq_reschedule_date (reschedule_id, proposed_date),
   CONSTRAINT fk_reschedule_date_parent FOREIGN KEY (reschedule_id) REFERENCES service_request_reschedules(id) ON DELETE RESTRICT
@@ -468,6 +481,7 @@ CREATE TABLE portfolio_items (
   service_request_id    INT UNSIGNED  NOT NULL,
   image_url              VARCHAR(500)  NULL,
   image_public_id         VARCHAR(255)  NULL,
+  caption                 VARCHAR(255)  NULL,
   is_published              BOOLEAN       NOT NULL DEFAULT TRUE,
   is_featured                BOOLEAN       NOT NULL DEFAULT FALSE,
   display_order                INT           NOT NULL DEFAULT 0,
@@ -515,6 +529,16 @@ CREATE TABLE notifications (
 
 -- ----------------------------------------------------------------------------
 -- 26. user_reports
+--
+-- This is the modern Admin Reports contract used by the active backend.
+-- Historical Railway production also carries legacy-only compatibility
+-- columns (report_status, action_taken, priority, resolution_notes,
+-- moderation_notes, screenshot_data, screenshot_mime, handled_at) that
+-- reconcile-production-schema.js preserves without dropping. Those legacy
+-- columns are intentionally omitted from this fresh baseline because no
+-- active code path reads or writes them. Historical screenshot blobs
+-- (screenshot_data/screenshot_mime) remain in production as compatibility
+-- data; migrating them to Cloudinary URLs is a separate, explicit follow-up.
 -- ----------------------------------------------------------------------------
 CREATE TABLE user_reports (
   id                   INT UNSIGNED  NOT NULL AUTO_INCREMENT,

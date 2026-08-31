@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import EditPortfolioModal from '../EditPortfolioModal';
-import { serviceProfileAPI } from '../../../services/api';
+import { serviceProfileAPI, userProfileAPI } from '../../../services/api';
 import { LanguageProvider } from '../../../context/LanguageContext';
 
 vi.mock('../../../services/api', () => ({
@@ -14,6 +14,11 @@ vi.mock('../../../services/api', () => ({
     createPortfolioFromRequest: vi.fn(),
     updateCompletedPortfolioItemImage: vi.fn(),
     deletePortfolioImage: vi.fn(),
+  },
+  userProfileAPI: {
+    getProfile: vi.fn(),
+    updateProfile: vi.fn(),
+    removePhoto: vi.fn(),
   },
 }));
 
@@ -39,6 +44,18 @@ describe('EditPortfolioModal provider languages', () => {
     });
     serviceProfileAPI.updatePortfolioDetails.mockResolvedValue({ success: true });
     serviceProfileAPI.updateMyLanguages.mockResolvedValue({ success: true });
+    userProfileAPI.getProfile.mockResolvedValue({
+      success: true,
+      data: {
+        fullName: 'Provider One',
+        profilePhoto: 'https://example.test/provider.jpg',
+      },
+    });
+    userProfileAPI.updateProfile.mockResolvedValue({
+      success: true,
+      data: { profilePhoto: 'https://example.test/new-provider.jpg' },
+    });
+    userProfileAPI.removePhoto.mockResolvedValue({ success: true });
   });
 
   it('loads signup languages into Provider Profile and saves them from there', async () => {
@@ -65,4 +82,31 @@ describe('EditPortfolioModal provider languages', () => {
       expect(serviceProfileAPI.updateMyLanguages).toHaveBeenCalledWith(['ceb', 'en', 'fil']);
     });
   });
+
+  it('saves a new provider profile picture from Provider Profile', async () => {
+    render(
+      <LanguageProvider>
+        <EditPortfolioModal onClose={vi.fn()} />
+      </LanguageProvider>,
+    );
+
+    expect(await screen.findByText('Profile Picture')).toBeInTheDocument();
+
+    // EditPortfolioModal renders through a portal (document.body), so the
+    // file input must be queried on the document, not the render container.
+    const fileInput = document.querySelector('.provider-profile-photo-section input[type="file"]');
+    const photo = new File(['photo'], 'provider.png', { type: 'image/png' });
+    fireEvent.change(fileInput, { target: { files: [photo] } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save Changes' }));
+
+    await waitFor(() => {
+      expect(userProfileAPI.updateProfile).toHaveBeenCalledTimes(1);
+    });
+
+    const submitted = userProfileAPI.updateProfile.mock.calls[0][0];
+    expect(submitted).toBeInstanceOf(FormData);
+    expect(submitted.get('profilePhoto')).toBe(photo);
+  });
+
+
 });

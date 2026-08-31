@@ -337,7 +337,7 @@ function Navbar() {
                         </button>
                       )}
 
-                      {isProvider && hasServiceProfile && (
+                      {isProvider && hasServiceProfile && providerPublicProfileRoute !== '/dashboard' && (
                         <Link
                           to={providerPublicProfileRoute}
                           state={{ previewMode: window.innerWidth <= 768 ? 'mobile' : 'web' }}
@@ -345,7 +345,7 @@ function Navbar() {
                           onClick={() => setDropdownOpen(false)}
                         >
                           <i className="bi bi-eye"></i>
-                          {t('viewPublicProfile')}
+                          {t('viewProfileAsClient')}
                         </Link>
                       )}
 

@@ -158,15 +158,6 @@ export default function MobileTopBar({
               </>
             ) : role === 'tradesperson' ? (
               <>
-                <button
-                  type="button"
-                  className="mobile-profile-menu-item"
-                  role="menuitem"
-                  onClick={onEditClientProfile}
-                >
-                  <i className="bi bi-pencil-square"></i>
-                  {t('editProfile')}
-                </button>
                 {hasServiceProfile && profileRoute !== '/dashboard' && (
                   <button
                     type="button"
