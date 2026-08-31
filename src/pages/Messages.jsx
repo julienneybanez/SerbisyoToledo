@@ -533,7 +533,7 @@ export default function Messages() {
                             <a href={'tel:' + phoneShare.sharedPhone.e164}>{phoneShare.sharedPhone.display}</a>
                           </div>
                         </div>
-                      ) : phoneShare?.requestedByMe?.status === 'pending' ? (
+                      ) : phoneShare?.requestedFromMe?.status === 'pending' ? null : phoneShare?.requestedByMe?.status === 'pending' ? (
                         <div className="messages-phone-pending">
                           <i className="bi bi-hourglass-split" aria-hidden="true"></i>
                           <span>{t('phoneSharePending')}</span>
