@@ -525,6 +525,10 @@ exports.createRequest = async (req, res) => {
          service_type_label,
          job_details,
          service_location,
+         booking_type,
+         start_date,
+         end_date,
+         duration_days,
          multi_day_mode,
          start_time,
          estimated_duration_minutes,
@@ -533,7 +537,7 @@ exports.createRequest = async (req, res) => {
          estimated_total,
          status
        )
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         clientId,
         profile.provider_id,
@@ -542,6 +546,10 @@ exports.createRequest = async (req, res) => {
         serviceRequestLabel,
         jobDetails,
         normalizedServiceLocation,
+        normalized.storageBookingType,
+        normalized.normalizedStartDate,
+        normalized.normalizedEndDate,
+        normalized.durationDays,
         requestMultiDayMode,
         normalized.normalizedStartTime,
         normalized.normalizedDurationMinutes,
@@ -1466,12 +1474,20 @@ exports.respondToReschedule = async (req, res) => {
 
       await connection.query(
         `UPDATE service_requests
-         SET start_time = ?,
+         SET booking_type = ?,
+             start_date = ?,
+             end_date = ?,
+             duration_days = ?,
+             start_time = ?,
              estimated_duration_minutes = ?,
              estimated_total = ?,
              multi_day_mode = ?
          WHERE id = ?`,
         [
+          proposedDates.length === 1 ? 'one_day' : 'multi_day',
+          proposedDates[0],
+          proposedDates[proposedDates.length - 1],
+          durationDays,
           proposal.proposed_start_time,
           proposedDurationMinutes,
           estimatedTotal,
