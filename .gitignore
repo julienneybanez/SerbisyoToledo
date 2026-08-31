@@ -66,3 +66,6 @@ temp/
 secrets/
 backend/migrations/20260725_add_service_request_decline_reason.sql
 backend/migrations/20260725_add_verification_notification_types.sql
+
+# Local production reconciliation audit output
+backend/.runtime-audits/
