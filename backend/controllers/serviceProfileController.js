@@ -173,7 +173,7 @@ const findNextBookableSlot = async (queryable, profile) => {
        FROM provider_available_slots
        WHERE service_profile_id = ?
          AND available_date BETWEEN ? AND ?
-       ORDER BY available_date ASC`,
+       ORDER BY service_date ASC`,
       [profile.id, todayIso, endIso]
     );
 
@@ -195,7 +195,12 @@ const findNextBookableSlot = async (queryable, profile) => {
         };
       }
     }
-  } catch {
+  } catch (error) {
+    console.error('Failed to resolve next bookable slot:', {
+      serviceProfileId: profile.id,
+      code: error?.code,
+      message: error?.message,
+    });
     return null;
   }
 
