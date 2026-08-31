@@ -97,14 +97,6 @@ async function ensureTable(table, ddl) {
   await schedule('create table ' + table, ddl);
 }
 
-async function modifyIfNeeded(table, column, targetFragment, ddl) {
-  const current = await getColumn(table, column);
-  if (!current) return;
-  const signature = [current.COLUMN_TYPE, current.IS_NULLABLE, current.COLUMN_DEFAULT].join('|').toLowerCase();
-  if (signature.includes(targetFragment.toLowerCase())) return;
-  await schedule('modify ' + table + '.' + column, ddl);
-}
-
 function parseJsonArray(value) {
   if (Array.isArray(value)) return value;
   if (!value) return [];

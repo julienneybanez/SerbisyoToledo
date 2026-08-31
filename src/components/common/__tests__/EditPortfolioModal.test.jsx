@@ -81,8 +81,10 @@ describe('EditPortfolioModal provider languages', () => {
     await waitFor(() => {
       expect(serviceProfileAPI.updateMyLanguages).toHaveBeenCalledWith(['ceb', 'en', 'fil']);
     });
-  });  it('saves a new provider profile picture from Provider Profile', async () => {
-    const { container } = render(
+  });
+
+  it('saves a new provider profile picture from Provider Profile', async () => {
+    render(
       <LanguageProvider>
         <EditPortfolioModal onClose={vi.fn()} />
       </LanguageProvider>,
@@ -90,7 +92,9 @@ describe('EditPortfolioModal provider languages', () => {
 
     expect(await screen.findByText('Profile Picture')).toBeInTheDocument();
 
-    const fileInput = container.querySelector('.provider-profile-photo-section input[type="file"]');
+    // EditPortfolioModal renders through a portal (document.body), so the
+    // file input must be queried on the document, not the render container.
+    const fileInput = document.querySelector('.provider-profile-photo-section input[type="file"]');
     const photo = new File(['photo'], 'provider.png', { type: 'image/png' });
     fireEvent.change(fileInput, { target: { files: [photo] } });
     fireEvent.click(screen.getByRole('button', { name: 'Save Changes' }));

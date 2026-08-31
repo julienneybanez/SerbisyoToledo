@@ -6,6 +6,11 @@ afterEach(() => {
 	cleanup();
 });
 
+// jsdom does not implement scrollIntoView; components that call it unconditionally need this stub.
+if (typeof window !== 'undefined' && typeof window.HTMLElement !== 'undefined' && !window.HTMLElement.prototype.scrollIntoView) {
+	window.HTMLElement.prototype.scrollIntoView = () => {};
+}
+
 const createStorage = () => {
 	const values = new Map();
 	return {

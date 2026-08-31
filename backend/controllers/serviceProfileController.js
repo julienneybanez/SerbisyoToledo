@@ -209,14 +209,6 @@ const deriveOnlineFromLastSeen = (lastSeenAt) => {
   return (Date.now() - seenTime) <= PRESENCE_WINDOW_MINUTES * 60 * 1000;
 };
 
-const normalizeLanguageCodes = (payload) => Array.from(
-  new Set(
-    (Array.isArray(payload) ? payload : [])
-      .map((value) => String(value || '').trim().toLowerCase())
-      .filter(Boolean)
-  )
-);
-
 const populateCanonicalProfileFields = async (queryable, profile) => {
   const profileId = profile.id;
   const userId = profile.user_id;
