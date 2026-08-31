@@ -8,6 +8,7 @@ const {
 const APPLY = process.argv.includes('--apply');
 const CONFIRM_PRODUCTION = process.argv.includes('--confirm-production');
 const BACKUP_CONFIRMED = String(process.env.PRODUCTION_DB_BACKUP_CONFIRMED || '').toLowerCase() === 'yes';
+const EXPECTED_DATABASE_NAME = String(process.env.PRODUCTION_DB_EXPECTED_NAME || '').trim();
 
 const plan = [];
 const changes = [];
@@ -854,6 +855,15 @@ async function run() {
     if (!BACKUP_CONFIRMED) {
       throw new Error('Refusing to apply until PRODUCTION_DB_BACKUP_CONFIRMED=yes is set after taking a Railway backup/snapshot.');
     }
+    if (!EXPECTED_DATABASE_NAME) {
+      throw new Error('Refusing to apply without PRODUCTION_DB_EXPECTED_NAME set to the database name printed by the read-only audit.');
+    }
+    if (EXPECTED_DATABASE_NAME !== databaseName) {
+      throw new Error(
+        'Refusing to apply: connected database "' + databaseName
+        + '" does not match PRODUCTION_DB_EXPECTED_NAME="' + EXPECTED_DATABASE_NAME + '".'
+      );
+    }
   }
 
   for (const required of ['users', 'service_profiles', 'service_requests', 'portfolio_items', 'reviews', 'notifications', 'verification_requests']) {
@@ -877,7 +887,7 @@ async function run() {
     });
     console.log('\nDry run only. No database changes were made.');
     console.log('To apply after taking a Railway production backup:');
-    console.log('  PRODUCTION_DB_BACKUP_CONFIRMED=yes node scripts/reconcile-production-schema.js --apply --confirm-production');
+    console.log('  PRODUCTION_DB_BACKUP_CONFIRMED=yes PRODUCTION_DB_EXPECTED_NAME=' + databaseName + ' node scripts/reconcile-production-schema.js --apply --confirm-production');
     return;
   }
 
