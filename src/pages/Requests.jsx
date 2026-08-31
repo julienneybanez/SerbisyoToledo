@@ -986,9 +986,6 @@ export default function Requests() {
                       <i className="bi bi-chat-dots-fill"></i>
                       {isProvider ? t('messageClient') : t('messageProvider')}
                     </button>
-                    {[REQUEST_STATUS.ACCEPTED, REQUEST_STATUS.ON_THE_WAY, REQUEST_STATUS.IN_PROGRESS].includes(request.status) && (
-                      <span className="request-communication-help">{t('phoneShareOpenDetailsHelp')}</span>
-                    )}
                   </div>
                 )}
 
