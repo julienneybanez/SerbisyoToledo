@@ -25,6 +25,24 @@
   .workspace-nav { display: flex; flex-direction: column; gap: 0.25rem; }
   .workspace-nav-link { min-height: 48px; display: flex; align-items: center; gap: 0.75rem; padding: 0.7rem 0.8rem; border: 1px solid transparent; border-radius: 10px; color: var(--color-text-secondary); text-decoration: none; font-size: 0.94rem; font-weight: 700; }
   .workspace-nav-link i { width: 20px; text-align: center; }
+  .workspace-nav-badge {
+    min-width: 22px;
+    height: 22px;
+    margin-left: auto;
+    padding: 0 0.38rem;
+    display: inline-grid;
+    place-items: center;
+    border-radius: 999px;
+    background: var(--brand-primary);
+    color: #fff;
+    font-size: 0.72rem;
+    font-weight: 800;
+    line-height: 1;
+  }
+  .workspace-nav-link.active .workspace-nav-badge {
+    background: #fff;
+    color: var(--brand-primary);
+  }
   .workspace-nav-link:hover { color: var(--color-text-primary); background: var(--color-surface-secondary); }
   .workspace-nav-link.active {
     color: #fff;
