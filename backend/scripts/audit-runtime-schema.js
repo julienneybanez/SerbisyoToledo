@@ -66,6 +66,44 @@ const REQUIRED_COLUMNS = {
     'id', 'service_request_id', 'requester_user_id', 'owner_user_id',
     'contact_type', 'status', 'requested_at', 'responded_at', 'updated_at',
   ],
+  provider_availability_settings: [
+    'id', 'service_profile_id', 'allow_same_day_booking',
+    'min_advance_notice_minutes', 'max_advance_booking_days',
+    'availability_status', 'show_availability_status',
+  ],
+  provider_available_slots: [
+    'id', 'service_profile_id', 'available_date', 'start_time', 'end_time',
+  ],
+  provider_availability_blackouts: [
+    'id', 'service_profile_id', 'blackout_date', 'start_time', 'end_time', 'reason',
+  ],
+  provider_credentials: [
+    'id', 'service_profile_id', 'credential_name', 'credential_type',
+    'issuing_organization', 'credential_id', 'issue_date', 'expiration_date',
+    'does_not_expire', 'credential_url', 'related_skills', 'document_url',
+    'document_public_id', 'verification_status', 'verification_notes',
+    'reviewed_by', 'reviewed_at', 'created_at', 'updated_at',
+  ],
+  legal_acceptances: [
+    'id', 'user_id', 'acceptance_type', 'document_version', 'context',
+    'verification_request_id', 'accepted_at', 'created_at',
+  ],
+  service_request_dates: ['id', 'service_request_id', 'service_date', 'created_at'],
+  service_request_reschedules: [
+    'id', 'service_request_id', 'original_start_date', 'original_end_date',
+    'original_start_time', 'proposed_start_date', 'proposed_end_date',
+    'proposed_start_time', 'proposed_estimated_duration_minutes',
+    'proposed_multi_day_mode', 'proposed_by', 'reschedule_reason',
+    'reschedule_status', 'responded_by', 'responded_at', 'created_at', 'updated_at',
+  ],
+  service_request_reschedule_dates: ['id', 'reschedule_id', 'proposed_date', 'created_at'],
+  service_request_status_history: [
+    'id', 'service_request_id', 'from_status', 'to_status',
+    'changed_by', 'reason', 'record_source', 'created_at',
+  ],
+  conversations: ['id', 'service_request_id', 'created_at', 'updated_at'],
+  messages: ['id', 'conversation_id', 'sender_id', 'message_text', 'read_at', 'created_at'],
+  service_request_archives: ['service_request_id', 'user_id', 'archived_at'],
 };
 
 const REQUIRED_VIEWS = ['service_profile_stats'];
