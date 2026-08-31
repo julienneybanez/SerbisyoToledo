@@ -357,6 +357,14 @@ async function ensureSupportingTables() {
       CONSTRAINT fk_credential_reviewer FOREIGN KEY (reviewed_by) REFERENCES users(id) ON DELETE SET NULL
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
 
+  const issuingOrganization = await getColumn('provider_credentials', 'issuing_organization');
+  if (issuingOrganization && issuingOrganization.IS_NULLABLE === 'NO') {
+    await schedule(
+      'allow provider_credentials.issuing_organization to be nullable',
+      'ALTER TABLE provider_credentials MODIFY COLUMN issuing_organization VARCHAR(255) NULL'
+    );
+  }
+
   await ensureTable('legal_acceptances', `
     CREATE TABLE legal_acceptances (
       id BIGINT NOT NULL AUTO_INCREMENT,
@@ -489,6 +497,29 @@ async function ensureSupportingTables() {
       CONSTRAINT fk_contact_share_requester FOREIGN KEY (requester_user_id) REFERENCES users(id) ON DELETE RESTRICT,
       CONSTRAINT fk_contact_share_owner FOREIGN KEY (owner_user_id) REFERENCES users(id) ON DELETE RESTRICT
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
+
+  if (await tableExists('service_request_contact_shares')) {
+    const requesterUserId = await getColumn('service_request_contact_shares', 'requester_user_id');
+    const legacyRequesterId = await getColumn('service_request_contact_shares', 'requester_id');
+
+    if (!requesterUserId) {
+      await ensureColumn('service_request_contact_shares', 'requester_user_id', userId + ' NULL');
+      if (APPLY && legacyRequesterId) {
+        await db.query(
+          'UPDATE service_request_contact_shares SET requester_user_id = requester_id WHERE requester_user_id IS NULL'
+        );
+        await db.query(
+          'ALTER TABLE service_request_contact_shares MODIFY COLUMN requester_user_id ' + userId + ' NOT NULL'
+        );
+        changes.push('backfilled service_request_contact_shares.requester_user_id');
+      } else if (!APPLY) {
+        plan.push({
+          label: 'backfill service_request_contact_shares.requester_user_id from legacy requester_id',
+          sql: '[data backfill]',
+        });
+      }
+    }
+  }
 
   await ensureTable('service_request_archives', `
     CREATE TABLE service_request_archives (
