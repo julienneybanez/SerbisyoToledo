@@ -156,6 +156,24 @@ async function preflightProductionData() {
       );
     }
   }
+
+  if (await tableExists('service_request_reschedules')) {
+    const [duplicatePendingReschedules] = await db.query(
+      `SELECT service_request_id, COUNT(*) AS pending_count
+         FROM service_request_reschedules
+        WHERE reschedule_status = 'pending'
+        GROUP BY service_request_id
+       HAVING COUNT(*) > 1`
+    );
+
+    if (duplicatePendingReschedules.length > 0) {
+      throw new Error(
+        'Preflight failed: duplicate pending reschedule proposals exist for request(s): '
+        + duplicatePendingReschedules.map((row) => row.service_request_id).join(', ')
+        + '. Resolve these before production reconciliation.'
+      );
+    }
+  }
 }
 
 async function ensureCoreColumns() {
@@ -486,11 +504,13 @@ async function ensureSupportingTables() {
       proposed_by ${userId} NOT NULL,
       reschedule_reason VARCHAR(1000) NOT NULL,
       reschedule_status ENUM('pending','accepted','declined','cancelled') NOT NULL DEFAULT 'pending',
+      pending_marker TINYINT(1) GENERATED ALWAYS AS (CASE WHEN reschedule_status = 'pending' THEN 1 ELSE NULL END) STORED,
       responded_by ${userId} NULL,
       responded_at TIMESTAMP NULL DEFAULT NULL,
       created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
       PRIMARY KEY (id),
+      UNIQUE KEY uq_reschedule_pending (service_request_id, pending_marker),
       KEY idx_reschedule_request_status (service_request_id, reschedule_status),
       CONSTRAINT fk_reschedule_request FOREIGN KEY (service_request_id) REFERENCES service_requests(id) ON DELETE CASCADE,
       CONSTRAINT fk_reschedule_proposed_by FOREIGN KEY (proposed_by) REFERENCES users(id) ON DELETE RESTRICT,
@@ -499,6 +519,17 @@ async function ensureSupportingTables() {
 
   await ensureColumn('service_request_reschedules', 'proposed_estimated_duration_minutes', 'INT NULL');
   await ensureColumn('service_request_reschedules', 'proposed_multi_day_mode', "ENUM('continuous','specific_dates') NULL");
+  await ensureColumn(
+    'service_request_reschedules',
+    'pending_marker',
+    "TINYINT(1) GENERATED ALWAYS AS (CASE WHEN reschedule_status = 'pending' THEN 1 ELSE NULL END) STORED"
+  );
+  await ensureIndex(
+    'service_request_reschedules',
+    'uq_reschedule_pending',
+    '(service_request_id, pending_marker)',
+    true
+  );
 
   const rescheduleId = await tableExists('service_request_reschedules') ? await idType('service_request_reschedules') : 'BIGINT';
   await ensureTable('service_request_reschedule_dates', `
