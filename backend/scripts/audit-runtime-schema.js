@@ -94,7 +94,7 @@ const REQUIRED_COLUMNS = {
     'original_start_time', 'proposed_start_date', 'proposed_end_date',
     'proposed_start_time', 'proposed_estimated_duration_minutes',
     'proposed_multi_day_mode', 'proposed_by', 'reschedule_reason',
-    'reschedule_status', 'responded_by', 'responded_at', 'created_at', 'updated_at',
+    'reschedule_status', 'pending_marker', 'responded_by', 'responded_at', 'created_at', 'updated_at',
   ],
   service_request_reschedule_dates: ['id', 'reschedule_id', 'proposed_date', 'created_at'],
   service_request_status_history: [
