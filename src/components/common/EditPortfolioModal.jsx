@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { serviceProfileAPI } from '../../services/api';
+import { serviceProfileAPI, userProfileAPI } from '../../services/api';
 import { useLanguage } from '../../context/LanguageContext';
 import './EditPortfolioModal.css';
 
@@ -12,6 +12,7 @@ const LANGUAGE_OPTIONS = [
 
 export default function EditPortfolioModal({ onClose }) {
   const { t } = useLanguage();
+  const profilePhotoInputRef = useRef(null);
   const completedJobPhotoInputRef = useRef(null);
   const linkedJobPhotoInputRef = useRef(null);
   
@@ -21,6 +22,11 @@ export default function EditPortfolioModal({ onClose }) {
     skills: [],
   });
   const [portfolio, setPortfolio] = useState([]);
+  const [accountName, setAccountName] = useState('');
+  const [profilePhoto, setProfilePhoto] = useState(null);
+  const [profilePhotoFile, setProfilePhotoFile] = useState(null);
+  const [profilePhotoPreview, setProfilePhotoPreview] = useState(null);
+  const [isRemovingProfilePhoto, setIsRemovingProfilePhoto] = useState(false);
   const [selectedLanguages, setSelectedLanguages] = useState([]);
   const [eligibleCompletedRequests, setEligibleCompletedRequests] = useState([]);
   const [selectedCompletedRequestId, setSelectedCompletedRequestId] = useState('');
@@ -49,39 +55,57 @@ export default function EditPortfolioModal({ onClose }) {
   }, []);
 
   const fetchPortfolio = async () => {
-    try {
-      setIsLoading(true);
-      const response = await serviceProfileAPI.getMyPortfolio();
-      if (response.success) {
-        setFormData({
-          aboutMe: response.data.aboutMe || '',
-          responseTime: response.data.responseTime || 'Within 24 hours',
-          skills: response.data.skills || [],
-        });
-        setPortfolio(response.data.portfolio || []);
-      }
+    setIsLoading(true);
+    setError(null);
 
-      const [completedResponse, languagesResponse] = await Promise.all([
-        serviceProfileAPI.getEligibleCompletedRequests(),
-        serviceProfileAPI.getMyLanguages(),
-      ]);
+    const [portfolioResult, completedResult, languagesResult, accountResult] = await Promise.allSettled([
+      serviceProfileAPI.getMyPortfolio(),
+      serviceProfileAPI.getEligibleCompletedRequests(),
+      serviceProfileAPI.getMyLanguages(),
+      userProfileAPI.getProfile(),
+    ]);
 
-      if (completedResponse.success && completedResponse.data) {
-        setEligibleCompletedRequests(completedResponse.data.requests || []);
-      }
-      if (languagesResponse.success) {
-        setSelectedLanguages(languagesResponse.data?.languages || []);
-      }
-    } catch (err) {
-      if (err.status === 404) {
-        setError('Please create a service profile first before editing your portfolio.');
+    if (portfolioResult.status === 'fulfilled' && portfolioResult.value?.success) {
+      const response = portfolioResult.value;
+      setFormData({
+        aboutMe: response.data.aboutMe || '',
+        responseTime: response.data.responseTime || 'Within 24 hours',
+        skills: response.data.skills || [],
+      });
+      setPortfolio(response.data.portfolio || []);
+    } else {
+      const reason = portfolioResult.status === 'rejected' ? portfolioResult.reason : null;
+      if (reason?.status === 404) {
+        setError('Please create a Service Listing first before editing your Provider Profile.');
       } else {
-        setError('Failed to load portfolio');
+        setError('Some Provider Profile details could not be loaded. You can still manage the available sections below.');
       }
-      console.error('Portfolio fetch error:', err);
-    } finally {
-      setIsLoading(false);
+      console.error('Provider profile details fetch error:', reason);
     }
+
+    if (completedResult.status === 'fulfilled' && completedResult.value?.success) {
+      setEligibleCompletedRequests(completedResult.value.data?.requests || []);
+    } else if (completedResult.status === 'rejected') {
+      console.error('Completed-job portfolio fetch error:', completedResult.reason);
+    }
+
+    if (languagesResult.status === 'fulfilled' && languagesResult.value?.success) {
+      setSelectedLanguages(languagesResult.value.data?.languages || []);
+    } else if (languagesResult.status === 'rejected') {
+      console.error('Provider language fetch error:', languagesResult.reason);
+    }
+
+    if (accountResult.status === 'fulfilled' && accountResult.value?.success) {
+      const account = accountResult.value.data || {};
+      setAccountName(account.fullName || '');
+      setProfilePhoto(account.profilePhoto || null);
+      setProfilePhotoPreview(account.profilePhoto || null);
+      setProfilePhotoFile(null);
+    } else if (accountResult.status === 'rejected') {
+      console.error('Provider account photo fetch error:', accountResult.reason);
+    }
+
+    setIsLoading(false);
   };
 
   const handleLinkCompletedRequest = async () => {
@@ -221,6 +245,66 @@ export default function EditPortfolioModal({ onClose }) {
     }));
   };
 
+  const getProfileInitials = () => {
+    const initials = String(accountName || 'SP')
+      .split(/\s+/)
+      .filter(Boolean)
+      .map((part) => part[0])
+      .join('')
+      .slice(0, 2)
+      .toUpperCase();
+    return initials || 'SP';
+  };
+
+  const handleProfilePhotoSelect = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type?.startsWith('image/')) {
+      setError('Please choose an image file for your profile picture.');
+      event.target.value = '';
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setError('Profile picture must be less than 5MB.');
+      event.target.value = '';
+      return;
+    }
+
+    setError(null);
+    setProfilePhotoFile(file);
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      if (typeof reader.result === 'string') {
+        setProfilePhotoPreview(reader.result);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveProfilePhoto = async () => {
+    if (!profilePhoto && !profilePhotoPreview) return;
+    if (!confirm('Remove your profile picture?')) return;
+
+    try {
+      setIsRemovingProfilePhoto(true);
+      setError(null);
+      const response = await userProfileAPI.removePhoto();
+      if (response.success) {
+        setProfilePhoto(null);
+        setProfilePhotoPreview(null);
+        setProfilePhotoFile(null);
+        if (profilePhotoInputRef.current) profilePhotoInputRef.current.value = '';
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to remove profile picture.');
+    } finally {
+      setIsRemovingProfilePhoto(false);
+    }
+  };
+
   const handleLanguageToggle = (code) => {
     setSelectedLanguages((current) => (
       current.includes(code)
@@ -248,22 +332,37 @@ export default function EditPortfolioModal({ onClose }) {
     setIsSaving(true);
 
     try {
-      const [profileResponse, languagesResponse] = await Promise.all([
+      const saveOperations = [
         serviceProfileAPI.updatePortfolioDetails({
           aboutMe: formData.aboutMe,
           responseTime: formData.responseTime,
           skills: formData.skills,
         }),
         serviceProfileAPI.updateMyLanguages(selectedLanguages),
-      ]);
-      
-      if (profileResponse.success && languagesResponse.success) {
+      ];
+
+      if (profilePhotoFile) {
+        const photoData = new FormData();
+        photoData.append('profilePhoto', profilePhotoFile);
+        saveOperations.push(userProfileAPI.updateProfile(photoData));
+      }
+
+      const responses = await Promise.all(saveOperations);
+      const failedResponse = responses.find((response) => !response?.success);
+
+      if (!failedResponse) {
+        const photoResponse = profilePhotoFile ? responses[2] : null;
+        if (photoResponse?.data?.profilePhoto) {
+          setProfilePhoto(photoResponse.data.profilePhoto);
+          setProfilePhotoPreview(photoResponse.data.profilePhoto);
+          setProfilePhotoFile(null);
+        }
         setSuccess(true);
         setTimeout(() => {
           onClose();
         }, 1000);
       } else {
-        setError(profileResponse.message || languagesResponse.message || 'Failed to update provider profile');
+        setError(failedResponse.message || 'Failed to update provider profile');
       }
     } catch (err) {
       setError(err.message || 'An error occurred');
@@ -304,6 +403,55 @@ export default function EditPortfolioModal({ onClose }) {
                 Provider profile updated successfully!
               </div>
             )}
+
+            {/* Provider Profile Picture */}
+            <div className="form-section provider-profile-photo-section">
+              <h3><i className="bi bi-person-circle"></i> Profile Picture</h3>
+              <p className="completed-job-linker-help">
+                This picture appears on your public provider profile, Messages, and beside your name in the app.
+              </p>
+              <div className="provider-profile-photo-row">
+                <div className="provider-profile-photo-preview" aria-label="Current provider profile picture">
+                  {profilePhotoPreview ? (
+                    <img src={profilePhotoPreview} alt="Provider profile" className="non-draggable-image" draggable="false" />
+                  ) : (
+                    <span>{getProfileInitials()}</span>
+                  )}
+                </div>
+                <div className="provider-profile-photo-actions">
+                  <input
+                    ref={profilePhotoInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="portfolio-hidden-file-input"
+                    onChange={handleProfilePhotoSelect}
+                  />
+                  <button
+                    type="button"
+                    className="btn-completed-job-photo"
+                    onClick={() => profilePhotoInputRef.current?.click()}
+                    disabled={isSaving || isRemovingProfilePhoto}
+                  >
+                    <i className="bi bi-camera"></i>
+                    {profilePhotoPreview ? 'Change Photo' : 'Upload Photo'}
+                  </button>
+                  {profilePhotoPreview && (
+                    <button
+                      type="button"
+                      className="provider-profile-photo-remove"
+                      onClick={handleRemoveProfilePhoto}
+                      disabled={isSaving || isRemovingProfilePhoto}
+                    >
+                      <i className="bi bi-trash"></i>
+                      {isRemovingProfilePhoto ? 'Removing...' : 'Remove Photo'}
+                    </button>
+                  )}
+                  {profilePhotoFile && (
+                    <span className="provider-profile-photo-pending">New photo will be saved with your Provider Profile.</span>
+                  )}
+                </div>
+              </div>
+            </div>
 
             {/* About Me Section */}
             <div className="form-section">
