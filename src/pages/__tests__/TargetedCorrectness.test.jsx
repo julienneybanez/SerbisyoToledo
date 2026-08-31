@@ -123,6 +123,84 @@ describe('Targeted correctness checks', () => {
     expect(activeLabel.previousElementSibling).toHaveTextContent('3');
   });
 
+  it('treats canonical availableSlots as completed provider availability', async () => {
+    getUser.mockReturnValue({
+      id: 7,
+      userType: 'tradesperson',
+      fullName: 'Provider User',
+      isVerified: true,
+    });
+
+    serviceProfileAPI.getMyProfile.mockResolvedValue({
+      success: true,
+      data: {
+        id: 9,
+        categories: ['Plumbing'],
+        description: 'Experienced local plumber.',
+        startingPrice: 500,
+        location: 'Poblacion',
+      },
+    });
+    serviceProfileAPI.getMyPortfolio.mockResolvedValue({
+      success: true,
+      data: {
+        aboutMe: 'Experienced local plumber.',
+        portfolio: [],
+      },
+    });
+    serviceProfileAPI.getMyAvailability.mockResolvedValue({
+      success: true,
+      data: {
+        acceptingBookings: true,
+        availableSlots: [
+          { date: '2099-01-02', startTime: '08:00', endTime: '17:00' },
+        ],
+      },
+    });
+    serviceRequestAPI.getProviderRequests.mockResolvedValue({
+      success: true,
+      data: { requests: [] },
+    });
+
+    renderWithAppProviders(<ServiceProviderDashboard />);
+
+    expect(await screen.findByText('Upload portfolio work')).toBeInTheDocument();
+    expect(screen.queryByText('Set your availability')).not.toBeInTheDocument();
+  });
+
+  it('shows canonical request dates and times in the provider work queue', async () => {
+    getUser.mockReturnValue({
+      id: 7,
+      userType: 'tradesperson',
+      fullName: 'Provider User',
+      isVerified: true,
+    });
+
+    serviceRequestAPI.getProviderRequests.mockResolvedValue({
+      success: true,
+      data: {
+        requests: [
+          {
+            id: 77,
+            status: 'accepted',
+            client_name: 'Lili Client',
+            service_display_label: 'Pipe Repair & Installation',
+            booking_dates: ['2099-01-02'],
+            start_date: '2099-01-02',
+            end_date: '2099-01-02',
+            start_time: '09:00',
+          },
+        ],
+      },
+    });
+
+    renderWithAppProviders(<ServiceProviderDashboard />);
+
+    expect(await screen.findByText('Pipe Repair & Installation')).toBeInTheDocument();
+    expect(screen.getByText(/Jan 2, 2099.*9:00 AM/)).toBeInTheDocument();
+    expect(screen.queryByText('Schedule not set')).not.toBeInTheDocument();
+  });
+
   it('shows the client workspace summary and current request', async () => {
     getUser.mockReturnValue({ userType: 'client', fullName: 'Client User' });
     serviceRequestAPI.getClientRequests.mockResolvedValue({
