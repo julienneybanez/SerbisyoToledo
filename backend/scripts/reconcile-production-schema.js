@@ -83,6 +83,14 @@ async function ensureIndex(table, index, expression, unique = false) {
   );
 }
 
+async function dropIndexIfExists(table, index) {
+  if (!(await indexExists(table, index))) return;
+  await schedule(
+    'drop obsolete index ' + table + '.' + index,
+    'ALTER TABLE ' + quote(table) + ' DROP INDEX ' + quote(index)
+  );
+}
+
 async function ensureTable(table, ddl) {
   if (await tableExists(table)) return;
   await schedule('create table ' + table, ddl);
@@ -111,6 +119,24 @@ async function idType(table) {
   const column = await getColumn(table, 'id');
   if (!column) throw new Error('Required parent table is missing: ' + table);
   return String(column.COLUMN_TYPE || 'int').toUpperCase();
+}
+
+async function preflightProductionData() {
+  const [duplicatePendingVerification] = await db.query(
+    `SELECT user_id, COUNT(*) AS pending_count
+       FROM verification_requests
+      WHERE status = 'pending'
+      GROUP BY user_id
+     HAVING COUNT(*) > 1`
+  );
+
+  if (duplicatePendingVerification.length > 0) {
+    throw new Error(
+      'Preflight failed: duplicate pending verification requests exist for user(s): '
+      + duplicatePendingVerification.map((row) => row.user_id).join(', ')
+      + '. Resolve these before production reconciliation.'
+    );
+  }
 }
 
 async function ensureCoreColumns() {
@@ -243,6 +269,22 @@ async function ensureCoreColumns() {
       'ALTER TABLE verification_requests MODIFY COLUMN certifications_mime VARCHAR(100) NULL'
     );
   }
+
+  // Historical production enforced UNIQUE(user_id, status), which prevents a
+  // provider from being rejected more than once. Canonical behavior permits
+  // unlimited reviewed history while allowing only one active pending request.
+  await dropIndexIfExists('verification_requests', 'uniq_user_pending_request');
+  await ensureColumn(
+    'verification_requests',
+    'is_active_pending',
+    "TINYINT(1) GENERATED ALWAYS AS (CASE WHEN status = 'pending' THEN 1 ELSE NULL END) STORED"
+  );
+  await ensureIndex(
+    'verification_requests',
+    'uq_verification_active_pending',
+    '(user_id, is_active_pending)',
+    true
+  );
 }
 
 async function ensureSupportingTables() {
@@ -755,6 +797,7 @@ async function run() {
     }
   }
 
+  await preflightProductionData();
   await ensureCoreColumns();
   await ensureSupportingTables();
   await ensureIndexes();
