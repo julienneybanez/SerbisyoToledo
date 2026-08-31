@@ -1120,9 +1120,6 @@ exports.updateRequestStatus = async (req, res) => {
           };
           io.to('user:' + request.client_id).emit('conversation:updated', payload);
           io.to('user:' + request.provider_id).emit('conversation:updated', payload);
-          if (conversationId) {
-            io.to('conversation:' + conversationId).emit('conversation:updated', payload);
-          }
         } catch (eventError) {
           console.error('Conversation status broadcast error:', eventError);
         }
