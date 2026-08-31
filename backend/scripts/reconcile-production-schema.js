@@ -137,6 +137,25 @@ async function preflightProductionData() {
       + '. Resolve these before production reconciliation.'
     );
   }
+
+  if (await tableExists('legal_acceptances')) {
+    const [duplicateLegalEvents] = await db.query(
+      `SELECT user_id, acceptance_type, document_version, context,
+              COALESCE(verification_request_id, 0) AS verification_request_key,
+              COUNT(*) AS duplicate_count
+         FROM legal_acceptances
+        GROUP BY user_id, acceptance_type, document_version, context,
+                 COALESCE(verification_request_id, 0)
+       HAVING COUNT(*) > 1`
+    );
+
+    if (duplicateLegalEvents.length > 0) {
+      throw new Error(
+        'Preflight failed: duplicate legal acceptance evidence exists. '
+        + 'No rows will be deleted automatically; resolve duplicates manually before reconciliation.'
+      );
+    }
+  }
 }
 
 async function ensureCoreColumns() {
@@ -416,14 +435,29 @@ async function ensureSupportingTables() {
       document_version VARCHAR(32) NOT NULL,
       context VARCHAR(64) NOT NULL,
       verification_request_id ${verificationId} NULL,
+      verification_request_key ${verificationId} GENERATED ALWAYS AS (COALESCE(verification_request_id, 0)) STORED NOT NULL,
       accepted_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
       created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
       PRIMARY KEY (id),
+      UNIQUE KEY uq_legal_acceptance_event
+        (user_id, acceptance_type, document_version, context, verification_request_key),
       KEY idx_legal_acceptance_user_type (user_id, acceptance_type),
       KEY idx_legal_acceptance_verification_request (verification_request_id),
-      CONSTRAINT fk_legal_acceptance_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+      CONSTRAINT fk_legal_acceptance_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE RESTRICT,
       CONSTRAINT fk_legal_acceptance_verification FOREIGN KEY (verification_request_id) REFERENCES verification_requests(id) ON DELETE RESTRICT
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
+
+  await ensureColumn(
+    'legal_acceptances',
+    'verification_request_key',
+    verificationId + ' GENERATED ALWAYS AS (COALESCE(verification_request_id, 0)) STORED NOT NULL'
+  );
+  await ensureIndex(
+    'legal_acceptances',
+    'uq_legal_acceptance_event',
+    '(user_id, acceptance_type, document_version, context, verification_request_key)',
+    true
+  );
 
   await ensureTable('service_request_dates', `
     CREATE TABLE service_request_dates (
