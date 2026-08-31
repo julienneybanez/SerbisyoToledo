@@ -170,7 +170,10 @@ exports.getOnboardingProgress = async (req, res) => {
         [userId]
       );
       const [schedules] = await db.query(
-        `SELECT COUNT(*) AS count FROM provider_availability_schedules WHERE user_id = ?`,
+        `SELECT COUNT(*) AS count
+         FROM provider_availability_settings pas
+         JOIN service_profiles sp ON sp.id = pas.service_profile_id
+         WHERE sp.user_id = ?`,
         [userId]
       );
       const [verifications] = await db.query(
