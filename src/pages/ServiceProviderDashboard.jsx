@@ -40,12 +40,65 @@ function formatServiceLabel(request, fallbackLabel) {
   return label.replace(/\b\w/g, (character) => character.toUpperCase());
 }
 
-function getScheduledDate(request) {
-  const raw = request?.scheduled_start_at
-    || (request?.scheduled_date
-      ? `${request.scheduled_date}T${request.scheduled_time || '00:00'}`
-      : null);
+function normalizeScheduleDateKey(value) {
+  const match = String(value || '').match(/^(\d{4})-(\d{2})-(\d{2})/);
+  return match ? `${match[1]}-${match[2]}-${match[3]}` : '';
+}
 
+function parseLocalScheduleDate(dateKey, timeValue = '00:00') {
+  const dateMatch = normalizeScheduleDateKey(dateKey).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!dateMatch) return null;
+
+  const timeMatch = String(timeValue || '00:00').match(/^(\d{1,2}):(\d{2})/);
+  const hour = timeMatch ? Number(timeMatch[1]) : 0;
+  const minute = timeMatch ? Number(timeMatch[2]) : 0;
+  const date = new Date(
+    Number(dateMatch[1]),
+    Number(dateMatch[2]) - 1,
+    Number(dateMatch[3]),
+    hour,
+    minute,
+  );
+
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function getRequestScheduleDates(request) {
+  const explicitDates = Array.isArray(request?.booking_dates) && request.booking_dates.length > 0
+    ? request.booking_dates
+    : (Array.isArray(request?.selected_dates) ? request.selected_dates : []);
+
+  const normalizedExplicitDates = [...new Set(
+    explicitDates.map(normalizeScheduleDateKey).filter(Boolean)
+  )].sort();
+
+  if (normalizedExplicitDates.length > 0) {
+    return normalizedExplicitDates;
+  }
+
+  const startDate = normalizeScheduleDateKey(request?.start_date || request?.scheduled_date);
+  const endDate = normalizeScheduleDateKey(request?.end_date);
+
+  if (startDate) {
+    if (endDate && endDate !== startDate && request?.multi_day_mode !== 'specific_dates') {
+      return [startDate, endDate];
+    }
+    return [startDate];
+  }
+
+  return [];
+}
+
+function getScheduledDate(request) {
+  const canonicalDates = getRequestScheduleDates(request);
+  if (canonicalDates.length > 0) {
+    return parseLocalScheduleDate(
+      canonicalDates[0],
+      request?.start_time || request?.scheduled_time || '00:00',
+    );
+  }
+
+  const raw = request?.scheduled_start_at;
   if (!raw) return null;
 
   const date = new Date(raw);
@@ -56,11 +109,45 @@ function formatSchedule(request, compact = false, locale = 'en-PH', unsetLabel =
   const date = getScheduledDate(request);
   if (!date) return unsetLabel;
 
-  const dateLabel = date.toLocaleDateString(locale, {
+  const scheduleDates = getRequestScheduleDates(request);
+  const isSpecificDates = request?.booking_mode === 'specific_dates'
+    || request?.multi_day_mode === 'specific_dates';
+
+  let dateLabel = date.toLocaleDateString(locale, {
     month: 'short',
     day: 'numeric',
     ...(compact ? {} : { year: 'numeric' }),
   });
+
+  if (scheduleDates.length > 1) {
+    const parsedDates = scheduleDates
+      .map((dateKey) => parseLocalScheduleDate(dateKey))
+      .filter(Boolean);
+
+    if (isSpecificDates && parsedDates.length > 1) {
+      if (compact) {
+        dateLabel = `${parsedDates[0].toLocaleDateString(locale, { month: 'short', day: 'numeric' })} +${parsedDates.length - 1} more`;
+      } else {
+        const visibleDates = parsedDates.slice(0, 3).map((item) => item.toLocaleDateString(locale, {
+          month: 'short',
+          day: 'numeric',
+        }));
+        const suffix = parsedDates.length > 3 ? ` +${parsedDates.length - 3} more` : '';
+        dateLabel = `${visibleDates.join(', ')}${suffix}`;
+      }
+    } else if (parsedDates.length > 1) {
+      const first = parsedDates[0].toLocaleDateString(locale, {
+        month: 'short',
+        day: 'numeric',
+      });
+      const last = parsedDates[parsedDates.length - 1].toLocaleDateString(locale, {
+        month: 'short',
+        day: 'numeric',
+        ...(compact ? {} : { year: 'numeric' }),
+      });
+      dateLabel = `${first}–${last}`;
+    }
+  }
 
   const timeLabel = date.toLocaleTimeString(locale, {
     hour: 'numeric',
@@ -307,7 +394,8 @@ export default function ServiceProviderDashboard() {
       label: t('providerChecklistAvailabilityLabel'),
       description: t('providerChecklistAvailabilityDescription'),
       completed: Boolean(
-        (Array.isArray(myAvailability?.availability) && myAvailability.availability.length > 0)
+        (Array.isArray(myAvailability?.availableSlots) && myAvailability.availableSlots.length > 0)
+        || (Array.isArray(myAvailability?.availability) && myAvailability.availability.length > 0)
         || (Array.isArray(myAvailability?.specificAvailability) && myAvailability.specificAvailability.length > 0)
         || (Array.isArray(myAvailability?.weeklyBlocks) && myAvailability.weeklyBlocks.length > 0)
       ),
