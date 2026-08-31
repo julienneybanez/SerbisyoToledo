@@ -27,22 +27,27 @@ const emitConversationUpdated = async (req, request, eventType) => {
   const io = req.app.get('io');
   if (!io) return;
 
-  const [rows] = await db.query(
-    'SELECT id FROM conversations WHERE service_request_id = ? LIMIT 1',
-    [request.id]
-  );
-  const conversationId = rows[0]?.id || null;
-  const payload = {
-    conversationId,
-    serviceRequestId: request.id,
-    requestStatus: request.status,
-    eventType,
-  };
+  try {
+    const [rows] = await db.query(
+      'SELECT id FROM conversations WHERE service_request_id = ? LIMIT 1',
+      [request.id]
+    );
+    const payload = {
+      conversationId: rows[0]?.id || null,
+      serviceRequestId: request.id,
+      requestStatus: request.status,
+      eventType,
+    };
 
-  io.to('user:' + request.client_id).emit('conversation:updated', payload);
-  io.to('user:' + request.provider_id).emit('conversation:updated', payload);
-  if (conversationId) {
-    io.to('conversation:' + conversationId).emit('conversation:updated', payload);
+    // User rooms reach both participants whether or not they currently have the
+    // conversation open. Avoid also emitting to the conversation room so one
+    // browser does not process the same refresh twice.
+    io.to('user:' + request.client_id).emit('conversation:updated', payload);
+    io.to('user:' + request.provider_id).emit('conversation:updated', payload);
+  } catch (error) {
+    // Realtime refresh is best-effort; the successful privacy mutation must not
+    // be turned into a 500 if Socket.IO metadata lookup fails.
+    console.error('Conversation phone-share broadcast error:', error);
   }
 };
 
