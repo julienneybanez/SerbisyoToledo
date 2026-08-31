@@ -86,7 +86,7 @@ const REQUIRED_COLUMNS = {
   ],
   legal_acceptances: [
     'id', 'user_id', 'acceptance_type', 'document_version', 'context',
-    'verification_request_id', 'accepted_at', 'created_at',
+    'verification_request_id', 'verification_request_key', 'accepted_at', 'created_at',
   ],
   service_request_dates: ['id', 'service_request_id', 'service_date', 'created_at'],
   service_request_reschedules: [
