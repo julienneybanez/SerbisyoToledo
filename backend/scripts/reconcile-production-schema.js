@@ -97,6 +97,25 @@ async function ensureTable(table, ddl) {
   await schedule('create table ' + table, ddl);
 }
 
+async function ensureBackfilledTimestampColumn({ table, column, sourceSql, finalDefinition, label }) {
+  if (await getColumn(table, column)) return;
+
+  if (!APPLY) {
+    plan.push({
+      label,
+      sql: '[add nullable timestamp, backfill from historical parent timestamp, normalize column]',
+    });
+    return;
+  }
+
+  await db.query('ALTER TABLE ' + quote(table) + ' ADD COLUMN ' + quote(column) + ' TIMESTAMP NULL');
+  await db.query(sourceSql);
+  await db.query(
+    'ALTER TABLE ' + quote(table) + ' MODIFY COLUMN ' + quote(column) + ' ' + finalDefinition
+  );
+  changes.push(label);
+}
+
 function parseJsonArray(value) {
   if (Array.isArray(value)) return value;
   if (!value) return [];
@@ -214,7 +233,7 @@ async function ensureCoreColumns() {
     ['service_type_key', 'VARCHAR(120) NULL'],
     ['service_type_label', 'VARCHAR(255) NULL'],
     ['service_location', 'VARCHAR(500) NULL'],
-    ['booking_type', "ENUM('one_day','multi_day') NOT NULL DEFAULT 'one_day'"],
+    ['booking_type', "ENUM('one_day','multi_day') NULL"],
     ['start_date', 'DATE NULL'],
     ['end_date', 'DATE NULL'],
     ['start_time', 'TIME NULL'],
@@ -578,6 +597,17 @@ async function ensureSupportingTables() {
       CONSTRAINT fk_service_request_dates_request FOREIGN KEY (service_request_id) REFERENCES service_requests(id) ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
 
+  await ensureBackfilledTimestampColumn({
+    table: 'service_request_dates',
+    column: 'created_at',
+    label: 'add/backfill service_request_dates.created_at from parent request timestamps',
+    sourceSql: `UPDATE service_request_dates d
+                JOIN service_requests sr ON sr.id = d.service_request_id
+                   SET d.created_at = sr.created_at
+                 WHERE d.created_at IS NULL`,
+    finalDefinition: 'TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP',
+  });
+
   await ensureTable('service_request_reschedules', `
     CREATE TABLE service_request_reschedules (
       id BIGINT NOT NULL AUTO_INCREMENT,
@@ -608,6 +638,15 @@ async function ensureSupportingTables() {
 
   await ensureColumn('service_request_reschedules', 'proposed_estimated_duration_minutes', 'INT NULL');
   await ensureColumn('service_request_reschedules', 'proposed_multi_day_mode', "ENUM('continuous','specific_dates') NULL");
+  await ensureBackfilledTimestampColumn({
+    table: 'service_request_reschedules',
+    column: 'updated_at',
+    label: 'add/backfill service_request_reschedules.updated_at from historical reschedule timestamps',
+    sourceSql: `UPDATE service_request_reschedules
+                   SET updated_at = COALESCE(responded_at, created_at)
+                 WHERE updated_at IS NULL`,
+    finalDefinition: 'TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP',
+  });
   await ensureColumn(
     'service_request_reschedules',
     'pending_marker',
@@ -631,6 +670,17 @@ async function ensureSupportingTables() {
       UNIQUE KEY uq_reschedule_date (reschedule_id, proposed_date),
       CONSTRAINT fk_reschedule_date_parent FOREIGN KEY (reschedule_id) REFERENCES service_request_reschedules(id) ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
+
+  await ensureBackfilledTimestampColumn({
+    table: 'service_request_reschedule_dates',
+    column: 'created_at',
+    label: 'add/backfill service_request_reschedule_dates.created_at from parent reschedule timestamps',
+    sourceSql: `UPDATE service_request_reschedule_dates d
+                JOIN service_request_reschedules r ON r.id = d.reschedule_id
+                   SET d.created_at = r.created_at
+                 WHERE d.created_at IS NULL`,
+    finalDefinition: 'TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP',
+  });
 
   await ensureTable('service_request_status_history', `
     CREATE TABLE service_request_status_history (
