@@ -26,6 +26,12 @@ CREATE TABLE users (
   profession                  VARCHAR(255)     NULL,
   profile_photo_url           VARCHAR(500)     NULL,
   profile_photo_public_id     VARCHAR(255)     NULL,
+  -- Compatibility columns: active code still reads these as a fallback for
+  -- accounts photographed before the Cloudinary migration and still writes
+  -- NULL to them whenever a canonical profile_photo_url is saved. Do not
+  -- remove without first removing every backend read/write reference.
+  profile_image                VARCHAR(500)     NULL,
+  profile_photo                LONGBLOB         NULL,
   is_verified                 BOOLEAN          NOT NULL DEFAULT FALSE,
   is_active                   BOOLEAN          NOT NULL DEFAULT TRUE,
   email_verified              BOOLEAN          NOT NULL DEFAULT FALSE,
@@ -523,6 +529,16 @@ CREATE TABLE notifications (
 
 -- ----------------------------------------------------------------------------
 -- 26. user_reports
+--
+-- This is the modern Admin Reports contract used by the active backend.
+-- Historical Railway production also carries legacy-only compatibility
+-- columns (report_status, action_taken, priority, resolution_notes,
+-- moderation_notes, screenshot_data, screenshot_mime, handled_at) that
+-- reconcile-production-schema.js preserves without dropping. Those legacy
+-- columns are intentionally omitted from this fresh baseline because no
+-- active code path reads or writes them. Historical screenshot blobs
+-- (screenshot_data/screenshot_mime) remain in production as compatibility
+-- data; migrating them to Cloudinary URLs is a separate, explicit follow-up.
 -- ----------------------------------------------------------------------------
 CREATE TABLE user_reports (
   id                   INT UNSIGNED  NOT NULL AUTO_INCREMENT,

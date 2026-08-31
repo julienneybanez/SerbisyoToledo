@@ -175,6 +175,22 @@ async function preflightProductionData() {
       );
     }
   }
+
+  if (await tableExists('user_reports') && (await getColumn('user_reports', 'status'))) {
+    const [unexpectedReportStatuses] = await db.query(
+      `SELECT DISTINCT status FROM user_reports
+        WHERE status IS NOT NULL
+          AND status NOT IN ('pending','under_review','investigating','resolved','dismissed','banned')`
+    );
+
+    if (unexpectedReportStatuses.length > 0) {
+      throw new Error(
+        'Preflight failed: user_reports.status contains value(s) not covered by the safe migration mapping: '
+        + unexpectedReportStatuses.map((row) => row.status).join(', ')
+        + '. Resolve these manually before production reconciliation.'
+      );
+    }
+  }
 }
 
 async function ensureCoreColumns() {
@@ -323,6 +339,86 @@ async function ensureCoreColumns() {
     '(user_id, is_active_pending)',
     true
   );
+}
+
+function parseEnumValues(columnType) {
+  const match = /^enum\((.*)\)$/i.exec(String(columnType || '').trim());
+  if (!match) return [];
+  return match[1].split(',').map((value) => value.trim().replace(/^'|'$/g, ''));
+}
+
+const CANONICAL_REPORT_STATUSES = ['pending', 'investigating', 'resolved', 'dismissed'];
+const LEGACY_REPORT_STATUS_SUPERSET = ['pending', 'under_review', 'investigating', 'resolved', 'dismissed', 'banned'];
+
+// Active code still reads/writes these legacy compatibility columns
+// unconditionally, so they must exist on every reconciled database. No photo
+// data is fabricated here; existing values (or their absence) are preserved.
+async function ensureUserProfilePhotoCompatibility() {
+  await ensureColumn('users', 'profile_image', 'VARCHAR(500) NULL');
+  await ensureColumn('users', 'profile_photo', 'LONGBLOB NULL');
+}
+
+// Bring the historical Railway `user_reports` shape up to the modern
+// Admin Reports contract (status/resolution/screenshot_url/handled_by)
+// without deleting any legacy column or fabricating moderation decisions.
+async function ensureReportsSchema() {
+  if (!(await tableExists('user_reports'))) return;
+
+  await ensureColumn('user_reports', 'resolution', 'TEXT NULL');
+  await ensureColumn('user_reports', 'screenshot_url', 'VARCHAR(500) NULL');
+  await ensureColumn('user_reports', 'handled_by', 'BIGINT NULL');
+
+  const statusColumn = await getColumn('user_reports', 'status');
+  if (statusColumn) {
+    const currentValues = parseEnumValues(statusColumn.COLUMN_TYPE);
+    const isCanonicalShape = statusColumn.IS_NULLABLE === 'NO'
+      && currentValues.length === CANONICAL_REPORT_STATUSES.length
+      && CANONICAL_REPORT_STATUSES.every((value) => currentValues.includes(value));
+
+    if (!isCanonicalShape) {
+      if (!APPLY) {
+        plan.push({
+          label: 'normalize user_reports.status to canonical lifecycle enum (pending/investigating/resolved/dismissed)',
+          sql: '[widen enum, backfill NULL/under_review/banned -> investigating/resolved, narrow enum]',
+        });
+      } else {
+        // Widen first so every existing legacy value stays valid while rows are remapped.
+        await db.query(
+          "ALTER TABLE user_reports MODIFY COLUMN status ENUM('" + LEGACY_REPORT_STATUS_SUPERSET.join("','") + "') NULL DEFAULT 'pending'"
+        );
+        await db.query("UPDATE user_reports SET status = 'pending' WHERE status IS NULL");
+        // Deterministic stage-label renames only; no new moderation decision is invented.
+        await db.query("UPDATE user_reports SET status = 'investigating' WHERE status = 'under_review'");
+        await db.query("UPDATE user_reports SET status = 'resolved' WHERE status = 'banned'");
+        await db.query(
+          "ALTER TABLE user_reports MODIFY COLUMN status ENUM('" + CANONICAL_REPORT_STATUSES.join("','") + "') NOT NULL DEFAULT 'pending'"
+        );
+        changes.push('normalized user_reports.status to canonical lifecycle enum (pending/investigating/resolved/dismissed)');
+      }
+    }
+  }
+
+  // Copy legacy free-text moderation notes into the canonical `resolution`
+  // field without inventing new resolution text. screenshot_data/screenshot_mime
+  // are intentionally left untouched; migrating those blobs to Cloudinary is a
+  // separate, explicit follow-up (see PRODUCTION_RECONCILIATION_RUNBOOK.md).
+  const hasResolutionNotes = await getColumn('user_reports', 'resolution_notes');
+  const hasModerationNotes = await getColumn('user_reports', 'moderation_notes');
+  if (hasResolutionNotes || hasModerationNotes) {
+    if (!APPLY) {
+      plan.push({
+        label: 'backfill user_reports.resolution from legacy resolution_notes/moderation_notes',
+        sql: '[data backfill]',
+      });
+    } else {
+      await db.query(
+        `UPDATE user_reports
+            SET resolution = COALESCE(resolution, resolution_notes, moderation_notes)
+          WHERE resolution IS NULL AND (resolution_notes IS NOT NULL OR moderation_notes IS NOT NULL)`
+      );
+      changes.push('backfilled user_reports.resolution from legacy resolution_notes/moderation_notes');
+    }
+  }
 }
 
 async function ensureSupportingTables() {
@@ -668,48 +764,52 @@ async function backfillTaxonomyAndSkills() {
     return;
   }
 
-  const [profiles] = await db.query(
-    `SELECT sp.id, sp.user_id, sp.service_categories,
-            CASE WHEN EXISTS(
-              SELECT 1 FROM information_schema.COLUMNS
-              WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'service_profiles' AND COLUMN_NAME = 'service_types'
-            ) THEN 1 ELSE 0 END AS ignored
-     FROM service_profiles sp`
-  );
-
-  for (const row of profiles) {
-    const legacyCategories = parseJsonArray(row.service_categories);
-    const normalizedLabels = normalizeCategoryLabels(legacyCategories, { preserveUnknown: true });
-    const canonicalLabels = normalizeCategoryLabels(normalizedLabels, { preserveUnknown: false });
-    const categoryKeys = canonicalLabels.map(toCategoryKey).filter(Boolean);
-    const derivedTypes = getServiceTypesForProfile({ categoryLabels: canonicalLabels, serviceTypeKeys: [] });
-
-    for (const key of categoryKeys) {
-      await db.query(
-        'INSERT IGNORE INTO service_profile_categories (service_profile_id, category_key) VALUES (?, ?)',
-        [row.id, key]
-      );
-    }
-    for (const type of derivedTypes) {
-      await db.query(
-        'INSERT IGNORE INTO service_profile_types (service_profile_id, service_type_key) VALUES (?, ?)',
-        [row.id, type.key]
-      );
-    }
-
-    await db.query(
-      'UPDATE service_profiles SET taxonomy_needs_review = ? WHERE id = ?',
-      [categoryKeys.length === 0 || derivedTypes.length === 0 ? 1 : 0, row.id]
+  // Legacy one-time source; absent on fresh canonical databases and on
+  // production installs where this backfill already ran previously.
+  if (await getColumn('service_profiles', 'service_categories')) {
+    const [profiles] = await db.query(
+      `SELECT sp.id, sp.user_id, sp.service_categories
+       FROM service_profiles sp`
     );
+
+    for (const row of profiles) {
+      const legacyCategories = parseJsonArray(row.service_categories);
+      const normalizedLabels = normalizeCategoryLabels(legacyCategories, { preserveUnknown: true });
+      const canonicalLabels = normalizeCategoryLabels(normalizedLabels, { preserveUnknown: false });
+      const categoryKeys = canonicalLabels.map(toCategoryKey).filter(Boolean);
+      const derivedTypes = getServiceTypesForProfile({ categoryLabels: canonicalLabels, serviceTypeKeys: [] });
+
+      for (const key of categoryKeys) {
+        await db.query(
+          'INSERT IGNORE INTO service_profile_categories (service_profile_id, category_key) VALUES (?, ?)',
+          [row.id, key]
+        );
+      }
+      for (const type of derivedTypes) {
+        await db.query(
+          'INSERT IGNORE INTO service_profile_types (service_profile_id, service_type_key) VALUES (?, ?)',
+          [row.id, type.key]
+        );
+      }
+
+      await db.query(
+        'UPDATE service_profiles SET taxonomy_needs_review = ? WHERE id = ?',
+        [categoryKeys.length === 0 || derivedTypes.length === 0 ? 1 : 0, row.id]
+      );
+    }
   }
 
-  const [users] = await db.query('SELECT id, skills FROM users');
-  for (const user of users) {
-    for (const skill of parseJsonArray(user.skills).map((value) => String(value || '').trim()).filter(Boolean)) {
-      await db.query(
-        'INSERT IGNORE INTO provider_skills (user_id, skill_label) VALUES (?, ?)',
-        [user.id, skill]
-      );
+  // Legacy one-time source; absent on fresh canonical databases and on
+  // production installs where this backfill already ran previously.
+  if (await getColumn('users', 'skills')) {
+    const [users] = await db.query('SELECT id, skills FROM users');
+    for (const user of users) {
+      for (const skill of parseJsonArray(user.skills).map((value) => String(value || '').trim()).filter(Boolean)) {
+        await db.query(
+          'INSERT IGNORE INTO provider_skills (user_id, skill_label) VALUES (?, ?)',
+          [user.id, skill]
+        );
+      }
     }
   }
 
@@ -746,17 +846,34 @@ async function backfillRequestCompatibility() {
     return;
   }
 
+  // Legacy one-time sources; absent on fresh canonical databases and on
+  // production installs where this backfill already ran previously.
+  const hasScheduledDate = Boolean(await getColumn('service_requests', 'scheduled_date'));
+  const hasScheduledStartAt = Boolean(await getColumn('service_requests', 'scheduled_start_at'));
+  const hasScheduledEndAt = Boolean(await getColumn('service_requests', 'scheduled_end_at'));
+
+  const startDateSources = ['sr.start_date'];
+  if (hasScheduledDate) startDateSources.push('sr.scheduled_date');
+  if (hasScheduledStartAt) startDateSources.push('DATE(sr.scheduled_start_at)');
+
+  const endDateSources = ['sr.end_date'];
+  if (hasScheduledDate) endDateSources.push('sr.scheduled_date');
+  if (hasScheduledEndAt) endDateSources.push('DATE(sr.scheduled_end_at)');
+  if (hasScheduledStartAt) endDateSources.push('DATE(sr.scheduled_start_at)');
+
+  const durationSources = ['sr.estimated_duration_minutes'];
+  if (hasScheduledStartAt && hasScheduledEndAt) {
+    durationSources.push('TIMESTAMPDIFF(MINUTE, sr.scheduled_start_at, sr.scheduled_end_at)');
+  }
+  durationSources.push('120');
+
   await db.query(
     `UPDATE service_requests sr
      LEFT JOIN service_profiles sp ON sp.id = sr.service_profile_id
      SET sr.booking_type = COALESCE(sr.booking_type, 'one_day'),
-         sr.start_date = COALESCE(sr.start_date, sr.scheduled_date, DATE(sr.scheduled_start_at)),
-         sr.end_date = COALESCE(sr.end_date, sr.scheduled_date, DATE(sr.scheduled_end_at), DATE(sr.scheduled_start_at)),
-         sr.estimated_duration_minutes = COALESCE(
-           sr.estimated_duration_minutes,
-           TIMESTAMPDIFF(MINUTE, sr.scheduled_start_at, sr.scheduled_end_at),
-           120
-         ),
+         sr.start_date = COALESCE(${startDateSources.join(', ')}),
+         sr.end_date = COALESCE(${endDateSources.join(', ')}),
+         sr.estimated_duration_minutes = COALESCE(${durationSources.join(', ')}),
          sr.duration_days = COALESCE(sr.duration_days, 1),
          sr.multi_day_mode = COALESCE(sr.multi_day_mode, 'continuous'),
          sr.pricing_unit_snapshot = COALESCE(sr.pricing_unit_snapshot, 'per_day'),
@@ -768,11 +885,15 @@ async function backfillRequestCompatibility() {
         OR sr.daily_rate_snapshot IS NULL`
   );
 
+  const requestDateSources = ['start_date'];
+  if (hasScheduledDate) requestDateSources.push('scheduled_date');
+  if (hasScheduledStartAt) requestDateSources.push('DATE(scheduled_start_at)');
+
   await db.query(
     `INSERT IGNORE INTO service_request_dates (service_request_id, service_date)
-     SELECT id, COALESCE(start_date, scheduled_date, DATE(scheduled_start_at))
+     SELECT id, COALESCE(${requestDateSources.join(', ')})
      FROM service_requests
-     WHERE COALESCE(start_date, scheduled_date, DATE(scheduled_start_at)) IS NOT NULL`
+     WHERE COALESCE(${requestDateSources.join(', ')}) IS NOT NULL`
   );
 
   await db.query(
@@ -822,6 +943,8 @@ async function verifyCriticalRuntime() {
     ['taxonomy', "SELECT COUNT(*) AS count FROM service_profile_categories"],
     ['languages', "SELECT COUNT(*) AS count FROM person_languages"],
     ['availability', "SELECT COUNT(*) AS count FROM provider_available_slots"],
+    ['admin reports', "SELECT COUNT(*) AS count FROM user_reports WHERE status IN ('pending','investigating','resolved','dismissed')"],
+    ['profile photo compatibility', "SELECT COUNT(*) AS count FROM users WHERE profile_photo_url IS NOT NULL OR profile_image IS NOT NULL OR profile_photo IS NOT NULL"],
   ];
 
   const results = [];
@@ -866,7 +989,7 @@ async function run() {
     }
   }
 
-  for (const required of ['users', 'service_profiles', 'service_requests', 'portfolio_items', 'reviews', 'notifications', 'verification_requests']) {
+  for (const required of ['users', 'service_profiles', 'service_requests', 'portfolio_items', 'reviews', 'notifications', 'verification_requests', 'user_reports']) {
     if (!(await tableExists(required))) {
       throw new Error('Production reconciliation requires existing legacy table: ' + required);
     }
@@ -874,6 +997,8 @@ async function run() {
 
   await preflightProductionData();
   await ensureCoreColumns();
+  await ensureUserProfilePhotoCompatibility();
+  await ensureReportsSchema();
   await ensureSupportingTables();
   await ensureIndexes();
   await backfillTaxonomyAndSkills();

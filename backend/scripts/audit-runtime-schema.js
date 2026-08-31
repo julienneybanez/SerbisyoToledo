@@ -32,7 +32,11 @@ const REQUIRED_TABLES = [
 
 const REQUIRED_COLUMNS = {
   users: [
-    'id', 'full_name', 'email', 'user_type', 'profession', 'skills',
+    // 'skills' is intentionally excluded: it is a one-time legacy source that
+    // reconcile-production-schema.js reads only if present on historical
+    // Railway production (see backfillTaxonomyAndSkills). It is not part of
+    // the canonical baseline and no active controller reads/writes it.
+    'id', 'full_name', 'email', 'user_type', 'profession',
     'profile_image', 'profile_photo', 'profile_photo_url', 'profile_photo_public_id',
     'phone', 'address', 'bio', 'is_verified', 'is_active', 'last_seen_at', 'email_verified',
   ],
@@ -104,7 +108,18 @@ const REQUIRED_COLUMNS = {
   conversations: ['id', 'service_request_id', 'created_at', 'updated_at'],
   messages: ['id', 'conversation_id', 'sender_id', 'message_text', 'read_at', 'created_at'],
   service_request_archives: ['service_request_id', 'user_id', 'archived_at'],
+  // Canonical Admin Reports contract. Legacy-only fields (report_status,
+  // action_taken, priority, resolution_notes, moderation_notes,
+  // screenshot_data, screenshot_mime, handled_at) may still exist in
+  // production as preserved compatibility data but are not required here
+  // because active code no longer reads or writes them.
+  user_reports: [
+    'id', 'request_id', 'reporter_id', 'reported_user_id', 'reason', 'description',
+    'status', 'resolution', 'screenshot_url', 'handled_by', 'created_at', 'updated_at',
+  ],
 };
+
+const CANONICAL_REPORT_STATUSES = ['pending', 'investigating', 'resolved', 'dismissed'];
 
 const REQUIRED_VIEWS = ['service_profile_stats'];
 
@@ -182,14 +197,75 @@ async function run() {
     }
   }
 
+  // Column-existence checks above cannot detect a wrong ENUM domain or
+  // incompatible stored data shape, so check those separately.
+  const incompatibleShapes = [];
+
+  const reportStatusColumn = (columnsByTable.user_reports || []).find((row) => row.COLUMN_NAME === 'status');
+  if (reportStatusColumn) {
+    const enumMatch = /^enum\((.*)\)$/i.exec(String(reportStatusColumn.COLUMN_TYPE || '').trim());
+    const enumValues = enumMatch
+      ? enumMatch[1].split(',').map((value) => value.trim().replace(/^'|'$/g, ''))
+      : [];
+    const missingStatuses = CANONICAL_REPORT_STATUSES.filter((value) => !enumValues.includes(value));
+    if (missingStatuses.length > 0 || reportStatusColumn.IS_NULLABLE === 'YES') {
+      incompatibleShapes.push({
+        table: 'user_reports',
+        column: 'status',
+        issue: 'enum is missing canonical lifecycle value(s) or the column allows NULL',
+        blocking: true,
+        details: { columnType: reportStatusColumn.COLUMN_TYPE, nullable: reportStatusColumn.IS_NULLABLE, missingStatuses },
+      });
+    }
+  }
+
+  const hasProfilePhotoUrl = (columnsByTable.users || []).some((row) => row.COLUMN_NAME === 'profile_photo_url');
+  if (hasProfilePhotoUrl) {
+    const [badPhotoUrlRows] = await db.query(
+      `SELECT COUNT(*) AS count FROM users
+        WHERE profile_photo_url IS NOT NULL
+          AND profile_photo_url NOT LIKE 'http://%'
+          AND profile_photo_url NOT LIKE 'https://%'
+          AND profile_photo_url NOT LIKE 'data:image/%'`
+    );
+    const badCount = Number(badPhotoUrlRows[0]?.count || 0);
+    if (badCount > 0) {
+      incompatibleShapes.push({
+        table: 'users',
+        column: 'profile_photo_url',
+        issue: 'contains value(s) that are not HTTP(S)/data-URL image references',
+        blocking: false,
+        details: { count: badCount },
+      });
+    }
+
+    const [orphanPublicIdRows] = await db.query(
+      `SELECT COUNT(*) AS count FROM users
+        WHERE profile_photo_public_id IS NOT NULL AND profile_photo_url IS NULL`
+    );
+    const orphanCount = Number(orphanPublicIdRows[0]?.count || 0);
+    if (orphanCount > 0) {
+      incompatibleShapes.push({
+        table: 'users',
+        column: 'profile_photo_public_id',
+        issue: 'set without a corresponding profile_photo_url',
+        blocking: false,
+        details: { count: orphanCount },
+      });
+    }
+  }
+
+  const blockingShapeIssues = incompatibleShapes.filter((issue) => issue.blocking);
+
   const report = {
     generatedAt: new Date().toISOString(),
     database: databaseName,
     mysqlVersion,
-    compatible: missingTables.length === 0 && missingColumns.length === 0 && missingViews.length === 0,
+    compatible: missingTables.length === 0 && missingColumns.length === 0 && missingViews.length === 0 && blockingShapeIssues.length === 0,
     missingTables,
     missingColumns,
     missingViews,
+    incompatibleShapes,
     tables,
     columns,
     indexes,
@@ -215,6 +291,7 @@ async function run() {
     missingTables: report.missingTables,
     missingColumns: report.missingColumns,
     missingViews: report.missingViews,
+    incompatibleShapes: report.incompatibleShapes,
   }, null, 2));
 
   if (!report.compatible) {
