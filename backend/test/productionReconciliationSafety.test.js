@@ -14,6 +14,7 @@ describe('production database reconciliation safety', () => {
     expect(source).toContain("const APPLY = process.argv.includes('--apply')");
     expect(source).toContain("const CONFIRM_PRODUCTION = process.argv.includes('--confirm-production')");
     expect(source).toContain("PRODUCTION_DB_BACKUP_CONFIRMED");
+    expect(source).toContain("PRODUCTION_DB_EXPECTED_NAME");
     expect(source).toContain("Refusing to apply without --confirm-production.");
     expect(source).toContain("Refusing to apply until PRODUCTION_DB_BACKUP_CONFIRMED=yes");
   });
