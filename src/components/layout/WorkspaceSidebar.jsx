@@ -37,6 +37,7 @@ export default function WorkspaceSidebar({
 
   useEffect(() => {
     if (!['client', 'tradesperson'].includes(role)) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- reset badge for roles without Messages
       setUnreadMessages(0);
       return undefined;
     }
