@@ -18,7 +18,8 @@
     "db:phase-c": "node scripts/run-sql-file.js migrations/20260807_004_canonical_phase_c_drop_legacy.sql",
     "taxonomy:backfill": "node scripts/backfill-service-taxonomy.js",
     "db:audit:runtime": "node scripts/audit-runtime-schema.js",
-    "db:reconcile:production": "node scripts/reconcile-production-schema.js"
+    "db:reconcile:production": "node scripts/reconcile-production-schema.js",
+    "db:verify:runtime": "node scripts/verify-runtime-sql.js"
   },
   "dependencies": {
     "@google/genai": "^2.19.0",
