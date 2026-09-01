@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { serviceRequestAPI } from '../../services/api';
+import { AppButton, AppInput, AppTextarea, IconButton } from '../ui';
 import './ServiceProfileModal.css';
 
 export default function ReportUserModal({ request, isProvider, onClose, onSubmitted }) {
@@ -47,7 +48,7 @@ export default function ReportUserModal({ request, isProvider, onClose, onSubmit
   return createPortal(
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <button className="modal-close" onClick={onClose} aria-label="Close report user modal">×</button>
+        <IconButton className="modal-close" onClick={onClose} aria-label="Close report user modal">×</IconButton>
 
         <form onSubmit={handleSubmit} className="service-profile-form" noValidate>
           <div className="modal-header">
@@ -62,7 +63,7 @@ export default function ReportUserModal({ request, isProvider, onClose, onSubmit
           <section className="form-section">
             <div className="form-group">
               <label htmlFor="reason" className="form-label">Reason<span className="required">*</span></label>
-              <input
+              <AppInput
                 id="reason"
                 name="reason"
                 className="form-input"
@@ -76,7 +77,7 @@ export default function ReportUserModal({ request, isProvider, onClose, onSubmit
 
             <div className="form-group">
               <label htmlFor="description" className="form-label">Description<span className="required">*</span></label>
-              <textarea
+              <AppTextarea
                 id="description"
                 name="description"
                 className="form-input"
@@ -101,9 +102,14 @@ export default function ReportUserModal({ request, isProvider, onClose, onSubmit
             </div>
           </section>
 
-          <button type="submit" className="btn-submit" disabled={submitting}>
-            {submitting ? 'Submitting...' : 'Submit Report'}
-          </button>
+          <div className="report-modal-actions">
+            <AppButton type="button" variant="secondary" onClick={onClose}>
+              Cancel
+            </AppButton>
+            <AppButton type="submit" variant="danger" className="report-submit" disabled={submitting}>
+              {submitting ? 'Submitting...' : 'Submit Report'}
+            </AppButton>
+          </div>
         </form>
       </div>
     </div>,
