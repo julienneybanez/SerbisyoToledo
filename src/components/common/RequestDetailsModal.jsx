@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../../context/LanguageContext';
+import { AppButton, IconButton } from '../ui';
 import './RequestDetailsModal.css';
 
 export default function RequestDetailsModal({
@@ -80,9 +81,9 @@ export default function RequestDetailsModal({
   return (
     <div className="request-details-overlay" onClick={onClose}>
       <div className="request-details-modal" onClick={(e) => e.stopPropagation()}>
-        <button className="modal-close-btn" onClick={onClose}>
+        <IconButton className="modal-close-btn" onClick={onClose} aria-label="Close request details">
           <i className="bi bi-x-lg"></i>
-        </button>
+        </IconButton>
 
         <div className="modal-header-section">
           <div className="status-icon-wrapper">
@@ -246,20 +247,19 @@ export default function RequestDetailsModal({
 
                         {actorCanRespond && (
                           <div className="reschedule-actions">
-                            <button
-                              className="action-btn btn-accept"
+                            <AppButton
                               onClick={() => onRespondReschedule && onRespondReschedule(request.id, item.id, 'accepted')}
                               disabled={actionLoading === request.id}
                             >
                               Accept Proposal
-                            </button>
-                            <button
-                              className="action-btn btn-decline"
+                            </AppButton>
+                            <AppButton
+                              variant="danger"
                               onClick={() => onRespondReschedule && onRespondReschedule(request.id, item.id, 'declined')}
                               disabled={actionLoading === request.id}
                             >
                               Decline Proposal
-                            </button>
+                            </AppButton>
                           </div>
                         )}
                       </div>
@@ -296,16 +296,16 @@ export default function RequestDetailsModal({
                     <i className="bi bi-chat-square-text"></i>
                     <span>{t('requestMessagesHelp')}</span>
                   </div>
-                  <button
-                    type="button"
-                    className="btn-request-discussion-modal"
+                  <AppButton
+                    variant="secondary"
                     onClick={() => {
                       onClose?.();
                       navigate('/messages?request=' + request.id);
                     }}
+                    icon={<i className="bi bi-chat-dots-fill" aria-hidden="true"></i>}
                   >
-                    <i className="bi bi-chat-dots-fill"></i> {isProvider ? t('messageClient') : t('messageProvider')}
-                  </button>
+                    {isProvider ? t('messageClient') : t('messageProvider')}
+                  </AppButton>
                 </div>
               </div>
             </div>
@@ -315,16 +315,15 @@ export default function RequestDetailsModal({
         {/* Action Buttons */}
         <div className="modal-actions">
           {onOpenReport && (
-            <button className="action-btn btn-decline" onClick={() => onOpenReport(request)}>
-              <i className="bi bi-flag"></i> Report User
-            </button>
+            <AppButton variant="danger" onClick={() => onOpenReport(request)} icon={<i className="bi bi-flag" aria-hidden="true"></i>}>
+              Report User
+            </AppButton>
           )}
 
           {/* Provider-only: pending actions */}
           {isProvider && request.status === 'pending' && (
             <>
-              <button
-                className="action-btn btn-accept"
+              <AppButton
                 onClick={() => void onStatusUpdate(request.id, 'accepted')}
                 disabled={actionLoading === request.id}
               >
@@ -333,21 +332,20 @@ export default function RequestDetailsModal({
                 ) : (
                   <><i className="bi bi-check-lg"></i> Accept Request</>
                 )}
-              </button>
-              <button
-                className="action-btn btn-decline"
+              </AppButton>
+              <AppButton
+                variant="danger"
                 onClick={() => onOpenDecline && onOpenDecline(request)}
                 disabled={actionLoading === request.id}
               >
                 <i className="bi bi-x-lg"></i> Decline Request
-              </button>
+              </AppButton>
             </>
           )}
 
           {/* Provider-only: on the way */}
           {isProvider && request.status === 'accepted' && (
-            <button
-              className="action-btn btn-on-way"
+            <AppButton
               onClick={() => void onStatusUpdate(request.id, 'on_the_way')}
               disabled={actionLoading === request.id}
             >
@@ -356,35 +354,35 @@ export default function RequestDetailsModal({
               ) : (
                 <><i className="bi bi-truck"></i> I'm On My Way</>
               )}
-            </button>
+            </AppButton>
           )}
 
           {isProvider && request.status === 'on_the_way' && onStatusUpdate && (
-            <button className="action-btn btn-on-way" onClick={() => void onStatusUpdate(request.id, 'in_progress')} disabled={actionLoading === request.id}>
+            <AppButton onClick={() => void onStatusUpdate(request.id, 'in_progress')} disabled={actionLoading === request.id}>
               {actionLoading === request.id ? <><span className="spinner-btn"></span> Updating...</> : <><i className="bi bi-play-circle"></i> Start Service</>}
-            </button>
+            </AppButton>
           )}
 
           {isProvider && request.status === 'in_progress' && !request.provider_completed && onStatusUpdate && (
-            <button className="action-btn btn-complete" onClick={() => void onStatusUpdate(request.id, 'completed')} disabled={actionLoading === request.id}>
+            <AppButton onClick={() => void onStatusUpdate(request.id, 'completed')} disabled={actionLoading === request.id}>
               {actionLoading === request.id ? <><span className="spinner-btn"></span> Confirming...</> : <><i className="bi bi-check-circle"></i> Mark Service Complete</>}
-            </button>
+            </AppButton>
           )}
 
           {!isProvider && request.status === 'in_progress' && !request.client_completed && onStatusUpdate && (
-            <button className="action-btn btn-complete" onClick={() => void onStatusUpdate(request.id, 'completed')} disabled={actionLoading === request.id}>
+            <AppButton onClick={() => void onStatusUpdate(request.id, 'completed')} disabled={actionLoading === request.id}>
               {actionLoading === request.id ? <><span className="spinner-btn"></span> Confirming...</> : <><i className="bi bi-check-circle"></i> Mark Service Complete</>}
-            </button>
+            </AppButton>
           )}
 
           {/* Client: Leave a review on completed request */}
           {!isProvider && request.status === 'completed' && !request.has_review && (
-            <button
-              className="action-btn btn-review"
+            <AppButton
               onClick={() => onOpenReview && onOpenReview(request)}
+              icon={<i className="bi bi-star" aria-hidden="true"></i>}
             >
-              <i className="bi bi-star"></i> Leave a Review
-            </button>
+              Leave a Review
+            </AppButton>
           )}
           {!isProvider && request.status === 'completed' && request.has_review && (
             <span className="review-submitted-badge">
@@ -393,29 +391,29 @@ export default function RequestDetailsModal({
           )}
 
           {!isProvider && request.status === 'pending' && onOpenCancel && (
-            <button className="action-btn btn-cancel" onClick={() => onOpenCancel(request)} disabled={actionLoading === request.id}>
+            <AppButton variant="danger" onClick={() => onOpenCancel(request)} disabled={actionLoading === request.id}>
               Cancel Request
-            </button>
+            </AppButton>
           )}
 
           {request.status === 'accepted' && onOpenCancel && (
-            <button className="action-btn btn-cancel" onClick={() => onOpenCancel(request)} disabled={actionLoading === request.id}>
+            <AppButton variant="danger" onClick={() => onOpenCancel(request)} disabled={actionLoading === request.id}>
               Cancel Service Request
-            </button>
+            </AppButton>
           )}
 
           {request.status === 'accepted' && onOpenReschedule && (
-            <button className="action-btn btn-on-way" onClick={() => onOpenReschedule(request)} disabled={actionLoading === request.id}>
+            <AppButton variant="secondary" onClick={() => onOpenReschedule(request)} disabled={actionLoading === request.id}>
               Propose Reschedule
-            </button>
+            </AppButton>
           )}
         </div>
 
         {/* Close Button */}
         <div className="modal-footer">
-          <button className="btn-close-modal" onClick={onClose}>
+          <AppButton variant="secondary" onClick={onClose}>
             Close
-          </button>
+          </AppButton>
         </div>
       </div>
     </div>
