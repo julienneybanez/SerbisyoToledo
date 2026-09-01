@@ -72,3 +72,43 @@ jobs:
           CANONICAL_TEST_DB_USER: serbisyo_ci
           CANONICAL_TEST_DB_PASSWORD: serbisyo_ci
         run: npm test
+
+  browser:
+    name: Responsive phone-app browser QA
+    needs: frontend
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Install Chromium QA tooling
+        run: |
+          npm install --no-save --package-lock=false @playwright/test@1.55.0
+          npx playwright install --with-deps chromium
+      - run: npm run build
+      - name: Start local production preview
+        shell: bash
+        run: |
+          npm run preview -- --host 127.0.0.1 --port 4173 > /tmp/serbisyo-preview.log 2>&1 &
+          for i in {1..30}; do
+            if curl -fsS http://127.0.0.1:4173/ >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/serbisyo-preview.log
+          exit 1
+      - name: Run phone-app browser matrix
+        run: npx playwright test qa/ui-browser.spec.cjs --browser=chromium --workers=1 --reporter=line
+      - name: Upload phone-app screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-phone-app-qa
+          path: artifacts/ui-phone
+          if-no-files-found: warn
+
