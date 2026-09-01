@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { adminAPI } from '../../services/api';
 import { useLanguage } from '../../context/LanguageContext';
-import { AppButton, AppInput, AppSelect, IconButton, PageHeader } from '../../components/ui';
+import { PageHeader } from '../../components/ui';
 import '../../styles/AdminPages.css';
 
 function AdminVerifications({ mode = 'verifications' }) {
@@ -339,12 +339,12 @@ function AdminVerifications({ mode = 'verifications' }) {
         </div>
 
         <div className="filter-group">
-          <AppSelect value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
+          <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
             <option value="all">{t('allStatuses')}</option>
             <option value="pending">{t('pending')}</option>
             <option value="approved">{t('approved')}</option>
             <option value="rejected">{t('rejected')}</option>
-          </AppSelect>
+          </select>
         </div>
       </div>
 
@@ -383,22 +383,22 @@ function AdminVerifications({ mode = 'verifications' }) {
                 )}
 
                 <div className="request-documents">
-                  <AppButton variant="secondary" className="admin-action"
-                    
+                  <button
+                    className="btn-view-details"
                     onClick={() => openDocumentPreview(request.id, 'government-id', 'Government ID')}
                     disabled={!request.documents?.hasGovernmentId}
                     aria-label={t('adminPreviewGovernmentIdDocument')}
                   >
                     {t('adminViewGovernmentId')}
-                  </AppButton>
-                  <AppButton variant="secondary" className="admin-action"
-                    
+                  </button>
+                  <button
+                    className="btn-view-details"
                     onClick={() => openDocumentPreview(request.id, 'certifications', 'Certifications')}
                     disabled={!request.documents?.hasCertifications}
                     aria-label={t('adminPreviewCertificationsDocument')}
                   >
                     {t('adminViewCertifications')}
-                  </AppButton>
+                  </button>
                 </div>
 
                 {!request.documents?.hasGovernmentId && !request.documents?.hasCertifications && (
@@ -409,14 +409,14 @@ function AdminVerifications({ mode = 'verifications' }) {
               <div className="request-actions">
                 {request.status === 'pending' ? (
                   <>
-                    <AppButton variant="secondary" className="admin-action"
+                    <button
                       className="btn-approve"
                       disabled={actionLoading === `${request.id}-approve`}
                       onClick={() => handleReview(request.id, 'approve')}
                     >
                       {actionLoading === `${request.id}-approve` ? t('adminApproving') : t('adminApproveVerification')}
                     </button>
-                    <AppButton variant="primary" className="admin-action"
+                    <button
                       className="btn-reject"
                       disabled={actionLoading === `${request.id}-reject`}
                       onClick={() => openRejectDialog(request.id)}
@@ -425,14 +425,14 @@ function AdminVerifications({ mode = 'verifications' }) {
                     </button>
                   </>
                 ) : (
-                  <AppButton variant="danger" className="admin-action"
-                    
+                  <button
+                    className="btn-view-details"
                     onClick={() => openDocumentPreview(request.id, request.documents?.hasGovernmentId ? 'government-id' : 'certifications', 'Verification Document')}
                     disabled={!request.documents?.hasGovernmentId && !request.documents?.hasCertifications}
                     aria-label={t('adminPreviewVerificationDocument')}
                   >
                     {t('viewDetails')}
-                  </AppButton>
+                  </button>
                 )}
               </div>
             </div>
@@ -477,14 +477,14 @@ function AdminVerifications({ mode = 'verifications' }) {
 
       <div className="filters-bar">
         <div className="filter-group">
-          <AppSelect value={credentialFilterStatus} onChange={(e) => setCredentialFilterStatus(e.target.value)}>
+          <select value={credentialFilterStatus} onChange={(e) => setCredentialFilterStatus(e.target.value)}>
             <option value="all">{t('allStatuses')}</option>
             <option value="pending">{t('pending')}</option>
             <option value="verified">{t('verified')}</option>
             <option value="rejected">{t('rejected')}</option>
             <option value="expired">{t('adminExpired')}</option>
             <option value="unverified">{t('adminUnverified')}</option>
-          </AppSelect>
+          </select>
         </div>
       </div>
 
@@ -521,51 +521,51 @@ function AdminVerifications({ mode = 'verifications' }) {
                 )}
 
                 <div className="request-documents">
-                  <AppButton variant="secondary" className="admin-action"
-                    
+                  <button
+                    className="btn-view-details"
                     onClick={() => openDocumentPreview(credential.document, 'Credential Document')}
                     disabled={!credential.document}
                     aria-label={t('adminPreviewCredentialDocument')}
                   >
                     {t('adminViewCredentialDocument')}
-                  </AppButton>
+                  </button>
                 </div>
               </div>
 
               <div className="request-actions">
                 {credential.verificationStatus === 'pending' || credential.verificationStatus === 'unverified' ? (
                   <>
-                    <AppButton variant="secondary" className="admin-action"
-                      
+                    <button
+                      className="btn-approve"
                       disabled={credentialActionLoading === `${credential.id}-approve`}
                       onClick={() => handleCredentialReview(credential.id, 'approve')}
                     >
                       {credentialActionLoading === `${credential.id}-approve` ? t('adminApproving') : t('adminApproveCredential')}
-                    </AppButton>
+                    </button>
                     <button
-                      
+                      className="btn-reject"
                       disabled={credentialActionLoading === `${credential.id}-reject`}
                       onClick={() => openCredentialRejectDialog(credential.id)}
                     >
                       {credentialActionLoading === `${credential.id}-reject` ? t('requestsDeclining') : t('adminRejectCredential')}
-                    </AppButton>
-                    <AppButton variant="danger" className="admin-action"
-                      
+                    </button>
+                    <button
+                      className="btn-view-details"
                       disabled={credentialActionLoading === `${credential.id}-expire`}
                       onClick={() => handleCredentialReview(credential.id, 'expire')}
                     >
                       {credentialActionLoading === `${credential.id}-expire` ? t('adminExpiring') : t('adminMarkExpired')}
-                    </AppButton>
+                    </button>
                   </>
                 ) : (
-                  <AppButton variant="secondary" className="admin-action"
-                    
+                  <button
+                    className="btn-view-details"
                     onClick={() => openDocumentPreview(credential.document, 'Credential Document')}
                     disabled={!credential.document}
                     aria-label={t('adminPreviewCredentialDocument')}
                   >
                     {t('viewDetails')}
-                  </AppButton>
+                  </button>
                 )}
               </div>
             </div>
@@ -592,7 +592,7 @@ function AdminVerifications({ mode = 'verifications' }) {
           onClick={closeDocumentPreview}
         >
           <div className="admin-document-preview-dialog" onClick={(event) => event.stopPropagation()}>
-            <AppButton variant="secondary" className="admin-action"
+            <button
               type="button"
               className="admin-document-preview-close"
               onClick={closeDocumentPreview}
@@ -603,12 +603,14 @@ function AdminVerifications({ mode = 'verifications' }) {
 
             {documentPreview.kind === 'image' ? (
               <div className="admin-document-image-container">
-                <AppButton variant="secondary" size="sm" className="admin-document-zoom-toggle"
+                <button
+                  type="button"
+                  className="admin-document-zoom-toggle"
                   onClick={() => setIsImageZoomed((prev) => !prev)}
                   aria-label={isImageZoomed ? t('adminResetImageZoom') : t('adminEnlargeImage')}
                 >
                   {isImageZoomed ? t('adminResetZoom') : t('adminEnlarge')}
-                </AppButton>
+                </button>
                 <img
                   src={documentPreview.dataUrl}
                   alt={`${documentPreview.label} document`}
@@ -651,12 +653,14 @@ function AdminVerifications({ mode = 'verifications' }) {
           <div className="admin-dialog-card danger" onClick={(event) => event.stopPropagation()}>
             <div className="admin-dialog-header">
               <h2 id="verification-reject-title" className="admin-dialog-title">{t('adminRejectVerificationRequest')}</h2>
-              <IconButton className="admin-dialog-close"
+              <button
+                type="button"
+                className="admin-dialog-close"
                 onClick={closeRejectDialog}
                 aria-label={t('adminCloseRejectionDialog')}
               >
                 ×
-              </IconButton>
+              </button>
             </div>
 
             <div className="admin-dialog-body">
@@ -685,19 +689,20 @@ function AdminVerifications({ mode = 'verifications' }) {
             <div className="admin-dialog-actions admin-dialog-actions-split">
               <button
                 type="button"
-                
+                className="btn-view-details"
                 onClick={closeRejectDialog}
-                disabled={actionLoading === `${rejectDialog.requestId}-reject`}>
+                disabled={actionLoading === `${rejectDialog.requestId}-reject`}
+              >
                 {t('requestsCancelAction')}
-              </AppButton>
-              <AppButton variant="secondary" className="admin-action"
+              </button>
+              <button
                 type="button"
-                
+                className="btn-reject"
                 onClick={() => handleReview(rejectDialog.requestId, 'reject', rejectDialog.reason)}
                 disabled={actionLoading === `${rejectDialog.requestId}-reject` || !rejectDialog.reason.trim()}
               >
                 {actionLoading === `${rejectDialog.requestId}-reject` ? t('requestsDeclining') : t('adminConfirmRejection')}
-              </AppButton>
+              </button>
             </div>
           </div>
         </div>
@@ -714,7 +719,7 @@ function AdminVerifications({ mode = 'verifications' }) {
           <div className="admin-dialog-card danger" onClick={(event) => event.stopPropagation()}>
             <div className="admin-dialog-header">
               <h2 id="credential-reject-title" className="admin-dialog-title">{t('adminRejectCredential')}</h2>
-              <AppButton variant="danger" className="admin-action"
+              <button
                 type="button"
                 className="admin-dialog-close"
                 onClick={closeCredentialRejectDialog}
@@ -750,19 +755,20 @@ function AdminVerifications({ mode = 'verifications' }) {
             <div className="admin-dialog-actions admin-dialog-actions-split">
               <button
                 type="button"
-                
+                className="btn-view-details"
                 onClick={closeCredentialRejectDialog}
-                disabled={credentialActionLoading === `${credentialRejectDialog.credentialId}-reject`}>
+                disabled={credentialActionLoading === `${credentialRejectDialog.credentialId}-reject`}
+              >
                 {t('requestsCancelAction')}
-              </AppButton>
+              </button>
               <button
                 type="button"
-                
+                className="btn-reject"
                 onClick={() => handleCredentialReview(credentialRejectDialog.credentialId, 'reject', credentialRejectDialog.reason)}
                 disabled={credentialActionLoading === `${credentialRejectDialog.credentialId}-reject` || !credentialRejectDialog.reason.trim()}
               >
                 {credentialActionLoading === `${credentialRejectDialog.credentialId}-reject` ? t('requestsDeclining') : t('adminConfirmRejection')}
-              </AppButton>
+              </button>
             </div>
           </div>
         </div>
