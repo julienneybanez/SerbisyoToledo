@@ -1754,45 +1754,6 @@
     background: transparent !important;
   }
 
-  .desktop-public-navbar .navbar .login-btn {
-    min-width: 92px !important;
-    min-height: 48px !important;
-    padding: 0 16px !important;
-    border-color: transparent !important;
-    border-radius: 12px !important;
-    background: transparent !important;
-    color: var(--mock-ink) !important;
-    font-size: 0.96rem !important;
-    font-weight: 760 !important;
-  }
-
-  .desktop-public-navbar .navbar .login-btn:hover,
-  .desktop-public-navbar .navbar .login-btn:focus-visible,
-  .desktop-public-navbar .navbar .login-btn.active-btn {
-    border-color: transparent !important;
-    background: var(--mock-surface-2) !important;
-    color: var(--mock-ink) !important;
-  }
-
-  .desktop-public-navbar .navbar .signup-btn {
-    min-width: 120px !important;
-    min-height: 52px !important;
-    padding: 0 18px !important;
-    border: 1px solid var(--mock-blue) !important;
-    border-radius: 14px !important;
-    background: var(--mock-blue) !important;
-    color: #fff !important;
-    font-size: 0.96rem !important;
-    font-weight: 780 !important;
-  }
-
-  .desktop-public-navbar .navbar .signup-btn:hover,
-  .desktop-public-navbar .navbar .signup-btn:focus-visible,
-  .desktop-public-navbar .navbar .signup-btn.active-btn {
-    border-color: var(--mock-blue-2) !important;
-    background: var(--mock-blue-2) !important;
-    color: #fff !important;
-  }
 
   /* The mockup hero uses a near-full-width editorial box with 32px gutters. */
   .home-hero > .container {
@@ -2118,42 +2079,7 @@
     background: transparent !important;
   }
 
-  .desktop-public-navbar .navbar--guest .login-btn,
-  .desktop-public-navbar .navbar--guest .signup-btn {
-    min-height: 44px !important;
-    border-radius: 12px !important;
-    padding-inline: 15px !important;
-    font-size: 0.9rem !important;
-    font-weight: 760 !important;
-  }
 
-  .desktop-public-navbar .navbar--guest .login-btn {
-    min-width: 82px !important;
-    border-color: transparent !important;
-    background: transparent !important;
-    color: var(--mock-ink) !important;
-  }
-
-  .desktop-public-navbar .navbar--guest .login-btn:hover,
-  .desktop-public-navbar .navbar--guest .login-btn:focus-visible {
-    border-color: transparent !important;
-    background: var(--mock-surface-2) !important;
-    color: var(--mock-ink) !important;
-  }
-
-  .desktop-public-navbar .navbar--guest .signup-btn {
-    min-width: 104px !important;
-    border-color: var(--mock-blue) !important;
-    background: var(--mock-blue) !important;
-    color: #fff !important;
-  }
-
-  .desktop-public-navbar .navbar--guest .signup-btn:hover,
-  .desktop-public-navbar .navbar--guest .signup-btn:focus-visible {
-    border-color: var(--mock-blue-2) !important;
-    background: var(--mock-blue-2) !important;
-    color: #fff !important;
-  }
 }
 
 @media (min-width: 992px) and (max-width: 1160px) {
@@ -2346,41 +2272,7 @@
     background: transparent !important;
   }
 
-  .desktop-public-navbar .navbar--guest .login-btn,
-  .desktop-public-navbar .navbar--guest .signup-btn {
-    min-height: 40px !important;
-    height: 40px !important;
-    padding: 10px 15px !important;
-    border-radius: 12px !important;
-    font-size: 13px !important;
-    font-weight: 750 !important;
-    line-height: 1 !important;
-  }
 
-  .desktop-public-navbar .navbar--guest .login-btn {
-    border-color: transparent !important;
-    background: transparent !important;
-    color: var(--mock-ink) !important;
-  }
-
-  .desktop-public-navbar .navbar--guest .login-btn:hover,
-  .desktop-public-navbar .navbar--guest .login-btn:focus-visible {
-    background: var(--mock-surface-2) !important;
-    color: var(--mock-ink) !important;
-  }
-
-  .desktop-public-navbar .navbar--guest .signup-btn {
-    border-color: var(--mock-blue) !important;
-    background: var(--mock-blue) !important;
-    color: #fff !important;
-  }
-
-  .desktop-public-navbar .navbar--guest .signup-btn:hover,
-  .desktop-public-navbar .navbar--guest .signup-btn:focus-visible {
-    border-color: var(--mock-blue-2) !important;
-    background: var(--mock-blue-2) !important;
-    color: #fff !important;
-  }
 }
 
 /* Home hero = the mockup's 1240px editorial box, not a full-bleed dashboard panel. */
