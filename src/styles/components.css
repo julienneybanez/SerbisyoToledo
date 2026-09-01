@@ -468,3 +468,16 @@
 [data-theme='dark'] .btn-outline-secondary {
   background: var(--color-surface);
 }
+
+
+[data-theme='dark'] .btn-outline-primary {
+  border-color: color-mix(in srgb, var(--color-primary) 42%, var(--color-border));
+  color: var(--color-primary-hover);
+}
+
+[data-theme='dark'] .btn-outline-primary:hover,
+[data-theme='dark'] .btn-outline-primary:focus-visible {
+  border-color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 12%, var(--color-surface));
+  color: var(--color-primary-hover);
+}
