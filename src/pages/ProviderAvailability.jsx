@@ -4,7 +4,7 @@ import { DayPicker } from 'react-day-picker';
 import 'react-day-picker/style.css';
 import { serviceProfileAPI } from '../services/api';
 import SettingsFlash from '../components/settings/SettingsFlash';
-import { AppButton, PageHeader } from '../components/ui';
+import { AppButton, AppInput, PageHeader } from '../components/ui';
 import { useLanguage } from '../context/LanguageContext';
 import './ProviderAvailability.css';
 
@@ -535,15 +535,13 @@ export default function ProviderAvailability() {
             <span>{t('availabilitySystemRule')}</span>
           </div>
 
-          <button
-            type="button"
-            className="availability-primary-button"
+          <AppButton
             onClick={applyPreset}
             disabled={loading || saving}
+            icon={<i className="bi bi-lightning-charge-fill" aria-hidden="true"></i>}
           >
-            <i className="bi bi-lightning-charge-fill" aria-hidden="true"></i>
             {t('availabilityApplyPreset')}
-          </button>
+          </AppButton>
         </section>
 
         <section className="availability-card">
@@ -586,9 +584,9 @@ export default function ProviderAvailability() {
                   <h3>{t('availabilitySelectedDates')}</h3>
                   <p>{customHoursCount > 0 ? t('availabilityCustomHoursCount', { count: customHoursCount }) : t('availabilityAllUsualHours')}</p>
                 </div>
-                <button type="button" className="availability-text-button" onClick={clearDates}>
+                <AppButton variant="ghost" size="sm" onClick={clearDates}>
                   {t('availabilityClearDates')}
-                </button>
+                </AppButton>
               </div>
 
               <div className="availability-date-list">
@@ -609,7 +607,7 @@ export default function ProviderAvailability() {
 
                       {isEditing ? (
                         <div className="availability-date-editor">
-                          <input
+                          <AppInput
                             type="time"
                             value={editingHours.startTime}
                             onChange={(event) => setEditingHours((current) => ({
@@ -618,7 +616,7 @@ export default function ProviderAvailability() {
                             }))}
                           />
                           <span>{t('to')}</span>
-                          <input
+                          <AppInput
                             type="time"
                             value={editingHours.endTime}
                             onChange={(event) => setEditingHours((current) => ({
@@ -626,18 +624,18 @@ export default function ProviderAvailability() {
                               endTime: event.target.value,
                             }))}
                           />
-                          <button type="button" onClick={saveOverride}>{t('save')}</button>
-                          <button type="button" className="subtle" onClick={() => setEditingDate('')}>{t('cancel')}</button>
+                          <AppButton size="sm" onClick={saveOverride}>{t('save')}</AppButton>
+                          <AppButton variant="secondary" size="sm" onClick={() => setEditingDate('')}>{t('cancel')}</AppButton>
                         </div>
                       ) : (
                         <div className="availability-date-actions">
-                          <button type="button" onClick={() => beginEditHours(date)}>
+                          <AppButton variant="secondary" size="sm" onClick={() => beginEditHours(date)}>
                             {t('availabilityChangeTime')}
-                          </button>
+                          </AppButton>
                           {hasOverride && (
-                            <button type="button" className="subtle" onClick={() => resetOverride(date)}>
+                            <AppButton variant="ghost" size="sm" onClick={() => resetOverride(date)}>
                               {t('availabilityUseUsualHours')}
-                            </button>
+                            </AppButton>
                           )}
                         </div>
                       )}
@@ -659,9 +657,7 @@ export default function ProviderAvailability() {
                 : t('availabilityPausedDescription')}
             </span>
           </div>
-          <button
-            type="button"
-            className="availability-save-button"
+          <AppButton
             onClick={handleSave}
             disabled={loading || saving}
           >
@@ -676,7 +672,7 @@ export default function ProviderAvailability() {
                 {t('availabilitySave')}
               </>
             )}
-          </button>
+          </AppButton>
         </div>
       </div>
     </div>
