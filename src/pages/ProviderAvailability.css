@@ -761,3 +761,369 @@
     transition: none;
   }
 }
+
+
+/* ===================================
+   AOXA-INSPIRED PROVIDER AVAILABILITY
+   All presets, calendar dates, per-date overrides, accepting-bookings toggle,
+   validation, clear dates and save behavior remain unchanged.
+   =================================== */
+.provider-availability-page {
+  min-height: calc(100vh - 72px);
+  padding: clamp(1.4rem, 3vw, 2.4rem) 1rem clamp(5rem, 8vw, 7rem);
+  background: var(--color-page-bg);
+}
+
+.provider-availability-inner {
+  width: min(980px, 100%);
+}
+
+.availability-page-header {
+  margin-bottom: 1rem;
+}
+
+.availability-page-header .st-page-title {
+  color: var(--color-ink);
+  font-size: clamp(2.2rem, 4vw, 3.2rem);
+  font-weight: 820;
+  letter-spacing: -0.045em;
+}
+
+.availability-card {
+  margin-bottom: 1rem;
+  padding: clamp(1.1rem, 2.5vw, 1.5rem);
+  border: 1px solid var(--color-border);
+  border-radius: 20px;
+  background: var(--color-surface);
+  box-shadow: none;
+}
+
+.availability-status-card {
+  min-height: 118px;
+  border-color: color-mix(in srgb, var(--brand-blue) 14%, var(--color-border));
+  background:
+    radial-gradient(circle at 90% 10%, color-mix(in srgb, var(--brand-blue) 8%, transparent), transparent 30%),
+    var(--color-soft-blue);
+}
+
+.availability-section-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 15px;
+  background: var(--color-surface);
+  color: var(--brand-blue-hover);
+  box-shadow: none;
+}
+
+.availability-status-copy h2,
+.availability-card-heading h2 {
+  color: var(--color-ink);
+  font-size: 1.2rem;
+  font-weight: 790;
+}
+
+.availability-status-copy p,
+.availability-card-heading p,
+.availability-calendar-help,
+.availability-list-heading p {
+  color: var(--color-text-secondary);
+}
+
+.availability-switch {
+  font-weight: 760;
+}
+
+.availability-switch > span {
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-surface);
+}
+
+.availability-switch > span::after {
+  background: var(--color-text-muted);
+}
+
+.availability-switch input:checked + span {
+  border-color: var(--brand-blue);
+  background: var(--brand-blue);
+}
+
+.availability-step {
+  border-radius: 10px;
+  background: var(--brand-blue);
+}
+
+.availability-label {
+  color: var(--color-text-primary);
+  font-weight: 740;
+}
+
+.availability-preset-grid {
+  gap: 0.6rem;
+}
+
+.availability-preset {
+  min-height: 86px;
+  padding: 0.8rem;
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  box-shadow: none;
+}
+
+.availability-preset:nth-child(1) { background: var(--color-soft-cream); }
+.availability-preset:nth-child(2) { background: var(--color-soft-blue); }
+.availability-preset:nth-child(3) { background: var(--color-soft-mint); }
+.availability-preset:nth-child(4) { background: var(--color-surface); }
+
+.availability-preset:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--brand-blue) 38%, var(--color-border));
+}
+
+.availability-preset.active {
+  padding: calc(0.8rem - 1px);
+  border: 2px solid var(--brand-blue);
+  background: color-mix(in srgb, var(--color-soft-blue) 78%, var(--color-surface));
+}
+
+.availability-preset strong {
+  font-weight: 760;
+}
+
+.availability-preset span {
+  color: var(--color-text-secondary);
+}
+
+.availability-weekday-row button,
+.availability-time-presets button {
+  min-height: 42px;
+  border: 1px solid var(--color-border);
+  border-radius: 11px;
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  font-weight: 690;
+}
+
+.availability-weekday-row button:hover,
+.availability-time-presets button:hover {
+  border-color: color-mix(in srgb, var(--brand-blue) 35%, var(--color-border));
+  background: var(--color-soft-blue);
+  color: var(--brand-blue-hover);
+}
+
+.availability-weekday-row button.selected,
+.availability-time-presets button.active {
+  border-color: var(--brand-blue);
+  background: var(--brand-blue);
+  color: #fff;
+}
+
+.availability-time-row input,
+.availability-date-editor input {
+  min-height: 46px;
+  border: 1px solid var(--color-border);
+  border-radius: 11px;
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+}
+
+.availability-time-row input:focus,
+.availability-date-editor input:focus {
+  outline: none;
+  border-color: var(--brand-blue);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-blue) 12%, transparent);
+}
+
+.availability-system-rule {
+  border-color: color-mix(in srgb, var(--brand-teal) 18%, var(--color-border));
+  border-radius: 13px;
+  background: var(--color-soft-mint);
+  color: var(--color-text-secondary);
+}
+
+.availability-system-rule i {
+  color: var(--brand-teal-hover);
+}
+
+.availability-primary-button,
+.availability-save-button {
+  min-height: 48px;
+  border: 1px solid var(--brand-blue);
+  border-radius: 12px;
+  background: var(--brand-blue);
+  box-shadow: none;
+}
+
+.availability-primary-button:hover:not(:disabled),
+.availability-save-button:hover:not(:disabled) {
+  border-color: var(--brand-blue-hover);
+  background: var(--brand-blue-hover);
+}
+
+.availability-selected-count {
+  border-color: color-mix(in srgb, var(--brand-blue) 18%, var(--color-border));
+  border-radius: 12px;
+  background: var(--color-soft-blue);
+}
+
+.availability-selected-count strong {
+  color: var(--brand-blue-hover);
+}
+
+.availability-calendar-shell {
+  padding: 0.9rem;
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  background: var(--color-soft-cream);
+}
+
+.availability-calendar-shell .rdp-root {
+  --rdp-accent-color: var(--brand-blue);
+  --rdp-accent-background-color: var(--color-soft-blue);
+}
+
+.availability-calendar-shell .rdp-caption_label,
+.availability-calendar-shell .rdp-month_caption {
+  color: var(--color-ink);
+}
+
+.availability-calendar-shell .rdp-button_previous,
+.availability-calendar-shell .rdp-button_next {
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-surface);
+  color: var(--brand-blue-hover);
+}
+
+.availability-calendar-shell .rdp-day_button {
+  border-radius: 10px;
+}
+
+.availability-calendar-shell .rdp-day:not(.rdp-disabled) .rdp-day_button:hover {
+  background: var(--color-soft-blue);
+}
+
+.availability-calendar-shell .rdp-selected .rdp-day_button {
+  border-color: var(--brand-blue);
+  background: var(--brand-blue);
+  color: #fff;
+}
+
+.availability-date-adjustments {
+  border-top-color: var(--color-border);
+}
+
+.availability-date-adjustments > summary {
+  color: var(--color-text-primary);
+  font-weight: 760;
+}
+
+.availability-date-list {
+  border-color: var(--color-border);
+  border-radius: 14px;
+}
+
+.availability-date-row {
+  min-height: 72px;
+  padding: 0.75rem 0.85rem;
+  background: var(--color-surface);
+}
+
+.availability-date-row + .availability-date-row {
+  border-top-color: var(--color-border);
+}
+
+.availability-date-copy strong {
+  color: var(--color-text-primary);
+  font-weight: 740;
+}
+
+.availability-date-copy span,
+.availability-adjustments-summary {
+  color: var(--color-text-secondary);
+}
+
+.availability-date-copy em {
+  background: var(--color-soft-mint);
+  color: var(--brand-teal-hover);
+}
+
+.availability-date-actions button,
+.availability-date-editor button {
+  min-height: 40px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  font-weight: 700;
+}
+
+.availability-date-actions button:hover,
+.availability-date-editor button:hover {
+  border-color: color-mix(in srgb, var(--brand-blue) 38%, var(--color-border));
+  background: var(--color-soft-blue);
+}
+
+.availability-save-bar {
+  bottom: 1rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-panel);
+  backdrop-filter: none;
+}
+
+.availability-save-bar strong {
+  color: var(--color-text-primary);
+}
+
+.availability-save-bar span {
+  color: var(--color-text-secondary);
+}
+
+[data-theme='dark'] .availability-card,
+[data-theme='dark'] .availability-date-row,
+[data-theme='dark'] .availability-save-bar {
+  background: var(--color-surface);
+  border-color: var(--color-border);
+}
+
+[data-theme='dark'] .availability-status-card,
+[data-theme='dark'] .availability-calendar-shell {
+  background: var(--color-surface-secondary);
+  border-color: var(--color-border);
+}
+
+[data-theme='dark'] .availability-preset {
+  border-color: var(--color-border);
+}
+
+@media (max-width: 760px) {
+  .provider-availability-page {
+    padding: 1rem 0.65rem calc(var(--mobile-nav-height) + 7rem);
+  }
+
+  .availability-page-header .st-page-title {
+    font-size: clamp(2rem, 9vw, 2.65rem);
+  }
+
+  .availability-card {
+    padding: 1rem;
+    border-radius: 18px;
+  }
+
+  .availability-status-card {
+    border-radius: 18px;
+  }
+
+  .availability-calendar-shell {
+    padding: 0.65rem;
+    border-radius: 14px;
+  }
+
+  .availability-save-bar {
+    bottom: calc(var(--mobile-nav-height) + 0.65rem);
+  }
+}
