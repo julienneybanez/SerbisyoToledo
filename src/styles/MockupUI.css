@@ -1334,3 +1334,51 @@
   }
   .booking-content { padding: 18px 14px !important; }
 }
+
+
+/* Phone-shell containment: no page-level horizontal panning, even at 320px. */
+@media (max-width: 800px) {
+  html,
+  body,
+  #root,
+  .app,
+  .main-content,
+  .mobile-page-content {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: clip;
+  }
+
+  .mobile-topbar,
+  .mobile-bottom-nav,
+  .mobile-profile-menu,
+  .workspace-content,
+  :is(
+    .client-dashboard-page,
+    .dashboard-container,
+    .requests-container,
+    .messages-page,
+    .provider-schedule-page,
+    .provider-availability-page,
+    .user-settings-container,
+    .notifications-page-shell,
+    .portfolio-shell,
+    .feed-shell
+  ) {
+    max-width: 100vw;
+    box-sizing: border-box;
+  }
+
+  .client-dashboard-inner,
+  .dashboard-wrapper,
+  .requests-wrapper,
+  .provider-schedule-inner,
+  .provider-availability-inner,
+  .notifications-page-container,
+  .feed-container,
+  .portfolio-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+  }
+}
