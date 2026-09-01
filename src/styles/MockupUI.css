@@ -3661,3 +3661,74 @@
     min-height: 44px !important;
   }
 }
+
+
+/* Remaining semantic action aliases use the same canonical variants. */
+:where(
+  .btn-secondary,
+  .btn-login-prompt,
+  .job-btn-secondary
+) {
+  min-height: 40px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  padding: 10px 15px !important;
+  border: 1px solid var(--mock-line) !important;
+  border-radius: 12px !important;
+  background: var(--mock-surface) !important;
+  color: var(--mock-ink) !important;
+  font-size: 13px !important;
+  font-weight: 750 !important;
+  line-height: 1.15 !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+:where(
+  .btn-register-prompt
+) {
+  min-height: 40px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  padding: 10px 15px !important;
+  border: 1px solid var(--mock-blue) !important;
+  border-radius: 12px !important;
+  background: var(--mock-blue) !important;
+  color: #fff !important;
+  font-size: 13px !important;
+  font-weight: 750 !important;
+  line-height: 1.15 !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+:where(
+  .job-btn-decline-subtle,
+  .messages-action-secondary.danger
+) {
+  min-height: 40px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  padding: 10px 15px !important;
+  border: 1px solid color-mix(in srgb, var(--mock-red) 38%, var(--mock-line)) !important;
+  border-radius: 12px !important;
+  background: var(--mock-surface) !important;
+  color: var(--mock-red) !important;
+  font-size: 13px !important;
+  font-weight: 750 !important;
+  line-height: 1.15 !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+@media (max-width: 800px) {
+  :where(.btn-secondary,.btn-login-prompt,.btn-register-prompt,.job-btn-secondary,.job-btn-decline-subtle,.messages-action-secondary.danger) {
+    min-height: 44px !important;
+  }
+}
