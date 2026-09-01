@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { adminAPI } from '../../services/api';
 import { useLanguage } from '../../context/LanguageContext';
-import { Chip, StatCard } from '../../components/ui';
+import { AppButton, Chip, StatCard } from '../../components/ui';
 import '../../styles/AdminPages.css';
 
 function AdminDashboard() {
@@ -158,9 +158,9 @@ function AdminDashboard() {
                 </div>
 
                 <div className="request-actions">
-                  <Link to="/admin/verifications" className="btn-view-details">
+                  <AppButton as={Link} to="/admin/verifications" variant="ghost">
                     {t('reviewRequest')}
-                  </Link>
+                  </AppButton>
                 </div>
               </div>
             ))}
@@ -199,7 +199,7 @@ function AdminDashboard() {
                 </div>
 
                 <div className="request-actions report-actions">
-                  <Link to="/admin/reports" className="btn-view-details">{t('viewReport')}</Link>
+                  <AppButton as={Link} to="/admin/reports" variant="ghost">{t('viewReport')}</AppButton>
                 </div>
               </div>
             ))}
