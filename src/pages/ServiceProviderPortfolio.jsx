@@ -4,6 +4,7 @@ import BookingModal from '../components/common/BookingModal';
 import MobileStickyAction from '../components/mobile/MobileStickyAction';
 import { serviceProfileAPI, isAuthenticated } from '../services/api';
 import { useLanguage } from '../context/LanguageContext';
+import { AppButton, IconButton } from '../components/ui';
 import {
   ArrowLeftIcon,
   StarIcon,
@@ -163,9 +164,9 @@ const ProviderCard = ({ provider, profile, onBack, hideBackLink = false, isPrevi
   return (
     <section className="provider-section">
       {!hideBackLink && (
-        <button type="button" className="back-link" onClick={handleBack}>
-          <ArrowLeftIcon /> {t('providerBackToBrowse')}
-        </button>
+        <AppButton variant="ghost" size="sm" onClick={handleBack} icon={<ArrowLeftIcon />}>
+          {t('providerBackToBrowse')}
+        </AppButton>
       )}
 
       <div className="profile-summary">
@@ -207,14 +208,14 @@ const ProviderCard = ({ provider, profile, onBack, hideBackLink = false, isPrevi
               Preview mode
             </span>
           ) : (
-            <button
-              className="btn-request-service profile-summary-request-btn"
+            <AppButton
+              className="profile-summary-request-btn"
               onClick={handleRequestService}
               disabled={!canRequestService}
               data-tour="provider-request-service"
             >
               {canRequestService ? t('requestService') : unavailableActionLabel}
-            </button>
+            </AppButton>
           )}
         </aside>
       </div>
@@ -407,21 +408,21 @@ const ProviderCard = ({ provider, profile, onBack, hideBackLink = false, isPrevi
       {showLoginPrompt && (
         <div className="login-prompt-overlay" onClick={() => setShowLoginPrompt(false)}>
           <div className="login-prompt-modal" onClick={(e) => e.stopPropagation()}>
-            <button className="login-prompt-close" type="button" onClick={() => setShowLoginPrompt(false)}>
+            <IconButton className="login-prompt-close" onClick={() => setShowLoginPrompt(false)} aria-label={t('close')}>
               <i className="bi bi-x-lg"></i>
-            </button>
+            </IconButton>
             <div className="login-prompt-icon">
               <i className="bi bi-person-lock"></i>
             </div>
             <h3>{t('providerLoginRequired')}</h3>
             <p>{t('providerLoginRequestMessage')}</p>
             <div className="login-prompt-actions">
-              <button className="btn-login-prompt" onClick={handleLoginRedirect}>
+              <AppButton variant="secondary" onClick={handleLoginRedirect}>
                 {t('logIn')}
-              </button>
-              <button className="btn-register-prompt" onClick={() => navigate('/register')}>
+              </AppButton>
+              <AppButton onClick={() => navigate('/register')}>
                 {t('createAccount')}
-              </button>
+              </AppButton>
             </div>
           </div>
         </div>
@@ -444,23 +445,22 @@ const ProviderCard = ({ provider, profile, onBack, hideBackLink = false, isPrevi
             </div>
           )}
         >
-          <button
-            type="button"
-            className="btn-request-service provider-mobile-request-btn"
+          <AppButton
+            className="provider-mobile-request-btn"
             onClick={handleRequestService}
             disabled={!canRequestService}
             data-tour="provider-request-service"
           >
             {canRequestService ? t('requestService') : unavailableActionLabel}
-          </button>
+          </AppButton>
         </MobileStickyAction>
       )}
 
       {expandedImage && (
         <div className="image-lightbox-overlay" onClick={() => setExpandedImage(null)}>
-          <button className="lightbox-close" onClick={() => setExpandedImage(null)}>
+          <IconButton className="lightbox-close" onClick={() => setExpandedImage(null)} aria-label={t('close')}>
             <i className="bi bi-x-lg"></i>
-          </button>
+          </IconButton>
           <img 
             src={expandedImage} 
             alt={t('portfolio')} 
@@ -577,9 +577,9 @@ const ServiceProviderPortfolio = () => {
         <div className="portfolio-container">
           <h2>{t('providerNotFound')}</h2>
           <p>{t('providerLoadErrorText')}</p>
-          <button className="btn-view-profile" onClick={() => navigate('/feed')}>
+          <AppButton variant="secondary" onClick={() => navigate('/feed')}>
             {t('backToFeed')}
-          </button>
+          </AppButton>
         </div>
       </div>
     );
