@@ -1614,3 +1614,342 @@
   border-color: var(--mock-blue) !important;
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--mock-blue) 12%, transparent) !important;
 }
+
+
+/* ===================================
+   PUBLIC HOME — EXACT APPROVED MOCKUP PROPORTIONS
+   The Aoxa-derived standalone mockup is the design source here.
+   Keep SerbisyoToledo's real logo, imagery, routes and functionality.
+   =================================== */
+@media (min-width: 992px) {
+  .desktop-public-navbar .navbar {
+    padding: 0 !important;
+    border-bottom: 1px solid var(--mock-line) !important;
+    background: var(--mock-surface) !important;
+    box-shadow: none !important;
+  }
+
+  .desktop-public-navbar .navbar-scrolled {
+    background: var(--mock-surface) !important;
+    box-shadow: 0 8px 28px rgba(17, 24, 39, 0.05) !important;
+  }
+
+  .desktop-public-navbar .navbar-shell {
+    width: min(1600px, calc(100% - 64px)) !important;
+    max-width: none !important;
+    min-height: 90px !important;
+    margin-inline: auto !important;
+    padding-inline: 0 !important;
+    gap: 28px !important;
+    flex-wrap: nowrap !important;
+  }
+
+  .desktop-public-navbar .brand-link {
+    flex: 0 0 auto !important;
+    min-width: max-content !important;
+  }
+
+  .desktop-public-navbar .logo-wrapper {
+    width: 50px !important;
+    height: 50px !important;
+    border: 1px solid var(--mock-line) !important;
+    border-radius: 14px !important;
+    background: var(--mock-surface) !important;
+    box-shadow: none !important;
+  }
+
+  .desktop-public-navbar .brand-text {
+    display: inline-flex !important;
+    flex-direction: row !important;
+    align-items: baseline !important;
+    margin-left: 12px !important;
+    white-space: nowrap;
+    line-height: 1 !important;
+  }
+
+  .desktop-public-navbar .brand-name,
+  .desktop-public-navbar .brand-location {
+    font-size: 1.34rem !important;
+    font-weight: 850 !important;
+    line-height: 1 !important;
+    letter-spacing: -0.045em !important;
+  }
+
+  .desktop-public-navbar .navbar-collapse {
+    min-width: 0;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center !important;
+  }
+
+  .desktop-public-navbar .primary-nav {
+    justify-self: center;
+    margin: 0 !important;
+    gap: 1.35rem !important;
+  }
+
+  .desktop-public-navbar .primary-nav .nav-link {
+    padding: 0.7rem 0 !important;
+    color: var(--mock-ink) !important;
+    font-size: 0.98rem !important;
+    font-weight: 720 !important;
+  }
+
+  .desktop-public-navbar .primary-nav .nav-link::after {
+    display: none !important;
+  }
+
+  .desktop-public-navbar .primary-nav .nav-link:hover,
+  .desktop-public-navbar .primary-nav .nav-link:focus-visible,
+  .desktop-public-navbar .primary-nav .nav-link.active {
+    color: var(--mock-blue) !important;
+  }
+
+  .desktop-public-navbar .navbar-actions {
+    justify-self: end;
+    margin: 0 !important;
+    gap: 10px !important;
+  }
+
+  .desktop-public-navbar .logged-out-block {
+    gap: 10px !important;
+  }
+
+  .desktop-public-navbar .navbar-language-select {
+    width: 58px !important;
+    min-width: 58px !important;
+    height: 48px !important;
+    min-height: 48px !important;
+    padding: 0 8px !important;
+    border: 1px solid var(--mock-line) !important;
+    border-radius: 14px !important;
+    background: var(--mock-surface) !important;
+    color: var(--mock-ink) !important;
+    font-size: 0.92rem !important;
+    font-weight: 650 !important;
+    text-align: center;
+    box-shadow: none !important;
+  }
+
+  .desktop-public-navbar .navbar-theme-toggle {
+    width: 52px !important;
+    min-width: 52px !important;
+    height: 48px !important;
+    min-height: 48px !important;
+    justify-content: center !important;
+    padding: 0 !important;
+    border: 1px solid var(--mock-line) !important;
+    border-radius: 14px !important;
+    background: var(--mock-surface) !important;
+    color: var(--mock-ink) !important;
+  }
+
+  .desktop-public-navbar .navbar-theme-toggle .theme-toggle-label {
+    display: none !important;
+  }
+
+  .desktop-public-navbar .navbar-theme-toggle .theme-toggle-icon {
+    width: auto !important;
+    height: auto !important;
+    background: transparent !important;
+  }
+
+  .desktop-public-navbar .navbar .login-btn {
+    min-width: 92px !important;
+    min-height: 48px !important;
+    padding: 0 16px !important;
+    border-color: transparent !important;
+    border-radius: 12px !important;
+    background: transparent !important;
+    color: var(--mock-ink) !important;
+    font-size: 0.96rem !important;
+    font-weight: 760 !important;
+  }
+
+  .desktop-public-navbar .navbar .login-btn:hover,
+  .desktop-public-navbar .navbar .login-btn:focus-visible,
+  .desktop-public-navbar .navbar .login-btn.active-btn {
+    border-color: transparent !important;
+    background: var(--mock-surface-2) !important;
+    color: var(--mock-ink) !important;
+  }
+
+  .desktop-public-navbar .navbar .signup-btn {
+    min-width: 120px !important;
+    min-height: 52px !important;
+    padding: 0 18px !important;
+    border: 1px solid var(--mock-blue) !important;
+    border-radius: 14px !important;
+    background: var(--mock-blue) !important;
+    color: #fff !important;
+    font-size: 0.96rem !important;
+    font-weight: 780 !important;
+  }
+
+  .desktop-public-navbar .navbar .signup-btn:hover,
+  .desktop-public-navbar .navbar .signup-btn:focus-visible,
+  .desktop-public-navbar .navbar .signup-btn.active-btn {
+    border-color: var(--mock-blue-2) !important;
+    background: var(--mock-blue-2) !important;
+    color: #fff !important;
+  }
+
+  /* The mockup hero uses a near-full-width editorial box with 32px gutters. */
+  .home-hero > .container {
+    width: min(1600px, calc(100% - 64px)) !important;
+    max-width: none !important;
+  }
+
+  /* Keep category cards deliberately smaller than the hero. */
+  .home-popular-section > .container {
+    width: min(1320px, calc(100% - 64px)) !important;
+    max-width: none !important;
+  }
+}
+
+/* Popular Services cards: image and label are one professional component,
+   instead of a huge image with a loose label sitting against the border. */
+.home-popular-section .home-section-heading {
+  align-items: end !important;
+  margin-bottom: 26px !important;
+}
+
+.home-popular-section .home-category-grid {
+  gap: 18px !important;
+}
+
+.home-popular-section .home-category-card {
+  min-width: 0;
+  display: flex !important;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 0 !important;
+  border: 1px solid var(--mock-line) !important;
+  border-radius: 22px !important;
+  background: var(--mock-surface) !important;
+  color: var(--mock-ink) !important;
+  box-shadow: none !important;
+  text-align: left;
+}
+
+.home-popular-section .home-category-image-wrap {
+  width: 100%;
+  aspect-ratio: 16 / 10 !important;
+  overflow: hidden;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: var(--mock-surface-2) !important;
+}
+
+.home-popular-section .home-category-card-footer {
+  min-height: 66px;
+  width: 100%;
+  padding: 13px 14px 13px 16px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  background: var(--mock-surface) !important;
+}
+
+.home-popular-section .home-category-name {
+  min-width: 0;
+  color: var(--mock-ink) !important;
+  font-size: 1rem !important;
+  font-weight: 790 !important;
+  line-height: 1.25 !important;
+}
+
+.home-popular-section .home-category-arrow {
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 11px;
+  background: var(--mock-sky);
+  color: var(--mock-blue) !important;
+  font-size: 0.9rem !important;
+}
+
+.home-popular-section .home-category-card:hover {
+  border-color: color-mix(in srgb, var(--mock-blue) 28%, var(--mock-line)) !important;
+  transform: translateY(-2px);
+}
+
+.home-popular-section .home-category-card:hover .home-category-image {
+  transform: scale(1.025);
+}
+
+.home-popular-section .home-category-card:hover .home-category-arrow {
+  transform: none !important;
+  background: var(--mock-blue);
+  color: #fff !important;
+}
+
+.home-popular-section .home-browse-all {
+  min-width: 116px;
+  min-height: 46px;
+  padding-inline: 16px !important;
+  border-radius: 12px !important;
+  background: var(--mock-blue) !important;
+  border-color: var(--mock-blue) !important;
+  color: #fff !important;
+  white-space: nowrap;
+}
+
+.home-popular-section .home-browse-all:hover,
+.home-popular-section .home-browse-all:focus-visible {
+  background: var(--mock-blue-2) !important;
+  border-color: var(--mock-blue-2) !important;
+  color: #fff !important;
+}
+
+[data-theme='dark'] .desktop-public-navbar .navbar {
+  background: var(--mock-surface) !important;
+  border-color: var(--mock-line) !important;
+}
+
+[data-theme='dark'] .desktop-public-navbar .navbar-language-select,
+[data-theme='dark'] .desktop-public-navbar .navbar-theme-toggle {
+  border-color: var(--mock-line) !important;
+  background: var(--mock-surface) !important;
+  color: var(--mock-ink) !important;
+}
+
+@media (max-width: 991.98px) and (min-width: 769px) {
+  .home-popular-section > .container {
+    width: min(100% - 32px, 880px) !important;
+  }
+
+  .home-popular-section .home-category-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 800px) {
+  .home-popular-section .home-section-heading {
+    align-items: flex-start !important;
+    gap: 14px !important;
+  }
+
+  .home-popular-section .home-browse-all {
+    width: auto !important;
+    min-width: 112px;
+  }
+
+  .home-popular-section .home-category-card-footer {
+    min-height: 60px;
+    padding: 11px 12px 11px 14px !important;
+  }
+
+  .home-popular-section .home-category-name {
+    font-size: 0.94rem !important;
+  }
+
+  .home-popular-section .home-category-arrow {
+    width: 34px;
+    height: 34px;
+    flex-basis: 34px;
+  }
+}
