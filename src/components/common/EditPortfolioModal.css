@@ -35,29 +35,6 @@
   background: transparent;
 }
 
-.edit-portfolio-modal .modal-close-btn {
-  position: absolute;
-  top: 18px;
-  right: 18px;
-  width: 32px;
-  height: 32px;
-  border: none;
-  background: none;
-  border-radius: 50%;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 26px;
-  color: #333;
-  transition: all 0.3s ease;
-  z-index: 1;
-}
-
-.edit-portfolio-modal .modal-close-btn:hover {
-  background: #f0f0f0;
-  color: #000;
-}
 
 .edit-portfolio-header {
   padding: 32px 32px 0;
@@ -227,23 +204,6 @@
   flex: 1;
 }
 
-.btn-add-skill {
-  padding: 10px 20px;
-  background: var(--brand-primary);
-  color: white;
-  border: none;
-  border-radius: 999px !important;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.btn-add-skill:hover {
-  transform: translateY(-1px);
-  background: var(--brand-primary-dark);
-  box-shadow: 0 8px 20px rgba(47, 125, 225, 0.25);
-}
 
 /* Portfolio Grid */
 .portfolio-grid {
@@ -292,24 +252,6 @@
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
 
-.btn-delete-image {
-  background: rgba(220, 38, 38, 0.9);
-  border: none;
-  color: white;
-  width: 28px;
-  height: 28px;
-  border-radius: 6px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  transition: background 0.2s;
-}
-
-.btn-delete-image:hover {
-  background: #dc2626;
-}
 
 /* Add Image Section */
 .add-image-section {
@@ -357,32 +299,6 @@
   color: #94a3b8;
 }
 
-.btn-upload-image {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  padding: 10px 20px;
-  background: var(--brand-primary);
-  color: white;
-  border: none;
-  border-radius: 999px !important;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.btn-upload-image:hover:not(:disabled) {
-  transform: translateY(-1px);
-  background: var(--brand-primary-dark);
-  box-shadow: 0 8px 20px rgba(47, 125, 225, 0.25);
-}
-
-.btn-upload-image:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
-}
 
 /* Form Actions */
 .edit-portfolio-form .form-actions {
@@ -392,48 +308,6 @@
   margin-top: 20px;
 }
 
-.edit-portfolio-form .btn-cancel,
-.edit-portfolio-form .btn-save {
-  min-width: 140px;
-  padding: 12px 24px;
-  border-radius: 999px !important;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
-
-.edit-portfolio-form .btn-cancel {
-  background: #ffffff;
-  color: #6c757d;
-  border: 1px solid #d7dce3;
-}
-
-.edit-portfolio-form .btn-cancel:hover:not(:disabled) {
-  background: #f8f9fb;
-}
-
-.edit-portfolio-form .btn-save {
-  border: none;
-  background: var(--brand-primary);
-  color: white;
-}
-
-.edit-portfolio-form .btn-save:hover:not(:disabled) {
-  transform: translateY(-1px);
-  background: var(--brand-primary-dark);
-  box-shadow: 0 4px 12px rgba(47, 125, 225, 0.3);
-}
-
-.edit-portfolio-form .btn-cancel:disabled,
-.edit-portfolio-form .btn-save:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
 
 [data-theme='dark'] .edit-portfolio-modal {
   background: var(--color-surface-elevated) !important;
@@ -441,15 +315,6 @@
   color: var(--color-text-primary);
 }
 
-[data-theme='dark'] .edit-portfolio-modal .modal-close-btn {
-  background: var(--color-surface-secondary);
-  color: var(--color-text-secondary);
-}
-
-[data-theme='dark'] .edit-portfolio-modal .modal-close-btn:hover {
-  background: var(--color-surface);
-  color: var(--color-text-primary);
-}
 
 [data-theme='dark'] .edit-portfolio-header {
   background: var(--color-surface-elevated) !important;
@@ -510,18 +375,6 @@
   color: var(--color-text-secondary);
 }
 
-[data-theme='dark'] .btn-upload-image,
-[data-theme='dark'] .edit-portfolio-form .btn-cancel {
-  background: var(--color-surface-secondary);
-  color: var(--color-text-primary);
-  border-color: var(--color-border);
-}
-
-[data-theme='dark'] .btn-upload-image:hover:not(:disabled),
-[data-theme='dark'] .edit-portfolio-form .btn-cancel:hover:not(:disabled) {
-  background: var(--color-surface-secondary);
-  color: var(--color-text-primary);
-}
 
 [data-theme='dark'] .edit-portfolio-form .form-actions {
   border-top-color: transparent;
@@ -568,13 +421,6 @@
     flex-direction: column;
   }
 
-  .edit-portfolio-form .btn-cancel,
-  .edit-portfolio-form .btn-save {
-    width: 100%;
-    min-width: 0;
-    min-height: 44px;
-    border-radius: 12px !important;
-  }
   
   .add-skill-row {
     flex-direction: column;
@@ -617,33 +463,6 @@
   min-width: 0;
 }
 
-.btn-completed-job-photo,
-.btn-add-linked-job-photo {
-  min-height: 44px;
-  border: 1px solid #cbd5e1;
-  border-radius: 999px;
-  background: #fff;
-  color: #334155;
-  font: inherit;
-  font-size: 0.82rem;
-  font-weight: 700;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.4rem;
-}
-
-.btn-completed-job-photo {
-  padding: 0.55rem 0.85rem;
-  flex: 0 0 auto;
-}
-
-.btn-completed-job-photo:hover:not(:disabled),
-.btn-add-linked-job-photo:hover:not(:disabled) {
-  border-color: var(--brand-primary);
-  color: var(--brand-primary);
-}
 
 .completed-job-photo-name {
   min-width: 0;
@@ -699,19 +518,6 @@
   gap: 0.45rem;
 }
 
-.btn-add-linked-job-photo {
-  width: auto;
-  padding: 0.38rem 0.6rem;
-  border: 0;
-  background: rgba(255, 255, 255, 0.94);
-  color: #1e3a5f;
-}
-
-.btn-add-linked-job-photo:disabled,
-.btn-completed-job-photo:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
 
 @media (max-width: 480px) {
   .completed-job-photo-row {
@@ -719,17 +525,11 @@
     flex-direction: column;
   }
 
-  .btn-completed-job-photo {
-    width: 100%;
-  }
 
   .completed-job-photo-name {
     width: 100%;
   }
 
-  .btn-add-linked-job-photo span {
-    display: none;
-  }
 }
 
 [data-theme='dark'] .completed-job-linker {
@@ -748,11 +548,6 @@
   color: var(--text-muted);
 }
 
-[data-theme='dark'] .btn-completed-job-photo {
-  background: var(--surface);
-  color: var(--text);
-  border-color: var(--border);
-}
 
 [data-theme='dark'] .edit-portfolio-modal .portfolio-item-no-photo {
   background: var(--surface-muted);
@@ -824,18 +619,6 @@
   flex: 1 1 240px;
 }
 
-.provider-profile-photo-remove {
-  min-height: 44px;
-  border: 1px solid var(--border, #d8e2ea);
-  border-radius: 9px;
-  padding: 0.55rem 0.8rem;
-  background: var(--surface, #fff);
-  color: var(--color-danger, #b42318);
-  font-weight: 700;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-}
 
 .provider-profile-photo-pending {
   flex-basis: 100%;
@@ -872,23 +655,6 @@
   box-shadow: 0 30px 80px rgba(7, 18, 33, 0.24);
 }
 
-.edit-portfolio-modal .modal-close-btn {
-  top: 16px;
-  right: 16px;
-  width: 42px;
-  height: 42px;
-  border: 1px solid var(--color-border);
-  border-radius: 12px;
-  background: var(--color-surface);
-  color: var(--color-text-secondary);
-  font-size: 22px;
-}
-
-.edit-portfolio-modal .modal-close-btn:hover,
-.edit-portfolio-modal .modal-close-btn:focus-visible {
-  background: var(--color-soft-blue);
-  color: var(--color-text-primary);
-}
 
 .edit-portfolio-header {
   padding: 1.5rem 1.6rem 0;
@@ -997,27 +763,6 @@
   gap: 0.55rem;
 }
 
-.provider-profile-photo-remove,
-.btn-completed-job-photo,
-.btn-add-linked-job-photo {
-  min-height: 44px;
-  border: 1px solid var(--color-border);
-  border-radius: 11px;
-  background: var(--color-surface);
-  color: var(--color-text-primary);
-  font-weight: 700;
-}
-
-.provider-profile-photo-remove {
-  color: var(--color-danger);
-}
-
-.provider-profile-photo-remove:hover,
-.btn-completed-job-photo:hover:not(:disabled),
-.btn-add-linked-job-photo:hover:not(:disabled) {
-  border-color: color-mix(in srgb, var(--brand-blue) 32%, var(--color-border));
-  background: var(--color-soft-blue);
-}
 
 .provider-profile-language-options {
   gap: 0.5rem;
@@ -1063,24 +808,6 @@
   background: color-mix(in srgb, var(--brand-blue) 18%, transparent);
 }
 
-.btn-add-skill,
-.btn-upload-image {
-  min-height: 46px;
-  padding: 0.65rem 0.9rem;
-  border: 1px solid var(--brand-blue);
-  border-radius: 11px !important;
-  background: var(--brand-blue);
-  color: #fff;
-  font-weight: 720;
-}
-
-.btn-add-skill:hover,
-.btn-upload-image:hover:not(:disabled) {
-  transform: none;
-  border-color: var(--brand-blue-hover);
-  background: var(--brand-blue-hover);
-  box-shadow: none;
-}
 
 .completed-job-linker,
 .add-image-section {
@@ -1142,38 +869,6 @@
   background: var(--color-surface);
 }
 
-.edit-portfolio-form .btn-cancel,
-.edit-portfolio-form .btn-save {
-  min-width: 140px;
-  min-height: 48px;
-  padding: 0.7rem 1rem;
-  border-radius: 12px !important;
-  font-size: 0.9rem;
-  font-weight: 730;
-}
-
-.edit-portfolio-form .btn-cancel {
-  border: 1px solid var(--color-border);
-  background: var(--color-surface);
-  color: var(--color-text-secondary);
-}
-
-.edit-portfolio-form .btn-cancel:hover:not(:disabled) {
-  border-color: var(--color-border-strong);
-  background: var(--color-soft-cream);
-}
-
-.edit-portfolio-form .btn-save {
-  border: 1px solid var(--brand-blue);
-  background: var(--brand-blue);
-}
-
-.edit-portfolio-form .btn-save:hover:not(:disabled) {
-  transform: none;
-  border-color: var(--brand-blue-hover);
-  background: var(--brand-blue-hover);
-  box-shadow: none;
-}
 
 [data-theme='dark'] .edit-portfolio-modal,
 [data-theme='dark'] .edit-portfolio-form,
@@ -1223,4 +918,17 @@
     height: 84px;
     flex-basis: 84px;
   }
+}
+
+/* Position only; canonical controls own action appearance. */
+.edit-portfolio-modal .modal-close-btn {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  z-index: 3;
+}
+.portfolio-delete-icon {
+  border-color: color-mix(in srgb, var(--mock-red, #dc2626) 38%, var(--mock-line, #e5e7eb)) !important;
+  color: var(--mock-red, #dc2626) !important;
+  background: var(--mock-surface, #fff) !important;
 }
