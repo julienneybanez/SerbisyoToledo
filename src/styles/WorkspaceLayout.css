@@ -115,3 +115,169 @@
     text-transform: uppercase;
   }
 }
+
+
+/* ===================================
+   AOXA-INSPIRED AUTHENTICATED WORKSPACE SHELL
+   Navigation structure and every role-specific link/action remain unchanged.
+   =================================== */
+@media (min-width: 769px) {
+  .authenticated-workspace-active .main-content {
+    background: var(--color-page-bg);
+  }
+
+  .workspace-shell {
+    grid-template-columns: 272px minmax(0, 1fr);
+    background: var(--color-page-bg);
+  }
+
+  .workspace-sidebar {
+    padding: 1.25rem 0.9rem 1rem;
+    border-right: 1px solid var(--color-border);
+    background: var(--color-surface);
+  }
+
+  .workspace-brand {
+    min-height: 64px;
+    gap: 0.72rem;
+    padding: 0.2rem 0.55rem 1rem;
+  }
+
+  .workspace-brand-logo {
+    width: 42px;
+    height: 42px;
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    background: var(--color-surface);
+  }
+
+  .workspace-brand-wordmark {
+    font-size: 1.08rem;
+    font-weight: 820;
+    letter-spacing: -0.04em;
+  }
+
+  .workspace-role-card {
+    min-height: 54px;
+    margin: 0 0 0.85rem;
+    padding: 0.75rem 0.8rem;
+    border: 1px solid var(--color-border);
+    border-radius: 14px;
+    background: var(--color-soft-blue);
+  }
+
+  .workspace-role-card i {
+    width: 22px;
+    color: var(--brand-blue-hover);
+  }
+
+  .workspace-role-card strong {
+    color: var(--color-text-primary);
+    font-size: 0.88rem;
+    font-weight: 760;
+  }
+
+  .workspace-nav {
+    gap: 0.24rem;
+  }
+
+  .workspace-nav-link {
+    min-height: 48px;
+    gap: 0.72rem;
+    padding: 0.7rem 0.82rem;
+    border: 1px solid transparent;
+    border-radius: 12px;
+    color: var(--color-text-secondary);
+    font-size: 0.93rem;
+    font-weight: 680;
+    transition:
+      background-color var(--motion-fast) var(--motion-ease),
+      border-color var(--motion-fast) var(--motion-ease),
+      color var(--motion-fast) var(--motion-ease);
+  }
+
+  .workspace-nav-link i {
+    width: 21px;
+    color: var(--color-text-muted);
+    font-size: 1rem;
+  }
+
+  .workspace-nav-link:hover {
+    border-color: color-mix(in srgb, var(--brand-blue) 12%, var(--color-border));
+    background: var(--color-soft-blue);
+    color: var(--color-text-primary);
+  }
+
+  .workspace-nav-link:hover i {
+    color: var(--brand-blue-hover);
+  }
+
+  .workspace-nav-link.active {
+    border-color: var(--brand-blue);
+    background: var(--brand-blue);
+    color: #fff;
+    box-shadow: none;
+  }
+
+  .workspace-nav-link.active i {
+    color: #fff;
+  }
+
+  .workspace-nav-badge {
+    background: var(--brand-blue);
+  }
+
+  .workspace-nav-link.active .workspace-nav-badge {
+    background: #fff;
+    color: var(--brand-blue-hover);
+  }
+
+  .workspace-nav-section-label {
+    margin-top: 1.05rem;
+    color: var(--color-text-muted);
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.07em;
+  }
+
+  .workspace-sidebar-divider {
+    background: var(--color-border);
+  }
+
+  .workspace-topbar {
+    min-height: 72px;
+    padding: 0.65rem 1.5rem;
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-surface);
+  }
+
+  .workspace-account-button,
+  .workspace-logout-button {
+    min-height: 44px;
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    background: var(--color-surface);
+  }
+
+  .workspace-account-button:hover,
+  .workspace-logout-button:hover {
+    border-color: var(--color-border-strong);
+    background: var(--color-soft-blue);
+  }
+
+  .workspace-topbar-avatar {
+    border-radius: 10px;
+    background: var(--color-soft-blue);
+    color: var(--brand-blue-hover);
+  }
+}
+
+[data-theme='dark'] .workspace-role-card {
+  background: var(--color-soft-blue);
+  border-color: var(--color-border);
+}
+
+[data-theme='dark'] .workspace-nav-link:hover {
+  background: var(--color-surface-secondary);
+  border-color: var(--color-border);
+}
