@@ -74,18 +74,22 @@ components:
 
 ## Overview
 
-**Creative North Star: "The Trusted Local Guide"**
+**Creative North Star: "Confident Local Service"**
 
-SerbisyoToledo is a clear, practical interface for helping Toledo City residents make dependable local-service decisions. It pairs civic blue for discovery and primary action with trust teal for success, completion, and confidence. The system feels service-oriented rather than corporate: it makes verification, availability, status, and next steps easy to understand without making the screen feel bureaucratic.
+SerbisyoToledo uses the approved Aoxa references as a visual-direction benchmark while keeping SerbisyoToledo's own product, assets, permissions, and workflows. The target is a confident local-service product: large readable headings, strong image composition, generous public-page spacing, white and softly tinted blue/cream surfaces, direct civic-blue actions, and restrained teal trust signals.
 
-The visual rhythm is deliberately operational. Information is organized into readable task surfaces, with short page titles, useful status color, and direct controls. The system accommodates English and Cebuano, light and dark themes, and users with varied technical familiarity. It should feel grounded in local community work, not like a generic SaaS dashboard or social feed.
+Public discovery surfaces may feel editorial and spacious, but authenticated workspaces remain more compact because users need to scan requests, schedules, verification states, reports, and messages efficiently. The redesign must never hide a code-backed action merely to make a screen look cleaner.
+
+The system accommodates English and Cebuano, light and dark themes, older and less technical users, and small mobile widths. Real repository assets and real provider/user uploads remain the visual source of truth.
 
 **Key Characteristics:**
-- Cool, readable surfaces with blue discovery and teal confirmation signals.
-- Calmly layered working surfaces, not floating page sections.
-- Rounded but disciplined controls sized for repeated desktop and mobile use.
-- Compact, approachable typography that favors scanning and task completion.
-- Clear role-specific navigation without generic-template sterility.
+- Strong black/ink typography with clearer hierarchy and fewer weak grey headings.
+- Large real service/provider imagery on public discovery surfaces.
+- Soft blue, mint, and cream editorial panels used selectively rather than decorative gradients everywhere.
+- Rounded, substantial shadcn-style primitives with visible labels and reliable focus states.
+- Civic blue for primary actions; teal for trust/success rather than as a competing primary color.
+- Spacious public pages, denser client/provider/admin workspaces.
+- Direct role-specific navigation with no disappearing features or hover-only critical controls.
 
 ## Colors
 
@@ -148,7 +152,7 @@ The system is calmly layered and reassuring. Page regions stay part of the canva
 
 ## Shapes
 
-The form language is gently rounded, not bubbly. Inputs use 11px corners, standard controls use 12px, cards use 15px, and larger contained surfaces reach 18px. Pills (`999px`) are reserved for compact tags, filters, and status-like affordances. Borders are cool and visible enough to support scanning in both themes.
+The form language is rounded and substantial without becoming bubbly. Inputs and buttons remain around 12px, repeated work cards stay disciplined, and major editorial/public panels may reach 24–32px. Pills (`999px`) are reserved for compact tags, filters, and status-like affordances. Borders remain visible enough to support scanning in both themes.
 
 ## Components
 
@@ -197,3 +201,7 @@ The form language is gently rounded, not bubbly. Inputs use 11px corners, standa
 - **Don't** use decorative gradients, nested card stacks, oversized headings, or status-pill clutter to compensate for weak information hierarchy.
 - **Don't** use low contrast, very small type, or ambiguous icon-only controls for critical workflows.
 - **Don't** let brand color override accessibility, readable grouping, or role-specific task clarity.
+
+## Aoxa-reference boundary
+
+The Aoxa screenshots are a visual reference only. Do not add Aoxa-only capabilities such as in-app payments, earnings/withdrawals, provider tracking, an open-job bidding marketplace, app-store badges, Trustpilot blocks, or fabricated marketplace statistics. A SerbisyoToledo UI migration may alter composition and styling, but it must preserve every route, button, conditional action, and code-backed workflow recorded in `docs/UI_FEATURE_PARITY_CHECKLIST.md`.
