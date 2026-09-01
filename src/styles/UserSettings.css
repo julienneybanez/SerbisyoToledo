@@ -1143,3 +1143,61 @@ input:checked + .slider:before {
     width: 100%;
   }
 }
+
+
+/* ===================================
+   PROVIDER CREDENTIALS RESPONSIVE FIX
+   The credential form is intentionally single-column because the provider
+   workspace sidebar can leave a narrow content region on medium displays.
+   =================================== */
+.provider-tool-credentials .settings-section > .settings-group:first-of-type {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  gap: 0.42rem !important;
+  padding: clamp(0.9rem, 2vw, 1.1rem) !important;
+}
+
+.provider-tool-credentials .settings-section > .settings-group:first-of-type > .settings-label {
+  margin-top: 0.72rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.provider-tool-credentials .settings-section > .settings-group:first-of-type > .settings-label:first-child {
+  margin-top: 0;
+}
+
+.provider-tool-credentials .settings-section > .settings-group:first-of-type > .settings-input,
+.provider-tool-credentials .settings-section > .settings-group:first-of-type > input,
+.provider-tool-credentials .settings-section > .settings-group:first-of-type > select {
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+}
+
+.provider-tool-credentials .settings-section > .settings-group:first-of-type > .settings-help {
+  width: 100%;
+  min-width: 0;
+  margin: 0.25rem 0 0;
+}
+
+.provider-tool-credentials input[type='date'],
+.provider-tool-credentials input[type='url'],
+.provider-tool-credentials input[type='file'],
+.provider-tool-credentials select {
+  width: 100%;
+  max-width: 100%;
+}
+
+.client-settings-onboarding {
+  width: min(1040px, 100%);
+  margin: 0 auto 1rem;
+}
+
+.client-settings-onboarding .profile-checklist {
+  margin: 0;
+}
+
+[data-theme='dark'] .provider-tool-credentials .settings-section > .settings-group:first-of-type {
+  background: var(--color-surface-secondary) !important;
+}
