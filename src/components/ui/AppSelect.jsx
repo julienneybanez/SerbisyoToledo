@@ -4,7 +4,7 @@ const AppSelect = forwardRef(function AppSelect({ className = '', children, ...p
   return (
     <select
       ref={ref}
-      className={['st-form-control', 'st-select', className].filter(Boolean).join(' ')}
+      className={['st-form-control', 'st-select', 'mock-select', className].filter(Boolean).join(' ')}
       {...props}
     >
       {children}
