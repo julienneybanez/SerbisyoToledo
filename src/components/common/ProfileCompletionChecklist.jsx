@@ -19,7 +19,7 @@ export default function ProfileCompletionChecklist({
   const progress = visibleTasks.length > 0 ? Math.round((completedCount / visibleTasks.length) * 100) : 100;
   const nextIncompleteTask = visibleTasks.find((task) => !task.completed);
 
-  if (!loading && !error && visibleTasks.length === 0) {
+  if (!loading && !error && (visibleTasks.length === 0 || progress === 100)) {
     return null;
   }
 
