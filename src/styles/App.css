@@ -33,3 +33,6 @@ body {
     transition: none;
   }
 }
+
+/* Canonical Aoxa mockup component system loads last so its component geometry is authoritative. */
+@import './MockupUI.css';
