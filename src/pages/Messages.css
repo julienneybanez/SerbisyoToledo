@@ -46,3 +46,265 @@
   .messages-request-phone-button{width:100%}
   .message-system-event{max-width:94%}
 }
+
+
+/* ===================================
+   AOXA-INSPIRED MESSAGES
+   Conversation, request-decision, phone-sharing and realtime behavior unchanged.
+   =================================== */
+.messages-page {
+  padding: clamp(1.25rem, 3vw, 2rem);
+}
+
+.messages-page-heading {
+  margin-bottom: 1rem;
+}
+
+.messages-page-heading h1 {
+  color: var(--color-ink);
+  font-size: clamp(2.1rem, 4vw, 3.2rem);
+  font-weight: 820;
+  letter-spacing: -0.045em;
+}
+
+.messages-shell {
+  min-height: 620px;
+  height: calc(100vh - 190px);
+  grid-template-columns: minmax(270px, 330px) minmax(0, 1fr);
+  border: 1px solid var(--color-border);
+  border-radius: 22px;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-panel);
+}
+
+.messages-list-panel {
+  border-right-color: var(--color-border);
+  background: var(--color-soft-cream);
+}
+
+.messages-list-header {
+  padding: 1rem;
+  border-bottom-color: var(--color-border);
+  background: inherit;
+}
+
+.messages-conversation-item {
+  min-height: 78px;
+  gap: 0.75rem;
+  padding: 0.9rem;
+  border-bottom-color: var(--color-border);
+}
+
+.messages-conversation-item:hover,
+.messages-conversation-item:focus-visible {
+  background: var(--color-soft-blue);
+}
+
+.messages-conversation-item.active {
+  background: var(--color-soft-blue);
+  box-shadow: inset 3px 0 0 var(--brand-blue);
+}
+
+.messages-avatar,
+.messages-thread-avatar,
+.message-row-avatar {
+  background: var(--color-soft-blue);
+  color: var(--brand-blue-hover);
+}
+
+.messages-service-label {
+  color: var(--brand-blue-hover);
+  font-weight: 740;
+}
+
+.messages-preview,
+.messages-thread-header>div span {
+  color: var(--color-text-secondary);
+}
+
+.messages-unread-badge {
+  background: var(--brand-blue);
+}
+
+.messages-thread-panel {
+  background: var(--color-surface);
+}
+
+.messages-thread-header {
+  min-height: 78px;
+  border-bottom-color: var(--color-border);
+}
+
+.messages-status-pill {
+  border-radius: 10px;
+  background: var(--color-soft-blue);
+  color: var(--brand-blue-hover);
+}
+
+.messages-thread {
+  padding: 1.1rem;
+  background:
+    radial-gradient(circle at 75% 0%, color-mix(in srgb, var(--brand-blue) 5%, transparent), transparent 32%),
+    var(--color-surface);
+}
+
+.message-bubble {
+  max-width: min(72%, 620px);
+  border: 1px solid var(--color-border);
+  border-radius: 16px 16px 16px 6px;
+  background: var(--color-soft-cream);
+  color: var(--color-text-primary);
+  box-shadow: none;
+}
+
+.message-row.mine .message-bubble {
+  border-color: color-mix(in srgb, var(--brand-blue) 16%, var(--color-border));
+  border-radius: 16px 16px 6px 16px;
+  background: var(--color-soft-blue);
+}
+
+.message-meta {
+  color: var(--color-text-muted);
+}
+
+.messages-booking-actions {
+  border-bottom-color: var(--color-border);
+  background: var(--color-soft-blue);
+}
+
+.messages-request-decision,
+.messages-phone-share {
+  border-color: var(--color-border);
+  border-radius: 16px;
+  background: var(--color-surface);
+}
+
+.messages-action-copy strong {
+  color: var(--color-text-primary);
+  font-weight: 740;
+}
+
+.messages-action-copy span {
+  color: var(--color-text-secondary);
+}
+
+.messages-action-primary,
+.messages-request-phone-button {
+  min-height: 42px;
+  border: 1px solid var(--brand-blue);
+  border-radius: 11px;
+  background: var(--brand-blue);
+  color: #fff;
+}
+
+.messages-action-primary:hover,
+.messages-request-phone-button:hover {
+  background: var(--brand-blue-hover);
+  border-color: var(--brand-blue-hover);
+}
+
+.messages-action-secondary {
+  min-height: 42px;
+  border: 1px solid var(--color-border);
+  border-radius: 11px;
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+}
+
+.messages-action-secondary:hover {
+  background: var(--color-soft-cream);
+}
+
+.messages-decline-form textarea {
+  border-color: var(--color-border);
+  border-radius: 12px;
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+}
+
+.messages-phone-request-card {
+  border: 1px solid color-mix(in srgb, var(--brand-blue) 16%, var(--color-border));
+  border-radius: 12px;
+  background: var(--color-soft-blue);
+}
+
+.messages-shared-phone {
+  border: 1px solid color-mix(in srgb, var(--brand-teal) 18%, var(--color-border));
+  border-radius: 12px;
+  background: var(--color-soft-mint);
+}
+
+.messages-shared-phone a {
+  color: var(--brand-teal-hover);
+}
+
+.message-system-event span {
+  border: 1px solid var(--color-border);
+  background: var(--color-soft-cream);
+}
+
+.messages-composer {
+  padding: 0.85rem 1rem;
+  border-top-color: var(--color-border);
+  background: var(--color-surface);
+}
+
+.messages-composer textarea {
+  min-height: 50px;
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+}
+
+.messages-composer textarea:focus {
+  outline: none;
+  border-color: var(--brand-blue);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-blue) 12%, transparent);
+}
+
+.messages-composer button {
+  min-height: 50px;
+  border: 1px solid var(--brand-blue);
+  border-radius: 12px;
+  background: var(--brand-blue);
+  color: #fff;
+}
+
+.messages-composer button:hover:not(:disabled) {
+  background: var(--brand-blue-hover);
+  border-color: var(--brand-blue-hover);
+}
+
+[data-theme='dark'] .messages-list-panel {
+  background: var(--color-surface-secondary);
+}
+
+[data-theme='dark'] .message-bubble {
+  background: var(--color-surface-secondary);
+  border-color: var(--color-border);
+}
+
+[data-theme='dark'] .message-row.mine .message-bubble {
+  background: var(--color-soft-blue);
+}
+
+@media(max-width:768px){
+  .messages-page {
+    padding: 0.75rem 0.65rem calc(var(--mobile-nav-height) + 0.8rem);
+  }
+
+  .messages-shell {
+    height: calc(100dvh - 148px);
+    border-radius: 18px;
+    box-shadow: none;
+  }
+
+  .messages-thread-header {
+    min-height: 66px;
+  }
+
+  .message-bubble {
+    max-width: 88%;
+  }
+}
