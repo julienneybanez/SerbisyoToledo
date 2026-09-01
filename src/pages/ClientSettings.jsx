@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { getUser, userProfileAPI, verificationAPI } from '../services/api';
 import { useLanguage } from '../context/LanguageContext';
 import SettingsFlash from '../components/settings/SettingsFlash';
+import ProfileCompletionChecklist from '../components/common/ProfileCompletionChecklist';
 import { AppButton, PageHeader } from '../components/ui';
 import '../styles/UserSettings.css';
 
@@ -16,6 +17,10 @@ function ClientSettings() {
   const [isSaving, setIsSaving] = useState(false);
   const [isSendingVerification, setIsSendingVerification] = useState(false);
   const [flash, setFlash] = useState({ type: 'info', message: '' });
+  const [onboardingData, setOnboardingData] = useState(null);
+  const [onboardingLoading, setOnboardingLoading] = useState(false);
+  const [onboardingError, setOnboardingError] = useState('');
+  const isSetupFlow = searchParams.get('setup') === '1';
 
   const [initialProfile, setInitialProfile] = useState(null);
   const [settings, setSettings] = useState({
@@ -80,6 +85,60 @@ function ClientSettings() {
     }
   }, [searchParams]);
 
+
+  const loadOnboardingProgress = useCallback(async () => {
+    if (!isSetupFlow) {
+      setOnboardingData(null);
+      setOnboardingError('');
+      return;
+    }
+
+    try {
+      setOnboardingLoading(true);
+      setOnboardingError('');
+      const response = await userProfileAPI.getOnboardingProgress();
+      if (response?.success) {
+        setOnboardingData(response.data || null);
+      }
+    } catch {
+      setOnboardingError(t('feedChecklistLoadError'));
+    } finally {
+      setOnboardingLoading(false);
+    }
+  }, [isSetupFlow, t]);
+
+  useEffect(() => {
+    loadOnboardingProgress();
+  }, [loadOnboardingProgress]);
+
+  const setupChecklistTasks = useMemo(() => {
+    if (!onboardingData?.tasks) return [];
+
+    return onboardingData.tasks.map((task) => ({
+      key: task.id,
+      label: task.id === 'email_verified'
+        ? t('checklistVerifyEmail')
+        : task.id === 'profile_info'
+          ? t('feedChecklistContactLabel')
+          : t('feedChecklistFirstBookingLabel'),
+      description: task.id === 'email_verified'
+        ? t('checklistVerifyEmailDescription')
+        : task.id === 'profile_info'
+          ? t('feedChecklistContactDescription')
+          : t('feedChecklistFirstBookingDescription'),
+      completed: task.completed,
+      actionType: 'link',
+      to: task.id === 'email_verified'
+        ? '/client-settings?section=security&setup=1'
+        : task.id === 'profile_info'
+          ? '/client-settings?section=contact&setup=1'
+          : '/feed',
+      actionLabel: task.id === 'first_request'
+        ? t('feedChecklistFindProviders')
+        : t('feedChecklistOpenSettings'),
+    }));
+  }, [onboardingData, t]);
+
   const hasProfileChanges = useMemo(() => {
     if (!initialProfile) {
       return false;
@@ -121,6 +180,9 @@ function ClientSettings() {
         setSettings(updated);
         setInitialProfile(updated);
         setFlash({ type: 'success', message: t('profileSettingsSaved') });
+        if (isSetupFlow) {
+          await loadOnboardingProgress();
+        }
       }
     } catch (err) {
       setFlash({ type: 'error', message: err.message || t('failedSaveProfileSettings') });
@@ -161,6 +223,20 @@ function ClientSettings() {
         className="settings-page-heading"
         titleClassName="settings-page-title"
       />
+
+      {isSetupFlow && (
+        <div className="client-settings-onboarding">
+          <ProfileCompletionChecklist
+            title={t('feedGettingStarted')}
+            tasks={setupChecklistTasks}
+            loading={onboardingLoading}
+            error={onboardingError}
+            initiallyCollapsed={false}
+            enhancedSummary
+            continueLabel={t('providerContinueSetup')}
+          />
+        </div>
+      )}
 
       <div className="settings-layout">
         <div className="settings-nav">
