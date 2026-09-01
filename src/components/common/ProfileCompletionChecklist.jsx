@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { AppButton } from '../ui';
 import './ProfileCompletionChecklist.css';
 
 export default function ProfileCompletionChecklist({
@@ -23,22 +24,22 @@ export default function ProfileCompletionChecklist({
     return null;
   }
 
-  const renderTaskAction = (task, className = 'btn btn-sm btn-outline-primary') => {
+  const renderTaskAction = (task) => {
     if (!task || task.completed) return null;
 
     if (task.actionType === 'link' && task.to) {
       return (
-        <Link className={className} to={task.to}>
+        <AppButton as={Link} to={task.to} variant="secondary" size="sm">
           {task.actionLabel || 'Complete'}
-        </Link>
+        </AppButton>
       );
     }
 
     if (task.actionType === 'button' && typeof task.onAction === 'function') {
       return (
-        <button type="button" className={className} onClick={task.onAction}>
+        <AppButton variant="secondary" size="sm" onClick={task.onAction}>
           {task.actionLabel || 'Complete'}
-        </button>
+        </AppButton>
       );
     }
 
@@ -50,17 +51,17 @@ export default function ProfileCompletionChecklist({
 
     if (nextIncompleteTask.actionType === 'link' && nextIncompleteTask.to) {
       return (
-        <Link className="checklist-continue-btn" to={nextIncompleteTask.to}>
+        <AppButton as={Link} to={nextIncompleteTask.to}>
           {continueLabel}
-        </Link>
+        </AppButton>
       );
     }
 
     if (nextIncompleteTask.actionType === 'button' && typeof nextIncompleteTask.onAction === 'function') {
       return (
-        <button type="button" className="checklist-continue-btn" onClick={nextIncompleteTask.onAction}>
+        <AppButton onClick={nextIncompleteTask.onAction}>
           {continueLabel}
-        </button>
+        </AppButton>
       );
     }
 
@@ -81,16 +82,17 @@ export default function ProfileCompletionChecklist({
               </p>
             )}
           </div>
-          <button
-            type="button"
-            className="btn btn-sm btn-outline-secondary checklist-toggle"
+          <AppButton
+            variant="ghost"
+            size="sm"
+            className="checklist-toggle"
             onClick={() => setCollapsed((prev) => !prev)}
             aria-expanded={!collapsed}
           >
             {enhancedSummary
               ? (collapsed ? 'Show details' : 'Hide details')
               : (collapsed ? 'Show' : 'Hide')}
-          </button>
+          </AppButton>
         </div>
 
         {loading && (
