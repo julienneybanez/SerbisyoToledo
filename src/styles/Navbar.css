@@ -89,59 +89,6 @@
   outline-offset: 2px;
 }
 
-.login-btn {
-  color: var(--brand-primary, #5da9dd) !important;
-  border-color: rgba(93, 169, 221, 0.32) !important;
-  font-weight: 600;
-  min-height: var(--control-height) !important;
-  height: auto !important;
-  border-radius: var(--radius-control) !important;
-  padding: 0.5rem 1rem !important;
-  line-height: 1.2;
-  white-space: nowrap;
-  background: rgba(93, 169, 221, 0.05) !important;
-  box-shadow: none;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.login-btn:hover {
-  background-color: rgba(93, 169, 221, 0.09) !important;
-  border-color: rgba(93, 169, 221, 0.5) !important;
-}
-
-.login-btn.active-btn {
-  background-color: transparent;
-  color: var(--brand-primary, #5da9dd) !important;
-}
-
-.signup-btn {
-  background: var(--brand-primary, #5da9dd) !important;
-  border: 1px solid color-mix(in srgb, var(--brand-primary, #5da9dd) 75%, #0f172a) !important;
-  min-height: var(--control-height) !important;
-  height: auto !important;
-  padding: 0.5rem 1rem !important;
-  font-weight: 600;
-  border-radius: var(--radius-control) !important;
-  line-height: 1.2;
-  white-space: nowrap;
-  color: white !important;
-  box-shadow: none;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.signup-btn:hover {
-  background: color-mix(in srgb, var(--brand-primary, #5da9dd) 90%, #0f172a) !important;
-  box-shadow: none;
-}
-
-.signup-btn.active-btn {
-  background: var(--brand-primary, #5da9dd) !important;
-  opacity: 0.9;
-}
 
 .brand-name,
 .brand-location {
@@ -585,11 +532,6 @@
     gap: 0.55rem;
   }
 
-  .login-btn,
-  .signup-btn {
-    flex: 1 1 calc(50% - 0.3rem);
-    padding-inline: 0.75rem;
-  }
 
   .profile-dropdown-menu {
     min-width: 100%;
@@ -597,15 +539,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .navbar,
-  .nav-link,
-  .login-btn,
-  .signup-btn,
-  .profile-avatar-btn,
-  .profile-dropdown-menu {
-    transition: none !important;
-    animation: none !important;
-  }
+
 }
 
 /* Consolidated from ReadabilityRefinement.css: Navbar.css */
@@ -618,73 +552,9 @@
   font-weight: 700;
 }
 
-.navbar .login-btn,
-.navbar .signup-btn {
-  font-size: 1rem;
-}
 
 .navbar .navbar-language-select {
   font-size: 0.95rem;
 }
 
 
-/* ===================================
-   APPROVED MOCKUP AUTH BUTTONS
-   Keep the restored navbar structure, but use the Login / Sign Up button
-   treatment from the approved mockup.
-   =================================== */
-.navbar .login-btn,
-.navbar .signup-btn {
-  min-height: 44px !important;
-  height: auto !important;
-  padding: 0.62rem 0.95rem !important;
-  border-radius: 12px !important;
-  font-size: 0.9rem;
-  font-weight: 750;
-  line-height: 1.2;
-  box-shadow: none !important;
-  transform: none !important;
-}
-
-.navbar .login-btn {
-  border: 1px solid var(--color-border) !important;
-  background: var(--color-surface) !important;
-  color: var(--brand-blue-hover) !important;
-}
-
-.navbar .login-btn:hover,
-.navbar .login-btn:focus-visible,
-.navbar .login-btn.active-btn {
-  border-color: color-mix(in srgb, var(--brand-blue) 40%, var(--color-border)) !important;
-  background: var(--color-soft-blue) !important;
-  color: var(--brand-blue-hover) !important;
-}
-
-.navbar .signup-btn {
-  border: 1px solid var(--brand-blue) !important;
-  background: var(--brand-blue) !important;
-  color: #fff !important;
-}
-
-.navbar .signup-btn:hover,
-.navbar .signup-btn:focus-visible,
-.navbar .signup-btn.active-btn {
-  border-color: var(--brand-blue-hover) !important;
-  background: var(--brand-blue-hover) !important;
-  color: #fff !important;
-  opacity: 1;
-}
-
-[data-theme='dark'] .navbar .login-btn {
-  border-color: var(--color-border-strong) !important;
-  background: var(--color-surface) !important;
-  color: var(--color-primary-hover) !important;
-}
-
-[data-theme='dark'] .navbar .login-btn:hover,
-[data-theme='dark'] .navbar .login-btn:focus-visible,
-[data-theme='dark'] .navbar .login-btn.active-btn {
-  border-color: color-mix(in srgb, var(--color-primary) 45%, var(--color-border)) !important;
-  background: color-mix(in srgb, var(--color-primary) 12%, var(--color-surface)) !important;
-  color: var(--color-primary-hover) !important;
-}
