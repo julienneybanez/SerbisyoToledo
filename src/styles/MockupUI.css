@@ -978,3 +978,105 @@
     padding-right: 10px !important;
   }
 }
+
+
+/* Mobile app-header copy introduced by MobileTopBar. */
+@media (max-width: 800px) {
+  .mobile-topbar-copy {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 1px;
+  }
+
+  .mobile-topbar-app-name {
+    margin: 0;
+    color: var(--mock-blue);
+    font-size: 0.66rem;
+    font-weight: 850;
+    line-height: 1;
+    letter-spacing: -0.01em;
+  }
+
+  .mobile-topbar-app-name span {
+    color: var(--mock-teal);
+  }
+
+  .mobile-topbar-page-title {
+    max-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Public/mobile pages use compact app spacing rather than desktop website gutters. */
+  .home-page {
+    background: var(--mock-bg);
+  }
+
+  .home-page .container {
+    width: 100% !important;
+    max-width: none !important;
+    padding-left: 14px !important;
+    padding-right: 14px !important;
+  }
+
+  .home-hero {
+    padding-top: 14px !important;
+  }
+
+  .home-hero > .container {
+    width: 100% !important;
+  }
+
+  .home-hero-grid {
+    border-radius: 24px !important;
+  }
+
+  .home-hero-title {
+    font-size: 38px !important;
+    letter-spacing: -2px !important;
+    line-height: 0.98 !important;
+  }
+
+  .home-popular-section,
+  .home-trust-section,
+  .home-provider-section {
+    padding-top: 48px !important;
+    padding-bottom: 48px !important;
+  }
+
+  .home-category-grid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 10px !important;
+  }
+
+  .home-category-card {
+    border-radius: 18px !important;
+  }
+
+  .home-category-image-wrap {
+    aspect-ratio: 1.35 / 1 !important;
+  }
+
+  .home-editorial-split,
+  .home-provider-split {
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+  }
+
+  .footer.public-route-footer {
+    margin-bottom: 100px !important;
+  }
+}
+
+@media (max-width: 390px) {
+  .home-category-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .mobile-topbar-page-title {
+    max-width: 145px;
+  }
+}
