@@ -329,3 +329,15 @@
   background:
     linear-gradient(to bottom, color-mix(in srgb, var(--color-surface) 72%, transparent), var(--color-surface) 24%);
 }
+
+
+[data-theme='dark'] .workspace-role-card i,
+[data-theme='dark'] .workspace-nav-link:hover i,
+[data-theme='dark'] .workspace-topbar-avatar {
+  color: var(--color-primary-hover);
+}
+
+[data-theme='dark'] .workspace-logout-link,
+[data-theme='dark'] .workspace-logout-link i {
+  color: var(--color-danger);
+}
