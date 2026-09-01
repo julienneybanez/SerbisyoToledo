@@ -910,7 +910,7 @@ export default function Requests() {
           <div className="requests-error">
             <i className="bi bi-exclamation-triangle"></i>
             <p>{error}</p>
-            <button onClick={fetchRequests}>{t('tryAgain')}</button>
+            <AppButton variant="secondary" onClick={fetchRequests}>{t('tryAgain')}</AppButton>
           </div>
         )}
 
@@ -1186,13 +1186,13 @@ export default function Requests() {
           <div className="decline-dialog-card" onClick={(event) => event.stopPropagation()}>
             <div className="decline-dialog-header">
               <h2 id="cancel-dialog-title">{t('cancelServiceRequest')}</h2>
-              <button type="button" className="decline-dialog-close" onClick={closeCancelDialog} aria-label={t('requestsCloseCancelDialog')}>
+              <IconButton className="decline-dialog-close" onClick={closeCancelDialog} aria-label={t('requestsCloseCancelDialog')}>
                 ×
-              </button>
+              </IconButton>
             </div>
             <div className="decline-dialog-body">
               <label htmlFor="cancel-reason-select" className="decline-dialog-label">{t('requestsReasonForCancellationLabel')}</label>
-              <select
+              <AppSelect
                 id="cancel-reason-select"
                 className="decline-dialog-textarea"
                 value={cancelDialog.cancellationReason}
@@ -1213,11 +1213,11 @@ export default function Requests() {
                 <option value={CANCELLATION_REASONS.PROVIDER_NO_RESPONSE}>{t('requestsCancelReasonProviderNoResponse')}</option>
                 <option value={CANCELLATION_REASONS.FOUND_ANOTHER_PROVIDER}>{t('requestsCancelReasonFoundAnotherProvider')}</option>
                 <option value={CANCELLATION_REASONS.OTHER}>{t('other')}</option>
-              </select>
+              </AppSelect>
               {cancelDialog.cancellationReason === CANCELLATION_REASONS.OTHER && (
                 <>
                   <label htmlFor="cancel-reason-other" className="decline-dialog-label">{t('requestsProvideCancellationDetails')}</label>
-                  <textarea
+                  <AppTextarea
                     id="cancel-reason-other"
                     className="decline-dialog-textarea"
                     rows={3}
@@ -1238,22 +1238,20 @@ export default function Requests() {
               {cancelDialog.error ? <p className="decline-dialog-error">{cancelDialog.error}</p> : null}
             </div>
             <div className="decline-dialog-actions">
-              <button
-                type="button"
-                className="decline-btn-cancel"
+              <AppButton
+                variant="secondary"
                 onClick={closeCancelDialog}
                 disabled={actionLoading === cancelDialog.requestId}
               >
                 {t('requestsKeepRequest')}
-              </button>
-              <button
-                type="button"
-                className="decline-btn-confirm"
+              </AppButton>
+              <AppButton
+                variant="danger"
                 onClick={handleConfirmCancellation}
                 disabled={actionLoading === cancelDialog.requestId}
               >
                 {actionLoading === cancelDialog.requestId ? t('requestsCancelling') : t('requestsConfirmCancellation')}
-              </button>
+              </AppButton>
             </div>
           </div>
         </div>
@@ -1264,13 +1262,13 @@ export default function Requests() {
           <div className="decline-dialog-card" onClick={(event) => event.stopPropagation()}>
             <div className="decline-dialog-header">
               <h2 id="reschedule-dialog-title">{t('requestsProposeReschedule')}</h2>
-              <button type="button" className="decline-dialog-close" onClick={closeRescheduleDialog} aria-label={t('requestsCloseRescheduleDialog')}>
+              <IconButton className="decline-dialog-close" onClick={closeRescheduleDialog} aria-label={t('requestsCloseRescheduleDialog')}>
                 ×
-              </button>
+              </IconButton>
             </div>
             <div className="decline-dialog-body">
               <label htmlFor="reschedule-booking-type" className="decline-dialog-label">{t('bookingTypeLabel')}</label>
-              <select
+              <AppSelect
                 id="reschedule-booking-type"
                 className="decline-dialog-textarea"
                 value={rescheduleDialog.bookingType}
@@ -1282,7 +1280,7 @@ export default function Requests() {
                 {SPECIFIC_DATE_BOOKING_ENABLED && (
                   <option value={BOOKING_TYPE.SPECIFIC_DATES}>{t('bookingSpecificDates')}</option>
                 )}
-              </select>
+              </AppSelect>
 
               {rescheduleDialog.bookingType === BOOKING_TYPE.SPECIFIC_DATES ? (
                 <>
@@ -1311,7 +1309,7 @@ export default function Requests() {
               ) : (
                 <>
                   <label htmlFor="reschedule-start-date" className="decline-dialog-label">{t('requestsStartDate')}</label>
-                  <select
+                  <AppSelect
                     id="reschedule-start-date"
                     className="decline-dialog-textarea"
                     value={rescheduleDialog.proposedStartDate}
@@ -1331,12 +1329,12 @@ export default function Requests() {
                     {rescheduleDialog.availableDates.map((date) => (
                       <option key={date} value={date}>{date}</option>
                     ))}
-                  </select>
+                  </AppSelect>
 
                   {rescheduleDialog.bookingType === BOOKING_TYPE.DATE_RANGE && (
                     <>
                       <label htmlFor="reschedule-end-date" className="decline-dialog-label">{t('requestsEndDate')}</label>
-                      <select
+                      <AppSelect
                         id="reschedule-end-date"
                         className="decline-dialog-textarea"
                         value={rescheduleDialog.proposedEndDate}
@@ -1355,14 +1353,14 @@ export default function Requests() {
                         {getContiguousDatesFrom(rescheduleDialog.availableDates, rescheduleDialog.proposedStartDate).map((date) => (
                           <option key={date} value={date}>{date}</option>
                         ))}
-                      </select>
+                      </AppSelect>
                     </>
                   )}
                 </>
               )}
 
               <label htmlFor="reschedule-start-time" className="decline-dialog-label">{t('requestsStartTime')}</label>
-              <select
+              <AppSelect
                 id="reschedule-start-time"
                 className="decline-dialog-textarea"
                 value={String(rescheduleDialog.proposedStartTime || '').slice(0, 5)}
@@ -1372,10 +1370,10 @@ export default function Requests() {
                 {rescheduleDialog.availableSlots.map((slot) => (
                   <option key={slot.time} value={String(slot.time).slice(0, 5)}>{String(slot.time).slice(0, 5)}</option>
                 ))}
-              </select>
+              </AppSelect>
 
               <label htmlFor="reschedule-duration" className="decline-dialog-label">{t('requestsEstimatedDurationMinutes')}</label>
-              <input
+              <AppInput
                 id="reschedule-duration"
                 className="decline-dialog-textarea"
                 type="number"
@@ -1387,7 +1385,7 @@ export default function Requests() {
               />
 
               <label htmlFor="reschedule-reason" className="decline-dialog-label">{t('reason')}</label>
-              <textarea
+              <AppTextarea
                 id="reschedule-reason"
                 className="decline-dialog-textarea"
                 rows={4}
@@ -1400,12 +1398,10 @@ export default function Requests() {
               {rescheduleDialog.error ? <p className="decline-dialog-error">{rescheduleDialog.error}</p> : null}
             </div>
             <div className="decline-dialog-actions">
-              <button type="button" className="decline-btn-cancel" onClick={closeRescheduleDialog} disabled={actionLoading === rescheduleDialog.requestId}>
+              <AppButton variant="secondary" onClick={closeRescheduleDialog} disabled={actionLoading === rescheduleDialog.requestId}>
                 {t('requestsCancelAction')}
-              </button>
-              <button
-                type="button"
-                className="decline-btn-confirm"
+              </AppButton>
+              <AppButton
                 onClick={handleSubmitReschedule}
                 disabled={
                   actionLoading === rescheduleDialog.requestId
@@ -1418,7 +1414,7 @@ export default function Requests() {
                 }
               >
                 {actionLoading === rescheduleDialog.requestId ? t('requestsSending') : t('requestsSendProposal')}
-              </button>
+              </AppButton>
             </div>
           </div>
         </div>
@@ -1429,13 +1425,13 @@ export default function Requests() {
           <div className="decline-dialog-card" onClick={(event) => event.stopPropagation()}>
             <div className="decline-dialog-header">
               <h2 id="decline-dialog-title">{t('declineServiceRequest')}</h2>
-              <button type="button" className="decline-dialog-close" onClick={closeDeclineDialog} aria-label={t('requestsCloseDeclineDialog')}>
+              <IconButton className="decline-dialog-close" onClick={closeDeclineDialog} aria-label={t('requestsCloseDeclineDialog')}>
                 ×
-              </button>
+              </IconButton>
             </div>
             <div className="decline-dialog-body">
               <label htmlFor="decline-reason-text" className="decline-dialog-label">{t('reasonForDeclining')}</label>
-              <textarea
+              <AppTextarea
                 id="decline-reason-text"
                 className="decline-dialog-textarea"
                 value={declineDialog.reason}
@@ -1454,22 +1450,20 @@ export default function Requests() {
               {declineDialog.error ? <p className="decline-dialog-error">{declineDialog.error}</p> : null}
             </div>
             <div className="decline-dialog-actions">
-              <button
-                type="button"
-                className="decline-btn-cancel"
+              <AppButton
+                variant="secondary"
                 onClick={closeDeclineDialog}
                 disabled={actionLoading === declineDialog.requestId}
               >
                 {t('requestsCancelAction')}
-              </button>
-              <button
-                type="button"
-                className="decline-btn-confirm"
+              </AppButton>
+              <AppButton
+                variant="danger"
                 onClick={handleConfirmDecline}
                 disabled={actionLoading === declineDialog.requestId || !declineDialog.reason.trim()}
               >
                 {actionLoading === declineDialog.requestId ? t('requestsDeclining') : t('requestsConfirmDecline')}
-              </button>
+              </AppButton>
             </div>
           </div>
         </div>
