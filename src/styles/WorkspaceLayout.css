@@ -281,3 +281,51 @@
   background: var(--color-surface-secondary);
   border-color: var(--color-border);
 }
+
+
+/* ===================================
+   WORKSPACE SIDEBAR VISIBILITY HARDENING
+   Keep Settings and Logout reachable even when provider navigation is tall.
+   =================================== */
+@media (min-width: 769px) {
+  .workspace-sidebar {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+  }
+
+  .workspace-sidebar-footer {
+    position: sticky;
+    bottom: -1rem;
+    z-index: 3;
+    margin: 0 -0.9rem -1rem;
+    padding: 0 0.9rem 1rem;
+    background:
+      linear-gradient(to bottom, color-mix(in srgb, var(--color-surface) 72%, transparent), var(--color-surface) 24%);
+  }
+
+  .workspace-sidebar-footer .workspace-sidebar-divider {
+    margin-top: 0.75rem;
+  }
+
+  .workspace-logout-link {
+    width: 100%;
+    color: var(--color-danger);
+  }
+
+  .workspace-logout-link i {
+    color: currentColor;
+  }
+
+  .workspace-logout-link:hover,
+  .workspace-logout-link:focus-visible {
+    border-color: color-mix(in srgb, var(--color-danger) 22%, var(--color-border));
+    background: color-mix(in srgb, var(--color-danger) 7%, var(--color-surface));
+    color: var(--color-danger);
+  }
+}
+
+[data-theme='dark'] .workspace-sidebar-footer {
+  background:
+    linear-gradient(to bottom, color-mix(in srgb, var(--color-surface) 72%, transparent), var(--color-surface) 24%);
+}
