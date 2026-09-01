@@ -9,6 +9,7 @@ import ServiceProfileModal from '../common/ServiceProfileModal';
 import ThemeToggle from '../common/ThemeToggle';
 import { useLanguage } from '../../context/LanguageContext';
 import logo from '../../assets/logo.png';
+import { AppButton } from '../ui';
 
 function Navbar() {
   const navigate = useNavigate();
@@ -156,7 +157,7 @@ function Navbar() {
       : '/client-settings';
 
   return (
-    <nav ref={navbarRef} className={`navbar navbar-expand-lg ${scrolled ? 'navbar-scrolled' : ''}`}>
+    <nav ref={navbarRef} className={`navbar navbar-expand-lg ${!loggedIn ? 'navbar--guest' : 'navbar--authenticated'} ${scrolled ? 'navbar-scrolled' : ''}`}>
       <div className="container navbar-shell">
         <Link className="navbar-brand brand-link d-flex align-items-center" to={brandDestination} onClick={handleNavClick}>
           <div className="logo-wrapper" aria-hidden="true">
@@ -423,20 +424,24 @@ function Navbar() {
                   <option value="ceb">CEB</option>
                 </select>
                 <ThemeToggle compact className="navbar-theme-toggle" />
-                <NavLink
+                <AppButton
+                  as={Link}
                   to="/login"
-                  className={({ isActive }) => `btn btn-outline-primary login-btn ${isActive ? 'active-btn' : ''}`}
+                  variant="ghost"
+                  className="login-btn"
                   onClick={handleNavClick}
                 >
                   {t('logIn')}
-                </NavLink>
-                <NavLink
+                </AppButton>
+                <AppButton
+                  as={Link}
                   to="/register"
-                  className={({ isActive }) => `btn btn-primary signup-btn ${isActive ? 'active-btn' : ''}`}
+                  variant="primary"
+                  className="signup-btn"
                   onClick={handleNavClick}
                 >
                   {t('signUp')}
-                </NavLink>
+                </AppButton>
               </div>
             )}
           </div>
