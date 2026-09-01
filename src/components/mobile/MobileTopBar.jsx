@@ -259,6 +259,12 @@ export default function MobileTopBar({
 
             {isLoggedIn && (
               <>
+                {role === 'admin' && (
+                  <Link to="/" className="mobile-profile-menu-item" role="menuitem" onClick={onCloseProfileMenu}>
+                    <i className="bi bi-box-arrow-up-right"></i>
+                    {language === 'ceb' ? 'Tan-awa ang Site' : 'View Site'}
+                  </Link>
+                )}
                 <Link to={settingsRoute} className="mobile-profile-menu-item" role="menuitem" onClick={onCloseProfileMenu}>
                   <i className="bi bi-gear"></i>
                   {role === 'admin' ? adminSystemStatusLabel : role === 'client' ? t('clientSettings') : t('settings')}
