@@ -222,3 +222,87 @@
     width: 100%;
   }
 }
+
+
+/* ===================================
+   AOXA-INSPIRED REQUEST ACTION DIALOGS
+   Cancel, decline and reschedule forms retain existing validation/actions.
+   =================================== */
+.decline-dialog-overlay {
+  background: color-mix(in srgb, #08111f 70%, transparent);
+  backdrop-filter: blur(2px);
+}
+
+.decline-dialog-card {
+  border: 1px solid var(--color-border);
+  border-radius: 22px;
+  background: var(--color-surface);
+  box-shadow: 0 28px 72px rgba(7, 18, 33, 0.22);
+}
+
+.decline-dialog-header {
+  padding: 1rem 1.1rem;
+  border-bottom-color: var(--color-border);
+}
+
+.decline-dialog-header h2 {
+  color: var(--color-ink);
+  font-size: 1.25rem;
+  font-weight: 790;
+}
+
+.decline-dialog-close {
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+}
+
+.decline-dialog-close:hover {
+  background: var(--color-soft-blue);
+  color: var(--color-text-primary);
+}
+
+.decline-dialog-body {
+  padding: 1rem 1.1rem;
+}
+
+.decline-dialog-label {
+  color: var(--color-text-primary);
+  font-weight: 700;
+}
+
+.decline-dialog-textarea,
+.decline-dialog-body input,
+.decline-dialog-body select {
+  border-color: var(--color-border);
+  border-radius: 12px;
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+}
+
+.decline-dialog-textarea:focus,
+.decline-dialog-body input:focus,
+.decline-dialog-body select:focus {
+  border-color: var(--brand-blue);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-blue) 12%, transparent);
+}
+
+[data-theme='dark'] .decline-dialog-card {
+  background: var(--color-surface);
+  border-color: var(--color-border);
+}
+
+@media (max-width: 576px) {
+  .decline-dialog-overlay {
+    align-items: flex-end;
+    padding: 0;
+    backdrop-filter: none;
+  }
+
+  .decline-dialog-card {
+    width: 100%;
+    max-height: 92dvh;
+    border-radius: 22px 22px 0 0;
+  }
+}
