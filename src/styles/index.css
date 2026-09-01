@@ -103,24 +103,13 @@ select {
   box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--color-primary) 20%, transparent);
 }
 
+/* Button geometry is owned by the canonical mockup component system.
+   Do not wildcard-style legacy `btn-*` classes here. */
 .btn,
 button.btn,
 a.btn,
-.ui-button,
-[class*='btn-']:not(.btn-close):not(.navbar-toggler-icon),
-[class$='-btn']:not(.filter-btn):not(.category-btn):not(.popular-search-chip):not(.how-role-btn):not(.theme-toggle):not(.status-pill):not(.mobile-bottom-nav-item):not(.notification-bell-btn):not(.modal-close-btn):not(.calendar-nav):not(.profile-avatar-btn):not(.mobile-topbar-icon-btn):not(.mobile-topbar-avatar):not(.login-prompt-close):not(.lightbox-close):not(.floating-btn) {
-  border-radius: var(--radius-control);
-  min-height: var(--control-height);
-  font-weight: 600;
-}
-
-.btn-lg,
-.ui-button-primary,
-.cta-btn,
-.btn-request-service,
-.booking-btn-primary {
-  border-radius: var(--radius-control-lg);
-  min-height: var(--control-height-lg);
+.ui-button {
+  font: inherit;
 }
 
 [data-theme='dark'] .text-muted {
