@@ -927,7 +927,7 @@ export default function ServiceProviderDashboard() {
               </div>
               <div className="decline-dialog-body">
                 <label htmlFor="dashboard-decline-reason" className="decline-dialog-label">{t('reasonForDeclining')}</label>
-                <textarea
+                <AppTextarea
                   id="dashboard-decline-reason"
                   className="decline-dialog-textarea"
                   rows={4}
