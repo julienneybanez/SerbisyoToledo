@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { userProfileAPI } from '../../services/api';
+import { AppButton, IconButton } from '../ui';
 import './EditProfileModal.css';
 
 export default function EditProfileModal({ onClose, onProfileUpdated }) {
@@ -125,9 +126,9 @@ export default function EditProfileModal({ onClose, onProfileUpdated }) {
   return createPortal(
     <div className="edit-profile-overlay" onClick={onClose}>
       <div className="edit-profile-modal" onClick={(e) => e.stopPropagation()}>
-        <button className="modal-close-btn" onClick={onClose}>
+        <IconButton className="modal-close-btn" onClick={onClose} aria-label="Close edit profile">
           <i className="bi bi-x-lg"></i>
-        </button>
+        </IconButton>
 
         <div className="edit-profile-header">
           <h2>Edit Profile</h2>
@@ -173,25 +174,23 @@ export default function EditProfileModal({ onClose, onProfileUpdated }) {
                   onChange={handlePhotoSelect}
                   style={{ display: 'none' }}
                 />
-                <button
-                  type="button"
-                  className="btn-photo-upload"
+                <AppButton
+                  variant="secondary"
                   onClick={() => fileInputRef.current?.click()}
                   disabled={isSaving}
+                  icon={<i className="bi bi-camera" aria-hidden="true"></i>}
                 >
-                  <i className="bi bi-camera"></i>
                   {photoPreview ? 'Change Photo' : 'Upload Photo'}
-                </button>
+                </AppButton>
                 {photoPreview && (
-                  <button
-                    type="button"
-                    className="btn-photo-remove"
+                  <AppButton
+                    variant="danger"
                     onClick={handleRemovePhoto}
                     disabled={isSaving}
+                    icon={<i className="bi bi-trash" aria-hidden="true"></i>}
                   >
-                    <i className="bi bi-trash"></i>
                     Remove
-                  </button>
+                  </AppButton>
                 )}
               </div>
             </div>
@@ -237,17 +236,15 @@ export default function EditProfileModal({ onClose, onProfileUpdated }) {
             </div>
 
             <div className="form-actions">
-              <button
-                type="button"
-                className="btn-cancel"
+              <AppButton
+                variant="secondary"
                 onClick={onClose}
                 disabled={isSaving}
               >
                 Cancel
-              </button>
-              <button
+              </AppButton>
+              <AppButton
                 type="submit"
-                className="btn-save"
                 disabled={isSaving}
               >
                 {isSaving ? (
@@ -258,7 +255,7 @@ export default function EditProfileModal({ onClose, onProfileUpdated }) {
                 ) : (
                   'Save Changes'
                 )}
-              </button>
+              </AppButton>
             </div>
           </form>
         )}
