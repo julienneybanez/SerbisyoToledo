@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { AppButton, AppTextarea, IconButton } from '../ui';
 import './ReviewModal.css';
 
 function HalfStarRating({ rating, onRatingChange }) {
@@ -89,9 +90,9 @@ export default function ReviewModal({ request, onClose, onSubmit, loading }) {
   return (
     <div className="review-modal-overlay" onClick={onClose}>
       <div className="review-modal" onClick={(e) => e.stopPropagation()}>
-        <button className="review-modal-close" onClick={onClose}>
+        <IconButton className="review-modal-close" onClick={onClose} aria-label="Close review">
           <i className="bi bi-x-lg"></i>
-        </button>
+        </IconButton>
 
         <div className="review-modal-header">
           <div className="review-icon-wrapper">
@@ -111,7 +112,7 @@ export default function ReviewModal({ request, onClose, onSubmit, loading }) {
 
           <div className="review-comment-section">
             <label htmlFor="review-comment">Your Review (optional)</label>
-            <textarea
+            <AppTextarea
               id="review-comment"
               className="review-textarea"
               rows={4}
@@ -125,8 +126,16 @@ export default function ReviewModal({ request, onClose, onSubmit, loading }) {
         </div>
 
         <div className="review-modal-actions">
-          <button 
-            className="btn-submit-review"
+          <AppButton
+            variant="secondary"
+            className="review-cancel"
+            onClick={onClose}
+          >
+            Cancel
+          </AppButton>
+          <AppButton
+            variant="primary"
+            className="review-submit"
             onClick={handleSubmit}
             disabled={loading || rating === 0}
           >
@@ -135,10 +144,7 @@ export default function ReviewModal({ request, onClose, onSubmit, loading }) {
             ) : (
               <><i className="bi bi-send-fill"></i> Submit Review</>
             )}
-          </button>
-          <button className="btn-cancel-review" onClick={onClose}>
-            Cancel
-          </button>
+          </AppButton>
         </div>
       </div>
     </div>
