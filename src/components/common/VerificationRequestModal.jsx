@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
 import { userProfileAPI } from '../../services/api';
 import { useLanguage } from '../../context/LanguageContext';
+import { AppButton, IconButton } from '../ui';
 import './ServiceProfileModal.css';
 
 export default function VerificationRequestModal({ onClose }) {
@@ -79,9 +80,9 @@ export default function VerificationRequestModal({ onClose }) {
   return createPortal(
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <button className="modal-close" onClick={onClose} aria-label={t('verificationCloseAria')}>
+        <IconButton className="modal-close" onClick={onClose} aria-label={t('verificationCloseAria')}>
           ×
-        </button>
+        </IconButton>
 
         <form onSubmit={handleSubmit} className="service-profile-form" noValidate>
           <div className="modal-header">
@@ -210,9 +211,9 @@ export default function VerificationRequestModal({ onClose }) {
             </label>
           </div>
 
-          <button type="submit" className="btn-submit" disabled={isLoading || success}>
+          <AppButton type="submit" disabled={isLoading || success}>
             {isLoading ? t('verificationSubmitting') : t('verificationSubmitRequest')}
-          </button>
+          </AppButton>
         </form>
       </div>
     </div>,
