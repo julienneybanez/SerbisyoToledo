@@ -12,11 +12,8 @@
 .messages-action-copy strong{color:var(--text-primary,#16324a);font-size:.9rem}
 .messages-action-copy span{color:var(--text-secondary,#667784);font-size:.8rem;line-height:1.4}
 .messages-action-buttons{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap}
-.messages-action-primary,.messages-action-secondary,.messages-request-phone-button{min-height:40px;border-radius:10px;padding:.55rem .8rem;display:inline-flex;align-items:center;justify-content:center;gap:.38rem;font-weight:750;font-size:.84rem;cursor:pointer}
-.messages-action-primary,.messages-request-phone-button{border:1px solid #0d7195;background:#0d7195;color:#fff}
-.messages-action-secondary{border:1px solid var(--border-color,#c8d5de);background:var(--surface,#fff);color:var(--text-primary,#16324a)}
-.messages-action-secondary.danger{border-color:#e4a7ad;color:#b4232f;background:color-mix(in srgb,#fff 94%,#dc3545 6%)}
-.messages-action-primary:disabled,.messages-action-secondary:disabled,.messages-request-phone-button:disabled{opacity:.55;cursor:not-allowed}
+
+
 .messages-decline-form{min-width:min(420px,100%);display:flex;flex-direction:column;gap:.45rem}
 .messages-decline-form label{font-size:.8rem;font-weight:750;color:var(--text-primary,#16324a)}
 .messages-decline-form textarea{width:100%;resize:vertical;min-height:64px;border:1px solid var(--border-color,#b9c9d3);border-radius:10px;padding:.6rem .7rem;background:var(--surface,#fff);color:var(--text-primary,#16324a)}
@@ -33,7 +30,6 @@
 .message-system-event span{padding:.35rem .65rem;border-radius:999px;background:color-mix(in srgb,var(--surface-soft,#f7fafc) 88%,#dbe7ee 12%)}
 .message-system-event time{font-size:.68rem;color:var(--text-secondary,#7a8994)}
 
-[data-theme='dark'] .messages-action-secondary.danger{background:color-mix(in srgb,var(--surface,#18242d) 90%,#dc3545 10%)}
 [data-theme='dark'] .messages-inline-error{background:color-mix(in srgb,var(--surface,#18242d) 88%,#dc3545 12%)}
 
 @media(max-width:768px){
@@ -43,7 +39,7 @@
   .messages-action-buttons>button{flex:1 1 140px}
   .messages-decline-form{min-width:0;width:100%}
   .messages-phone-request-card{align-items:stretch;flex-direction:column}
-  .messages-request-phone-button{width:100%}
+
   .message-system-event{max-width:94%}
 }
 
@@ -188,32 +184,6 @@
   color: var(--color-text-secondary);
 }
 
-.messages-action-primary,
-.messages-request-phone-button {
-  min-height: 44px;
-  border: 1px solid var(--brand-blue);
-  border-radius: 12px;
-  background: var(--brand-blue);
-  color: #fff;
-}
-
-.messages-action-primary:hover,
-.messages-request-phone-button:hover {
-  background: var(--brand-blue-hover);
-  border-color: var(--brand-blue-hover);
-}
-
-.messages-action-secondary {
-  min-height: 44px;
-  border: 1px solid var(--color-border);
-  border-radius: 12px;
-  background: var(--color-surface);
-  color: var(--color-text-primary);
-}
-
-.messages-action-secondary:hover {
-  background: var(--color-soft-cream);
-}
 
 .messages-decline-form textarea {
   border-color: var(--color-border);
