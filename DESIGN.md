@@ -205,3 +205,15 @@ The form language is rounded and substantial without becoming bubbly. Inputs and
 ## Aoxa-reference boundary
 
 The Aoxa screenshots are a visual reference only. Do not add Aoxa-only capabilities such as in-app payments, earnings/withdrawals, provider tracking, an open-job bidding marketplace, app-store badges, Trustpilot blocks, or fabricated marketplace statistics. A SerbisyoToledo UI migration may alter composition and styling, but it must preserve every route, button, conditional action, and code-backed workflow recorded in `docs/UI_FEATURE_PARITY_CHECKLIST.md`.
+
+## Canonical Aoxa mockup source
+
+For the `ui/aoxa-shadcn-visual-shift` branch, the standalone **SerbisyoToledo — Aoxa × shadcn UI Mockup** supplied by the project owner is the authoritative visual reference for most interface geometry and component presentation.
+
+Implementation rule:
+- The mockup defines the visual system: public navbar proportions, buttons, icon buttons, hero sizing, section width/spacing, cards, sidebars, workspace topbar, page headers, stats, soft panels, list rows, filters/chips, provider cards, profile layout, request cards, messages, availability, settings, admin tables, auth split layout, dialogs, and footer composition.
+- The real SerbisyoToledo application defines functionality and content: routes, permissions, API calls, request lifecycle, booking rules, real assets/uploads, localization, notifications, messaging, verification, moderation, availability, and database contracts.
+- Do not invent mockup-only functionality.
+- Do not remove existing code-backed actions for visual cleanliness.
+- Mobile may use app-native chrome (fixed top app bar, bottom navigation, sheets) while reusing the same mockup component language, spacing, colors, cards, buttons, inputs, chips, and status treatments.
+- When an older page stylesheet conflicts with the mockup design, `src/styles/MockupUI.css` is authoritative for the redesigned branch.
