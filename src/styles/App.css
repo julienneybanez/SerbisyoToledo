@@ -21,6 +21,8 @@
 @import '../components/common/RequestActionDialog.css';
 @import '../components/mobile/mobile.css';
 
+@import './MockupUI.css';
+
 body {
   line-height: 1.55;
 }
@@ -33,6 +35,3 @@ body {
     transition: none;
   }
 }
-
-/* Canonical Aoxa mockup component system loads last so its component geometry is authoritative. */
-@import './MockupUI.css';
