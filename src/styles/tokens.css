@@ -15,6 +15,14 @@
   --gradient-brand-soft: linear-gradient(135deg, #e7f1ff 0%, #e8f8f4 100%);
   --gradient-brand-deep: linear-gradient(125deg, #153a72 0%, #0f5f73 100%);
 
+  /* Aoxa-inspired editorial surfaces. These are opt-in tokens so unmigrated routes keep their current behavior. */
+  --color-public-bg: #f7f8f4;
+  --color-soft-blue: #eaf7ff;
+  --color-soft-blue-strong: #d9efff;
+  --color-soft-cream: #f8f7ed;
+  --color-soft-mint: #edf9f4;
+  --color-ink: #101114;
+
   --brand-primary: var(--brand-blue);
   --brand-primary-dark: var(--brand-blue-hover);
   --brand-accent: var(--brand-teal);
@@ -87,6 +95,8 @@
   --space-6: 1.5rem;
   --space-8: 2rem;
   --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
 
   --radius-sm: 10px;
   --radius-md: 14px;
@@ -96,6 +106,8 @@
   --radius-input: 11px;
   --radius-card: 15px;
   --radius-pill: 999px;
+  --radius-panel: 24px;
+  --radius-hero: 32px;
 
   --control-height: 46px;
   --control-height-lg: 50px;
@@ -105,6 +117,7 @@
 
   --shadow-sm: 0 2px 0 rgba(15, 23, 42, 0.04), 0 8px 20px rgba(15, 23, 42, 0.10);
   --shadow-md: 0 3px 0 rgba(15, 23, 42, 0.05), 0 16px 34px rgba(15, 23, 42, 0.15);
+  --shadow-panel: 0 1px 0 rgba(15, 23, 42, 0.04), 0 18px 50px rgba(15, 23, 42, 0.08);
 
   --motion-fast: 150ms;
   --motion-normal: 220ms;
@@ -133,6 +146,13 @@
   --color-placeholder: #a9b8cc;
   --color-overlay: rgba(2, 6, 23, 0.78);
   --color-shadow: rgba(0, 0, 0, 0.35);
+
+  --color-public-bg: #0b1220;
+  --color-soft-blue: #162a3d;
+  --color-soft-blue-strong: #1d3850;
+  --color-soft-cream: #25271f;
+  --color-soft-mint: #17342f;
+  --color-ink: #f8fafc;
 
   --color-primary: #74baf5;
   --color-primary-hover: #95cfff;
@@ -170,6 +190,7 @@
 
   --shadow-sm: 0 6px 16px rgba(0, 0, 0, 0.26);
   --shadow-md: 0 18px 36px rgba(0, 0, 0, 0.34);
+  --shadow-panel: 0 20px 54px rgba(0, 0, 0, 0.32);
 
   color-scheme: dark;
 }
