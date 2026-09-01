@@ -603,32 +603,6 @@
   color: #4f6480;
 }
 
-/* ===================================
-   PORTFOLIO PAGE - PRICING & CONTACT
-   =================================== */
-.btn-request-service {
-  margin-top: 0.6rem;
-  width: 100%;
-  border: none;
-  border-radius: 12px;
-  min-height: 48px;
-  padding: 0.9rem;
-  font-weight: 700;
-  color: #fff;
-  background: var(--primary);
-  box-shadow: none;
-  cursor: pointer;
-}
-
-.btn-request-service:hover:not(:disabled) {
-  background: var(--primary-hover);
-}
-
-.btn-request-service:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  box-shadow: none;
-}
 
 .contact-item {
   display: flex;
@@ -865,41 +839,6 @@
   gap: 0.75rem;
 }
 
-.btn-login-prompt {
-  background: var(--brand-primary);
-  color: #fff;
-  border: none;
-  border-radius: var(--radius-control);
-  min-height: var(--control-height);
-  padding: 0.75rem 1.1rem;
-  font-weight: 600;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: background-color 0.2s ease, filter 0.2s ease;
-  box-shadow: none;
-}
-
-.btn-login-prompt:hover {
-  background: var(--brand-primary-dark);
-}
-
-.btn-register-prompt {
-  background: transparent;
-  color: var(--brand-primary);
-  border: 2px solid #e2e8f0;
-  border-radius: var(--radius-control);
-  min-height: var(--control-height);
-  padding: 0.75rem 1.1rem;
-  font-weight: 600;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.btn-register-prompt:hover {
-  background: #f8fafc;
-  border-color: var(--brand-primary);
-}
 
 /* ===================================
    IMAGE LIGHTBOX
@@ -1076,17 +1015,6 @@
   box-shadow: inset 0 0 0 1px var(--color-border);
 }
 
-[data-theme='dark'] .chip-outline,
-[data-theme='dark'] .btn-register-prompt {
-  border-color: var(--color-border);
-  color: var(--color-text-secondary);
-}
-
-[data-theme='dark'] .btn-register-prompt:hover {
-  background: var(--color-surface-secondary);
-  border-color: var(--color-primary);
-  color: var(--color-primary-hover);
-}
 
 [data-theme='dark'] .login-prompt-overlay {
   background: var(--color-overlay);
@@ -1113,7 +1041,6 @@
 [data-theme='dark'] .provider-mobile-rate-value {
   color: var(--color-text-primary);
 }
-
 
 
 @media (max-width: 360px) {
@@ -1432,20 +1359,6 @@
   font-weight: 810;
 }
 
-.btn-request-service {
-  min-height: 50px;
-  border: 1px solid var(--brand-blue);
-  border-radius: 12px;
-  background: var(--brand-blue);
-  color: #fff;
-  font-weight: 750;
-}
-
-.btn-request-service:hover:not(:disabled),
-.btn-request-service:focus-visible:not(:disabled) {
-  background: var(--brand-blue-hover);
-  border-color: var(--brand-blue-hover);
-}
 
 .provider-preview-badge {
   border-color: color-mix(in srgb, var(--brand-blue) 28%, var(--color-border));
@@ -1649,18 +1562,6 @@
   color: var(--color-ink);
 }
 
-.btn-login-prompt {
-  min-height: 48px;
-  border-radius: 12px;
-  background: var(--brand-blue);
-}
-
-.btn-register-prompt {
-  min-height: 48px;
-  border: 1px solid var(--color-border);
-  border-radius: 12px;
-  color: var(--brand-blue-hover);
-}
 
 .provider-mobile-request-bar {
   border-top-color: var(--color-border);
