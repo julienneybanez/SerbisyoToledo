@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { serviceProfileAPI } from '../../services/api';
 import useServiceTaxonomy from '../../hooks/useServiceTaxonomy';
 import { useLanguage } from '../../context/LanguageContext';
+import { AppButton, IconButton } from '../ui';
 import './ServiceProfileModal.css';
 
 export default function ServiceProfileModal({ onClose }) {
@@ -188,7 +189,7 @@ export default function ServiceProfileModal({ onClose }) {
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         {/* Close Button */}
-        <button className="modal-close" onClick={onClose} aria-label={t('serviceListingCloseAria')}>×</button>
+        <IconButton className="modal-close" onClick={onClose} aria-label={t('serviceListingCloseAria')}>×</IconButton>
 
         {isFetchingProfile ? (
           <div className="edit-profile-loading">
@@ -339,13 +340,12 @@ export default function ServiceProfileModal({ onClose }) {
           </section>
 
           {/* Submit Button */}
-          <button 
-            type="submit" 
-            className="btn-submit"
+          <AppButton
+            type="submit"
             disabled={isLoading || success}
           >
             {isLoading ? t('serviceListingSaving') : t(isEditMode ? 'serviceListingSave' : 'postServiceListing')}
-          </button>
+          </AppButton>
 
           {/* Terms Agreement */}
           <p className="terms-text">
