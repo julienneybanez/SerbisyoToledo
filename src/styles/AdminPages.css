@@ -1098,7 +1098,7 @@
 }
 
 .pagination-btn {
-  min-height: 40px;
+  min-height: 44px;
   padding: 0.5rem 1rem;
   background: transparent;
   border: 1px solid #e2e8f0;
@@ -2542,7 +2542,7 @@ input:checked + .slider:before {
 }
 
 .admin-page .table-actions-stack .btn-users-action {
-  min-height: 40px;
+  min-height: 44px;
   padding: 0.48rem 0.65rem;
   border-radius: 10px;
   font-size: 0.8rem;
