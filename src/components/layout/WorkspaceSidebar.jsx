@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Link, NavLink } from 'react-router-dom';
+import { Link, NavLink, useNavigate } from 'react-router-dom';
 import logo from '../../assets/logo.png';
 import { useLanguage } from '../../context/LanguageContext';
-import { messageAPI } from '../../services/api';
+import { authAPI, messageAPI } from '../../services/api';
 import { connectMessagingSocket } from '../../services/socket';
 
 const ROLE_ITEMS = {
@@ -30,10 +30,16 @@ export default function WorkspaceSidebar({
   onEditProviderProfile,
   onManageServiceProfile,
 }) {
+  const navigate = useNavigate();
   const { t } = useLanguage();
   const isProvider = role === 'tradesperson';
   const items = ROLE_ITEMS[role] || ROLE_ITEMS.client;
   const [unreadMessages, setUnreadMessages] = useState(0);
+
+  const handleLogout = async () => {
+    await authAPI.logout();
+    navigate('/');
+  };
 
   useEffect(() => {
     if (!['client', 'tradesperson'].includes(role)) {
@@ -159,13 +165,17 @@ export default function WorkspaceSidebar({
       )}
 
       <div className="workspace-sidebar-spacer" />
-      <div className="workspace-sidebar-divider" />
-
-      <nav className="workspace-nav workspace-nav-secondary">
-        <NavLink to={isProvider ? '/provider-settings' : '/client-settings'} className={({ isActive }) => `workspace-nav-link ${isActive ? 'active' : ''}`}>
-          <i className="bi bi-gear" aria-hidden="true"></i><span>{t('settings')}</span>
-        </NavLink>
-      </nav>
+      <div className="workspace-sidebar-footer">
+        <div className="workspace-sidebar-divider" />
+        <nav className="workspace-nav workspace-nav-secondary">
+          <NavLink to={isProvider ? '/provider-settings' : '/client-settings'} className={({ isActive }) => `workspace-nav-link ${isActive ? 'active' : ''}`}>
+            <i className="bi bi-gear" aria-hidden="true"></i><span>{t('settings')}</span>
+          </NavLink>
+          <button type="button" className="workspace-nav-link workspace-nav-action workspace-logout-link" onClick={handleLogout}>
+            <i className="bi bi-box-arrow-right" aria-hidden="true"></i><span>{t('logOut')}</span>
+          </button>
+        </nav>
+      </div>
     </aside>
   );
 }
