@@ -64,100 +64,6 @@
 
 .st-section-card { padding: var(--space-6); }
 
-.st-button {
-  min-height: var(--control-height);
-  padding: 0.7rem 1rem;
-  border: 1px solid transparent;
-  border-radius: var(--radius-control);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-2);
-  font: inherit;
-  font-size: 0.95rem;
-  font-weight: 700;
-  line-height: 1.2;
-  text-decoration: none;
-  cursor: pointer;
-  transition:
-    background-color var(--motion-normal) var(--motion-ease),
-    border-color var(--motion-normal) var(--motion-ease),
-    color var(--motion-normal) var(--motion-ease),
-    box-shadow var(--motion-normal) var(--motion-ease),
-    transform var(--motion-fast) var(--motion-ease);
-}
-
-.st-button:hover:not(:disabled) {
-  transform: translateY(-1px);
-  text-decoration: none;
-}
-
-.st-button:disabled,
-.st-button[aria-disabled='true'] {
-  opacity: 0.65;
-  cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
-}
-
-.st-button--primary {
-  background: var(--color-primary);
-  border-color: var(--color-primary);
-  color: #fff;
-}
-
-.st-button--primary:hover:not(:disabled) {
-  background: var(--color-primary-hover);
-  border-color: var(--color-primary-hover);
-  color: #fff;
-}
-
-.st-button--secondary,
-.st-button--outline {
-  background: var(--color-surface);
-  border-color: var(--color-border-strong);
-  color: var(--color-text-primary);
-}
-
-.st-button--secondary:hover:not(:disabled),
-.st-button--outline:hover:not(:disabled) {
-  background: var(--color-surface-secondary);
-  border-color: var(--color-border-strong);
-  color: var(--color-text-primary);
-}
-
-.st-button--ghost {
-  background: transparent;
-  border-color: transparent;
-  color: var(--color-text-secondary);
-}
-
-.st-button--ghost:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--color-primary) 10%, transparent);
-  color: var(--color-text-primary);
-}
-
-.st-button--danger {
-  background: transparent;
-  border-color: color-mix(in srgb, var(--color-danger) 40%, var(--color-border));
-  color: var(--color-danger);
-}
-
-.st-button--danger:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--color-danger) 10%, var(--color-surface));
-  color: var(--color-danger);
-}
-
-.st-button--sm {
-  min-height: 38px;
-  padding: 0.5rem 0.75rem;
-  font-size: var(--text-sm);
-}
-
-.st-button--lg {
-  min-height: var(--control-height-lg);
-  padding: 0.8rem 1.25rem;
-}
 
 .st-status-badge {
   display: inline-flex;
@@ -252,24 +158,13 @@
     margin-bottom: 0.8rem;
   }
 
-  .st-page-header-action,
-  .st-page-header-action .st-button {
-    width: 100%;
-  }
 
   .st-section-card { padding: var(--space-4); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .st-card--interactive,
-  .st-button {
-    transition: none;
-  }
 
-  .st-card--interactive:hover,
-  .st-button:hover:not(:disabled) {
-    transform: none;
-  }
+
 }
 
 
@@ -359,21 +254,6 @@
   border-radius: var(--radius-panel);
 }
 
-.st-button {
-  border-radius: var(--radius-control);
-  box-shadow: none;
-}
-
-.st-button--primary {
-  background: var(--brand-blue);
-  border-color: var(--brand-blue);
-  color: #fff;
-}
-
-.st-button--primary:hover:not(:disabled) {
-  background: var(--brand-blue-hover);
-  border-color: var(--brand-blue-hover);
-}
 
 @media (max-width: 576px) {
   .st-surface {
@@ -386,44 +266,6 @@
   }
 }
 
-
-/* ===================================
-   SHARED ACTION BUTTON CONSISTENCY
-   Standardize action buttons without changing icon-only controls, close buttons,
-   filter chips, status pills, or calendar day cells.
-   =================================== */
-:where(
-  .st-button,
-  .btn:not(.btn-close),
-  .btn-save,
-  .btn-cancel,
-  .btn-change-password,
-  .btn-post-service,
-  .btn-review-requests,
-  .btn-view-profile,
-  .btn-request-service,
-  .booking-btn,
-  .btn-action,
-  .job-btn,
-  .about-cta-button,
-  .home-provider-cta,
-  .home-secondary-cta,
-  .auth-submit,
-  .checklist-continue-btn,
-  .btn-get-verified,
-  .btn-login-prompt,
-  .btn-register-prompt
-) {
-  min-height: 44px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  border-radius: 12px;
-  font-weight: 700;
-  line-height: 1.2;
-  text-align: center;
-}
 
 .btn-primary {
   border-color: var(--brand-blue);
