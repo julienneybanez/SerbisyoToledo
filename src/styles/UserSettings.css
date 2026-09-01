@@ -1011,3 +1011,135 @@ input:checked + .slider:before {
     padding: 1.1rem 0.9rem 1.3rem;
   }
 }
+
+
+/* ===================================
+   PROVIDER CREDENTIALS / ACCOUNT TOOL POLISH
+   Existing credential fields, document upload, add credential, review submit,
+   verification feedback, account save/reset and password actions remain.
+   =================================== */
+.provider-tool-page {
+  max-width: 1120px;
+}
+
+.provider-tool-page .settings-page-heading,
+.provider-tool-page .settings-layout-single {
+  max-width: 900px;
+}
+
+.provider-tool-page .settings-layout-single {
+  border-radius: 20px;
+}
+
+.provider-tool-page .settings-content {
+  padding: clamp(1.3rem, 3vw, 2rem);
+}
+
+.provider-tool-page .settings-section-title {
+  color: var(--color-ink);
+  font-size: 1.35rem;
+  font-weight: 790;
+}
+
+.provider-tool-page .settings-subsection-title {
+  color: var(--color-text-primary);
+  font-weight: 740;
+}
+
+.provider-tool-credentials .settings-section > .settings-group:first-of-type {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.35rem 0.85rem;
+  padding: 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  background: var(--color-soft-cream);
+}
+
+.provider-tool-credentials .settings-section > .settings-group:first-of-type .settings-label,
+.provider-tool-credentials .settings-section > .settings-group:first-of-type .settings-help,
+.provider-tool-credentials .settings-section > .settings-group:first-of-type .settings-input {
+  grid-column: auto;
+}
+
+.provider-tool-credentials .settings-section > .settings-group:first-of-type .settings-label {
+  align-self: end;
+  margin-top: 0.45rem;
+}
+
+.provider-tool-credentials .settings-section > .settings-group:first-of-type .settings-input {
+  min-width: 0;
+}
+
+.provider-tool-credentials .settings-section > .settings-group:first-of-type input[type='file'] {
+  padding: 0.55rem;
+  background: var(--color-surface);
+}
+
+.provider-tool-credentials .settings-actions {
+  margin-top: 0.9rem;
+  padding-top: 0;
+  border-top: 0;
+}
+
+.provider-tool-credentials .settings-actions .btn-save {
+  min-width: 180px;
+}
+
+.provider-tool-credentials .settings-surface-block {
+  padding: 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  background: var(--color-surface);
+}
+
+.provider-tool-credentials .settings-surface-block + .settings-surface-block {
+  margin-top: 0.7rem;
+}
+
+.provider-tool-credentials .settings-metadata-strong {
+  color: var(--color-ink);
+  font-size: 0.96rem;
+  font-weight: 750;
+}
+
+.provider-tool-credentials .settings-credential-actions .btn-save {
+  min-height: 42px !important;
+  padding: 0.55rem 0.75rem;
+  border-radius: 11px;
+  font-size: 0.84rem;
+}
+
+.provider-tool-account .settings-card {
+  border-bottom-color: var(--color-border);
+}
+
+.provider-tool-account .settings-card-row {
+  padding: 0.9rem 0 1rem;
+}
+
+.provider-tool-account .btn-change-password,
+.provider-tool-account .btn-save,
+.provider-tool-account .btn-cancel {
+  border-radius: 12px;
+}
+
+[data-theme='dark'] .provider-tool-credentials .settings-section > .settings-group:first-of-type {
+  background: var(--color-surface-secondary);
+  border-color: var(--color-border);
+}
+
+[data-theme='dark'] .provider-tool-credentials .settings-surface-block {
+  background: var(--color-surface-secondary);
+  border-color: var(--color-border);
+}
+
+@media (max-width: 700px) {
+  .provider-tool-credentials .settings-section > .settings-group:first-of-type {
+    grid-template-columns: 1fr;
+  }
+
+  .provider-tool-credentials .settings-actions .btn-save {
+    width: 100%;
+  }
+}
