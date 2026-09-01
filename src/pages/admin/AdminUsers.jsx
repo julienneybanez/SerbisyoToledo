@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { adminAPI } from '../../services/api';
 import { useLanguage } from '../../context/LanguageContext';
-import { PageHeader } from '../../components/ui';
+import { AppButton, AppInput, AppSelect, IconButton, PageHeader } from '../../components/ui';
 import '../../styles/AdminPages.css';
 
 function AdminUsers() {
@@ -154,7 +154,7 @@ function AdminUsers() {
             <circle cx="11" cy="11" r="8"></circle>
             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
           </svg>
-          <input
+          <AppInput
             type="text"
             placeholder={t('searchUsersPlaceholder')}
             value={searchTerm}
@@ -163,20 +163,20 @@ function AdminUsers() {
         </div>
 
         <div className="filter-group">
-          <select value={filterType} onChange={(e) => setFilterType(e.target.value)} aria-label={t('filterUsersByRole')}>
+          <AppSelect value={filterType} onChange={(e) => setFilterType(e.target.value)} aria-label={t('filterUsersByRole')}>
             <option value="all">{t('allTypes')}</option>
             <option value="client">{t('clients')}</option>
             <option value="tradesperson">{t('serviceProviders')}</option>
             <option value="admin">{t('admins')}</option>
-          </select>
+          </AppSelect>
 
-          <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} aria-label={t('filterUsersByStatus')}>
+          <AppSelect value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} aria-label={t('filterUsersByStatus')}>
             <option value="all">{t('allStatuses')}</option>
             <option value="active">{t('active')}</option>
             <option value="verified">{t('verified')}</option>
             <option value="pending">{t('pending')}</option>
             <option value="suspended">{t('suspended')}</option>
-          </select>
+          </AppSelect>
         </div>
       </div>
 
@@ -207,11 +207,12 @@ function AdminUsers() {
               </div>
 
               <div className="table-actions-stack admin-user-mobile-actions">
-                <button className="btn-view-details btn-users-action" onClick={() => handleViewDetails(user.id)}>
+                <AppButton variant="secondary" className="admin-user-action" onClick={() => handleViewDetails(user.id)}>
                   {t('viewDetails')}
-                </button>
-                <button
-                  className="btn-dismiss btn-users-action"
+                </AppButton>
+                <AppButton
+                  variant={user.isActive ? "danger" : "secondary"}
+                  className="admin-user-action"
                   disabled={actionLoading === `active-${user.id}`}
                   onClick={() => handleToggleActive(user)}
                 >
@@ -220,10 +221,10 @@ function AdminUsers() {
                     : user.isActive
                       ? t('deactivate')
                       : t('reactivate')}
-                </button>
-                <button className="btn-approve btn-users-action" onClick={() => handleViewActivity(user.id)}>
+                </AppButton>
+                <AppButton variant="ghost" className="admin-user-action" onClick={() => handleViewActivity(user.id)}>
                   {t('viewActivity')}
-                </button>
+                </AppButton>
               </div>
             </div>
           ))}
@@ -273,11 +274,12 @@ function AdminUsers() {
                   <td>{new Date(user.joinDate).toLocaleDateString()}</td>
                   <td>
                     <div className="table-actions table-actions-stack">
-                      <button className="btn-view-details btn-users-action" onClick={() => handleViewDetails(user.id)}>
+                      <AppButton variant="secondary" className="admin-user-action" onClick={() => handleViewDetails(user.id)}>
                         {t('viewDetails')}
                       </button>
-                      <button
-                        className="btn-dismiss btn-users-action"
+                      <AppButton
+                        variant={user.isActive ? "danger" : "secondary"}
+                        className="admin-user-action"
                         disabled={actionLoading === `active-${user.id}`}
                         onClick={() => handleToggleActive(user)}
                       >
@@ -286,10 +288,10 @@ function AdminUsers() {
                           : user.isActive
                             ? t('deactivate')
                             : t('reactivate')}
-                      </button>
-                      <button className="btn-approve" onClick={() => handleViewActivity(user.id)}>
+                      </AppButton>
+                      <AppButton variant="ghost" className="admin-user-action" onClick={() => handleViewActivity(user.id)}>
                         {t('viewActivity')}
-                      </button>
+                      </AppButton>
                     </div>
                   </td>
                 </tr>
@@ -304,14 +306,13 @@ function AdminUsers() {
           <div className={`admin-dialog-card ${dialog.tone === 'danger' ? 'danger' : ''}`}>
             <div className="admin-dialog-header">
               <h2 id="admin-dialog-title" className="admin-dialog-title">{dialog.title}</h2>
-              <button
-                type="button"
+              <IconButton
                 className="admin-dialog-close"
                 onClick={closeDialog}
                 aria-label={t('adminCloseDialog')}
               >
                 ×
-              </button>
+              </IconButton>
             </div>
 
             <div className="admin-dialog-body">
@@ -321,9 +322,9 @@ function AdminUsers() {
             </div>
 
             <div className="admin-dialog-actions">
-              <button type="button" className="btn-approve" onClick={closeDialog}>
+              <AppButton onClick={closeDialog}>
                 {t('adminOkay')}
-              </button>
+              </AppButton>
             </div>
           </div>
         </div>
