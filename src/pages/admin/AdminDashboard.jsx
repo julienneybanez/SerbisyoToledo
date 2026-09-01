@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { adminAPI } from '../../services/api';
 import { useLanguage } from '../../context/LanguageContext';
+import { Chip, StatCard } from '../../components/ui';
 import '../../styles/AdminPages.css';
 
 function AdminDashboard() {
@@ -94,46 +95,28 @@ function AdminDashboard() {
     <div className="admin-page">
       {/* Stats Cards */}
       <div className="stats-grid">
-        <div className="stat-card">
-          <span className="stat-label">{t('pendingVerifications')}</span>
-          <span className="stat-value text-warning">
-            {loading ? '...' : stats.pendingVerifications}
-          </span>
-        </div>
-        <div className="stat-card">
-          <span className="stat-label">{t('activeReports')}</span>
-          <span className="stat-value text-orange">
-            {loading ? '...' : stats.activeReports}
-          </span>
-        </div>
-        <div className="stat-card">
-          <span className="stat-label">{t('verifiedProviders')}</span>
-          <span className="stat-value text-success">
-            {loading ? '...' : stats.verifiedProviders}
-          </span>
-        </div>
-        <div className="stat-card">
-          <span className="stat-label">{t('totalUsers')}</span>
-          <span className="stat-value text-primary">
-            {loading ? '...' : stats.totalUsers}
-          </span>
-        </div>
+        <StatCard className="stat-card" label={t('pendingVerifications')} value={loading ? '...' : stats.pendingVerifications} />
+        <StatCard className="stat-card" label={t('activeReports')} value={loading ? '...' : stats.activeReports} />
+        <StatCard className="stat-card" label={t('verifiedProviders')} value={loading ? '...' : stats.verifiedProviders} />
+        <StatCard className="stat-card" label={t('totalUsers')} value={loading ? '...' : stats.totalUsers} />
       </div>
 
       {/* Tabs */}
       <div className="admin-tabs">
-        <button 
-          className={`admin-tab ${activeTab === 'verifications' ? 'active' : ''}`}
+        <Chip
+          className="admin-tab"
+          active={activeTab === 'verifications'}
           onClick={() => setActiveTab('verifications')}
         >
           {t('verificationRequests')}
-        </button>
-        <button 
-          className={`admin-tab ${activeTab === 'reports' ? 'active' : ''}`}
+        </Chip>
+        <Chip
+          className="admin-tab"
+          active={activeTab === 'reports'}
           onClick={() => setActiveTab('reports')}
         >
           {t('userReports')}
-        </button>
+        </Chip>
       </div>
 
       {/* Content */}
