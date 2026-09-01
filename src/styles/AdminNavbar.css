@@ -268,3 +268,80 @@
 .admin-profile-panel:hover {
   background: transparent;
 }
+
+
+/* ===================================
+   AOXA-INSPIRED ADMIN TOPBAR
+   Administrator identity remains informational; theme control remains available.
+   =================================== */
+.admin-navbar {
+  min-height: 72px;
+  padding: 0.65rem 1.5rem;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface);
+  backdrop-filter: none;
+  box-shadow: none;
+}
+
+.sidebar-toggle {
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+}
+
+.sidebar-toggle:hover,
+.sidebar-toggle:focus-visible {
+  border-color: var(--color-border-strong);
+  background: var(--color-soft-blue);
+  color: var(--brand-blue-hover);
+}
+
+.admin-navbar-right {
+  gap: 0.75rem;
+}
+
+.admin-theme-toggle {
+  margin-right: 0;
+}
+
+.admin-profile-panel {
+  min-height: 46px;
+  gap: 0.65rem;
+  padding: 0.3rem 0.55rem;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-soft-cream);
+}
+
+.admin-profile-panel:hover {
+  background: var(--color-soft-cream);
+}
+
+.admin-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--color-soft-blue);
+  color: var(--brand-blue-hover);
+  font-weight: 760;
+}
+
+.admin-name {
+  color: var(--color-text-primary);
+  font-weight: 680;
+}
+
+[data-theme='dark'] .admin-profile-panel {
+  background: var(--color-surface-secondary);
+  border-color: var(--color-border);
+}
+
+@media (max-width: 768px) {
+  .admin-navbar {
+    min-height: 64px;
+    padding: 0.5rem 0.75rem;
+  }
+}
