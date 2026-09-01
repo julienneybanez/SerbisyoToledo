@@ -747,3 +747,267 @@ input:checked + .slider:before {
   font-size: 0.84rem;
   line-height: 1.5;
 }
+
+
+/* ===================================
+   AOXA-INSPIRED CLIENT/PROVIDER SETTINGS SURFACE
+   Existing sections, fields, verification, password and save/reset actions remain.
+   =================================== */
+.user-settings-container {
+  max-width: 1120px;
+  padding: clamp(1.4rem, 3vw, 2.4rem) var(--space-5) clamp(3rem, 6vw, 4.5rem);
+}
+
+.settings-page-heading {
+  max-width: 1040px;
+  margin-bottom: 1.2rem;
+  padding: 0 0 0.6rem;
+  border-bottom: 0;
+}
+
+.settings-page-title {
+  color: var(--color-ink);
+  font-size: clamp(2.2rem, 4vw, 3.2rem);
+  font-weight: 820;
+  line-height: 1.03;
+  letter-spacing: -0.045em;
+}
+
+.settings-layout {
+  max-width: 1040px;
+  grid-template-columns: 220px minmax(0, 1fr);
+  border: 1px solid var(--color-border);
+  border-radius: 22px;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-panel);
+}
+
+.settings-nav {
+  padding: 1rem 0.75rem;
+  border-right: 1px solid var(--color-border);
+  background: var(--color-soft-cream);
+}
+
+.settings-nav-item {
+  min-height: 46px;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid transparent;
+  border-left: 1px solid transparent;
+  border-radius: 11px;
+  color: var(--color-text-secondary);
+  font-size: 0.92rem;
+  font-weight: 680;
+}
+
+.settings-nav-item:hover {
+  border-color: color-mix(in srgb, var(--brand-blue) 12%, var(--color-border));
+  background: var(--color-soft-blue);
+  color: var(--color-text-primary);
+}
+
+.settings-nav-item.active {
+  border: 1px solid var(--brand-blue);
+  background: var(--brand-blue);
+  color: #fff;
+  font-weight: 720;
+}
+
+.settings-content {
+  padding: clamp(1.4rem, 3vw, 2rem);
+  background: var(--color-surface);
+}
+
+.settings-content > .settings-flash,
+.settings-section,
+.settings-actions {
+  max-width: 680px;
+}
+
+.settings-section-title {
+  margin-bottom: 1.25rem;
+  color: var(--color-ink);
+  font-size: 1.25rem;
+  font-weight: 780;
+}
+
+.settings-label {
+  color: var(--color-text-primary);
+  font-weight: 680;
+}
+
+.settings-input,
+.settings-select,
+.settings-textarea {
+  min-height: 48px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+}
+
+.settings-input:hover:not(:disabled),
+.settings-select:hover:not(:disabled),
+.settings-textarea:hover:not(:disabled) {
+  border-color: var(--color-border-strong);
+}
+
+.settings-input:focus,
+.settings-select:focus,
+.settings-textarea:focus {
+  border-color: var(--brand-blue);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-blue) 12%, transparent);
+}
+
+.settings-input:disabled,
+.settings-select:disabled,
+.settings-textarea:disabled {
+  background: var(--color-surface-secondary);
+  color: var(--color-text-muted);
+}
+
+.settings-help {
+  color: var(--color-text-secondary);
+  line-height: 1.45;
+}
+
+.settings-surface-block,
+.settings-status-list,
+.settings-toggle-group {
+  border-color: var(--color-border);
+  border-radius: 14px;
+  background: var(--color-soft-cream);
+}
+
+.settings-card {
+  border-bottom-color: var(--color-border);
+}
+
+.settings-card-title,
+.settings-metadata-strong {
+  color: var(--color-text-primary);
+  font-weight: 720;
+}
+
+.settings-card-description,
+.settings-metadata-row {
+  color: var(--color-text-secondary);
+}
+
+.settings-flash {
+  border-radius: 12px;
+}
+
+.settings-flash.success {
+  background: var(--color-soft-mint);
+  border-color: color-mix(in srgb, var(--brand-teal) 26%, var(--color-border));
+  color: var(--brand-teal-hover);
+}
+
+.settings-flash.info {
+  background: var(--color-soft-blue);
+  border-color: color-mix(in srgb, var(--brand-blue) 24%, var(--color-border));
+  color: var(--brand-blue-hover);
+}
+
+.settings-actions {
+  gap: 0.65rem;
+  margin-top: 1.5rem;
+  border-top-color: var(--color-border);
+}
+
+.btn-save,
+.btn-change-password {
+  min-height: 48px;
+  border: 1px solid var(--brand-blue);
+  border-radius: 12px;
+  background: var(--brand-blue);
+  color: #fff;
+  font-weight: 730;
+}
+
+.btn-save:hover,
+.btn-change-password:hover {
+  border-color: var(--brand-blue-hover);
+  background: var(--brand-blue-hover);
+  box-shadow: none;
+}
+
+.btn-cancel,
+.btn-secondary {
+  min-height: 48px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  font-weight: 700;
+}
+
+.btn-cancel:hover,
+.btn-secondary:hover {
+  border-color: var(--color-border-strong);
+  background: var(--color-soft-cream);
+}
+
+[data-theme='dark'] .user-settings-container .settings-layout,
+[data-theme='dark'] .user-settings-container .settings-content {
+  background: var(--color-surface);
+  border-color: var(--color-border);
+}
+
+[data-theme='dark'] .user-settings-container .settings-nav {
+  background: var(--color-surface-secondary);
+}
+
+[data-theme='dark'] .settings-surface-block,
+[data-theme='dark'] .settings-status-list,
+[data-theme='dark'] .settings-toggle-group {
+  background: var(--color-surface-secondary);
+}
+
+@media (max-width: 860px) {
+  .settings-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .settings-nav {
+    border-right: 0;
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-soft-cream);
+  }
+
+  .settings-nav-item {
+    border-bottom: 1px solid transparent;
+  }
+
+  .settings-nav-item.active {
+    border: 1px solid var(--brand-blue);
+  }
+}
+
+@media (max-width: 576px) {
+  .user-settings-container {
+    padding: 1rem 0.65rem calc(var(--mobile-nav-height) + 1.5rem);
+  }
+
+  .settings-page-title {
+    font-size: clamp(2rem, 9vw, 2.6rem);
+  }
+
+  .settings-layout {
+    border-radius: 18px;
+    box-shadow: none;
+  }
+
+  .settings-nav {
+    gap: 0.4rem;
+  }
+
+  .settings-nav-item {
+    min-width: 108px;
+  }
+
+  .settings-content {
+    padding: 1.1rem 0.9rem 1.3rem;
+  }
+}
