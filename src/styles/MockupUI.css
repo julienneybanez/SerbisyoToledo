@@ -1953,3 +1953,256 @@
     flex-basis: 34px;
   }
 }
+
+
+/* ===================================
+   FINAL PUBLIC GUEST NAVBAR
+   Three-region grid so the mockup navigation is truly centered instead of
+   being pushed by the real SerbisyoToledo wordmark.
+   =================================== */
+@media (min-width: 992px) {
+  .desktop-public-navbar .navbar--guest {
+    min-height: 82px !important;
+    padding: 0 !important;
+    border-bottom: 1px solid var(--mock-line) !important;
+    background: var(--mock-surface) !important;
+    box-shadow: none !important;
+  }
+
+  .desktop-public-navbar .navbar--guest .navbar-shell {
+    width: min(1500px, calc(100% - 48px)) !important;
+    max-width: none !important;
+    min-height: 82px !important;
+    margin-inline: auto !important;
+    padding: 0 !important;
+    display: grid !important;
+    grid-template-columns: minmax(230px, 1fr) auto minmax(330px, 1fr) !important;
+    align-items: center !important;
+    column-gap: 26px !important;
+  }
+
+  .desktop-public-navbar .navbar--guest .brand-link {
+    grid-column: 1;
+    justify-self: start;
+    min-width: 0 !important;
+    width: auto !important;
+    flex: none !important;
+  }
+
+  .desktop-public-navbar .navbar--guest .logo-wrapper {
+    width: 46px !important;
+    height: 46px !important;
+    flex: 0 0 46px !important;
+    border: 1px solid var(--mock-line) !important;
+    border-radius: 13px !important;
+    background: var(--mock-surface) !important;
+    box-shadow: none !important;
+  }
+
+  .desktop-public-navbar .navbar--guest .logo-wrapper img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: contain !important;
+  }
+
+  .desktop-public-navbar .navbar--guest .brand-text {
+    display: inline-flex !important;
+    flex-direction: row !important;
+    align-items: baseline !important;
+    margin-left: 10px !important;
+    white-space: nowrap !important;
+    line-height: 1 !important;
+  }
+
+  .desktop-public-navbar .navbar--guest .brand-name,
+  .desktop-public-navbar .navbar--guest .brand-location {
+    font-size: 1.18rem !important;
+    font-weight: 850 !important;
+    line-height: 1 !important;
+    letter-spacing: -0.035em !important;
+  }
+
+  .desktop-public-navbar .navbar--guest .navbar-toggler {
+    display: none !important;
+  }
+
+  /* Let nav and actions become direct grid children of navbar-shell. */
+  .desktop-public-navbar .navbar--guest .navbar-collapse {
+    display: contents !important;
+  }
+
+  .desktop-public-navbar .navbar--guest .primary-nav {
+    grid-column: 2;
+    justify-self: center;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 32px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .desktop-public-navbar .navbar--guest .primary-nav .nav-item {
+    width: auto !important;
+  }
+
+  .desktop-public-navbar .navbar--guest .primary-nav .nav-link {
+    min-height: 44px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    padding: 0 !important;
+    border: 0 !important;
+    background: transparent !important;
+    color: var(--mock-ink) !important;
+    font-size: 0.94rem !important;
+    font-weight: 720 !important;
+    line-height: 1 !important;
+    white-space: nowrap;
+  }
+
+  .desktop-public-navbar .navbar--guest .primary-nav .nav-link.active,
+  .desktop-public-navbar .navbar--guest .primary-nav .nav-link:hover,
+  .desktop-public-navbar .navbar--guest .primary-nav .nav-link:focus-visible {
+    color: var(--mock-blue) !important;
+  }
+
+  .desktop-public-navbar .navbar--guest .navbar-actions {
+    grid-column: 3;
+    justify-self: end;
+    width: auto !important;
+    margin: 0 !important;
+  }
+
+  .desktop-public-navbar .navbar--guest .logged-out-block {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+  }
+
+  .desktop-public-navbar .navbar--guest .navbar-language-select {
+    width: 58px !important;
+    min-width: 58px !important;
+    height: 44px !important;
+    min-height: 44px !important;
+    padding: 0 8px !important;
+    border: 1px solid var(--mock-line) !important;
+    border-radius: 12px !important;
+    background: var(--mock-surface) !important;
+    color: var(--mock-ink) !important;
+    box-shadow: none !important;
+    font-size: 0.88rem !important;
+    font-weight: 650 !important;
+    text-align: center;
+  }
+
+  .desktop-public-navbar .navbar--guest .navbar-theme-toggle {
+    width: 44px !important;
+    min-width: 44px !important;
+    height: 44px !important;
+    min-height: 44px !important;
+    padding: 0 !important;
+    justify-content: center !important;
+    border: 1px solid var(--mock-line) !important;
+    border-radius: 12px !important;
+    background: var(--mock-surface) !important;
+    color: var(--mock-ink) !important;
+  }
+
+  .desktop-public-navbar .navbar--guest .navbar-theme-toggle .theme-toggle-label {
+    display: none !important;
+  }
+
+  .desktop-public-navbar .navbar--guest .navbar-theme-toggle .theme-toggle-icon {
+    width: auto !important;
+    height: auto !important;
+    background: transparent !important;
+  }
+
+  .desktop-public-navbar .navbar--guest .login-btn,
+  .desktop-public-navbar .navbar--guest .signup-btn {
+    min-height: 44px !important;
+    border-radius: 12px !important;
+    padding-inline: 15px !important;
+    font-size: 0.9rem !important;
+    font-weight: 760 !important;
+  }
+
+  .desktop-public-navbar .navbar--guest .login-btn {
+    min-width: 82px !important;
+    border-color: transparent !important;
+    background: transparent !important;
+    color: var(--mock-ink) !important;
+  }
+
+  .desktop-public-navbar .navbar--guest .login-btn:hover,
+  .desktop-public-navbar .navbar--guest .login-btn:focus-visible {
+    border-color: transparent !important;
+    background: var(--mock-surface-2) !important;
+    color: var(--mock-ink) !important;
+  }
+
+  .desktop-public-navbar .navbar--guest .signup-btn {
+    min-width: 104px !important;
+    border-color: var(--mock-blue) !important;
+    background: var(--mock-blue) !important;
+    color: #fff !important;
+  }
+
+  .desktop-public-navbar .navbar--guest .signup-btn:hover,
+  .desktop-public-navbar .navbar--guest .signup-btn:focus-visible {
+    border-color: var(--mock-blue-2) !important;
+    background: var(--mock-blue-2) !important;
+    color: #fff !important;
+  }
+}
+
+@media (min-width: 992px) and (max-width: 1160px) {
+  .desktop-public-navbar .navbar--guest .navbar-shell {
+    width: min(100% - 28px, 1120px) !important;
+    grid-template-columns: minmax(205px, 1fr) auto minmax(290px, 1fr) !important;
+    column-gap: 16px !important;
+  }
+
+  .desktop-public-navbar .navbar--guest .primary-nav {
+    gap: 20px !important;
+  }
+
+  .desktop-public-navbar .navbar--guest .brand-name,
+  .desktop-public-navbar .navbar--guest .brand-location {
+    font-size: 1.05rem !important;
+  }
+}
+
+/* Find Services uses the exact same primary button primitive as Browse all,
+   Sign up, Save, Continue, Request Service, etc. */
+.landing-search-wrap .home-search-submit {
+  min-height: 46px !important;
+  height: 46px !important;
+  flex: 0 0 auto;
+  padding: 0 16px !important;
+  border-radius: 12px !important;
+  border: 1px solid var(--mock-blue) !important;
+  background: var(--mock-blue) !important;
+  color: #fff !important;
+  font-size: 0.9rem !important;
+  font-weight: 760 !important;
+  white-space: nowrap;
+  box-shadow: none !important;
+}
+
+.landing-search-wrap .home-search-submit:hover,
+.landing-search-wrap .home-search-submit:focus-visible {
+  border-color: var(--mock-blue-2) !important;
+  background: var(--mock-blue-2) !important;
+  color: #fff !important;
+  transform: none !important;
+}
+
+@media (max-width: 575.98px) {
+  .landing-search-wrap .home-search-submit {
+    min-height: 44px !important;
+    height: 44px !important;
+    padding-inline: 12px !important;
+    font-size: 0.82rem !important;
+  }
+}
