@@ -60,3 +60,42 @@
 [data-theme='dark'] .admin-layout {
   background: linear-gradient(135deg, #0f172a 0%, #152236 45%, #0f2530 100%);
 }
+
+
+/* ===================================
+   AOXA-INSPIRED ADMIN WORKSPACE
+   Same admin routes/components; visual density is intentionally higher than public pages.
+   =================================== */
+.admin-layout {
+  background: var(--color-page-bg);
+}
+
+.admin-main {
+  margin-left: 272px;
+}
+
+.admin-content {
+  padding: clamp(1.1rem, 2.4vw, 1.8rem);
+  background: var(--color-page-bg);
+}
+
+[data-theme='dark'] .admin-layout,
+[data-theme='dark'] .admin-content {
+  background: var(--color-page-bg);
+}
+
+@media (max-width: 991px) {
+  .admin-main {
+    margin-left: 0;
+  }
+
+  .admin-content {
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 767px) {
+  .admin-content {
+    padding: 0.75rem 0.65rem calc(var(--mobile-nav-height) + 1rem);
+  }
+}
