@@ -7,7 +7,6 @@ import ReportUserModal from '../components/common/ReportUserModal';
 import NextStepHelp from '../components/common/NextStepHelp';
 import { BOOKING_TYPE, REQUEST_STATUS, SPECIFIC_DATE_BOOKING_ENABLED } from '../constants/domain';
 import { useLanguage } from '../context/LanguageContext';
-import { AppButton, AppInput, AppSelect, AppTextarea, IconButton } from '../components/ui';
 import './Requests.css';
 
 const addDaysIso = (days) => {
@@ -878,25 +877,25 @@ export default function Requests() {
       <div className="requests-wrapper">
         <div className="requests-toolbar" data-tour={isProvider ? 'incoming-requests' : undefined}>
           <div className="requests-filters">
-            <AppButton variant="primary"
+            <button
               className={`filter-btn ${activeFilter === 'all' ? 'active' : ''}`}
               onClick={() => setActiveFilter('all')}
             >
               {t('all')}
             </button>
-            <AppButton variant="primary"
+            <button
               className={`filter-btn ${activeFilter === 'active' ? 'active' : ''}`}
               onClick={() => setActiveFilter('active')}
             >
               {t('active')}
             </button>
-            <AppButton variant="primary"
+            <button
               className={`filter-btn ${activeFilter === REQUEST_STATUS.COMPLETED ? 'active' : ''}`}
               onClick={() => setActiveFilter(REQUEST_STATUS.COMPLETED)}
             >
               {t(REQUEST_STATUS.COMPLETED)}
             </button>
-            <AppButton variant="primary"
+            <button
               className={`filter-btn ${activeFilter === REQUEST_STATUS.CANCELLED ? 'active' : ''}`}
               onClick={() => setActiveFilter(REQUEST_STATUS.CANCELLED)}
             >
@@ -910,7 +909,7 @@ export default function Requests() {
           <div className="requests-error">
             <i className="bi bi-exclamation-triangle"></i>
             <p>{error}</p>
-            <AppButton variant="secondary" onClick={fetchRequests}>{t('tryAgain')}</button>
+            <button onClick={fetchRequests}>{t('tryAgain')}</button>
           </div>
         )}
 
@@ -979,13 +978,14 @@ export default function Requests() {
                 {/* Booking communication */}
                 {[REQUEST_STATUS.PENDING, REQUEST_STATUS.ACCEPTED, REQUEST_STATUS.ON_THE_WAY, REQUEST_STATUS.IN_PROGRESS].includes(request.status) && (
                   <div className="request-discussion-section">
-                    <AppButton
-                      variant="secondary"
+                    <button
+                      type="button"
+                      className="btn-request-discussion"
                       onClick={() => navigate('/messages?request=' + request.id)}
-                      icon={<i className="bi bi-chat-dots-fill" aria-hidden="true"></i>}
                     >
+                      <i className="bi bi-chat-dots-fill"></i>
                       {isProvider ? t('messageClient') : t('messageProvider')}
-                    </AppButton>
+                    </button>
                   </div>
                 )}
 
@@ -995,20 +995,20 @@ export default function Requests() {
                     <>
                       {request.status === REQUEST_STATUS.PENDING && (
                         <>
-                          <AppButton variant="secondary"
-                            
+                          <button
+                            className="btn-action btn-accept btn-primary-action"
                             onClick={() => handleStatusUpdate(request.id, REQUEST_STATUS.ACCEPTED)}
                             disabled={actionLoading === request.id}
                           >
                             {actionLoading === request.id ? t('requestsProcessing') : t('requestsAcceptRequest')}
-                          </AppButton>
-                          <AppButton variant="secondary"
-                            
+                          </button>
+                          <button
+                            className="btn-action btn-view-details-secondary"
                             onClick={() => void handleViewDetails(request)}
                           >
                             <i className="bi bi-eye"></i> {t('viewDetails')}
-                          </AppButton>
-                          <AppButton variant="secondary"
+                          </button>
+                          <button
                             className="btn-action btn-decline btn-danger-subtle"
                             onClick={() => openDeclineDialog(request.id)}
                             disabled={actionLoading === request.id}
@@ -1019,52 +1019,52 @@ export default function Requests() {
                       )}
                       {request.status === REQUEST_STATUS.ACCEPTED && (
                         <>
-                          <AppButton variant="danger"  onClick={() => handleStatusUpdate(request.id, REQUEST_STATUS.ON_THE_WAY)} disabled={actionLoading === request.id}>
+                          <button className="btn-action btn-on-way btn-primary-action" onClick={() => handleStatusUpdate(request.id, REQUEST_STATUS.ON_THE_WAY)} disabled={actionLoading === request.id}>
                             <i className="bi bi-truck"></i> {t('requestsImOnMyWay')}
-                          </AppButton>
-                          <AppButton variant="primary"  onClick={() => void handleViewDetails(request)}>
+                          </button>
+                          <button className="btn-action btn-view-details-secondary" onClick={() => void handleViewDetails(request)}>
                             <i className="bi bi-eye"></i> {t('viewDetails')}
-                          </AppButton>
-                          <AppButton variant="secondary"  onClick={() => openCancelDialog(request.id)} disabled={actionLoading === request.id}>
+                          </button>
+                          <button className="btn-action btn-cancel btn-danger-subtle" onClick={() => openCancelDialog(request.id)} disabled={actionLoading === request.id}>
                             {t('cancelServiceRequest')}
-                          </AppButton>
+                          </button>
                         </>
                       )}
                       {request.status === REQUEST_STATUS.ON_THE_WAY && (
                         <>
-                          <AppButton variant="danger"  onClick={() => handleStatusUpdate(request.id, REQUEST_STATUS.IN_PROGRESS)} disabled={actionLoading === request.id}>
+                          <button className="btn-action btn-on-way btn-primary-action" onClick={() => handleStatusUpdate(request.id, REQUEST_STATUS.IN_PROGRESS)} disabled={actionLoading === request.id}>
                             <i className="bi bi-play-circle"></i> {t('requestsStartService')}
-                          </AppButton>
-                          <button  onClick={() => void handleViewDetails(request)}>
+                          </button>
+                          <button className="btn-action btn-view-details-secondary" onClick={() => void handleViewDetails(request)}>
                             <i className="bi bi-eye"></i> {t('viewDetails')}
-                          </AppButton>
+                          </button>
                         </>
                       )}
                       {request.status === REQUEST_STATUS.IN_PROGRESS && !request.provider_completed && (
                         <>
-                          <AppButton variant="secondary"  onClick={() => handleStatusUpdate(request.id, REQUEST_STATUS.COMPLETED)} disabled={actionLoading === request.id}>
+                          <button className="btn-action btn-complete btn-primary-action" onClick={() => handleStatusUpdate(request.id, REQUEST_STATUS.COMPLETED)} disabled={actionLoading === request.id}>
                             <i className="bi bi-check-lg"></i> {t('requestsMarkServiceComplete')}
-                          </AppButton>
-                          <AppButton variant="primary"  onClick={() => void handleViewDetails(request)}>
+                          </button>
+                          <button className="btn-action btn-view-details-secondary" onClick={() => void handleViewDetails(request)}>
                             <i className="bi bi-eye"></i> {t('viewDetails')}
-                          </AppButton>
+                          </button>
                         </>
                       )}
                       {request.status === REQUEST_STATUS.COMPLETED && (
                         <>
-                          <AppButton variant="secondary"
-                            
+                          <button
+                            className="btn-action btn-view-details-secondary"
                             onClick={() => void handleViewDetails(request)}
                           >
                             <i className="bi bi-eye"></i> {t('viewDetails')}
-                          </AppButton>
-                          <AppButton variant="secondary"
-                            
+                          </button>
+                          <button
+                            className="btn-action btn-hide"
                             onClick={() => handleHideRequest(request.id)}
                             disabled={actionLoading === request.id}
                           >
                             <i className="bi bi-eye-slash"></i> {t('requestsRemoveFromList')}
-                          </AppButton>
+                          </button>
                         </>
                       )}
                     </>
@@ -1073,58 +1073,58 @@ export default function Requests() {
                     <>
                       {request.status === REQUEST_STATUS.PENDING && (
                         <>
-                          <AppButton variant="secondary"
-                            
+                          <button
+                            className="btn-action btn-view-details-secondary"
                             onClick={() => void handleViewDetails(request)}
                           >
                             <i className="bi bi-eye"></i> {t('viewDetails')}
-                          </AppButton>
-                          <AppButton variant="secondary"
-                            
+                          </button>
+                          <button
+                            className="btn-action btn-cancel btn-danger-subtle"
                             onClick={() => openCancelDialog(request.id)}
                             disabled={actionLoading === request.id}
                           >
                             {t('requestsCancelRequest')}
-                          </AppButton>
+                          </button>
                         </>
                       )}
                       {request.status === REQUEST_STATUS.ACCEPTED && (
                         <>
-                          <AppButton variant="danger"  onClick={() => void handleViewDetails(request)}>
+                          <button className="btn-action btn-view-details-secondary" onClick={() => void handleViewDetails(request)}>
                             <i className="bi bi-eye"></i> {t('viewDetails')}
-                          </AppButton>
-                          <AppButton variant="secondary"  onClick={() => openRescheduleDialog(request)} disabled={actionLoading === request.id}>
+                          </button>
+                          <button className="btn-action btn-on-way" onClick={() => openRescheduleDialog(request)} disabled={actionLoading === request.id}>
                             <i className="bi bi-calendar2-week"></i> {t('requestsProposeReschedule')}
-                          </AppButton>
-                          <button  onClick={() => openCancelDialog(request.id)} disabled={actionLoading === request.id}>
+                          </button>
+                          <button className="btn-action btn-cancel btn-danger-subtle" onClick={() => openCancelDialog(request.id)} disabled={actionLoading === request.id}>
                             {t('cancelServiceRequest')}
-                          </AppButton>
+                          </button>
                         </>
                       )}
                       {[REQUEST_STATUS.ON_THE_WAY, REQUEST_STATUS.IN_PROGRESS].includes(request.status) && (
-                        <button  onClick={() => void handleViewDetails(request)}>
+                        <button className="btn-action btn-view-details-secondary" onClick={() => void handleViewDetails(request)}>
                           <i className="bi bi-eye"></i> {t('viewDetails')}
-                        </AppButton>
+                        </button>
                       )}
                       {request.status === REQUEST_STATUS.IN_PROGRESS && !request.client_completed && (
-                        <AppButton variant="secondary"  onClick={() => handleStatusUpdate(request.id, REQUEST_STATUS.COMPLETED)} disabled={actionLoading === request.id}>
+                        <button className="btn-action btn-complete btn-primary-action" onClick={() => handleStatusUpdate(request.id, REQUEST_STATUS.COMPLETED)} disabled={actionLoading === request.id}>
                           <i className="bi bi-check-lg"></i> {t('requestsMarkServiceComplete')}
-                        </AppButton>
+                        </button>
                       )}
                       {request.status === REQUEST_STATUS.COMPLETED && !request.has_review && (
                         <>
                           <button
-                            
+                            className="btn-action btn-review btn-primary-action"
                             onClick={() => setReviewRequest(request)}
                           >
                             <i className="bi bi-star"></i> {t('requestsLeaveReview')}
-                          </AppButton>
+                          </button>
                           <button
-                            
+                            className="btn-action btn-view-details-secondary"
                             onClick={() => void handleViewDetails(request)}
                           >
                             <i className="bi bi-eye"></i> {t('viewDetails')}
-                          </AppButton>
+                          </button>
                         </>
                       )}
                       {request.status === REQUEST_STATUS.COMPLETED && request.has_review && (
@@ -1135,12 +1135,12 @@ export default function Requests() {
                       )}
                       {request.status === REQUEST_STATUS.COMPLETED && (
                         <button
-                          
+                          className="btn-action btn-hide"
                           onClick={() => handleHideRequest(request.id)}
                           disabled={actionLoading === request.id}
                         >
                           <i className="bi bi-eye-slash"></i> {t('requestsRemoveFromList')}
-                        </AppButton>
+                        </button>
                       )}
                     </>
                   )}
@@ -1181,13 +1181,13 @@ export default function Requests() {
           <div className="decline-dialog-card" onClick={(event) => event.stopPropagation()}>
             <div className="decline-dialog-header">
               <h2 id="cancel-dialog-title">{t('cancelServiceRequest')}</h2>
-              <IconButton className="decline-dialog-close" onClick={closeCancelDialog} aria-label={t('requestsCloseCancelDialog')}>
+              <button type="button" className="decline-dialog-close" onClick={closeCancelDialog} aria-label={t('requestsCloseCancelDialog')}>
                 ×
-              </IconButton>
+              </button>
             </div>
             <div className="decline-dialog-body">
               <label htmlFor="cancel-reason-select" className="decline-dialog-label">{t('requestsReasonForCancellationLabel')}</label>
-              <AppSelect
+              <select
                 id="cancel-reason-select"
                 className="decline-dialog-textarea"
                 value={cancelDialog.cancellationReason}
@@ -1208,11 +1208,11 @@ export default function Requests() {
                 <option value={CANCELLATION_REASONS.PROVIDER_NO_RESPONSE}>{t('requestsCancelReasonProviderNoResponse')}</option>
                 <option value={CANCELLATION_REASONS.FOUND_ANOTHER_PROVIDER}>{t('requestsCancelReasonFoundAnotherProvider')}</option>
                 <option value={CANCELLATION_REASONS.OTHER}>{t('other')}</option>
-              </AppSelect>
+              </select>
               {cancelDialog.cancellationReason === CANCELLATION_REASONS.OTHER && (
                 <>
                   <label htmlFor="cancel-reason-other" className="decline-dialog-label">{t('requestsProvideCancellationDetails')}</label>
-                  <AppTextarea
+                  <textarea
                     id="cancel-reason-other"
                     className="decline-dialog-textarea"
                     rows={3}
@@ -1233,20 +1233,22 @@ export default function Requests() {
               {cancelDialog.error ? <p className="decline-dialog-error">{cancelDialog.error}</p> : null}
             </div>
             <div className="decline-dialog-actions">
-              <AppButton
-                variant="secondary"
+              <button
+                type="button"
+                className="decline-btn-cancel"
                 onClick={closeCancelDialog}
                 disabled={actionLoading === cancelDialog.requestId}
               >
                 {t('requestsKeepRequest')}
-              </AppButton>
-              <AppButton
-                variant="danger"
+              </button>
+              <button
+                type="button"
+                className="decline-btn-confirm"
                 onClick={handleConfirmCancellation}
                 disabled={actionLoading === cancelDialog.requestId}
               >
                 {actionLoading === cancelDialog.requestId ? t('requestsCancelling') : t('requestsConfirmCancellation')}
-              </AppButton>
+              </button>
             </div>
           </div>
         </div>
@@ -1257,13 +1259,13 @@ export default function Requests() {
           <div className="decline-dialog-card" onClick={(event) => event.stopPropagation()}>
             <div className="decline-dialog-header">
               <h2 id="reschedule-dialog-title">{t('requestsProposeReschedule')}</h2>
-              <IconButton className="decline-dialog-close" onClick={closeRescheduleDialog} aria-label={t('requestsCloseRescheduleDialog')}>
+              <button type="button" className="decline-dialog-close" onClick={closeRescheduleDialog} aria-label={t('requestsCloseRescheduleDialog')}>
                 ×
-              </IconButton>
+              </button>
             </div>
             <div className="decline-dialog-body">
               <label htmlFor="reschedule-booking-type" className="decline-dialog-label">{t('bookingTypeLabel')}</label>
-              <AppSelect
+              <select
                 id="reschedule-booking-type"
                 className="decline-dialog-textarea"
                 value={rescheduleDialog.bookingType}
@@ -1275,7 +1277,7 @@ export default function Requests() {
                 {SPECIFIC_DATE_BOOKING_ENABLED && (
                   <option value={BOOKING_TYPE.SPECIFIC_DATES}>{t('bookingSpecificDates')}</option>
                 )}
-              </AppSelect>
+              </select>
 
               {rescheduleDialog.bookingType === BOOKING_TYPE.SPECIFIC_DATES ? (
                 <>
@@ -1304,7 +1306,7 @@ export default function Requests() {
               ) : (
                 <>
                   <label htmlFor="reschedule-start-date" className="decline-dialog-label">{t('requestsStartDate')}</label>
-                  <AppSelect
+                  <select
                     id="reschedule-start-date"
                     className="decline-dialog-textarea"
                     value={rescheduleDialog.proposedStartDate}
@@ -1324,12 +1326,12 @@ export default function Requests() {
                     {rescheduleDialog.availableDates.map((date) => (
                       <option key={date} value={date}>{date}</option>
                     ))}
-                  </AppSelect>
+                  </select>
 
                   {rescheduleDialog.bookingType === BOOKING_TYPE.DATE_RANGE && (
                     <>
                       <label htmlFor="reschedule-end-date" className="decline-dialog-label">{t('requestsEndDate')}</label>
-                      <AppSelect
+                      <select
                         id="reschedule-end-date"
                         className="decline-dialog-textarea"
                         value={rescheduleDialog.proposedEndDate}
@@ -1348,14 +1350,14 @@ export default function Requests() {
                         {getContiguousDatesFrom(rescheduleDialog.availableDates, rescheduleDialog.proposedStartDate).map((date) => (
                           <option key={date} value={date}>{date}</option>
                         ))}
-                      </AppSelect>
+                      </select>
                     </>
                   )}
                 </>
               )}
 
               <label htmlFor="reschedule-start-time" className="decline-dialog-label">{t('requestsStartTime')}</label>
-              <AppSelect
+              <select
                 id="reschedule-start-time"
                 className="decline-dialog-textarea"
                 value={String(rescheduleDialog.proposedStartTime || '').slice(0, 5)}
@@ -1365,10 +1367,10 @@ export default function Requests() {
                 {rescheduleDialog.availableSlots.map((slot) => (
                   <option key={slot.time} value={String(slot.time).slice(0, 5)}>{String(slot.time).slice(0, 5)}</option>
                 ))}
-              </AppSelect>
+              </select>
 
               <label htmlFor="reschedule-duration" className="decline-dialog-label">{t('requestsEstimatedDurationMinutes')}</label>
-              <AppInput
+              <input
                 id="reschedule-duration"
                 className="decline-dialog-textarea"
                 type="number"
@@ -1380,7 +1382,7 @@ export default function Requests() {
               />
 
               <label htmlFor="reschedule-reason" className="decline-dialog-label">{t('reason')}</label>
-              <AppTextarea
+              <textarea
                 id="reschedule-reason"
                 className="decline-dialog-textarea"
                 rows={4}
@@ -1393,10 +1395,12 @@ export default function Requests() {
               {rescheduleDialog.error ? <p className="decline-dialog-error">{rescheduleDialog.error}</p> : null}
             </div>
             <div className="decline-dialog-actions">
-              <AppButton variant="secondary" onClick={closeRescheduleDialog} disabled={actionLoading === rescheduleDialog.requestId}>
+              <button type="button" className="decline-btn-cancel" onClick={closeRescheduleDialog} disabled={actionLoading === rescheduleDialog.requestId}>
                 {t('requestsCancelAction')}
-              </AppButton>
-              <AppButton
+              </button>
+              <button
+                type="button"
+                className="decline-btn-confirm"
                 onClick={handleSubmitReschedule}
                 disabled={
                   actionLoading === rescheduleDialog.requestId
@@ -1409,7 +1413,7 @@ export default function Requests() {
                 }
               >
                 {actionLoading === rescheduleDialog.requestId ? t('requestsSending') : t('requestsSendProposal')}
-              </AppButton>
+              </button>
             </div>
           </div>
         </div>
@@ -1420,13 +1424,13 @@ export default function Requests() {
           <div className="decline-dialog-card" onClick={(event) => event.stopPropagation()}>
             <div className="decline-dialog-header">
               <h2 id="decline-dialog-title">{t('declineServiceRequest')}</h2>
-              <IconButton className="decline-dialog-close" onClick={closeDeclineDialog} aria-label={t('requestsCloseDeclineDialog')}>
+              <button type="button" className="decline-dialog-close" onClick={closeDeclineDialog} aria-label={t('requestsCloseDeclineDialog')}>
                 ×
-              </IconButton>
+              </button>
             </div>
             <div className="decline-dialog-body">
               <label htmlFor="decline-reason-text" className="decline-dialog-label">{t('reasonForDeclining')}</label>
-              <AppTextarea
+              <textarea
                 id="decline-reason-text"
                 className="decline-dialog-textarea"
                 value={declineDialog.reason}
@@ -1445,20 +1449,22 @@ export default function Requests() {
               {declineDialog.error ? <p className="decline-dialog-error">{declineDialog.error}</p> : null}
             </div>
             <div className="decline-dialog-actions">
-              <AppButton
-                variant="secondary"
+              <button
+                type="button"
+                className="decline-btn-cancel"
                 onClick={closeDeclineDialog}
                 disabled={actionLoading === declineDialog.requestId}
               >
                 {t('requestsCancelAction')}
-              </AppButton>
-              <AppButton
-                variant="danger"
+              </button>
+              <button
+                type="button"
+                className="decline-btn-confirm"
                 onClick={handleConfirmDecline}
                 disabled={actionLoading === declineDialog.requestId || !declineDialog.reason.trim()}
               >
                 {actionLoading === declineDialog.requestId ? t('requestsDeclining') : t('requestsConfirmDecline')}
-              </AppButton>
+              </button>
             </div>
           </div>
         </div>
