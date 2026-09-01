@@ -1127,3 +1127,24 @@
     bottom: calc(var(--mobile-nav-height) + 0.65rem);
   }
 }
+
+
+/* Theme contrast audit for provider date picker. */
+.availability-calendar-shell .rdp-weekday {
+  color: var(--color-text-muted);
+}
+
+.availability-calendar-shell .rdp-day_button {
+  color: var(--color-text-primary);
+}
+
+.availability-calendar-shell .rdp-disabled .rdp-day_button,
+.availability-calendar-shell .rdp-outside .rdp-day_button {
+  color: var(--color-text-muted);
+}
+
+[data-theme='dark'] .availability-calendar-shell .rdp-button_previous,
+[data-theme='dark'] .availability-calendar-shell .rdp-button_next {
+  color: var(--color-primary-hover);
+  background: var(--color-surface);
+}
