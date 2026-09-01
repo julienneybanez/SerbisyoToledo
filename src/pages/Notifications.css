@@ -287,3 +287,86 @@
     width: 100%;
   }
 }
+
+
+/* ===================================
+   THEME-SAFE NOTIFICATION CENTER ICONS
+   The page does not import the dropdown stylesheet, so icon colors/backgrounds
+   must be defined here as well.
+   =================================== */
+.notifications-list-page .notification-icon-wrapper {
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 44px;
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  background: var(--color-surface-secondary);
+}
+
+.notifications-list-page .notification-icon {
+  font-size: 1.08rem;
+  color: var(--brand-blue-hover);
+}
+
+.notifications-list-page .icon-received,
+.notifications-list-page .icon-accepted,
+.notifications-list-page .icon-on-way {
+  color: var(--brand-blue-hover);
+}
+
+.notifications-list-page .icon-completed,
+.notifications-list-page .icon-discussion,
+.notifications-list-page .icon-phone {
+  color: var(--brand-teal-hover);
+}
+
+.notifications-list-page .icon-declined {
+  color: var(--color-danger);
+}
+
+.notifications-list-page .notification-icon-wrapper:has(.icon-received),
+.notifications-list-page .notification-icon-wrapper:has(.icon-accepted),
+.notifications-list-page .notification-icon-wrapper:has(.icon-on-way) {
+  background: var(--color-soft-blue);
+}
+
+.notifications-list-page .notification-icon-wrapper:has(.icon-completed),
+.notifications-list-page .notification-icon-wrapper:has(.icon-discussion),
+.notifications-list-page .notification-icon-wrapper:has(.icon-phone) {
+  background: var(--color-soft-mint);
+}
+
+.notifications-list-page .notification-icon-wrapper:has(.icon-declined) {
+  background: color-mix(in srgb, var(--color-danger) 8%, var(--color-surface));
+}
+
+[data-theme='dark'] .notifications-list-page .notification-icon-wrapper {
+  border-color: var(--color-border);
+}
+
+[data-theme='dark'] .notifications-list-page .notification-icon-wrapper:has(.icon-received),
+[data-theme='dark'] .notifications-list-page .notification-icon-wrapper:has(.icon-accepted),
+[data-theme='dark'] .notifications-list-page .notification-icon-wrapper:has(.icon-on-way) {
+  background: color-mix(in srgb, var(--brand-blue) 14%, var(--color-surface-secondary));
+}
+
+[data-theme='dark'] .notifications-list-page .notification-icon-wrapper:has(.icon-completed),
+[data-theme='dark'] .notifications-list-page .notification-icon-wrapper:has(.icon-discussion),
+[data-theme='dark'] .notifications-list-page .notification-icon-wrapper:has(.icon-phone) {
+  background: color-mix(in srgb, var(--brand-teal) 13%, var(--color-surface-secondary));
+}
+
+[data-theme='dark'] .notifications-list-page .notification-icon-wrapper:has(.icon-declined) {
+  background: color-mix(in srgb, var(--color-danger) 12%, var(--color-surface-secondary));
+}
+
+[data-theme='dark'] .notifications-page-actions .btn-outline-secondary {
+  color: var(--color-text-primary);
+}
+
+[data-theme='dark'] .notifications-page-actions .btn-outline-primary {
+  color: var(--color-primary-hover);
+}
