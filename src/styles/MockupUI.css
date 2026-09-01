@@ -1382,3 +1382,235 @@
     min-width: 0 !important;
   }
 }
+
+
+/* Canonical mockup button language for legacy action hooks.
+   We keep the original class names because handlers and conditional rendering
+   already depend on the existing pages, but their presentation is the same
+   component family as mock-btn. */
+:is(
+  .btn-view-profile,
+  .btn-request-service,
+  .btn-post-service,
+  .btn-review-requests,
+  .btn-get-verified,
+  .btn-save,
+  .btn-change-password,
+  .btn-submit,
+  .btn-submit-review,
+  .booking-btn,
+  .btn-action,
+  .job-btn,
+  .messages-action-primary,
+  .messages-action-secondary,
+  .messages-request-phone-button,
+  .btn-request-discussion,
+  .btn-request-discussion-modal,
+  .btn-accept-discussion-modal,
+  .admin-page .btn-approve,
+  .admin-page .btn-investigate,
+  .admin-page .btn-view-details,
+  .admin-page .btn-dismiss,
+  .admin-page .btn-reject,
+  .admin-page .btn-ban
+) {
+  min-height: 44px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  border-radius: 12px !important;
+  padding: 10px 15px !important;
+  box-shadow: none !important;
+  transform: none !important;
+  font-weight: 750 !important;
+  line-height: 1.2 !important;
+  text-align: center !important;
+}
+
+:is(
+  .btn-view-profile,
+  .btn-request-service,
+  .btn-post-service,
+  .btn-review-requests,
+  .btn-get-verified,
+  .btn-save,
+  .btn-change-password,
+  .btn-submit,
+  .btn-submit-review,
+  .booking-btn-primary,
+  .btn-primary-action,
+  .btn-accept,
+  .btn-complete,
+  .btn-review,
+  .job-btn-primary,
+  .job-btn-on-way,
+  .job-btn-complete,
+  .job-btn-accept,
+  .messages-action-primary,
+  .messages-request-phone-button,
+  .btn-request-discussion-modal,
+  .btn-accept-discussion-modal,
+  .admin-page .btn-approve,
+  .admin-page .btn-investigate
+) {
+  border: 1px solid var(--mock-blue) !important;
+  background: var(--mock-blue) !important;
+  color: #fff !important;
+}
+
+:is(
+  .btn-view-profile,
+  .btn-request-service,
+  .btn-post-service,
+  .btn-review-requests,
+  .btn-get-verified,
+  .btn-save,
+  .btn-change-password,
+  .btn-submit,
+  .btn-submit-review,
+  .booking-btn-primary,
+  .btn-primary-action,
+  .btn-accept,
+  .btn-complete,
+  .btn-review,
+  .job-btn-primary,
+  .job-btn-on-way,
+  .job-btn-complete,
+  .job-btn-accept,
+  .messages-action-primary,
+  .messages-request-phone-button,
+  .btn-request-discussion-modal,
+  .btn-accept-discussion-modal,
+  .admin-page .btn-approve,
+  .admin-page .btn-investigate
+):hover:not(:disabled),
+:is(
+  .btn-view-profile,
+  .btn-request-service,
+  .btn-post-service,
+  .btn-review-requests,
+  .btn-get-verified,
+  .btn-save,
+  .btn-change-password,
+  .btn-submit,
+  .btn-submit-review,
+  .booking-btn-primary,
+  .btn-primary-action,
+  .btn-accept,
+  .btn-complete,
+  .btn-review,
+  .job-btn-primary,
+  .job-btn-on-way,
+  .job-btn-complete,
+  .job-btn-accept,
+  .messages-action-primary,
+  .messages-request-phone-button,
+  .btn-request-discussion-modal,
+  .btn-accept-discussion-modal,
+  .admin-page .btn-approve,
+  .admin-page .btn-investigate
+):focus-visible {
+  border-color: var(--mock-blue-2) !important;
+  background: var(--mock-blue-2) !important;
+  color: #fff !important;
+}
+
+:is(
+  .booking-btn-outline,
+  .btn-view-details-secondary,
+  .job-btn-secondary,
+  .messages-action-secondary,
+  .btn-cancel,
+  .btn-secondary,
+  .btn-close-modal,
+  .admin-page .btn-view-details,
+  .admin-page .btn-dismiss
+) {
+  border: 1px solid var(--mock-line) !important;
+  background: var(--mock-surface) !important;
+  color: var(--mock-ink) !important;
+}
+
+:is(
+  .booking-btn-outline,
+  .btn-view-details-secondary,
+  .job-btn-secondary,
+  .messages-action-secondary,
+  .btn-cancel,
+  .btn-secondary,
+  .btn-close-modal,
+  .admin-page .btn-view-details,
+  .admin-page .btn-dismiss
+):hover:not(:disabled),
+:is(
+  .booking-btn-outline,
+  .btn-view-details-secondary,
+  .job-btn-secondary,
+  .messages-action-secondary,
+  .btn-cancel,
+  .btn-secondary,
+  .btn-close-modal,
+  .admin-page .btn-view-details,
+  .admin-page .btn-dismiss
+):focus-visible {
+  border-color: color-mix(in srgb, var(--mock-blue) 30%, var(--mock-line)) !important;
+  background: var(--mock-surface-2) !important;
+  color: var(--mock-ink) !important;
+}
+
+:is(
+  .btn-danger-subtle,
+  .btn-decline,
+  .btn-cancel.btn-danger-subtle,
+  .job-btn-decline-subtle,
+  .admin-page .btn-reject,
+  .admin-page .btn-ban
+) {
+  border: 1px solid color-mix(in srgb, var(--mock-red) 35%, var(--mock-line)) !important;
+  background: var(--mock-surface) !important;
+  color: var(--mock-red) !important;
+}
+
+/* All form controls that remain page-owned are visually the canonical mockup field. */
+:is(
+  .feed-filter-input,
+  .feed-filter-select,
+  .settings-input,
+  .settings-select,
+  .settings-textarea,
+  .booking-input,
+  .booking-textarea,
+  .review-textarea,
+  .decline-dialog-textarea,
+  .service-profile-form .form-input,
+  .edit-portfolio-form textarea,
+  .edit-portfolio-form select,
+  .edit-portfolio-form input[type='text']
+) {
+  min-height: 44px !important;
+  border: 1px solid var(--mock-line) !important;
+  border-radius: 11px !important;
+  background: var(--mock-surface) !important;
+  color: var(--mock-ink) !important;
+  box-shadow: none !important;
+}
+
+:is(
+  .feed-filter-input,
+  .feed-filter-select,
+  .settings-input,
+  .settings-select,
+  .settings-textarea,
+  .booking-input,
+  .booking-textarea,
+  .review-textarea,
+  .decline-dialog-textarea,
+  .service-profile-form .form-input,
+  .edit-portfolio-form textarea,
+  .edit-portfolio-form select,
+  .edit-portfolio-form input[type='text']
+):focus {
+  border-color: var(--mock-blue) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--mock-blue) 12%, transparent) !important;
+}
