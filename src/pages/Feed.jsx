@@ -4,6 +4,7 @@ import { getUser, serviceProfileAPI } from "../services/api";
 import useServiceTaxonomy from '../hooks/useServiceTaxonomy';
 import NextStepHelp from "../components/common/NextStepHelp";
 import { useLanguage } from "../context/LanguageContext";
+import { AppButton, AppInput, AppSelect, Chip } from "../components/ui";
 import {
   SearchIcon,
   FilterIcon,
@@ -323,7 +324,8 @@ export default function Feed() {
             <div className="search-filter-row" data-tour="feed-search-filters">
               <div className="search-input-large">
                 <SearchIcon />
-                <input
+                <AppInput
+                  className="feed-search-control"
                   placeholder={t('feedSearchPlaceholder')}
                   value={searchTerm}
                   onChange={(event) => {
@@ -334,8 +336,8 @@ export default function Feed() {
                   aria-label={t('feedSearchAria')}
                 />
               </div>
-              <button
-                type="button"
+              <AppButton
+                variant="secondary"
                 className={`btn-filter ${showFilters ? 'active' : ''}`}
                 onClick={toggleFilters}
                 aria-expanded={showFilters}
@@ -347,21 +349,21 @@ export default function Feed() {
                     {activeFilterItems.length}
                   </span>
                 )}
-              </button>
+              </AppButton>
             </div>
 
             {showFilters && (
               <div className={`advanced-filters ${isClosing ? 'closing' : ''}`}>
                 <div className="filters-header">
                   <span className="filters-title">{t('advancedFilters')}</span>
-                  <button type="button" className="clear-filters-btn" onClick={clearFilters}>
+                  <AppButton variant="ghost" size="sm" className="clear-filters-btn" onClick={clearFilters}>
                     {t('clearFilters')}
-                  </button>
+                  </AppButton>
                 </div>
                 <div className="filters-grid">
                   <div className="feed-filter-group">
                     <label htmlFor="feed-filter-location" className="feed-filter-label">{t('location')}</label>
-                    <input
+                    <AppInput
                       id="feed-filter-location"
                       type="text"
                       className="feed-filter-input"
@@ -372,7 +374,7 @@ export default function Feed() {
                   </div>
                   <div className="feed-filter-group">
                     <label htmlFor="feed-filter-min-price" className="feed-filter-label">{t('minPrice')}</label>
-                    <input
+                    <AppInput
                       id="feed-filter-min-price"
                       type="number"
                       className="feed-filter-input"
@@ -383,7 +385,7 @@ export default function Feed() {
                   </div>
                   <div className="feed-filter-group">
                     <label htmlFor="feed-filter-max-price" className="feed-filter-label">{t('maxPrice')}</label>
-                    <input
+                    <AppInput
                       id="feed-filter-max-price"
                       type="number"
                       className="feed-filter-input"
@@ -394,7 +396,7 @@ export default function Feed() {
                   </div>
                   <div className="feed-filter-group">
                     <label htmlFor="feed-filter-rating" className="feed-filter-label">{t('minimumRating')}</label>
-                    <select
+                    <AppSelect
                       id="feed-filter-rating"
                       className="feed-filter-select"
                       value={filters.minRating}
@@ -405,7 +407,7 @@ export default function Feed() {
                       <option value="4">{t('rating4')}</option>
                       <option value="3.5">{t('rating35')}</option>
                       <option value="3">{t('rating3')}</option>
-                    </select>
+                    </AppSelect>
                   </div>
                 </div>
               </div>
@@ -417,26 +419,26 @@ export default function Feed() {
               </div>
               <div className="category-filters">
                 {visiblePrimaryCategories.map((category) => (
-                  <button
+                  <Chip
                     key={category}
-                    type="button"
-                    className={`category-btn ${activeCategory === category ? 'active' : ''}`}
+                    className="category-btn"
+                    active={activeCategory === category}
                     onClick={() => selectCategory(category)}
                   >
                     {category}
-                  </button>
+                  </Chip>
                 ))}
                 {moreLabels.length > 0 && (
-                  <button
-                    type="button"
-                    className={`category-btn category-more-btn ${showMoreCategories ? 'active' : ''}`}
+                  <Chip
+                    className="category-btn category-more-btn"
+                    active={showMoreCategories}
                     onClick={() => setShowMoreCategories((previous) => !previous)}
                     aria-expanded={showMoreCategories}
                     aria-label={t('feedToggleMoreCategories')}
                   >
                     {showMoreCategories ? t('feedLess') : t('feedMore')}
                     <i className={`bi ${showMoreCategories ? 'bi-chevron-up' : 'bi-chevron-down'}`} aria-hidden="true"></i>
-                  </button>
+                  </Chip>
                 )}
               </div>
             </div>
@@ -447,22 +449,22 @@ export default function Feed() {
                   <span>{getCategory(activeCategory)?.label || activeCategory}</span>
                 </div>
                 <div className="category-filters" aria-label={t('feedServiceTypeFilters')}>
-                  <button
-                    type="button"
-                    className={`category-btn ${activeServiceType === '' ? 'active' : ''}`}
+                  <Chip
+                    className="category-btn"
+                    active={activeServiceType === ''}
                     onClick={() => selectServiceType('')}
                   >
                     {t('all')}
-                  </button>
+                  </Chip>
                   {activeCategoryServiceTypes.map((serviceType) => (
-                    <button
+                    <Chip
                       key={serviceType.key}
-                      type="button"
-                      className={`category-btn ${activeServiceType === serviceType.key ? 'active' : ''}`}
+                      className="category-btn"
+                      active={activeServiceType === serviceType.key}
                       onClick={() => selectServiceType(serviceType.key)}
                     >
                       {serviceType.label}
-                    </button>
+                    </Chip>
                   ))}
                 </div>
               </div>
