@@ -276,7 +276,7 @@ function AdminUsers() {
                     <div className="table-actions table-actions-stack">
                       <AppButton variant="secondary" className="admin-user-action" onClick={() => handleViewDetails(user.id)}>
                         {t('viewDetails')}
-                      </button>
+                      </AppButton>
                       <AppButton
                         variant={user.isActive ? "danger" : "secondary"}
                         className="admin-user-action"
