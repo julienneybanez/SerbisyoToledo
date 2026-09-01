@@ -493,11 +493,6 @@
     margin-left: auto;
   }
 
-  .login-btn,
-  .signup-btn {
-    flex: 1 1 140px;
-    justify-content: center;
-  }
 
   .profile-dropdown-menu {
     right: 0;
