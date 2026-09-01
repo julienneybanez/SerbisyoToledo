@@ -2195,3 +2195,398 @@
     min-width: 132px;
   }
 }
+
+
+/* ===================================
+   APPROVED MOCKUP FILTER SYSTEM
+   Uses the exact Browse Services interaction language from the standalone
+   Aoxa × shadcn mockup: compact discovery card, 44px search/filter controls,
+   simple four-column advanced filters, and compact pill category chips.
+   Feed.jsx behavior, query parameters, debounce, API calls, category/service
+   type state, More/Less, clear-one, and clear-all logic are unchanged.
+   =================================== */
+.feed-shell .feed-discovery-panel {
+  gap: 0;
+  padding: 16px;
+  border: 1px solid var(--color-border);
+  border-radius: 20px;
+  background: var(--color-surface);
+  box-shadow: none;
+}
+
+.feed-shell .search-filter-row {
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+}
+
+.feed-shell .search-input-large {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 44px;
+  height: 44px;
+  gap: 8px;
+  padding: 0 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-surface);
+  box-shadow: none;
+}
+
+.feed-shell .search-input-large:focus-within {
+  border-color: var(--brand-blue);
+  background: var(--color-surface);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-blue) 12%, transparent);
+}
+
+.feed-shell .search-input-large svg {
+  width: 18px;
+  height: 18px;
+  color: var(--color-text-muted);
+}
+
+.feed-shell .search-input-large input {
+  min-height: 0;
+  height: 100%;
+  padding: 0;
+  font-size: 0.92rem;
+  color: var(--color-text-primary);
+}
+
+.feed-shell .search-input-large input::placeholder {
+  color: var(--color-placeholder);
+}
+
+.feed-shell .btn-filter {
+  min-width: 104px;
+  min-height: 44px;
+  height: 44px;
+  padding: 0 13px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  box-shadow: none;
+  backdrop-filter: none;
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.feed-shell .btn-filter:hover,
+.feed-shell .btn-filter:focus-visible {
+  border-color: var(--color-border-strong);
+  background: var(--color-surface-secondary);
+  color: var(--color-text-primary);
+}
+
+.feed-shell .btn-filter.active {
+  border-color: color-mix(in srgb, var(--brand-blue) 45%, var(--color-border));
+  background: var(--color-soft-blue);
+  color: var(--brand-blue-hover);
+}
+
+.feed-shell .filter-count {
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--brand-blue);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+
+.feed-shell .btn-filter.active .filter-count {
+  background: var(--brand-blue);
+  color: #fff;
+}
+
+.feed-shell .advanced-filters {
+  margin: 0;
+  padding: 14px 0 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.feed-shell .filters-header {
+  min-height: 32px;
+  margin: 0 0 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.feed-shell .filters-title {
+  color: var(--color-text-primary);
+  font-size: 0.82rem;
+  font-weight: 760;
+}
+
+.feed-shell .clear-filters-btn {
+  min-height: 32px;
+  padding: 0 4px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--brand-blue-hover);
+  font-size: 0.78rem;
+  font-weight: 720;
+}
+
+.feed-shell .clear-filters-btn:hover,
+.feed-shell .clear-filters-btn:focus-visible {
+  background: var(--color-soft-blue);
+  color: var(--brand-blue-hover);
+}
+
+.feed-shell .filters-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.feed-shell .feed-filter-group {
+  min-width: 0;
+  gap: 6px;
+}
+
+.feed-shell .feed-filter-label {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 0.72rem;
+  font-weight: 750;
+  line-height: 1.25;
+}
+
+.feed-shell .feed-filter-input,
+.feed-shell .feed-filter-select {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  height: 44px;
+  padding: 0 11px;
+  border: 1px solid var(--color-border);
+  border-radius: 11px;
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  box-shadow: none;
+  font-size: 0.88rem;
+}
+
+.feed-shell .feed-filter-select {
+  padding-right: 32px;
+}
+
+.feed-shell .feed-filter-input:hover,
+.feed-shell .feed-filter-select:hover {
+  border-color: var(--color-border-strong);
+}
+
+.feed-shell .feed-filter-input:focus,
+.feed-shell .feed-filter-select:focus {
+  border-color: var(--brand-blue);
+  background: var(--color-surface);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-blue) 10%, transparent);
+}
+
+.feed-shell .feed-category-section,
+.feed-shell .feed-service-type-section {
+  gap: 0;
+  padding-top: 14px;
+}
+
+.feed-shell .feed-filter-section-heading {
+  margin: 0 0 8px;
+  color: var(--color-text-muted);
+  font-size: 0.72rem;
+  font-weight: 760;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.feed-shell .category-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+}
+
+.feed-shell .category-btn {
+  width: auto;
+  min-height: 36px;
+  padding: 7px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  box-shadow: none;
+  font-size: 0.78rem;
+  font-weight: 750;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.feed-shell .category-btn:hover,
+.feed-shell .category-btn:focus-visible {
+  border-color: color-mix(in srgb, var(--brand-blue) 42%, var(--color-border));
+  background: var(--color-surface-secondary);
+  color: var(--brand-blue-hover);
+}
+
+.feed-shell .category-btn.active {
+  border-color: var(--brand-blue);
+  background: var(--brand-blue);
+  color: #fff;
+  box-shadow: none;
+}
+
+.feed-shell .category-more-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.feed-shell .feed-results-toolbar {
+  margin-top: 18px;
+  margin-bottom: 10px;
+}
+
+.feed-shell .feed-active-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.feed-shell .feed-active-filter-chip {
+  min-height: 36px;
+  padding: 7px 8px 7px 12px;
+  border: 1px solid color-mix(in srgb, var(--brand-blue) 24%, var(--color-border));
+  border-radius: 999px;
+  background: var(--color-soft-blue);
+  color: var(--brand-blue-hover);
+  font-size: 0.78rem;
+  font-weight: 720;
+}
+
+.feed-shell .feed-active-filter-chip:hover,
+.feed-shell .feed-active-filter-chip:focus-visible {
+  border-color: var(--brand-blue);
+  background: color-mix(in srgb, var(--brand-blue) 12%, var(--color-surface));
+  color: var(--brand-blue-hover);
+}
+
+.feed-shell .feed-active-filter-chip i {
+  color: currentColor;
+}
+
+[data-theme='dark'] .feed-shell .feed-discovery-panel,
+[data-theme='dark'] .feed-shell .search-input-large,
+[data-theme='dark'] .feed-shell .btn-filter,
+[data-theme='dark'] .feed-shell .feed-filter-input,
+[data-theme='dark'] .feed-shell .feed-filter-select,
+[data-theme='dark'] .feed-shell .category-btn {
+  border-color: var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+}
+
+[data-theme='dark'] .feed-shell .btn-filter:hover,
+[data-theme='dark'] .feed-shell .btn-filter:focus-visible,
+[data-theme='dark'] .feed-shell .category-btn:hover,
+[data-theme='dark'] .feed-shell .category-btn:focus-visible {
+  border-color: var(--color-border-strong);
+  background: var(--color-surface-secondary);
+}
+
+[data-theme='dark'] .feed-shell .btn-filter.active {
+  border-color: color-mix(in srgb, var(--color-primary) 48%, var(--color-border));
+  background: color-mix(in srgb, var(--color-primary) 12%, var(--color-surface));
+  color: var(--color-primary-hover);
+}
+
+[data-theme='dark'] .feed-shell .category-btn.active {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+  color: #fff;
+}
+
+[data-theme='dark'] .feed-shell .feed-active-filter-chip {
+  border-color: color-mix(in srgb, var(--color-primary) 34%, var(--color-border));
+  background: color-mix(in srgb, var(--color-primary) 12%, var(--color-surface));
+  color: var(--color-primary-hover);
+}
+
+@media (max-width: 900px) {
+  .feed-shell .filters-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 575.98px) {
+  .feed-shell .feed-discovery-panel {
+    padding: 12px;
+    border-radius: 16px;
+  }
+
+  .feed-shell .search-filter-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 48px;
+    gap: 8px;
+  }
+
+  .feed-shell .search-input-large,
+  .feed-shell .btn-filter {
+    min-height: 46px;
+    height: 46px;
+  }
+
+  .feed-shell .btn-filter {
+    min-width: 48px;
+    width: 48px;
+    padding: 0;
+  }
+
+  .feed-shell .btn-filter > span:not(.filter-count) {
+    display: none;
+  }
+
+  .feed-shell .filter-count {
+    position: absolute;
+    transform: translate(12px, -12px);
+  }
+
+  .feed-shell .filters-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .feed-shell .feed-filter-input,
+  .feed-shell .feed-filter-select {
+    min-height: 46px;
+    height: 46px;
+  }
+
+  .feed-shell .category-filters {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 3px;
+    scrollbar-width: none;
+    scroll-snap-type: x proximity;
+  }
+
+  .feed-shell .category-filters::-webkit-scrollbar {
+    display: none;
+  }
+
+  .feed-shell .category-btn {
+    flex: 0 0 auto;
+    min-height: 38px;
+    scroll-snap-align: start;
+  }
+}
