@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { adminAPI } from '../../services/api';
 import { useLanguage } from '../../context/LanguageContext';
-import { PageHeader } from '../../components/ui';
+import { AppButton, AppInput, AppSelect, AppTextarea, IconButton, PageHeader } from '../../components/ui';
 import '../../styles/AdminPages.css';
 
 function AdminReports() {
@@ -167,7 +167,7 @@ function AdminReports() {
             <circle cx="11" cy="11" r="8"></circle>
             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
           </svg>
-          <input
+          <AppInput
             type="text"
             placeholder={t('adminSearchReportsPlaceholder')}
             value={searchTerm}
@@ -176,13 +176,13 @@ function AdminReports() {
         </div>
 
         <div className="filter-group">
-          <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} aria-label={t('adminFilterReportsByStatus')}>
+          <AppSelect value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} aria-label={t('adminFilterReportsByStatus')}>
             <option value="all">{t('allStatuses')}</option>
             <option value="pending">{t('pending')}</option>
             <option value="investigating">{t('adminUnderReview')}</option>
             <option value="dismissed">{t('adminDismissed')}</option>
             <option value="resolved">{t('adminResolved')}</option>
-          </select>
+          </AppSelect>
         </div>
       </div>
 
@@ -249,32 +249,30 @@ function AdminReports() {
               <div className="request-actions report-actions">
                 {report.status === 'pending' ? (
                   <>
-                    <button
-                      className="btn-investigate"
+                    <AppButton
                       disabled={actionLoading === `${report.id}-investigate`}
                       onClick={() => handleReportAction(report.id, 'investigate')}
                     >
                       {actionLoading === `${report.id}-investigate` ? t('adminWorking') : t('adminReviewReport')}
-                    </button>
+                    </AppButton>
                   </>
                 ) : null}
                 {report.status === 'investigating' ? (
                   <>
-                    <button
-                      className="btn-approve"
+                    <AppButton
                       disabled={actionLoading && actionLoading.startsWith(`${report.id}-`)}
                       onClick={() => openDecisionDialog(report.id)}
                     >
                       {t('adminMakeDecision')}
-                    </button>
+                    </AppButton>
                   </>
                 ) : null}
-                <button
-                  className="btn-view-details"
+                <AppButton
+                  variant="secondary"
                   onClick={() => setExpandedReportId((prev) => (prev === report.id ? null : report.id))}
                 >
                   {expandedReportId === report.id ? t('adminHideDetails') : t('viewDetails')}
-                </button>
+                </AppButton>
               </div>
             </div>
           ))
@@ -290,14 +288,13 @@ function AdminReports() {
           onClick={() => setPreviewScreenshot('')}
         >
           <div className="admin-report-preview-dialog" onClick={(event) => event.stopPropagation()}>
-            <button
-              type="button"
+            <IconButton
               className="admin-report-preview-close"
               onClick={() => setPreviewScreenshot('')}
               aria-label={t('adminCloseImagePreview')}
             >
               ×
-            </button>
+            </IconButton>
             <img
               src={previewScreenshot}
               alt="Attached evidence preview"
@@ -325,19 +322,18 @@ function AdminReports() {
           <div className="admin-dialog-card" onClick={(event) => event.stopPropagation()}>
             <div className="admin-dialog-header">
               <h2 id="report-decision-title" className="admin-dialog-title">{t('adminMakeDecision')}</h2>
-              <button
-                type="button"
+              <IconButton
                 className="admin-dialog-close"
                 onClick={closeDecisionDialog}
                 aria-label={t('adminCloseDecisionDialog')}
               >
                 ×
-              </button>
+              </IconButton>
             </div>
 
             <div className="admin-dialog-body">
               <label htmlFor="report-decision-action" className="settings-label">{t('adminDecision')}</label>
-              <select
+              <AppSelect
                 id="report-decision-action"
                 className="settings-input"
                 value={decisionDialog.action}
@@ -347,10 +343,10 @@ function AdminReports() {
                 <option value="warn">{t('adminDecisionWarn')}</option>
                 <option value="suspend">{t('adminDecisionSuspend')}</option>
                 <option value="ban">{t('adminDecisionBan')}</option>
-              </select>
+              </AppSelect>
 
               <label htmlFor="report-decision-note" className="settings-label">{t('adminNote')}</label>
-              <textarea
+              <AppTextarea
                 id="report-decision-note"
                 className="settings-textarea"
                 rows={4}
@@ -364,15 +360,13 @@ function AdminReports() {
             </div>
 
             <div className="admin-dialog-actions admin-dialog-actions-split">
-              <button type="button" className="btn-view-details" onClick={closeDecisionDialog}>{t('requestsCancelAction')}</button>
-              <button
-                type="button"
-                className="btn-approve"
+              <AppButton variant="secondary" onClick={closeDecisionDialog}>{t('requestsCancelAction')}</AppButton>
+              <AppButton
                 onClick={handleSubmitDecision}
                 disabled={Boolean(actionLoading)}
               >
                 {actionLoading ? t('adminSubmitting') : t('adminSubmitDecision')}
-              </button>
+              </AppButton>
             </div>
           </div>
         </div>
