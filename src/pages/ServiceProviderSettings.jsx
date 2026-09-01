@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { getUser, userProfileAPI, serviceProfileAPI, verificationAPI } from '../services/api';
 import SettingsFlash from '../components/settings/SettingsFlash';
-import { PageHeader } from '../components/ui';
+import { AppButton, AppInput, AppSelect, PageHeader } from '../components/ui';
 import { useLanguage } from '../context/LanguageContext';
 import '../styles/UserSettings.css';
 
@@ -283,7 +283,7 @@ function ServiceProviderSettings() {
 
               <div className="settings-group">
                 <label className="settings-label">{t('fullName')}</label>
-                <input
+                <AppInput
                   type="text"
                   className="settings-input"
                   value={settings.fullName}
@@ -295,7 +295,7 @@ function ServiceProviderSettings() {
 
               <div className="settings-group">
                 <label className="settings-label">{t('emailAddress')}</label>
-                <input
+                <AppInput
                   type="email"
                   className="settings-input"
                   value={settings.email}
@@ -315,21 +315,20 @@ function ServiceProviderSettings() {
                     </p>
                   </div>
                   {!settings.emailVerified && (
-                    <button
-                      type="button"
-                      className="btn-change-password"
+                    <AppButton
+                      variant="secondary"
                       onClick={handleResendVerification}
                       disabled={isSendingVerification}
                     >
                       {isSendingVerification ? t('sending') : t('resendVerificationEmail')}
-                    </button>
+                    </AppButton>
                   )}
                 </div>
               </div>
 
               <div className="settings-group">
                 <label className="settings-label">{t('providerPersonalPhoneLabel')}</label>
-                <input
+                <AppInput
                   type="tel"
                   className="settings-input"
                   value={settings.phone}
@@ -345,24 +344,23 @@ function ServiceProviderSettings() {
               <div className="settings-section-divider"></div>
 
               <h3 className="settings-subsection-title">{t('providerPasswordSecurityTitle')}</h3>
-              <button
-                className="btn-change-password"
-                type="button"
+              <AppButton
+                variant="secondary"
                 onClick={() => navigate('/forgot-password', {
                   state: { fromSettings: true, returnTo: '/provider-settings' },
                 })}
               >
                 {t('changePassword')}
-              </button>
+              </AppButton>
               <small className="settings-help">{t('providerPasswordSecurityHelp')}</small>
 
               <div className="settings-actions">
-                <button className="btn-save" onClick={handleSave} disabled={isSaving || isLoadingProfile || !hasAccountChanges}>
+                <AppButton onClick={handleSave} disabled={isSaving || isLoadingProfile || !hasAccountChanges}>
                   {isSaving ? t('saving') : t('saveChanges')}
-                </button>
-                <button className="btn-cancel" type="button" onClick={handleResetAccount} disabled={isSaving || isLoadingProfile || !hasAccountChanges}>
+                </AppButton>
+                <AppButton variant="secondary" onClick={handleResetAccount} disabled={isSaving || isLoadingProfile || !hasAccountChanges}>
                   {t('reset')}
-                </button>
+                </AppButton>
               </div>
             </div>
           )}
@@ -375,7 +373,7 @@ function ServiceProviderSettings() {
 
               <div className="settings-group">
                 <label className="settings-label">{t('providerCredentialNameLabel')}</label>
-                <input
+                <AppInput
                   type="text"
                   className="settings-input"
                   value={newCredential.credentialName}
@@ -384,7 +382,7 @@ function ServiceProviderSettings() {
                 />
 
                 <label className="settings-label">{t('providerCredentialTypeLabel')}</label>
-                <select
+                <AppSelect
                   className="settings-input"
                   value={newCredential.credentialType}
                   onChange={(e) => setNewCredential((prev) => ({ ...prev, credentialType: e.target.value }))}
@@ -399,10 +397,10 @@ function ServiceProviderSettings() {
                   <option value="manufacturer_certification">{t('providerCredentialTypeManufacturerCertification')}</option>
                   <option value="training_certificate">{t('providerCredentialTypeTrainingCertificate')}</option>
                   <option value="other">{t('providerCredentialTypeOther')}</option>
-                </select>
+                </AppSelect>
 
                 <label className="settings-label">{t('providerIssuingOrganizationLabel')}</label>
-                <input
+                <AppInput
                   type="text"
                   className="settings-input"
                   value={newCredential.issuingOrganization}
@@ -411,7 +409,7 @@ function ServiceProviderSettings() {
                 />
 
                 <label className="settings-label">{t('providerCredentialIdLabel')}</label>
-                <input
+                <AppInput
                   type="text"
                   className="settings-input"
                   value={newCredential.credentialId}
@@ -420,7 +418,7 @@ function ServiceProviderSettings() {
                 />
 
                 <label className="settings-label">{t('providerIssueDateLabel')}</label>
-                <input
+                <AppInput
                   type="date"
                   className="settings-input"
                   value={newCredential.issueDate}
@@ -429,7 +427,7 @@ function ServiceProviderSettings() {
                 />
 
                 <label className="settings-label">{t('providerExpirationDateLabel')}</label>
-                <input
+                <AppInput
                   type="date"
                   className="settings-input"
                   value={newCredential.expirationDate}
@@ -449,7 +447,7 @@ function ServiceProviderSettings() {
                 </label>
 
                 <label className="settings-label">{t('providerCredentialUrlLabel')}</label>
-                <input
+                <AppInput
                   type="url"
                   className="settings-input"
                   value={newCredential.credentialUrl}
@@ -468,9 +466,9 @@ function ServiceProviderSettings() {
               </div>
 
               <div className="settings-actions">
-                <button className="btn-save" onClick={handleCreateCredential} disabled={credentialSaving}>
+                <AppButton onClick={handleCreateCredential} disabled={credentialSaving}>
                   {credentialSaving ? t('saving') : t('providerAddCredential')}
-                </button>
+                </AppButton>
               </div>
 
               <div className="settings-group">
@@ -495,17 +493,14 @@ function ServiceProviderSettings() {
                       <p className="settings-metadata-row">{credential.verification_notes}</p>
                     )}
                     <div className="settings-credential-actions">
-                      <button
-                        type="button"
-                        className="btn-save"
+                      <AppButton
                         onClick={() => handleSubmitCredential(credential.id)}
                         disabled={credentialSaving || credential.verification_status === 'pending'}
-                        style={{ minHeight: '40px' }}
                       >
                         {credential.verification_status === 'pending'
                           ? t('providerPendingReview')
                           : t('providerSubmitForReview')}
-                      </button>
+                      </AppButton>
                     </div>
                   </div>
                 ))}
