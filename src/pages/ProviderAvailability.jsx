@@ -4,7 +4,7 @@ import { DayPicker } from 'react-day-picker';
 import 'react-day-picker/style.css';
 import { serviceProfileAPI } from '../services/api';
 import SettingsFlash from '../components/settings/SettingsFlash';
-import { PageHeader } from '../components/ui';
+import { AppButton, PageHeader } from '../components/ui';
 import { useLanguage } from '../context/LanguageContext';
 import './ProviderAvailability.css';
 
@@ -391,9 +391,9 @@ export default function ProviderAvailability() {
               </div>
             </div>
             <p>{t('availabilityListingRequiredDescription')}</p>
-            <Link className="st-button st-button--primary st-button--md" to="/dashboard">
+            <AppButton as={Link} to="/dashboard">
               {t('availabilityGoToDashboard')}
-            </Link>
+            </AppButton>
           </section>
         </div>
       </div>
