@@ -428,7 +428,7 @@ function Navbar() {
                   as={Link}
                   to="/login"
                   variant="ghost"
-                  className="login-btn"
+                  className="navbar-auth-action"
                   onClick={handleNavClick}
                 >
                   {t('logIn')}
@@ -437,7 +437,7 @@ function Navbar() {
                   as={Link}
                   to="/register"
                   variant="primary"
-                  className="signup-btn"
+                  className="navbar-auth-action"
                   onClick={handleNavClick}
                 >
                   {t('signUp')}
