@@ -11,3 +11,9 @@ export { default as PageHeader } from './PageHeader';
 export { default as SectionCard } from './SectionCard';
 export { default as StatusBadge } from './StatusBadge';
 export { default as Surface } from './Surface';
+
+export { default as Chip } from './Chip';
+export { default as IconButton } from './IconButton';
+export { default as ListRow } from './ListRow';
+export { default as SoftPanel } from './SoftPanel';
+export { default as StatCard } from './StatCard';
