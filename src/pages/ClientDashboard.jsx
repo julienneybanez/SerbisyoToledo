@@ -90,7 +90,11 @@ export default function ClientDashboard() {
         : t('feedChecklistFirstBookingDescription'),
       completed: task.completed,
       actionType: 'link',
-      to: task.actionPath || (task.id === 'first_request' ? '/feed' : '/client-settings'),
+      to: task.id === 'email_verified'
+        ? '/client-settings?section=security&setup=1'
+        : task.id === 'profile_info'
+          ? '/client-settings?section=contact&setup=1'
+          : '/feed',
       actionLabel: task.id === 'first_request' ? t('feedChecklistFindProviders') : t('feedChecklistOpenSettings'),
     }));
   }, [onboardingData, t]);
