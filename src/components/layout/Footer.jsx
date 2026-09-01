@@ -3,7 +3,7 @@ import logo from '../../assets/logo.png';
 import { useLanguage } from '../../context/LanguageContext';
 
 function Footer({ className = '' }) {
-  const { t } = useLanguage();
+  const { language, t } = useLanguage();
 
   return (
     <footer className={`footer ${className}`.trim()}>
@@ -40,13 +40,13 @@ function Footer({ className = '' }) {
         </div>
 
         <div className="footer-links-block">
-          <h4 className="footer-heading">{t('footerInformation') || 'Information'}</h4>
-          <Link to="/terms" className="footer-link">{t('terms') || 'Terms'}</Link>
-          <Link to="/privacy" className="footer-link">{t('privacy') || 'Privacy'}</Link>
+          <h4 className="footer-heading">{language === 'ceb' ? 'Impormasyon' : 'Information'}</h4>
+          <Link to="/terms" className="footer-link">{t('termsOfService')}</Link>
+          <Link to="/privacy" className="footer-link">{t('privacyPolicy')}</Link>
         </div>
 
         <div className="footer-links-block">
-          <h4 className="footer-heading">{t('footerAccount') || 'Account'}</h4>
+          <h4 className="footer-heading">{t('account')}</h4>
           <Link to="/login" className="footer-link">{t('logIn')}</Link>
           <Link to="/register" className="footer-link">{t('signUp')}</Link>
           <Link to="/register" className="footer-link">{t('footerBecomeProvider')}</Link>
