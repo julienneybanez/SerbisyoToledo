@@ -341,6 +341,16 @@ jobs:
             await page.goto(BASE + path, { waitUntil: 'domcontentloaded', timeout: 15000 });
             await page.waitForTimeout(600);
 
+            // Trigger scroll-reveal/intersection animations before measuring or capturing.
+            const documentHeight = await page.evaluate(() => document.documentElement.scrollHeight);
+            const step = Math.max(280, Math.floor((page.viewportSize()?.height || 800) * 0.72));
+            for (let y = 0; y < documentHeight; y += step) {
+              await page.evaluate((scrollY) => window.scrollTo(0, scrollY), y);
+              await page.waitForTimeout(70);
+            }
+            await page.evaluate(() => window.scrollTo(0, 0));
+            await page.waitForTimeout(180);
+
             const metrics = await page.evaluate(() => {
               const root = document.documentElement;
               const body = document.body;
