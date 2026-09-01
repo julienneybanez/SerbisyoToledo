@@ -2258,6 +2258,7 @@
 }
 
 .feed-shell .btn-filter {
+  position: relative;
   min-width: 104px;
   min-height: 44px;
   height: 44px;
@@ -2329,8 +2330,8 @@
 }
 
 .feed-shell .clear-filters-btn {
-  min-height: 32px;
-  padding: 0 4px;
+  min-height: 44px;
+  padding: 0 6px;
   border: 0;
   border-radius: 8px;
   background: transparent;
@@ -2419,8 +2420,8 @@
 
 .feed-shell .category-btn {
   width: auto;
-  min-height: 36px;
-  padding: 7px 12px;
+  min-height: 44px;
+  padding: 8px 12px;
   border: 1px solid var(--color-border);
   border-radius: 999px;
   background: var(--color-surface);
@@ -2465,8 +2466,8 @@
 }
 
 .feed-shell .feed-active-filter-chip {
-  min-height: 36px;
-  padding: 7px 8px 7px 12px;
+  min-height: 44px;
+  padding: 8px 9px 8px 12px;
   border: 1px solid color-mix(in srgb, var(--brand-blue) 24%, var(--color-border));
   border-radius: 999px;
   background: var(--color-soft-blue);
@@ -2586,7 +2587,7 @@
 
   .feed-shell .category-btn {
     flex: 0 0 auto;
-    min-height: 38px;
+    min-height: 44px;
     scroll-snap-align: start;
   }
 }
