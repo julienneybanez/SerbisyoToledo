@@ -55,6 +55,7 @@ const HOME_COPY = {
         description: 'Send a booking request with the date and time that works for you.',
       },
     ],
+    browseAll: 'Browse all',
     providerTitle: 'Are you a service provider in Toledo City?',
     providerText: 'Create your service listing, show your previous work, and receive booking requests from clients.',
   },
@@ -78,6 +79,7 @@ const HOME_COPY = {
         description: 'Pag-request og petsa ug oras nga angay sa imong kinahanglan.',
       },
     ],
+    browseAll: 'Tan-awa tanan',
     providerTitle: 'Service provider ka sa Toledo City?',
     providerText: 'Paghimo og service listing, ipakita imong previous work, ug dawata ang booking requests sa mga kliyente.',
   },
@@ -101,6 +103,7 @@ const HOME_COPY = {
         description: 'Mag-request ng petsa at oras na akma sa kailangan mo.',
       },
     ],
+    browseAll: 'Tingnan lahat',
     providerTitle: 'Service provider ka ba sa Toledo City?',
     providerText: 'Gumawa ng service listing, ipakita ang dati mong trabaho, at tumanggap ng booking requests mula sa mga kliyente.',
   },
@@ -184,12 +187,12 @@ function Home() {
               <p className="section-subtitle">{t('popularServicesSubtitle')}</p>
             </div>
             <AppButton
-              variant="ghost"
-              size="sm"
-              className="home-text-action"
+              variant="primary"
+              size="md"
+              className="home-browse-all"
               onClick={() => navigate('/feed')}
             >
-              {t('browseServices')}
+              {copy.browseAll}
               <i className="bi bi-arrow-right" aria-hidden="true"></i>
             </AppButton>
           </Reveal>
