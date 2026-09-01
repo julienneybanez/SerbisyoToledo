@@ -447,3 +447,113 @@
     display: inline-flex;
   }
 }
+
+
+/* ===================================
+   AOXA-INSPIRED MOBILE WORKSPACE CHROME
+   Same destinations, profile menu actions, notification access and badges.
+   =================================== */
+@media (max-width: 768px) {
+  .mobile-topbar {
+    min-height: calc(60px + env(safe-area-inset-top));
+    padding: calc(0.45rem + env(safe-area-inset-top)) 0.75rem 0.5rem;
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-surface);
+    backdrop-filter: none;
+  }
+
+  .mobile-topbar-mark {
+    width: 36px;
+    height: 36px;
+    border: 1px solid var(--color-border);
+    border-radius: 11px;
+    background: var(--color-surface);
+  }
+
+  .mobile-topbar-title {
+    font-size: 0.94rem;
+    font-weight: 820;
+    letter-spacing: -0.035em;
+  }
+
+  .mobile-topbar-icon-btn,
+  .mobile-topbar-avatar {
+    width: 44px;
+    height: 44px;
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    background: var(--color-soft-blue);
+    color: var(--color-text-primary);
+  }
+
+  .mobile-topbar-icon-btn:hover,
+  .mobile-topbar-avatar:hover {
+    border-color: var(--color-border-strong);
+    background: var(--color-surface);
+  }
+
+  .mobile-profile-menu {
+    border: 1px solid var(--color-border);
+    border-radius: 16px;
+    background: var(--color-surface);
+    box-shadow: var(--shadow-panel);
+  }
+
+  .mobile-profile-menu-item {
+    min-height: 44px;
+    border-radius: 10px;
+    color: var(--color-text-primary);
+    font-weight: 650;
+  }
+
+  .mobile-profile-menu-item:hover,
+  .mobile-profile-menu-item:focus-visible {
+    background: var(--color-soft-blue);
+  }
+
+  .mobile-profile-language-select {
+    border-color: var(--color-border);
+    border-radius: 10px;
+    background: var(--color-surface);
+  }
+
+  .mobile-bottom-nav {
+    min-height: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom));
+    gap: 0.2rem;
+    padding: 0.38rem 0.4rem calc(0.38rem + env(safe-area-inset-bottom));
+    border-top: 1px solid var(--color-border);
+    background: var(--color-surface);
+    backdrop-filter: none;
+    box-shadow: 0 -8px 24px rgba(15, 23, 42, 0.07);
+  }
+
+  .mobile-bottom-nav-item {
+    border-radius: 12px;
+  }
+
+  .mobile-bottom-nav-item.active {
+    background: var(--color-soft-blue);
+    color: var(--brand-blue-hover);
+  }
+
+  .mobile-bottom-nav-item.active .mobile-bottom-nav-icon-wrap {
+    color: var(--brand-blue-hover);
+  }
+
+  .mobile-bottom-nav-badge {
+    background: var(--brand-blue);
+    color: #fff;
+  }
+
+  [data-theme='dark'] .mobile-topbar,
+  [data-theme='dark'] .mobile-bottom-nav,
+  [data-theme='dark'] .mobile-profile-menu {
+    background: var(--color-surface);
+    border-color: var(--color-border);
+  }
+
+  [data-theme='dark'] .mobile-bottom-nav-item.active {
+    background: var(--color-surface-secondary);
+    color: var(--color-primary);
+  }
+}
