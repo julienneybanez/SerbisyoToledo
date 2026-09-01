@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { getUser, isAuthenticated, notificationAPI } from '../services/api';
 import { useLanguage } from '../context/LanguageContext';
+import { AppButton } from '../components/ui';
 import './Notifications.css';
 
 function resolveNotificationDestination(notification) {
@@ -218,24 +219,20 @@ export default function Notifications() {
           {focusRequestId != null && (
             <div className="notifications-request-focus" role="status">
               <span>{t('notificationsFocusedRequest')}</span>
-              <button
-                type="button"
-                className="btn btn-sm btn-primary"
-                onClick={() => navigate('/requests')}
-              >
+              <AppButton size="sm" onClick={() => navigate('/requests')}>
                 {t('goToRequests')}
-              </button>
+              </AppButton>
             </div>
           )}
 
           {hasItems && (
             <div className="notifications-page-actions">
-              <button type="button" className="btn btn-outline-primary btn-sm" onClick={handleMarkAllRead} disabled={busy}>
+              <AppButton variant="secondary" size="sm" onClick={handleMarkAllRead} disabled={busy}>
                 {t('notificationsMarkAllRead')}
-              </button>
-              <button type="button" className="btn btn-outline-secondary btn-sm" onClick={handleClearAll} disabled={busy}>
+              </AppButton>
+              <AppButton variant="secondary" size="sm" onClick={handleClearAll} disabled={busy}>
                 {t('notificationsClearAll')}
-              </button>
+              </AppButton>
             </div>
           )}
         </div>
