@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { getUser, serviceRequestAPI, userProfileAPI } from '../services/api';
-import { PageHeader } from '../components/ui';
+import { AppButton, AppCard, PageHeader, StatCard } from '../components/ui';
 import ProfileCompletionChecklist from '../components/common/ProfileCompletionChecklist';
 import { useLanguage } from '../context/LanguageContext';
 import './ClientDashboard.css';
@@ -118,7 +118,7 @@ export default function ClientDashboard() {
           title={t('clientDashboardWelcomeBack', { name: user?.fullName ? `, ${user.fullName.split(' ')[0]}` : '' })}
           subtitle={t('clientDashboardSubtitle')}
           className="client-dashboard-header"
-          action={<Link className="st-button st-button--primary st-button--md" to="/feed"><i className="bi bi-search" aria-hidden="true"></i> {t('clientDashboardFindService')}</Link>}
+          action={<AppButton as={Link} variant="primary" to="/feed" icon={<i className="bi bi-search" aria-hidden="true"></i>}>{t('clientDashboardFindService')}</AppButton>}
         />
 
         {onboardingData && !onboardingData.isComplete && (
@@ -134,22 +134,13 @@ export default function ClientDashboard() {
         )}
 
         <section className="client-dashboard-stats" aria-label={t('clientDashboardBookingSummary')}>
-          <Link to="/requests" className="client-stat-card">
-            <span className="client-stat-icon pending"><i className="bi bi-hourglass-split"></i></span>
-            <span><strong>{summary.pending}</strong><small>{t('clientDashboardPending')}</small></span>
-          </Link>
-          <Link to="/requests" className="client-stat-card">
-            <span className="client-stat-icon active"><i className="bi bi-calendar-check"></i></span>
-            <span><strong>{summary.active}</strong><small>{t('clientDashboardActiveRequests')}</small></span>
-          </Link>
-          <Link to="/requests" className="client-stat-card">
-            <span className="client-stat-icon completed"><i className="bi bi-check2-circle"></i></span>
-            <span><strong>{summary.completed}</strong><small>{t('clientDashboardCompleted')}</small></span>
-          </Link>
+          <StatCard as={Link} to="/requests" className="client-stat-card" label={t('clientDashboardPending')} value={summary.pending} icon={<i className="bi bi-hourglass-split"></i>} />
+          <StatCard as={Link} to="/requests" className="client-stat-card" label={t('clientDashboardActiveRequests')} value={summary.active} icon={<i className="bi bi-calendar-check"></i>} />
+          <StatCard as={Link} to="/requests" className="client-stat-card" label={t('clientDashboardCompleted')} value={summary.completed} icon={<i className="bi bi-check2-circle"></i>} />
         </section>
 
         <section className="client-dashboard-grid">
-          <div className="client-dashboard-panel client-current-panel">
+          <AppCard flat className="client-dashboard-panel client-current-panel">
             <div className="client-panel-heading">
               <div><h2>{t('clientDashboardCurrentRequests')}</h2></div>
               <Link to="/requests">{t('clientDashboardViewAll')}</Link>
@@ -159,7 +150,7 @@ export default function ClientDashboard() {
             ) : error ? (
               <div className="client-dashboard-state error"><i className="bi bi-exclamation-circle"></i><p>{error}</p></div>
             ) : currentRequests.length === 0 ? (
-              <div className="client-dashboard-state empty"><i className="bi bi-calendar2-plus"></i><h3>{t('clientDashboardNoActiveRequests')}</h3><p>{t('clientDashboardNoActiveDescription')}</p><Link className="st-button st-button--secondary st-button--md" to="/feed">{t('browseServices')}</Link></div>
+              <div className="client-dashboard-state empty"><i className="bi bi-calendar2-plus"></i><h3>{t('clientDashboardNoActiveRequests')}</h3><p>{t('clientDashboardNoActiveDescription')}</p><AppButton as={Link} variant="secondary" to="/feed">{t('browseServices')}</AppButton></div>
             ) : (
               <div className="client-request-list">
                 {currentRequests.map((request) => (
@@ -172,9 +163,9 @@ export default function ClientDashboard() {
                 ))}
               </div>
             )}
-          </div>
+          </AppCard>
 
-          <aside className="client-dashboard-panel client-quick-panel">
+          <AppCard as="aside" flat className="client-dashboard-panel client-quick-panel">
             <div className="client-panel-heading"><div><h2>{t('clientDashboardQuickActions')}</h2></div></div>
             <div className="client-quick-actions">
               <Link to="/feed"><i className="bi bi-search"></i><span><strong>{t('browseServices')}</strong><small>{t('clientDashboardBrowseDescription')}</small></span></Link>
@@ -182,7 +173,7 @@ export default function ClientDashboard() {
               <Link to="/notifications"><i className="bi bi-bell"></i><span><strong>{t('notifications')}</strong><small>{t('clientDashboardNotificationsDescription')}</small></span></Link>
               <Link to="/client-settings"><i className="bi bi-gear"></i><span><strong>{t('clientDashboardAccountSettings')}</strong><small>{t('clientDashboardSettingsDescription')}</small></span></Link>
             </div>
-          </aside>
+          </AppCard>
         </section>
       </div>
     </div>
