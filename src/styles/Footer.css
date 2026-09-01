@@ -466,3 +466,90 @@
     grid-column: auto;
   }
 }
+
+
+/* ===================================
+   BLUE-TEAL MOCKUP FOOTER PALETTE
+   Keep the approved rounded footer composition while using SerbisyoToledo's
+   blue/teal identity with high-contrast text in both themes.
+   =================================== */
+.footer.public-route-footer,
+.footer {
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background:
+    radial-gradient(circle at 12% 0%, rgba(89, 169, 255, 0.18), transparent 30%),
+    radial-gradient(circle at 90% 100%, rgba(74, 224, 204, 0.16), transparent 32%),
+    linear-gradient(135deg, #0e4f78 0%, #12647c 48%, #0f746d 100%) !important;
+  box-shadow: 0 22px 50px rgba(15, 74, 102, 0.18);
+}
+
+.footer .footer-wordmark-serbisyo {
+  color: #b9dcff;
+}
+
+.footer .footer-wordmark-toledo {
+  color: #79ead8;
+}
+
+.footer .footer-heading {
+  color: #ffffff;
+}
+
+.footer .footer-description,
+.footer .footer-link,
+.footer .footer-brand-meta a {
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.footer .footer-brand-meta,
+.footer .footer-bottom-row p {
+  color: rgba(255, 255, 255, 0.76);
+}
+
+.footer .footer-link:hover,
+.footer .footer-link:focus-visible,
+.footer .footer-brand-meta a:hover,
+.footer .footer-brand-meta a:focus-visible {
+  color: #ffffff !important;
+}
+
+.footer .footer-link:focus-visible,
+.footer .footer-brand-link:focus-visible,
+.footer .footer-brand-meta a:focus-visible {
+  outline: 2px solid #a7f3e6;
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+.footer .footer-bottom-row {
+  border-top-color: rgba(255, 255, 255, 0.20);
+}
+
+[data-theme='dark'] .footer.public-route-footer,
+[data-theme='dark'] .footer {
+  border-color: rgba(255, 255, 255, 0.10);
+  background:
+    radial-gradient(circle at 10% 0%, rgba(61, 143, 210, 0.14), transparent 30%),
+    radial-gradient(circle at 92% 100%, rgba(42, 176, 158, 0.13), transparent 34%),
+    linear-gradient(135deg, #091f31 0%, #0b3040 50%, #0a4542 100%) !important;
+  box-shadow: 0 24px 54px rgba(0, 0, 0, 0.30);
+}
+
+[data-theme='dark'] .footer .footer-wordmark-serbisyo {
+  color: #9fcfff;
+}
+
+[data-theme='dark'] .footer .footer-wordmark-toledo {
+  color: #69dfcf;
+}
+
+[data-theme='dark'] .footer .footer-description,
+[data-theme='dark'] .footer .footer-link,
+[data-theme='dark'] .footer .footer-brand-meta a {
+  color: rgba(255, 255, 255, 0.90);
+}
+
+[data-theme='dark'] .footer .footer-brand-meta,
+[data-theme='dark'] .footer .footer-bottom-row p {
+  color: rgba(255, 255, 255, 0.72);
+}
