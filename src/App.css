@@ -676,39 +676,6 @@ body {
   border-radius: 2px;
 }
 
-.login-btn {
-  color: #4A9FF5 !important;
-  border-color: #4A9FF5 !important;
-  font-weight: 600;
-}
-
-.login-btn:hover {
-  background-color: #f0f7ff !important;
-}
-
-.login-btn.active-btn {
-  background-color: transparent;
-  color: #4A9FF5 !important;
-}
-
-.signup-btn {
-  background-color: #4A9FF5 !important;
-  border: none;
-  padding: 0.5rem 2rem;
-  font-weight: 600;
-  border-radius: 5px;
-  color: white !important;
-}
-
-.signup-btn:hover {
-  background-color: #3a8fd5 !important;
-}
-
-.signup-btn.active-btn {
-  background-color: #4A9FF5 !important;
-  opacity: 0.9;
-}
-
 .brand-name {
   font-size: 1.5rem;
   font-weight: bold;
