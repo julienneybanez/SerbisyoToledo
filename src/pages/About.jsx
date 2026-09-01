@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import logo from '../assets/logo.png';
 import Reveal from '../components/common/Reveal';
 import { useLanguage } from '../context/LanguageContext';
+import { AppButton } from '../components/ui';
 
 const ABOUT_FEATURES = [
   { icon: 'bi-search', titleKey: 'aboutFeatureFindTitle', descriptionKey: 'aboutFeatureFindDescription' },
@@ -105,10 +106,10 @@ const About = () => {
               <h2>{t('aboutCtaTitle')}</h2>
               <p>{t('aboutCtaDescription')}</p>
             </div>
-            <Link to="/feed" className="btn btn-primary about-cta-button">
+            <AppButton as={Link} to="/feed" className="about-cta-button">
               {t('browseServices')}
               <i className="bi bi-arrow-right" aria-hidden="true" />
-            </Link>
+            </AppButton>
           </Reveal>
         </div>
       </section>
