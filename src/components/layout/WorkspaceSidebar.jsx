@@ -97,7 +97,8 @@ export default function WorkspaceSidebar({
         <span className="workspace-brand-wordmark"><strong>Serbisyo</strong><strong>Toledo</strong></span>
       </Link>
 
-      <div className="workspace-role-card">
+      <div className="workspace-sidebar-scroll">
+        <div className="workspace-role-card">
         <i className={`bi ${isProvider ? 'bi-person-workspace' : 'bi-person'}`} aria-hidden="true"></i>
         <strong>{t(isProvider ? 'serviceProvider' : 'client')}</strong>
       </div>
@@ -164,7 +165,7 @@ export default function WorkspaceSidebar({
         </>
       )}
 
-      <div className="workspace-sidebar-spacer" />
+      </div>
       <div className="workspace-sidebar-footer">
         <div className="workspace-sidebar-divider" />
         <nav className="workspace-nav workspace-nav-secondary">
