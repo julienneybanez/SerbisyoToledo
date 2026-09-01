@@ -335,3 +335,230 @@
   background: rgba(239,68,68,0.1);
   color: #fecaca !important;
 }
+
+
+/* ===================================
+   AOXA-INSPIRED ADMIN SIDEBAR
+   Every original destination and count badge remains visible.
+   =================================== */
+.admin-sidebar {
+  width: 272px;
+  padding: 0.7rem 0.75rem 0.85rem;
+  border-right: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.sidebar-brand-custom {
+  min-height: 66px;
+  padding: 0.35rem 0.4rem 0.85rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.admin-sidebar-brand-link {
+  gap: 0.72rem;
+}
+
+.brand-logo-img {
+  width: 42px;
+  height: 42px;
+  flex-basis: 42px;
+  padding: 0.18rem;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-surface);
+}
+
+.admin-sidebar-wordmark > span {
+  font-size: 1.06rem;
+  font-weight: 820;
+  letter-spacing: -0.04em;
+}
+
+.admin-sidebar-wordmark > span strong:first-child {
+  color: var(--brand-blue);
+}
+
+.admin-sidebar-wordmark > span strong:last-child {
+  color: var(--brand-teal-hover);
+}
+
+.admin-sidebar-wordmark small {
+  margin-top: 0.22rem;
+  color: var(--color-text-muted);
+  font-size: 0.69rem;
+  font-weight: 800;
+  letter-spacing: 0.075em;
+}
+
+.sidebar-close-btn {
+  width: 42px;
+  height: 42px;
+  border: 1px solid var(--color-border);
+  border-radius: 11px;
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+}
+
+.sidebar-close-btn:hover {
+  border-color: var(--color-border-strong);
+  background: var(--color-soft-blue);
+  color: var(--color-text-primary);
+}
+
+.admin-sidebar .sidebar-nav {
+  padding: 0.5rem 0 0;
+}
+
+.admin-sidebar .nav-title {
+  margin-top: 0.65rem;
+  padding: 0.55rem 0.55rem 0.3rem;
+  color: var(--color-text-muted);
+  font-size: 0.66rem;
+  font-weight: 820;
+  letter-spacing: 0.075em;
+}
+
+.admin-sidebar .nav-link {
+  min-height: 48px;
+  gap: 0.72rem;
+  margin: 0.12rem 0;
+  padding: 0.7rem 0.78rem;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: 0.91rem;
+  font-weight: 680;
+}
+
+.admin-sidebar .nav-link:hover {
+  border-color: color-mix(in srgb, var(--brand-blue) 12%, var(--color-border));
+  background: var(--color-soft-blue);
+  color: var(--color-text-primary);
+}
+
+.admin-sidebar .nav-link.active {
+  border-color: var(--brand-blue);
+  background: var(--brand-blue);
+  color: #fff;
+  box-shadow: none;
+}
+
+.admin-sidebar .nav-icon {
+  width: 21px;
+  flex-basis: 21px;
+  color: var(--color-text-muted);
+}
+
+.admin-sidebar .nav-link:hover .nav-icon {
+  color: var(--brand-blue-hover);
+}
+
+.admin-sidebar .nav-link.active .nav-icon {
+  color: #fff;
+}
+
+.admin-nav-badge {
+  min-width: 24px;
+  min-height: 22px;
+  padding: 0.12rem 0.42rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  font-size: 0.68rem;
+  font-weight: 820;
+}
+
+.admin-nav-badge.success {
+  border-color: color-mix(in srgb, var(--brand-teal) 22%, var(--color-border));
+  background: var(--color-soft-mint);
+  color: var(--brand-teal-hover);
+}
+
+.admin-nav-badge.danger {
+  border-color: color-mix(in srgb, var(--color-danger) 22%, var(--color-border));
+  background: color-mix(in srgb, var(--color-danger) 7%, var(--color-surface));
+  color: var(--color-danger);
+}
+
+.admin-sidebar .nav-link.active .admin-nav-badge {
+  border-color: rgba(255,255,255,0.35);
+  background: #fff;
+  color: var(--brand-blue-hover);
+}
+
+.sidebar-footer-section {
+  margin-top: auto;
+  padding-top: 0.7rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.admin-sidebar .logout-btn {
+  width: 100%;
+  color: var(--color-danger);
+}
+
+.admin-sidebar .logout-btn:hover {
+  border-color: color-mix(in srgb, var(--color-danger) 14%, var(--color-border));
+  background: color-mix(in srgb, var(--color-danger) 7%, var(--color-surface));
+  color: var(--color-danger);
+}
+
+.sidebar-overlay {
+  background: color-mix(in srgb, #08111f 62%, transparent);
+}
+
+[data-theme='light'] .admin-sidebar {
+  border-right: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+[data-theme='light'] .admin-sidebar .sidebar-brand-custom,
+[data-theme='light'] .admin-sidebar .sidebar-footer-section {
+  border-color: var(--color-border);
+}
+
+[data-theme='light'] .admin-sidebar-wordmark small,
+[data-theme='light'] .admin-sidebar .nav-title {
+  color: var(--color-text-muted);
+}
+
+[data-theme='light'] .admin-sidebar .nav-link {
+  color: var(--color-text-secondary) !important;
+}
+
+[data-theme='light'] .admin-sidebar .nav-link:hover {
+  border-color: color-mix(in srgb, var(--brand-blue) 12%, var(--color-border));
+  background: var(--color-soft-blue);
+  color: var(--color-text-primary) !important;
+}
+
+[data-theme='light'] .admin-sidebar .nav-link.active {
+  border-color: var(--brand-blue);
+  background: var(--brand-blue);
+  color: #fff !important;
+}
+
+[data-theme='light'] .admin-sidebar .logout-btn {
+  color: var(--color-danger) !important;
+}
+
+[data-theme='light'] .admin-sidebar .logout-btn:hover {
+  background: color-mix(in srgb, var(--color-danger) 7%, var(--color-surface));
+  color: var(--color-danger) !important;
+}
+
+[data-theme='dark'] .admin-sidebar {
+  border-right: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+[data-theme='dark'] .admin-sidebar .nav-link {
+  color: var(--color-text-secondary);
+}
+
+@media (max-width: 991.98px) {
+  .admin-sidebar {
+    width: min(88vw, 288px);
+  }
+}
