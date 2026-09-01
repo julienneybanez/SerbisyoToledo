@@ -2865,3 +2865,399 @@
     border-radius: 24px !important;
   }
 }
+
+
+/* ===================================
+   CANONICAL BUTTON OWNERSHIP
+   This is the only visual button system for the Aoxa mockup overhaul.
+   Legacy page class names may remain temporarily as layout/behavior hooks,
+   but their appearance is normalized here and is no longer owned by the
+   old page CSS.
+   =================================== */
+:where(
+  .mock-btn,
+  .admin-page .btn-approve,
+  .admin-page .btn-investigate,
+  .admin-page .btn-view-details,
+  .admin-page .btn-dismiss,
+  .admin-page .btn-reject,
+  .admin-page .btn-ban,
+  .btn-save,
+  .btn-change-password,
+  .btn-submit,
+  .btn-submit-review,
+  .btn-cancel-review,
+  .btn-post-service,
+  .btn-review-requests,
+  .btn-request-service,
+  .booking-btn,
+  .btn-action,
+  .job-btn,
+  .btn-request-discussion,
+  .btn-accept-discussion,
+  .btn-request-discussion-modal,
+  .btn-accept-discussion-modal,
+  .messages-action-primary,
+  .messages-action-secondary,
+  .messages-request-phone-button,
+  .availability-primary-button,
+  .availability-save-button,
+  .checklist-continue-btn,
+  .btn-get-verified,
+  .btn-login-prompt,
+  .btn-register-prompt,
+  .auth-submit,
+  .home-provider-cta,
+  .home-secondary-cta,
+  .home-browse-all,
+  .home-search-submit,
+  .decline-btn-cancel,
+  .decline-btn-confirm
+) {
+  min-height: 40px !important;
+  height: auto !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  padding: 10px 15px !important;
+  border: 1px solid var(--mock-line) !important;
+  border-radius: 12px !important;
+  background: var(--mock-surface) !important;
+  color: var(--mock-ink) !important;
+  font-family: inherit !important;
+  font-size: 13px !important;
+  font-weight: 750 !important;
+  line-height: 1.15 !important;
+  text-align: center !important;
+  text-decoration: none !important;
+  box-shadow: none !important;
+  transform: none !important;
+  cursor: pointer;
+  transition:
+    background-color .15s ease,
+    border-color .15s ease,
+    color .15s ease,
+    opacity .15s ease !important;
+}
+
+:where(
+  .mock-btn,
+  .admin-page .btn-approve,
+  .admin-page .btn-investigate,
+  .admin-page .btn-view-details,
+  .admin-page .btn-dismiss,
+  .admin-page .btn-reject,
+  .admin-page .btn-ban,
+  .btn-save,
+  .btn-change-password,
+  .btn-submit,
+  .btn-submit-review,
+  .btn-cancel-review,
+  .btn-post-service,
+  .btn-review-requests,
+  .btn-request-service,
+  .booking-btn,
+  .btn-action,
+  .job-btn,
+  .btn-request-discussion,
+  .btn-accept-discussion,
+  .btn-request-discussion-modal,
+  .btn-accept-discussion-modal,
+  .messages-action-primary,
+  .messages-action-secondary,
+  .messages-request-phone-button,
+  .availability-primary-button,
+  .availability-save-button,
+  .checklist-continue-btn,
+  .btn-get-verified,
+  .btn-login-prompt,
+  .btn-register-prompt,
+  .auth-submit,
+  .home-provider-cta,
+  .home-secondary-cta,
+  .home-browse-all,
+  .home-search-submit,
+  .decline-btn-cancel,
+  .decline-btn-confirm
+):disabled {
+  opacity: .52 !important;
+  cursor: not-allowed !important;
+  pointer-events: none;
+}
+
+/* Primary */
+:where(
+  .mock-btn--primary,
+  .admin-page .btn-approve,
+  .admin-page .btn-investigate,
+  .btn-save,
+  .btn-change-password,
+  .btn-submit:not(.report-submit),
+  .btn-submit-review,
+  .btn-post-service,
+  .btn-review-requests,
+  .btn-request-service,
+  .booking-btn-primary,
+  .btn-primary-action,
+  .btn-accept,
+  .btn-complete,
+  .btn-review,
+  .job-btn-primary,
+  .job-btn-on-way,
+  .job-btn-complete,
+  .job-btn-accept,
+  .btn-request-discussion-modal,
+  .btn-accept-discussion-modal,
+  .messages-action-primary,
+  .messages-request-phone-button,
+  .availability-primary-button,
+  .availability-save-button,
+  .checklist-continue-btn,
+  .btn-get-verified,
+  .auth-submit,
+  .home-provider-cta,
+  .home-browse-all,
+  .home-search-submit
+) {
+  border-color: var(--mock-blue) !important;
+  background: var(--mock-blue) !important;
+  color: #fff !important;
+}
+
+:where(
+  .mock-btn--primary,
+  .admin-page .btn-approve,
+  .admin-page .btn-investigate,
+  .btn-save,
+  .btn-change-password,
+  .btn-submit:not(.report-submit),
+  .btn-submit-review,
+  .btn-post-service,
+  .btn-review-requests,
+  .btn-request-service,
+  .booking-btn-primary,
+  .btn-primary-action,
+  .btn-accept,
+  .btn-complete,
+  .btn-review,
+  .job-btn-primary,
+  .job-btn-on-way,
+  .job-btn-complete,
+  .job-btn-accept,
+  .btn-request-discussion-modal,
+  .btn-accept-discussion-modal,
+  .messages-action-primary,
+  .messages-request-phone-button,
+  .availability-primary-button,
+  .availability-save-button,
+  .checklist-continue-btn,
+  .btn-get-verified,
+  .auth-submit,
+  .home-provider-cta,
+  .home-browse-all,
+  .home-search-submit
+):hover:not(:disabled),
+:where(
+  .mock-btn--primary,
+  .admin-page .btn-approve,
+  .admin-page .btn-investigate,
+  .btn-save,
+  .btn-change-password,
+  .btn-submit:not(.report-submit),
+  .btn-submit-review,
+  .btn-post-service,
+  .btn-review-requests,
+  .btn-request-service,
+  .booking-btn-primary,
+  .btn-primary-action,
+  .btn-accept,
+  .btn-complete,
+  .btn-review,
+  .job-btn-primary,
+  .job-btn-on-way,
+  .job-btn-complete,
+  .job-btn-accept,
+  .btn-request-discussion-modal,
+  .btn-accept-discussion-modal,
+  .messages-action-primary,
+  .messages-request-phone-button,
+  .availability-primary-button,
+  .availability-save-button,
+  .checklist-continue-btn,
+  .btn-get-verified,
+  .auth-submit,
+  .home-provider-cta,
+  .home-browse-all,
+  .home-search-submit
+):focus-visible {
+  border-color: var(--mock-blue-2) !important;
+  background: var(--mock-blue-2) !important;
+  color: #fff !important;
+}
+
+/* Secondary / outline */
+:where(
+  .mock-btn--secondary,
+  .mock-btn--outline,
+  .admin-page .btn-view-details,
+  .admin-page .btn-dismiss,
+  .btn-cancel-review,
+  .booking-btn-outline,
+  .btn-view-details-secondary,
+  .btn-on-way:not(.btn-primary-action),
+  .btn-hide,
+  .job-btn-secondary,
+  .messages-action-secondary,
+  .decline-btn-cancel,
+  .home-secondary-cta
+) {
+  border-color: var(--mock-line) !important;
+  background: var(--mock-surface) !important;
+  color: var(--mock-ink) !important;
+}
+
+:where(
+  .mock-btn--secondary,
+  .mock-btn--outline,
+  .admin-page .btn-view-details,
+  .admin-page .btn-dismiss,
+  .btn-cancel-review,
+  .booking-btn-outline,
+  .btn-view-details-secondary,
+  .btn-on-way:not(.btn-primary-action),
+  .btn-hide,
+  .job-btn-secondary,
+  .messages-action-secondary,
+  .decline-btn-cancel,
+  .home-secondary-cta
+):hover:not(:disabled),
+:where(
+  .mock-btn--secondary,
+  .mock-btn--outline,
+  .admin-page .btn-view-details,
+  .admin-page .btn-dismiss,
+  .btn-cancel-review,
+  .booking-btn-outline,
+  .btn-view-details-secondary,
+  .btn-on-way:not(.btn-primary-action),
+  .btn-hide,
+  .job-btn-secondary,
+  .messages-action-secondary,
+  .decline-btn-cancel,
+  .home-secondary-cta
+):focus-visible {
+  border-color: color-mix(in srgb, var(--mock-blue) 28%, var(--mock-line)) !important;
+  background: var(--mock-surface-2) !important;
+  color: var(--mock-ink) !important;
+}
+
+/* Ghost */
+.mock-btn--ghost {
+  border-color: transparent !important;
+  background: transparent !important;
+  color: var(--mock-ink) !important;
+}
+.mock-btn--ghost:hover:not(:disabled),
+.mock-btn--ghost:focus-visible {
+  border-color: transparent !important;
+  background: var(--mock-surface-2) !important;
+  color: var(--mock-ink) !important;
+}
+
+/* Destructive */
+:where(
+  .mock-btn--danger,
+  .admin-page .btn-reject,
+  .admin-page .btn-ban,
+  .btn-danger-subtle,
+  .btn-decline,
+  .requests-container .btn-cancel,
+  .request-details-modal .btn-cancel,
+  .report-submit
+) {
+  border-color: color-mix(in srgb, var(--mock-red) 38%, var(--mock-line)) !important;
+  background: var(--mock-surface) !important;
+  color: var(--mock-red) !important;
+}
+:where(
+  .mock-btn--danger,
+  .admin-page .btn-reject,
+  .admin-page .btn-ban,
+  .btn-danger-subtle,
+  .btn-decline,
+  .requests-container .btn-cancel,
+  .request-details-modal .btn-cancel,
+  .report-submit
+):hover:not(:disabled),
+:where(
+  .mock-btn--danger,
+  .admin-page .btn-reject,
+  .admin-page .btn-ban,
+  .btn-danger-subtle,
+  .btn-decline,
+  .requests-container .btn-cancel,
+  .request-details-modal .btn-cancel,
+  .report-submit
+):focus-visible {
+  border-color: var(--mock-red) !important;
+  background: color-mix(in srgb, var(--mock-red) 7%, var(--mock-surface)) !important;
+  color: var(--mock-red) !important;
+}
+
+/* Compact size from the mockup; mobile restores 44px touch targets. */
+.mock-btn--sm {
+  min-height: 36px !important;
+  padding: 8px 11px !important;
+  border-radius: 10px !important;
+  font-size: 12px !important;
+}
+.mock-btn--lg {
+  min-height: 48px !important;
+  padding: 12px 18px !important;
+}
+
+@media (max-width: 800px) {
+  :where(
+    .mock-btn,
+    .admin-page .btn-approve,
+    .admin-page .btn-investigate,
+    .admin-page .btn-view-details,
+    .admin-page .btn-dismiss,
+    .admin-page .btn-reject,
+    .admin-page .btn-ban,
+    .btn-save,
+    .btn-change-password,
+    .btn-submit,
+    .btn-submit-review,
+    .btn-cancel-review,
+    .btn-post-service,
+    .btn-review-requests,
+    .btn-request-service,
+    .booking-btn,
+    .btn-action,
+    .job-btn,
+    .btn-request-discussion,
+    .btn-accept-discussion,
+    .btn-request-discussion-modal,
+    .btn-accept-discussion-modal,
+    .messages-action-primary,
+    .messages-action-secondary,
+    .messages-request-phone-button,
+    .availability-primary-button,
+    .availability-save-button,
+    .checklist-continue-btn,
+    .btn-get-verified,
+    .btn-login-prompt,
+    .btn-register-prompt,
+    .auth-submit,
+    .home-provider-cta,
+    .home-secondary-cta,
+    .home-browse-all,
+    .home-search-submit,
+    .decline-btn-cancel,
+    .decline-btn-confirm
+  ) {
+    min-height: 44px !important;
+  }
+}
