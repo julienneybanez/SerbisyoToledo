@@ -152,7 +152,7 @@
 }
 
 .provider-calendar-card .fc .btn {
-  min-height: 40px;
+  min-height: 44px;
   padding: 0.45rem 0.65rem;
   border-radius: 10px;
   border-color: var(--color-border);
