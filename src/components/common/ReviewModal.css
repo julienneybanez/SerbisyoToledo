@@ -370,3 +370,125 @@
   fill: var(--color-surface-secondary);
   stroke: var(--color-border-strong);
 }
+
+
+/* ===================================
+   AOXA-INSPIRED REVIEW MODAL
+   Rating precision, comment input, submit and cancel behavior unchanged.
+   =================================== */
+.review-modal-overlay {
+  background: color-mix(in srgb, #08111f 70%, transparent);
+  backdrop-filter: blur(2px);
+}
+
+.review-modal {
+  border: 1px solid var(--color-border);
+  border-radius: 24px;
+  background: var(--color-surface);
+  box-shadow: 0 30px 80px rgba(7, 18, 33, 0.24);
+}
+
+.review-modal-close {
+  width: 42px;
+  height: 42px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+}
+
+.review-modal-close:hover {
+  background: var(--color-soft-blue);
+  color: var(--color-text-primary);
+}
+
+.review-icon-wrapper {
+  border: 1px solid color-mix(in srgb, #f59e0b 24%, var(--color-border));
+  border-radius: 18px;
+  background: var(--color-soft-cream);
+  box-shadow: none;
+}
+
+.review-icon-wrapper i {
+  color: #d99200;
+}
+
+.review-modal-header h2 {
+  color: var(--color-ink);
+  font-size: 1.65rem;
+  font-weight: 820;
+  letter-spacing: -0.03em;
+}
+
+.review-subtitle,
+.rating-display,
+.char-count {
+  color: var(--color-text-secondary);
+}
+
+.review-rating-section label,
+.review-comment-section label {
+  color: var(--color-text-primary);
+  font-weight: 720;
+}
+
+.review-textarea {
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+}
+
+.review-textarea:focus {
+  border-color: var(--brand-blue);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-blue) 12%, transparent);
+}
+
+.btn-submit-review {
+  min-height: 48px;
+  border: 1px solid var(--brand-blue);
+  border-radius: 12px;
+  background: var(--brand-blue);
+  color: #fff;
+  box-shadow: none;
+  font-weight: 740;
+}
+
+.btn-submit-review:hover:not(:disabled) {
+  transform: none;
+  border-color: var(--brand-blue-hover);
+  background: var(--brand-blue-hover);
+  box-shadow: none;
+}
+
+.btn-cancel-review {
+  min-height: 46px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+}
+
+.btn-cancel-review:hover {
+  border-color: var(--color-border-strong);
+  background: var(--color-soft-cream);
+}
+
+[data-theme='dark'] .review-modal {
+  background: var(--color-surface);
+  border-color: var(--color-border);
+}
+
+[data-theme='dark'] .review-modal-header h2 {
+  color: var(--color-text-primary);
+}
+
+@media (max-width: 540px) {
+  .review-modal-overlay {
+    backdrop-filter: none;
+  }
+
+  .review-modal {
+    border-radius: 22px 22px 0 0;
+  }
+}
