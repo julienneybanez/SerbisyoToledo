@@ -2147,7 +2147,7 @@ input:checked + .slider:before {
 }
 
 .admin-tab {
-  min-height: 42px;
+  min-height: 44px;
   padding: 0.52rem 0.85rem;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-pill);
@@ -2182,7 +2182,7 @@ input:checked + .slider:before {
 }
 
 .quick-link {
-  min-height: 42px;
+  min-height: 44px;
   display: inline-flex;
   align-items: center;
   padding: 0.5rem 0.8rem;
@@ -2422,7 +2422,7 @@ input:checked + .slider:before {
 .admin-page .btn-dismiss,
 .admin-page .btn-reject,
 .admin-page .btn-ban {
-  min-height: 42px;
+  min-height: 44px;
   padding: 0.55rem 0.75rem;
   border-radius: 11px;
   font-size: 0.83rem;
@@ -2610,7 +2610,7 @@ input:checked + .slider:before {
 }
 
 .admin-page .admin-document-zoom-toggle {
-  min-height: 42px;
+  min-height: 44px;
   border: 1px solid var(--color-border);
   border-radius: 10px;
   background: var(--color-soft-blue);
