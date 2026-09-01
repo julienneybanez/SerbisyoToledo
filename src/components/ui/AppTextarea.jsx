@@ -4,7 +4,7 @@ const AppTextarea = forwardRef(function AppTextarea({ className = '', ...props }
   return (
     <textarea
       ref={ref}
-      className={['st-form-control', 'st-textarea', className].filter(Boolean).join(' ')}
+      className={['st-form-control', 'st-textarea', 'mock-textarea', className].filter(Boolean).join(' ')}
       {...props}
     />
   );
