@@ -7,6 +7,7 @@ import EditPortfolioModal from '../components/common/EditPortfolioModal';
 import VerificationRequestModal from '../components/common/VerificationRequestModal';
 import RequestDetailsModal from '../components/common/RequestDetailsModal';
 import NextStepHelp from '../components/common/NextStepHelp';
+import { AppButton, AppCard, SoftPanel, StatCard } from '../components/ui';
 import { REQUEST_STATUS } from '../constants/domain';
 import { useLanguage } from '../context/LanguageContext';
 import './ServiceProviderDashboard.css';
@@ -569,7 +570,7 @@ export default function ServiceProviderDashboard() {
   return (
     <div className="dashboard-container">
       <div className="dashboard-wrapper">
-        <section className="welcome-section">
+        <SoftPanel className="welcome-section">
           <div className="provider-welcome-identity">
             <div className="welcome-content">
               <h1>{t('providerGoodDay')} <span className="user-name">{providerName}</span></h1>
@@ -581,15 +582,15 @@ export default function ServiceProviderDashboard() {
 
           <div className="provider-welcome-actions">
             <NextStepHelp guidance={providerHelpGuidance} />
-            <button
+            <AppButton
               className="btn-post-service"
               data-tour="provider-profile-setup"
               onClick={handleOpenServiceListing}
             >
               {serviceListingActionLabel}
-            </button>
+            </AppButton>
           </div>
-        </section>
+        </SoftPanel>
 
         {requestSummary.pending > 0 && (
           <section className="action-banner" aria-live="polite">
@@ -602,60 +603,32 @@ export default function ServiceProviderDashboard() {
                 <p>{t('providerPendingDescription')}</p>
               </div>
             </div>
-            <button type="button" className="btn-review-requests" onClick={() => navigate('/requests')}>
+            <AppButton className="btn-review-requests" onClick={() => navigate('/requests')}>
               Review Requests
-            </button>
+            </AppButton>
           </section>
         )}
 
         <section className="provider-stats-row" aria-label={t('providerQuickStatsAria')}>
-          <article className="provider-stat-card">
-            <span className="provider-stat-icon requests" aria-hidden="true">
-              <i className="bi bi-inbox"></i>
-            </span>
-            <div className="provider-stat-copy">
-              <strong>{requestSummary.pending}</strong>
-              <p>{t(requestSummary.pending === 1 ? 'providerNewRequest' : 'providerNewRequests')}</p>
-              <small>{requestSummary.pending > 0 ? t('providerNeedsResponse') : t('providerNoPendingRequests')}</small>
-            </div>
-          </article>
+          <StatCard className="provider-stat-card" label={t(requestSummary.pending === 1 ? 'providerNewRequest' : 'providerNewRequests')} value={requestSummary.pending} icon={<i className="bi bi-inbox"></i>}>
+            <small>{requestSummary.pending > 0 ? t('providerNeedsResponse') : t('providerNoPendingRequests')}</small>
+          </StatCard>
 
-          <article className="provider-stat-card">
-            <span className="provider-stat-icon upcoming" aria-hidden="true">
-              <i className="bi bi-calendar-event"></i>
-            </span>
-            <div className="provider-stat-copy">
-              <strong>{requestSummary.upcoming}</strong>
-              <p>{t(requestSummary.upcoming === 1 ? 'providerUpcomingJob' : 'providerUpcomingJobs')}</p>
-              <small>
-                {requestSummary.nextUpcoming
-                  ? t('providerNext', { schedule: formatSchedule(requestSummary.nextUpcoming, true, locale, t('providerScheduleNotSet')) })
-                  : t('providerNoUpcomingJobs')}
-              </small>
-            </div>
-          </article>
+          <StatCard className="provider-stat-card" label={t(requestSummary.upcoming === 1 ? 'providerUpcomingJob' : 'providerUpcomingJobs')} value={requestSummary.upcoming} icon={<i className="bi bi-calendar-event"></i>}>
+            <small>
+              {requestSummary.nextUpcoming
+                ? t('providerNext', { schedule: formatSchedule(requestSummary.nextUpcoming, true, locale, t('providerScheduleNotSet')) })
+                : t('providerNoUpcomingJobs')}
+            </small>
+          </StatCard>
 
-          <article className="provider-stat-card">
-            <span className="provider-stat-icon active" aria-hidden="true">
-              <i className="bi bi-briefcase"></i>
-            </span>
-            <div className="provider-stat-copy">
-              <strong>{requestSummary.active}</strong>
-              <p>{t(requestSummary.active === 1 ? 'providerActiveJob' : 'providerActiveJobs')}</p>
-              <small>{t('providerActiveDescription')}</small>
-            </div>
-          </article>
+          <StatCard className="provider-stat-card" label={t(requestSummary.active === 1 ? 'providerActiveJob' : 'providerActiveJobs')} value={requestSummary.active} icon={<i className="bi bi-briefcase"></i>}>
+            <small>{t('providerActiveDescription')}</small>
+          </StatCard>
 
-          <article className="provider-stat-card">
-            <span className="provider-stat-icon completed" aria-hidden="true">
-              <i className="bi bi-check2-circle"></i>
-            </span>
-            <div className="provider-stat-copy">
-              <strong>{requestSummary.completed}</strong>
-              <p>{t(requestSummary.completed === 1 ? 'providerCompletedJob' : 'providerCompletedJobs')}</p>
-              <small>{t('providerCompletedDescription')}</small>
-            </div>
-          </article>
+          <StatCard className="provider-stat-card" label={t(requestSummary.completed === 1 ? 'providerCompletedJob' : 'providerCompletedJobs')} value={requestSummary.completed} icon={<i className="bi bi-check2-circle"></i>}>
+            <small>{t('providerCompletedDescription')}</small>
+          </StatCard>
         </section>
 
         <ProfileCompletionChecklist
@@ -736,7 +709,7 @@ export default function ServiceProviderDashboard() {
           ) : (
             <div className="jobs-grid">
               {requests.map((job) => (
-                <article key={job.id} className="job-card">
+                <AppCard as="article" flat key={job.id} className="job-card">
                   <div className="job-card-top">
                     <span className="job-service-icon" aria-hidden="true">
                       <i className="bi bi-tools"></i>
@@ -838,7 +811,7 @@ export default function ServiceProviderDashboard() {
                       </>
                     )}
                   </div>
-                </article>
+                </AppCard>
               ))}
             </div>
           )}
