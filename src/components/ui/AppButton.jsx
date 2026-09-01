@@ -16,11 +16,8 @@ export default function AppButton({
   return (
     <Component
       className={[
-        'st-button',
         'mock-btn',
-        `st-button--${variant}`,
         `mock-btn--${variant}`,
-        `st-button--${size}`,
         `mock-btn--${size}`,
         className,
       ].filter(Boolean).join(' ')}
