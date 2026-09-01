@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { serviceProfileAPI, userProfileAPI } from '../../services/api';
 import { useLanguage } from '../../context/LanguageContext';
+import { AppButton, IconButton } from '../ui';
 import './EditPortfolioModal.css';
 
 const LANGUAGE_OPTIONS = [
@@ -374,9 +375,9 @@ export default function EditPortfolioModal({ onClose }) {
   return createPortal(
     <div className="edit-portfolio-overlay" onClick={onClose}>
       <div className="edit-portfolio-modal" onClick={(e) => e.stopPropagation()}>
-        <button className="modal-close-btn" onClick={onClose}>
+        <IconButton className="modal-close-btn" onClick={onClose} aria-label="Close provider profile editor">
           <i className="bi bi-x-lg"></i>
-        </button>
+        </IconButton>
 
         <div className="edit-portfolio-header">
           <h2>Edit Provider Profile</h2>
@@ -426,25 +427,23 @@ export default function EditPortfolioModal({ onClose }) {
                     className="portfolio-hidden-file-input"
                     onChange={handleProfilePhotoSelect}
                   />
-                  <button
-                    type="button"
-                    className="btn-completed-job-photo"
+                  <AppButton
+                    variant="secondary"
                     onClick={() => profilePhotoInputRef.current?.click()}
                     disabled={isSaving || isRemovingProfilePhoto}
+                    icon={<i className="bi bi-camera" aria-hidden="true"></i>}
                   >
-                    <i className="bi bi-camera"></i>
                     {profilePhotoPreview ? 'Change Photo' : 'Upload Photo'}
-                  </button>
+                  </AppButton>
                   {profilePhotoPreview && (
-                    <button
-                      type="button"
-                      className="provider-profile-photo-remove"
+                    <AppButton
+                      variant="danger"
                       onClick={handleRemoveProfilePhoto}
                       disabled={isSaving || isRemovingProfilePhoto}
+                      icon={<i className="bi bi-trash" aria-hidden="true"></i>}
                     >
-                      <i className="bi bi-trash"></i>
                       {isRemovingProfilePhoto ? 'Removing...' : 'Remove Photo'}
-                    </button>
+                    </AppButton>
                   )}
                   {profilePhotoFile && (
                     <span className="provider-profile-photo-pending">New photo will be saved with your Provider Profile.</span>
@@ -525,9 +524,9 @@ export default function EditPortfolioModal({ onClose }) {
                   placeholder="Add a skill..."
                   onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddSkill())}
                 />
-                <button type="button" onClick={handleAddSkill} className="btn-add-skill">
+                <AppButton type="button" variant="secondary" size="sm" onClick={handleAddSkill}>
                   Add
-                </button>
+                </AppButton>
               </div>
             </div>
 
@@ -561,15 +560,14 @@ export default function EditPortfolioModal({ onClose }) {
                 />
 
                 <div className="completed-job-photo-row">
-                  <button
-                    type="button"
-                    className="btn-completed-job-photo"
+                  <AppButton
+                    variant="secondary"
                     onClick={() => completedJobPhotoInputRef.current?.click()}
                     disabled={isLinkingCompletedRequest}
+                    icon={<i className="bi bi-image" aria-hidden="true"></i>}
                   >
-                    <i className="bi bi-image"></i>
                     {completedJobPhoto ? 'Change optional photo' : 'Add optional work photo'}
-                  </button>
+                  </AppButton>
                   {completedJobPhoto && (
                     <span className="completed-job-photo-name" title={completedJobPhoto.name}>
                       {completedJobPhoto.name}
@@ -577,14 +575,12 @@ export default function EditPortfolioModal({ onClose }) {
                   )}
                 </div>
 
-                <button
-                  type="button"
-                  className="btn-upload-image"
+                <AppButton
                   onClick={handleLinkCompletedRequest}
                   disabled={isLinkingCompletedRequest || !selectedCompletedRequestId}
                 >
                   {isLinkingCompletedRequest ? 'Linking...' : 'Link Job to Portfolio'}
-                </button>
+                </AppButton>
                 <p className="completed-job-linker-help">
                   The photo is optional. Linked jobs are still shown as verified completed-work cards when no photo is added. Private client request details are not published automatically.
                 </p>
@@ -618,24 +614,23 @@ export default function EditPortfolioModal({ onClose }) {
 
                     <div className="portfolio-item-overlay">
                       {item.completedThroughPlatform && !item.src && (
-                        <button
-                          type="button"
+                        <AppButton
+                          variant="secondary"
+                          size="sm"
                           onClick={() => openLinkedJobPhotoPicker(item.id)}
-                          className="btn-add-linked-job-photo"
                           disabled={isUpdatingLinkedJobPhoto}
+                          icon={<i className="bi bi-image" aria-hidden="true"></i>}
                         >
-                          <i className="bi bi-image"></i>
                           <span>Add photo</span>
-                        </button>
+                        </AppButton>
                       )}
-                      <button
-                        type="button"
+                      <IconButton
+                        className="portfolio-delete-icon"
                         onClick={() => handleDeleteImage(item.id)}
-                        className="btn-delete-image"
                         aria-label="Remove portfolio item"
                       >
                         <i className="bi bi-trash"></i>
-                      </button>
+                      </IconButton>
                     </div>
                   </div>
                 ))}
@@ -648,17 +643,15 @@ export default function EditPortfolioModal({ onClose }) {
 
             {/* Actions */}
             <div className="form-actions">
-              <button
-                type="button"
-                className="btn-cancel"
+              <AppButton
+                variant="secondary"
                 onClick={onClose}
                 disabled={isSaving}
               >
                 Cancel
-              </button>
-              <button
+              </AppButton>
+              <AppButton
                 type="submit"
-                className="btn-save"
                 disabled={isSaving}
               >
                 {isSaving ? (
@@ -669,7 +662,7 @@ export default function EditPortfolioModal({ onClose }) {
                 ) : (
                   'Save Changes'
                 )}
-              </button>
+              </AppButton>
             </div>
           </form>
         )}
