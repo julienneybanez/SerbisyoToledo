@@ -10,8 +10,9 @@ export default function AppCard({
 }) {
   const classes = [
     'st-card',
-    flat ? 'st-card--flat' : '',
-    interactive ? 'st-card--interactive' : '',
+    'mock-card',
+    flat ? 'st-card--flat mock-card--flat' : '',
+    interactive ? 'st-card--interactive mock-card--interactive' : '',
     className,
   ].filter(Boolean).join(' ');
 
