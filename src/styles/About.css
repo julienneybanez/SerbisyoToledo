@@ -673,3 +673,13 @@
     padding: 3rem 0;
   }
 }
+
+
+/* Keep CTA labels optically and mechanically centered across button variants. */
+.about-cta-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  line-height: 1.2;
+}
