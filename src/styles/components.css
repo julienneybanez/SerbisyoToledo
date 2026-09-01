@@ -385,3 +385,86 @@
     height: 72px;
   }
 }
+
+
+/* ===================================
+   SHARED ACTION BUTTON CONSISTENCY
+   Standardize action buttons without changing icon-only controls, close buttons,
+   filter chips, status pills, or calendar day cells.
+   =================================== */
+:where(
+  .st-button,
+  .btn:not(.btn-close),
+  .btn-save,
+  .btn-cancel,
+  .btn-change-password,
+  .btn-post-service,
+  .btn-review-requests,
+  .btn-view-profile,
+  .btn-request-service,
+  .booking-btn,
+  .btn-action,
+  .job-btn,
+  .about-cta-button,
+  .home-provider-cta,
+  .home-secondary-cta,
+  .auth-submit,
+  .checklist-continue-btn,
+  .btn-get-verified,
+  .btn-login-prompt,
+  .btn-register-prompt
+) {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 12px;
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.btn-primary {
+  border-color: var(--brand-blue);
+  background: var(--brand-blue);
+  color: #fff;
+}
+
+.btn-primary:hover,
+.btn-primary:focus-visible {
+  border-color: var(--brand-blue-hover);
+  background: var(--brand-blue-hover);
+  color: #fff;
+}
+
+.btn-outline-primary {
+  border-color: color-mix(in srgb, var(--brand-blue) 38%, var(--color-border));
+  background: var(--color-surface);
+  color: var(--brand-blue-hover);
+}
+
+.btn-outline-primary:hover,
+.btn-outline-primary:focus-visible {
+  border-color: var(--brand-blue);
+  background: var(--color-soft-blue);
+  color: var(--brand-blue-hover);
+}
+
+.btn-outline-secondary {
+  border-color: var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+}
+
+.btn-outline-secondary:hover,
+.btn-outline-secondary:focus-visible {
+  border-color: var(--color-border-strong);
+  background: var(--color-soft-cream);
+  color: var(--color-text-primary);
+}
+
+[data-theme='dark'] .btn-outline-primary,
+[data-theme='dark'] .btn-outline-secondary {
+  background: var(--color-surface);
+}
