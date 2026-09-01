@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { getUser, messageAPI, serviceRequestAPI } from '../services/api';
 import { connectMessagingSocket } from '../services/socket';
 import { useLanguage } from '../context/LanguageContext';
+import { AppButton, AppTextarea, IconButton } from '../components/ui';
 import './Messages.css';
 
 const formatTime = (value) => {
@@ -402,9 +403,9 @@ export default function Messages() {
           ) : (
             <>
               <header className="messages-thread-header">
-                <button type="button" className="messages-mobile-back" onClick={closeMobileThread} aria-label={t('messagesBackToConversations')}>
+                <IconButton className="messages-mobile-back" onClick={closeMobileThread} aria-label={t('messagesBackToConversations')}>
                   <i className="bi bi-chevron-left" aria-hidden="true"></i>
-                </button>
+                </IconButton>
                 <span className="messages-thread-avatar" aria-hidden="true">
                   {(conversation?.otherUser?.profilePhoto || selectedItem?.otherUser?.profilePhoto) ? (
                     <img
@@ -436,29 +437,26 @@ export default function Messages() {
                       </div>
                       {!declineOpen ? (
                         <div className="messages-action-buttons">
-                          <button
-                            type="button"
-                            className="messages-action-primary"
+                          <AppButton
                             onClick={() => handleRequestDecision('accepted')}
                             disabled={requestActionLoading}
+                            icon={<i className="bi bi-check-lg" aria-hidden="true"></i>}
                           >
-                            <i className="bi bi-check-lg" aria-hidden="true"></i>
                             {t('requestsAcceptRequest')}
-                          </button>
-                          <button
-                            type="button"
-                            className="messages-action-secondary danger"
+                          </AppButton>
+                          <AppButton
+                            variant="danger"
                             onClick={() => setDeclineOpen(true)}
                             disabled={requestActionLoading}
+                            icon={<i className="bi bi-x-lg" aria-hidden="true"></i>}
                           >
-                            <i className="bi bi-x-lg" aria-hidden="true"></i>
                             {t('requestsDeclineRequest')}
-                          </button>
+                          </AppButton>
                         </div>
                       ) : (
                         <div className="messages-decline-form">
                           <label htmlFor="messages-decline-reason">{t('requestsDeclineReasonLabel')}</label>
-                          <textarea
+                          <AppTextarea
                             id="messages-decline-reason"
                             rows="2"
                             maxLength={500}
@@ -467,17 +465,15 @@ export default function Messages() {
                             placeholder={t('requestsDeclineReasonPlaceholder')}
                           />
                           <div className="messages-action-buttons">
-                            <button
-                              type="button"
-                              className="messages-action-secondary danger"
+                            <AppButton
+                              variant="danger"
                               onClick={() => handleRequestDecision('declined')}
                               disabled={requestActionLoading || !declineReason.trim()}
                             >
                               {t('requestsConfirmDecline')}
-                            </button>
-                            <button
-                              type="button"
-                              className="messages-action-secondary"
+                            </AppButton>
+                            <AppButton
+                              variant="secondary"
                               onClick={() => {
                                 setDeclineOpen(false);
                                 setDeclineReason('');
@@ -485,7 +481,7 @@ export default function Messages() {
                               disabled={requestActionLoading}
                             >
                               {t('cancel')}
-                            </button>
+                            </AppButton>
                           </div>
                         </div>
                       )}
@@ -505,22 +501,19 @@ export default function Messages() {
                         <div className="messages-phone-request-card">
                           <span><i className="bi bi-telephone-inbound" aria-hidden="true"></i>{t('phoneShareIncomingRequest')}</span>
                           <div className="messages-action-buttons">
-                            <button
-                              type="button"
-                              className="messages-action-primary"
+                            <AppButton
                               onClick={() => handlePhoneResponse('share')}
                               disabled={phoneShareLoading}
                             >
                               {t('sharePhoneNumber')}
-                            </button>
-                            <button
-                              type="button"
-                              className="messages-action-secondary"
+                            </AppButton>
+                            <AppButton
+                              variant="secondary"
                               onClick={() => handlePhoneResponse('decline')}
                               disabled={phoneShareLoading}
                             >
                               {t('decline')}
-                            </button>
+                            </AppButton>
                           </div>
                         </div>
                       )}
@@ -539,15 +532,13 @@ export default function Messages() {
                           <span>{t('phoneSharePending')}</span>
                         </div>
                       ) : (
-                        <button
-                          type="button"
-                          className="messages-request-phone-button"
+                        <AppButton
                           onClick={handleRequestPhone}
                           disabled={phoneShareLoading}
+                          icon={<i className="bi bi-telephone-plus" aria-hidden="true"></i>}
                         >
-                          <i className="bi bi-telephone-plus" aria-hidden="true"></i>
                           {phoneShareLoading ? t('loading') : t('requestPhoneNumber')}
-                        </button>
+                        </AppButton>
                       )}
                     </div>
                   )}
@@ -621,10 +612,9 @@ export default function Messages() {
                       }
                     }}
                   />
-                  <button type="submit" disabled={!draft.trim() || sending} aria-label={t('messagesSend')}>
-                    <i className="bi bi-send-fill" aria-hidden="true"></i>
+                  <AppButton type="submit" disabled={!draft.trim() || sending} aria-label={t('messagesSend')} icon={<i className="bi bi-send-fill" aria-hidden="true"></i>}>
                     <span>{sending ? t('sending') : t('messagesSend')}</span>
-                  </button>
+                  </AppButton>
                 </form>
               ) : (
                 <div className="messages-readonly-note">
