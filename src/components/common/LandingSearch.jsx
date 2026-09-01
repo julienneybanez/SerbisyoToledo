@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../../context/LanguageContext';
+import { AppButton } from '../ui';
 import './LandingSearch.css';
 
 const POPULAR_SEARCHES = ['Plumbing', 'Electrical', 'House Cleaning', 'Appliance Repair'];
@@ -39,9 +40,9 @@ export default function LandingSearch() {
           aria-label={t('searchServiceProviderLocation')}
         />
         <span className="search-divider" aria-hidden="true"></span>
-        <button type="submit" className="btn-search-home" aria-label={t('findServices')}>
+        <AppButton type="submit" variant="primary" className="home-search-submit" aria-label={t('findServices')}>
           {t('findServices')}
-        </button>
+        </AppButton>
       </form>
 
       <div className="popular-searches" aria-label={t('popularSearches')}>
