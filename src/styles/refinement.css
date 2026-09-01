@@ -67,15 +67,6 @@ body {
   font-size: var(--text-xs);
 }
 
-.btn-filter,
-.availability-primary-button,
-.availability-save-button,
-.admin-page .btn-view-details,
-.admin-page .btn-approve,
-.admin-page .btn-reject,
-.admin-page .btn-investigate {
-  min-height: 46px;
-}
 
 .btn-filter,
 .availability-save-bar,
