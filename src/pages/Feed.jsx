@@ -523,7 +523,7 @@ export default function Feed() {
                 <div className="feed-empty-icon" aria-hidden="true"><i className="bi bi-search"></i></div>
                 <h3>{t('feedNoProvidersTitle')}</h3>
                 <p>{t('feedNoProvidersSubtitle')}</p>
-                <button type="button" className="btn-view-profile" onClick={clearFilters}>{t('clearFilters')}</button>
+                <AppButton variant="secondary" onClick={clearFilters}>{t('clearFilters')}</AppButton>
               </div>
             )}
 
@@ -607,15 +607,14 @@ export default function Feed() {
                       <div className="price-block">
                         <span className="price-label">{formatPriceLabel(provider)}</span>
                       </div>
-                      <button
-                        type="button"
-                        className="btn-view-profile tour-provider-request-step"
+                      <AppButton
+                        className="tour-provider-request-step"
                         data-tour="provider-profile-trigger"
                         onClick={() => navigate(`/provider/${provider.id}`)}
+                        icon={<i className="bi bi-arrow-right" aria-hidden="true"></i>}
                       >
                         {t('viewProfile')}
-                        <i className="bi bi-arrow-right" aria-hidden="true"></i>
-                      </button>
+                      </AppButton>
                     </div>
                   </div>
                 </article>
