@@ -83,13 +83,6 @@
   font-size: 1rem;
 }
 
-.home-page .landing-search-wrap .btn-search-home {
-  min-height: 50px;
-  border-radius: 12px;
-  padding-inline: 1.15rem;
-  font-size: 0.98rem;
-  font-weight: 750;
-}
 
 .home-page .landing-search-wrap .popular-searches {
   gap: 0.5rem;
