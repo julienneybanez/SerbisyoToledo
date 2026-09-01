@@ -3732,3 +3732,16 @@
     min-height: 44px !important;
   }
 }
+
+
+/* Public auth actions use the same canonical AppButton variants as the rest of the product. */
+.desktop-public-navbar .navbar--guest .navbar-auth-action {
+  flex: 0 0 auto;
+}
+
+@media (max-width: 991.98px) {
+  .navbar--guest .navbar-auth-action {
+    flex: 1 1 140px;
+    width: auto;
+  }
+}
