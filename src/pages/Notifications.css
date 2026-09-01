@@ -157,7 +157,7 @@
 }
 
 .notifications-page-actions .btn {
-  min-height: 42px;
+  min-height: 44px;
   padding: 0.5rem 0.8rem;
   border-radius: 11px;
   font-weight: 700;
@@ -184,7 +184,7 @@
 }
 
 .notifications-request-focus .btn {
-  min-height: 42px;
+  min-height: 44px;
   border-radius: 11px;
   background: var(--brand-blue);
   border-color: var(--brand-blue);
