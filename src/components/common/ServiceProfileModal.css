@@ -521,3 +521,289 @@
     border-radius: 12px !important;
   }
 }
+
+
+/* ===================================
+   AOXA-INSPIRED SERVICE LISTING / VERIFICATION / REPORT MODAL FAMILY
+   Forms and all submit/upload/category/consent actions remain unchanged.
+   =================================== */
+.modal-overlay:has(> .modal-content > .service-profile-form) {
+  background: color-mix(in srgb, #08111f 70%, transparent);
+  backdrop-filter: blur(2px) !important;
+}
+
+.modal-overlay:has(> .modal-content > .service-profile-form) > .modal-content {
+  max-width: 720px;
+  border: 1px solid var(--color-border);
+  border-radius: 24px !important;
+  background: var(--color-surface) !important;
+  box-shadow: 0 30px 80px rgba(7, 18, 33, 0.24);
+}
+
+.modal-overlay:has(> .modal-content > .service-profile-form) > .modal-content > .modal-close {
+  top: 16px;
+  right: 16px;
+  width: 42px;
+  height: 42px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  font-size: 22px;
+}
+
+.modal-overlay:has(> .modal-content > .service-profile-form) > .modal-content > .modal-close:hover,
+.modal-overlay:has(> .modal-content > .service-profile-form) > .modal-content > .modal-close:focus-visible {
+  background: var(--color-soft-blue);
+  color: var(--color-text-primary);
+}
+
+.service-profile-form {
+  padding: clamp(1.35rem, 3vw, 2rem);
+  border-radius: 24px !important;
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+}
+
+.service-profile-form .modal-header {
+  padding: 0 3rem 0 0;
+  margin-bottom: 1.5rem;
+  background: transparent;
+}
+
+.service-profile-form .modal-title {
+  margin-bottom: 0.5rem;
+  color: var(--color-ink);
+  font-size: clamp(1.75rem, 3vw, 2.35rem);
+  font-weight: 820;
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+}
+
+.service-profile-form .modal-subtitle {
+  max-width: 590px;
+  color: var(--color-text-secondary);
+  font-size: 0.93rem;
+  line-height: 1.55;
+}
+
+.service-profile-form .alert {
+  padding: 0.8rem 0.9rem;
+  border-radius: 12px;
+  font-size: 0.86rem;
+}
+
+.service-profile-form .alert-success {
+  border-color: color-mix(in srgb, var(--brand-teal) 24%, var(--color-border));
+  background: var(--color-soft-mint);
+  color: var(--brand-teal-hover);
+}
+
+.service-profile-form .alert-error {
+  border-color: color-mix(in srgb, var(--color-danger) 28%, var(--color-border));
+  background: color-mix(in srgb, var(--color-danger) 7%, var(--color-surface));
+  color: var(--color-danger);
+}
+
+.service-profile-form .form-section {
+  margin-bottom: 1.35rem;
+  padding: 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  background: var(--color-surface);
+}
+
+.service-profile-form .form-section:last-of-type {
+  margin-bottom: 1rem;
+}
+
+.service-profile-form .section-header,
+.service-profile-form .important-notes h4 {
+  color: var(--color-text-primary);
+  font-size: 0.92rem;
+  font-weight: 780;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.service-profile-form .section-description {
+  margin: -0.35rem 0 1rem;
+  color: var(--color-text-secondary);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.service-profile-form .form-label {
+  color: var(--color-text-primary);
+  font-size: 0.88rem;
+  font-weight: 690;
+}
+
+.service-profile-form .form-input {
+  min-height: 48px;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid var(--color-border);
+  border-radius: 12px !important;
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  font-size: 0.94rem;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+}
+
+.service-profile-form .form-input:hover:not(:disabled) {
+  border-color: var(--color-border-strong);
+}
+
+.service-profile-form .form-input:focus {
+  border-color: var(--brand-blue);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-blue) 12%, transparent);
+}
+
+.service-profile-form .categories-grid {
+  gap: 0.55rem;
+}
+
+.service-profile-form .category-pill {
+  min-height: 42px;
+  padding: 0.5rem 0.8rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  font-size: 0.84rem;
+  font-weight: 670;
+}
+
+.service-profile-form .category-pill:hover {
+  border-color: color-mix(in srgb, var(--brand-blue) 38%, var(--color-border));
+  background: var(--color-soft-blue);
+  color: var(--brand-blue-hover);
+}
+
+.service-profile-form .category-pill.active {
+  border-color: var(--brand-blue);
+  background: var(--brand-blue);
+  color: #fff;
+}
+
+.service-profile-form .upload-area {
+  border: 1px dashed color-mix(in srgb, var(--brand-blue) 28%, var(--color-border));
+  border-radius: 16px;
+  background: var(--color-soft-blue);
+}
+
+.service-profile-form .upload-area:hover {
+  border-color: var(--brand-blue);
+  background: color-mix(in srgb, var(--color-soft-blue) 78%, var(--color-surface));
+}
+
+.service-profile-form .upload-label {
+  padding: 2rem 1rem;
+  color: var(--color-text-secondary);
+}
+
+.service-profile-form .upload-label h4 {
+  color: var(--color-text-primary);
+  font-weight: 720;
+}
+
+.service-profile-form .upload-icon {
+  color: var(--brand-blue-hover);
+}
+
+.service-profile-form .banner-preview {
+  height: 220px;
+}
+
+.service-profile-form .important-notes {
+  padding: 1rem;
+  border: 1px solid color-mix(in srgb, var(--brand-blue) 14%, var(--color-border));
+  border-left: 1px solid color-mix(in srgb, var(--brand-blue) 14%, var(--color-border));
+  border-radius: 14px;
+  background: var(--color-soft-cream);
+}
+
+.service-profile-form .important-notes li {
+  color: var(--color-text-secondary);
+  font-size: 0.82rem;
+}
+
+.verification-consent-label {
+  min-height: 48px;
+  padding: 0.75rem 0.85rem;
+  border-color: var(--color-border);
+  border-radius: 12px;
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+}
+
+.verification-consent-label a {
+  color: var(--brand-blue-hover);
+}
+
+.service-profile-form .btn-submit {
+  min-height: 48px;
+  margin: 0.5rem 0 0;
+  padding: 0.72rem 1.25rem;
+  border: 1px solid var(--brand-blue);
+  border-radius: 12px !important;
+  background: var(--brand-blue);
+  color: #fff;
+  font-size: 0.92rem;
+  font-weight: 740;
+}
+
+.service-profile-form .btn-submit:hover:not(:disabled) {
+  transform: none;
+  border-color: var(--brand-blue-hover);
+  background: var(--brand-blue-hover);
+  box-shadow: none;
+}
+
+.service-profile-form .terms-text {
+  color: var(--color-text-secondary);
+  font-size: 0.78rem;
+}
+
+.service-profile-form .terms-text a {
+  color: var(--brand-blue-hover);
+}
+
+[data-theme='dark'] .modal-overlay:has(> .modal-content > .service-profile-form) > .modal-content,
+[data-theme='dark'] .service-profile-form,
+[data-theme='dark'] .service-profile-form .form-section {
+  background: var(--color-surface) !important;
+  border-color: var(--color-border);
+}
+
+[data-theme='dark'] .service-profile-form .important-notes {
+  background: var(--color-surface-secondary);
+  border-color: var(--color-border);
+}
+
+@media (max-width: 600px) {
+  .modal-overlay:has(> .modal-content > .service-profile-form) {
+    backdrop-filter: none !important;
+  }
+
+  .modal-overlay:has(> .modal-content > .service-profile-form) > .modal-content {
+    border-radius: 22px 22px 0 0 !important;
+  }
+
+  .service-profile-form {
+    padding: 1.1rem;
+    border-radius: 22px 22px 0 0 !important;
+  }
+
+  .service-profile-form .modal-title {
+    font-size: 1.75rem;
+  }
+
+  .service-profile-form .form-section {
+    padding: 0.85rem;
+  }
+
+  .service-profile-form .btn-submit {
+    width: 100%;
+  }
+}
