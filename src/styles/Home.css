@@ -602,3 +602,13 @@
     transform: none;
   }
 }
+
+
+/* Homepage hero should use more of wide desktop screens without making
+   the text column itself excessively long. */
+@media (min-width: 1200px) {
+  .home-hero > .container {
+    width: min(1460px, calc(100% - 4rem));
+    max-width: none;
+  }
+}
