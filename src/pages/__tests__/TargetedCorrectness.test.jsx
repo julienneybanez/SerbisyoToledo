@@ -120,7 +120,7 @@ describe('Targeted correctness checks', () => {
     renderWithAppProviders(<ServiceProviderDashboard />);
 
     const activeLabel = await screen.findByText('Active Jobs');
-    expect(activeLabel.previousElementSibling).toHaveTextContent('3');
+    expect(activeLabel.closest('.provider-stat-card')?.querySelector('strong')).toHaveTextContent('3');
   });
 
   it('treats canonical availableSlots as completed provider availability', async () => {
@@ -222,7 +222,7 @@ describe('Targeted correctness checks', () => {
     renderWithAppProviders(<ClientDashboard />);
 
     expect(await screen.findByText('Plumbing Repair')).toBeInTheDocument();
-    expect(screen.getByText('Active Requests').previousElementSibling).toHaveTextContent('1');
+    expect(screen.getByText('Active Requests').closest('.client-stat-card')?.querySelector('strong')).toHaveTextContent('1');
     expect(screen.getByRole('link', { name: /Find a Service/i })).toHaveAttribute('href', '/feed');
   });
 
