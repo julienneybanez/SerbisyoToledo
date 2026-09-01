@@ -60,7 +60,12 @@ jobs:
       - name: Start canonical MySQL test service
         run: |
           sudo systemctl start mysql
-          sudo mysql -e "CREATE USER IF NOT EXISTS 'serbisyo_ci'@'localhost' IDENTIFIED BY 'serbisyo_ci'; GRANT ALL PRIVILEGES ON *.* TO 'serbisyo_ci'@'localhost' WITH GRANT OPTION; FLUSH PRIVILEGES;"
+          if mysql -uroot -e "SELECT 1" >/dev/null 2>&1; then
+            MYSQL_ADMIN=(mysql -uroot)
+          else
+            MYSQL_ADMIN=(mysql -uroot -proot)
+          fi
+          "${MYSQL_ADMIN[@]}" -e "CREATE USER IF NOT EXISTS 'serbisyo_ci'@'localhost' IDENTIFIED BY 'serbisyo_ci'; GRANT ALL PRIVILEGES ON *.* TO 'serbisyo_ci'@'localhost' WITH GRANT OPTION; FLUSH PRIVILEGES;"
       - name: Run complete backend suite
         env:
           CANONICAL_TEST_DB_SOCKET: /var/run/mysqld/mysqld.sock
