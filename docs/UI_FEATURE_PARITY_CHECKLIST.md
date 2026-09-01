@@ -592,11 +592,13 @@ Purpose: this file is the migration contract. A UI PR cannot be considered compl
 
 ## Regression gates
 
-- [ ] Frontend `npm run lint`
-- [ ] Frontend `npm test`
-- [ ] Frontend `npm run build`
-- [ ] Backend `npm test`
-- [ ] No new failures relative to baseline
+Automated/source QA completed at `1031072f812c3286ba9b5c4134911468f3a85d6a`. Browser-rendered visual checks remain intentionally unchecked until the final local/preview inspection.
+
+- [x] Frontend `npm run lint`
+- [x] Frontend `npm test` — 54/54 passed
+- [x] Frontend `npm run build`
+- [x] Backend `npm test` — canonical MySQL suite included; 263 passed, 12 opt-in reconciliation tests skipped
+- [x] No new failures relative to baseline
 - [ ] No new console errors in critical routes
 - [ ] Guest smoke test
 - [ ] Client smoke test
@@ -613,14 +615,14 @@ Purpose: this file is the migration contract. A UI PR cannot be considered compl
 - [ ] Cebuano
 - [ ] Keyboard navigation
 - [ ] No clipped critical actions
-- [ ] No hidden critical actions
-- [ ] No accidental Aoxa-only feature additions
+- [x] No hidden critical actions — source-diff audit found no new `display:none`, `visibility:hidden`, or `opacity:0` rules hiding baseline controls
+- [x] No accidental Aoxa-only feature additions — application page JSX remains at the locked baseline
 
 ## Merge sign-off
 
 - [ ] Every applicable parity item above checked
-- [ ] Working branch reviewed against baseline
-- [ ] Backup branch still points to baseline commit
+- [x] Working branch reviewed against baseline
+- [x] Backup branch still points to baseline commit
 - [ ] PR contains visual-only changes except explicitly approved UI dependency/config changes
-- [ ] No backend/database contract changes
+- [x] No backend/database contract changes — one null-safe realtime lookup hardening was added without changing the phone-sharing contract
 - [ ] Main merge performed only after final approval
