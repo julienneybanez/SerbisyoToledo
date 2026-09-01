@@ -272,7 +272,7 @@
 }
 
 /* Shared section heading */
-.section-title {
+.dashboard-container .section-title {
   margin: 0;
   color: var(--text-primary);
   font-size: 1.35rem;
@@ -297,7 +297,7 @@
   font-size: 0.9rem;
 }
 
-.view-all-link {
+.dashboard-container .view-all-link {
   min-height: 40px;
   display: inline-flex;
   align-items: center;
@@ -1267,7 +1267,7 @@
   font-size: 0.78rem;
 }
 
-.section-title {
+.dashboard-container .section-title {
   color: var(--color-ink);
   font-size: 1.28rem;
   font-weight: 790;
@@ -1278,14 +1278,14 @@
   margin-bottom: 0.75rem;
 }
 
-.view-all-link {
+.dashboard-container .view-all-link {
   min-height: 42px;
   color: var(--brand-blue-hover);
   font-weight: 720;
 }
 
-.view-all-link:hover,
-.view-all-link:focus-visible {
+.dashboard-container .view-all-link:hover,
+.dashboard-container .view-all-link:focus-visible {
   color: var(--brand-blue);
 }
 
