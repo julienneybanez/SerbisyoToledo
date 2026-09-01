@@ -36,7 +36,7 @@
 }
 
 .profile-checklist .btn-outline-secondary {
-  min-height: 42px;
+  min-height: 44px;
   color: var(--color-text-secondary);
   border-color: var(--color-border);
 }
@@ -48,7 +48,7 @@
 }
 
 .profile-checklist .btn-outline-primary {
-  min-height: 42px;
+  min-height: 44px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -224,7 +224,7 @@
 .profile-checklist .btn-outline-secondary,
 .profile-checklist .btn-outline-primary,
 .checklist-continue-btn {
-  min-height: 42px;
+  min-height: 44px;
   border-radius: 11px;
   font-size: 0.86rem;
   font-weight: 700;
