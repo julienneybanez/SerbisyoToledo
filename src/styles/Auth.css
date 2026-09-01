@@ -893,3 +893,271 @@ button.auth-layout-back {
 .auth-page-register .auth-heading {
   text-align: center;
 }
+
+
+/* ===================================
+   AOXA-INSPIRED AUTH EXPERIENCE
+   Visual-only overrides. Existing forms, fields, role selection, links,
+   verification flows, validation, and no-navbar/no-footer shell remain intact.
+   =================================== */
+.auth-layout {
+  background: var(--color-public-bg);
+}
+
+.auth-layout-header {
+  min-height: 68px;
+  border-bottom: 0;
+  background: var(--color-public-bg);
+}
+
+.auth-layout-logo {
+  border-radius: 12px;
+  border-color: var(--color-border);
+}
+
+.auth-layout-back {
+  border-radius: 12px;
+}
+
+.auth-layout-back:hover,
+.auth-layout-back:focus-visible {
+  background: var(--color-soft-blue);
+}
+
+.auth-page-login,
+.auth-page-register,
+[data-theme='dark'] .auth-page-login,
+[data-theme='dark'] .auth-page-register {
+  background: var(--color-public-bg);
+}
+
+.auth-page {
+  padding: clamp(1rem, 4vw, 2.5rem) clamp(1rem, 4vw, 3rem) clamp(2.5rem, 6vw, 4.5rem);
+}
+
+.auth-split-card,
+.auth-card {
+  border: 1px solid color-mix(in srgb, var(--brand-blue) 10%, var(--color-border));
+  border-radius: 28px;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-panel);
+}
+
+.auth-split-card {
+  width: min(100%, 1120px);
+  min-height: 680px;
+  grid-template-columns: minmax(0, 1fr) minmax(380px, 0.92fr);
+}
+
+.auth-form-pane {
+  padding: clamp(2rem, 5vw, 4rem);
+}
+
+.auth-visual-pane {
+  margin: 0.75rem;
+  min-height: calc(100% - 1.5rem);
+  border-radius: 22px;
+  background: var(--color-soft-blue);
+}
+
+.auth-visual-image {
+  min-height: 650px;
+  border-radius: 22px;
+}
+
+.auth-visual-overlay {
+  right: 1rem;
+  bottom: 1rem;
+  left: 1rem;
+  padding: 1rem 1.1rem;
+  border-radius: 16px;
+  background: rgba(8, 19, 31, 0.78);
+}
+
+.auth-page-logo {
+  width: 68px;
+  height: 68px;
+  margin-bottom: 0.9rem;
+  border-radius: 16px;
+  border-color: var(--color-border);
+}
+
+.auth-heading h1 {
+  color: var(--color-ink);
+  font-size: clamp(2rem, 3.4vw, 2.75rem);
+  font-weight: 820;
+  line-height: 1.06;
+  letter-spacing: -0.04em;
+}
+
+.auth-heading p:last-child,
+.auth-switch-copy,
+.auth-help-text {
+  color: var(--color-text-secondary);
+}
+
+.auth-layout .form-label,
+.auth-layout .login-role-fieldset legend {
+  color: var(--color-text-primary);
+  font-weight: 720;
+}
+
+.auth-layout .form-control,
+.auth-layout .form-select {
+  min-height: 50px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+}
+
+.auth-layout .form-control:hover:not(:disabled),
+.auth-layout .form-select:hover:not(:disabled) {
+  border-color: var(--color-border-strong);
+}
+
+.auth-layout .form-control:focus,
+.auth-layout .form-select:focus {
+  border-color: var(--brand-blue);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-blue) 12%, transparent);
+}
+
+.auth-inline-link,
+.auth-switch-copy a {
+  color: var(--brand-blue-hover);
+}
+
+.auth-layout .password-toggle:hover,
+.auth-layout .password-toggle:focus-visible {
+  background: var(--color-soft-blue);
+  color: var(--brand-blue-hover);
+}
+
+.auth-layout .login-role-list {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.auth-layout .login-role-option {
+  min-height: 70px;
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  background: var(--color-soft-cream);
+}
+
+.auth-layout .login-role-option:hover {
+  border-color: color-mix(in srgb, var(--brand-blue) 30%, var(--color-border));
+}
+
+.auth-layout .login-role-option.selected {
+  border-color: var(--brand-blue);
+  background: var(--color-soft-blue);
+}
+
+.auth-submit {
+  min-height: 50px;
+  border: 1px solid var(--brand-blue);
+  border-radius: 12px;
+  background: var(--brand-blue);
+  color: #fff;
+  font-weight: 760;
+}
+
+.auth-submit:hover,
+.auth-submit:focus-visible {
+  border-color: var(--brand-blue-hover);
+  background: var(--brand-blue-hover);
+}
+
+.auth-layout .professional-details {
+  border-color: color-mix(in srgb, var(--brand-teal) 20%, var(--color-border));
+  border-radius: 18px;
+  background: var(--color-soft-mint);
+}
+
+.auth-layout .professional-details-heading h2 {
+  color: var(--color-ink);
+}
+
+.auth-language-option,
+.auth-agreement-label {
+  border-color: var(--color-border);
+  border-radius: 12px;
+  background: var(--color-surface);
+}
+
+.auth-language-option:has(input:checked) {
+  border-color: var(--brand-blue);
+  background: var(--color-soft-blue);
+}
+
+.auth-layout .skill-tag {
+  border-color: color-mix(in srgb, var(--brand-blue) 16%, var(--color-border));
+  background: var(--color-soft-blue);
+  color: var(--brand-blue-hover);
+}
+
+.auth-compact-card {
+  max-width: 520px;
+  padding: clamp(1.5rem, 4vw, 2.4rem);
+}
+
+.verification-status-icon {
+  border-radius: 20px;
+}
+
+.verification-verifying { background: var(--color-soft-blue); }
+.verification-success { background: var(--color-soft-mint); }
+.verification-expired { background: var(--color-soft-cream); }
+
+[data-theme='dark'] .auth-split-card,
+[data-theme='dark'] .auth-card,
+[data-theme='dark'] .auth-layout .login-role-option,
+[data-theme='dark'] .auth-language-option,
+[data-theme='dark'] .auth-agreement-label {
+  background: var(--color-surface);
+  border-color: var(--color-border);
+}
+
+[data-theme='dark'] .auth-layout .professional-details {
+  background: var(--color-soft-mint);
+  border-color: var(--color-border);
+}
+
+@media (max-width: 991.98px) {
+  .auth-split-card,
+  .auth-register-split-card {
+    max-width: 660px;
+    min-height: auto;
+    grid-template-columns: 1fr;
+  }
+
+  .auth-visual-pane {
+    display: none;
+  }
+}
+
+@media (max-width: 639.98px) {
+  .auth-page {
+    padding: 0.75rem 0.75rem 2rem;
+  }
+
+  .auth-split-card,
+  .auth-card {
+    border-radius: 20px;
+  }
+
+  .auth-form-pane,
+  .auth-register-card,
+  .auth-compact-card {
+    padding: 1.35rem 1.15rem;
+  }
+
+  .auth-heading h1 {
+    font-size: clamp(1.9rem, 9vw, 2.4rem);
+  }
+
+  .auth-layout .login-role-list {
+    grid-template-columns: 1fr;
+  }
+}
