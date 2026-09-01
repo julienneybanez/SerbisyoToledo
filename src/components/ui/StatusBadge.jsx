@@ -6,7 +6,7 @@ export default function StatusBadge({
 }) {
   return (
     <span
-      className={['st-status-badge', `st-status-badge--${tone}`, className].filter(Boolean).join(' ')}
+      className={['st-status-badge', 'mock-status', `st-status-badge--${tone}`, `mock-status--${tone}`, className].filter(Boolean).join(' ')}
       {...props}
     >
       {children}
