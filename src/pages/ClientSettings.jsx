@@ -4,7 +4,7 @@ import { getUser, userProfileAPI, verificationAPI } from '../services/api';
 import { useLanguage } from '../context/LanguageContext';
 import SettingsFlash from '../components/settings/SettingsFlash';
 import ProfileCompletionChecklist from '../components/common/ProfileCompletionChecklist';
-import { AppButton, PageHeader } from '../components/ui';
+import { AppButton, AppInput, PageHeader } from '../components/ui';
 import '../styles/UserSettings.css';
 
 function ClientSettings() {
@@ -272,7 +272,7 @@ function ClientSettings() {
 
               <div className="settings-group">
                 <label className="settings-label" htmlFor="client-full-name">{t('fullName')}</label>
-                <input
+                <AppInput
                   id="client-full-name"
                   type="text"
                   className="settings-input"
@@ -285,7 +285,7 @@ function ClientSettings() {
 
               <div className="settings-group">
                 <label className="settings-label" htmlFor="client-email">{t('emailAddress')}</label>
-                <input
+                <AppInput
                   id="client-email"
                   type="email"
                   className="settings-input"
@@ -311,7 +311,7 @@ function ClientSettings() {
 
               <div className="settings-group">
                 <label className="settings-label" htmlFor="client-phone">{t('phoneNumber')}</label>
-                <input
+                <AppInput
                   id="client-phone"
                   type="tel"
                   className="settings-input"
@@ -328,7 +328,7 @@ function ClientSettings() {
 
               <div className="settings-group">
                 <label className="settings-label" htmlFor="client-address">{t('address')}</label>
-                <input
+                <AppInput
                   id="client-address"
                   type="text"
                   className="settings-input"
@@ -356,7 +356,6 @@ function ClientSettings() {
                   {!settings.emailVerified && (
                     <AppButton
                       variant="secondary"
-                      className="btn-secondary"
                       onClick={handleResendVerification}
                       disabled={isSendingVerification}
                     >
@@ -372,7 +371,7 @@ function ClientSettings() {
                     <p className="settings-card-title">{t('needChangePassword')}</p>
                   </div>
                   <AppButton
-                    className="btn-change-password"
+                    variant="secondary"
                     onClick={() => navigate('/forgot-password', {
                       state: { fromSettings: true, returnTo: '/client-settings?section=security' },
                     })}
@@ -386,10 +385,10 @@ function ClientSettings() {
 
           {(activeSection === 'account' || activeSection === 'contact') && (
             <div className="settings-actions">
-              <AppButton className="btn-save" onClick={handleSave} disabled={isSaving || isLoadingProfile || !hasProfileChanges}>
+              <AppButton onClick={handleSave} disabled={isSaving || isLoadingProfile || !hasProfileChanges}>
                 {isSaving ? t('saving') : t('saveChanges')}
               </AppButton>
-              <AppButton variant="secondary" className="btn-cancel" onClick={handleReset} disabled={isSaving || isLoadingProfile || !hasProfileChanges}>
+              <AppButton variant="secondary" onClick={handleReset} disabled={isSaving || isLoadingProfile || !hasProfileChanges}>
                 {t('reset')}
               </AppButton>
             </div>
