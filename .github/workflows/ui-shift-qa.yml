@@ -43,7 +43,7 @@ jobs:
       - run: npm run build
 
   backend:
-    name: Backend non-DB tests
+    name: Backend full test suite
     runs-on: ubuntu-latest
     timeout-minutes: 15
     defaults:
@@ -57,5 +57,13 @@ jobs:
           cache: npm
           cache-dependency-path: backend/package-lock.json
       - run: npm ci
-      - name: Run backend suite that does not require the local canonical MySQL socket
-        run: npx vitest run --exclude test/canonicalMySql.integration.test.js --exclude test/legacyProductionReconciliation.integration.test.js
+      - name: Start canonical MySQL test service
+        run: |
+          sudo systemctl start mysql
+          sudo mysql -e "CREATE USER IF NOT EXISTS 'serbisyo_ci'@'localhost' IDENTIFIED BY 'serbisyo_ci'; GRANT ALL PRIVILEGES ON *.* TO 'serbisyo_ci'@'localhost' WITH GRANT OPTION; FLUSH PRIVILEGES;"
+      - name: Run complete backend suite
+        env:
+          CANONICAL_TEST_DB_SOCKET: /var/run/mysqld/mysqld.sock
+          CANONICAL_TEST_DB_USER: serbisyo_ci
+          CANONICAL_TEST_DB_PASSWORD: serbisyo_ci
+        run: npm test
