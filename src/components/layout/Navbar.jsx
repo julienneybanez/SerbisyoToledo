@@ -162,9 +162,8 @@ function Navbar() {
           <div className="logo-wrapper" aria-hidden="true">
             <img src={logo} alt="" width="56" height="56" className="non-draggable-image" draggable="false" />
           </div>
-          <div className="brand-text ms-3">
-            <div className="brand-name">Serbisyo</div>
-            <div className="brand-location">Toledo</div>
+          <div className="brand-text ms-3" aria-label="SerbisyoToledo">
+            <span className="brand-name">Serbisyo</span><span className="brand-location">Toledo</span>
           </div>
         </Link>
 
