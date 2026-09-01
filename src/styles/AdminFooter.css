@@ -195,3 +195,96 @@
     padding: 0.5rem;
   }
 }
+
+
+/* ===================================
+   AOXA-INSPIRED ADMIN FOOTER
+   Existing admin navigation links and system indicator remain.
+   =================================== */
+.admin-footer {
+  padding: 0.9rem 1.5rem;
+  border-top: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.admin-footer-container {
+  gap: 0.8rem 1.25rem;
+}
+
+.admin-footer .brand-logo {
+  width: 34px;
+  height: 34px;
+  padding: 0.1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-surface);
+}
+
+.admin-footer .footer-logo-img {
+  width: 30px;
+  height: 30px;
+}
+
+.admin-footer .brand-name {
+  color: var(--brand-blue);
+  font-weight: 820;
+}
+
+.admin-footer .brand-name .highlight {
+  color: var(--brand-teal-hover);
+}
+
+.admin-label {
+  padding: 0.3rem 0.6rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-soft-blue);
+  color: var(--brand-blue-hover);
+  font-size: 0.66rem;
+  font-weight: 760;
+}
+
+.footer-nav {
+  gap: 0.35rem;
+}
+
+.footer-link {
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0.35rem 0.5rem;
+  border-radius: 9px;
+  color: var(--color-text-secondary);
+  font-size: 0.8rem;
+  font-weight: 650;
+}
+
+.footer-link:hover,
+.footer-link:focus-visible {
+  background: var(--color-soft-blue);
+  color: var(--brand-blue-hover);
+}
+
+.separator {
+  color: var(--color-border-strong);
+}
+
+.stat-dot {
+  animation: none;
+}
+
+.stat-dot.online {
+  background: var(--brand-teal);
+  box-shadow: none;
+}
+
+.stat-text,
+.footer-copyright {
+  color: var(--color-text-secondary);
+  font-size: 0.76rem;
+}
+
+[data-theme='dark'] .admin-footer {
+  background: var(--color-surface);
+  border-color: var(--color-border);
+}
