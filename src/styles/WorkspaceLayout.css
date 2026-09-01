@@ -341,3 +341,33 @@
 [data-theme='dark'] .workspace-logout-link i {
   color: var(--color-danger);
 }
+
+
+/* Keep the lower workspace actions permanently visible while the long role
+   navigation scrolls independently. */
+@media (min-width: 769px) {
+  .workspace-sidebar {
+    overflow: hidden;
+  }
+
+  .workspace-sidebar-scroll {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    padding-right: 0.15rem;
+  }
+
+  .workspace-sidebar-footer {
+    position: static;
+    flex: 0 0 auto;
+    margin: 0 -0.9rem -1rem;
+    padding: 0 0.9rem 1rem;
+    background: var(--color-surface);
+  }
+}
+
+[data-theme='dark'] .workspace-sidebar-footer {
+  background: var(--color-surface);
+}
