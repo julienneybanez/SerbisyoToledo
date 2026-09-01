@@ -852,3 +852,375 @@
     flex-basis: 100%;
   }
 }
+
+
+/* ===================================
+   AOXA-INSPIRED PROVIDER PROFILE EDITOR
+   Profile photo, About Me, languages, response time, skills, completed-job
+   linking, optional photos, existing portfolio actions, save and cancel remain.
+   =================================== */
+.edit-portfolio-overlay {
+  background: color-mix(in srgb, #08111f 70%, transparent);
+  backdrop-filter: blur(2px);
+}
+
+.edit-portfolio-modal {
+  max-width: 720px;
+  border: 1px solid var(--color-border);
+  border-radius: 24px !important;
+  background: var(--color-surface) !important;
+  box-shadow: 0 30px 80px rgba(7, 18, 33, 0.24);
+}
+
+.edit-portfolio-modal .modal-close-btn {
+  top: 16px;
+  right: 16px;
+  width: 42px;
+  height: 42px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  font-size: 22px;
+}
+
+.edit-portfolio-modal .modal-close-btn:hover,
+.edit-portfolio-modal .modal-close-btn:focus-visible {
+  background: var(--color-soft-blue);
+  color: var(--color-text-primary);
+}
+
+.edit-portfolio-header {
+  padding: 1.5rem 1.6rem 0;
+  margin-bottom: 1.2rem;
+}
+
+.edit-portfolio-header h2 {
+  margin: 0 3rem 0.45rem 0;
+  color: var(--color-ink);
+  font-size: clamp(1.75rem, 3vw, 2.35rem);
+  font-weight: 820;
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+}
+
+.edit-portfolio-header p {
+  max-width: 590px;
+  color: var(--color-text-secondary);
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
+.edit-portfolio-loading {
+  padding: 4rem 1.5rem;
+}
+
+.edit-portfolio-loading p {
+  color: var(--color-text-secondary);
+}
+
+.edit-portfolio-form {
+  padding: 0 1.6rem 1.5rem;
+  border-radius: 24px !important;
+  background: var(--color-surface);
+}
+
+.edit-portfolio-form .alert {
+  border-radius: 12px;
+}
+
+.edit-portfolio-form .alert-success {
+  border-color: color-mix(in srgb, var(--brand-teal) 24%, var(--color-border));
+  background: var(--color-soft-mint);
+  color: var(--brand-teal-hover);
+}
+
+.edit-portfolio-form .alert-error {
+  border-color: color-mix(in srgb, var(--color-danger) 28%, var(--color-border));
+  background: color-mix(in srgb, var(--color-danger) 7%, var(--color-surface));
+  color: var(--color-danger);
+}
+
+.edit-portfolio-form .form-section {
+  margin-bottom: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  background: var(--color-surface);
+}
+
+.edit-portfolio-form .form-section h3 {
+  color: var(--color-text-primary);
+  font-size: 0.95rem;
+  font-weight: 780;
+}
+
+.edit-portfolio-form .form-section h3 i {
+  color: var(--brand-blue-hover);
+}
+
+.edit-portfolio-form textarea,
+.edit-portfolio-form select,
+.edit-portfolio-form input[type="text"],
+.caption-input {
+  min-height: 48px;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid var(--color-border);
+  border-radius: 12px !important;
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  font-size: 0.94rem;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+}
+
+.edit-portfolio-form textarea:focus,
+.edit-portfolio-form select:focus,
+.edit-portfolio-form input[type="text"]:focus,
+.caption-input:focus {
+  border-color: var(--brand-blue);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-blue) 12%, transparent);
+}
+
+.provider-profile-photo-preview {
+  width: 96px;
+  height: 96px;
+  flex-basis: 96px;
+  border: 1px solid color-mix(in srgb, var(--brand-blue) 14%, var(--color-border));
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at 75% 20%, color-mix(in srgb, var(--brand-teal) 15%, transparent), transparent 38%),
+    var(--color-soft-blue);
+  color: var(--brand-blue-hover);
+}
+
+.provider-profile-photo-actions {
+  gap: 0.55rem;
+}
+
+.provider-profile-photo-remove,
+.btn-completed-job-photo,
+.btn-add-linked-job-photo {
+  min-height: 42px;
+  border: 1px solid var(--color-border);
+  border-radius: 11px;
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  font-weight: 700;
+}
+
+.provider-profile-photo-remove {
+  color: var(--color-danger);
+}
+
+.provider-profile-photo-remove:hover,
+.btn-completed-job-photo:hover:not(:disabled),
+.btn-add-linked-job-photo:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--brand-blue) 32%, var(--color-border));
+  background: var(--color-soft-blue);
+}
+
+.provider-profile-language-options {
+  gap: 0.5rem;
+}
+
+.provider-profile-language-option {
+  min-height: 44px;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: 11px;
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  font-weight: 680;
+}
+
+.provider-profile-language-option:has(input:checked) {
+  border-color: var(--brand-blue);
+  background: var(--color-soft-blue);
+  color: var(--brand-blue-hover);
+}
+
+.skills-container {
+  gap: 0.45rem;
+}
+
+.skill-tag {
+  min-height: 34px;
+  padding: 0.35rem 0.55rem 0.35rem 0.7rem;
+  border: 1px solid color-mix(in srgb, var(--brand-blue) 16%, var(--color-border));
+  border-radius: var(--radius-pill);
+  background: var(--color-soft-blue);
+  color: var(--brand-blue-hover);
+  font-size: 0.82rem;
+  font-weight: 680;
+}
+
+.skill-remove {
+  background: color-mix(in srgb, var(--brand-blue) 10%, transparent);
+  color: var(--brand-blue-hover);
+}
+
+.skill-remove:hover {
+  background: color-mix(in srgb, var(--brand-blue) 18%, transparent);
+}
+
+.btn-add-skill,
+.btn-upload-image {
+  min-height: 46px;
+  padding: 0.65rem 0.9rem;
+  border: 1px solid var(--brand-blue);
+  border-radius: 11px !important;
+  background: var(--brand-blue);
+  color: #fff;
+  font-weight: 720;
+}
+
+.btn-add-skill:hover,
+.btn-upload-image:hover:not(:disabled) {
+  transform: none;
+  border-color: var(--brand-blue-hover);
+  background: var(--brand-blue-hover);
+  box-shadow: none;
+}
+
+.completed-job-linker,
+.add-image-section {
+  padding: 0.9rem;
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  background: var(--color-soft-cream);
+}
+
+.completed-job-linker-title,
+.caption-label {
+  color: var(--color-text-primary);
+  font-weight: 720;
+}
+
+.completed-job-linker-help,
+.completed-job-photo-name,
+.provider-profile-photo-pending {
+  color: var(--color-text-secondary);
+}
+
+.edit-portfolio-modal .portfolio-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.edit-portfolio-modal .portfolio-item {
+  overflow: hidden;
+  aspect-ratio: 4 / 3;
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  background: var(--color-soft-cream);
+}
+
+.edit-portfolio-modal .portfolio-item-no-photo {
+  border-color: var(--color-border);
+  background: var(--color-soft-cream);
+}
+
+.edit-portfolio-job-placeholder {
+  color: var(--color-text-primary);
+}
+
+.edit-portfolio-job-placeholder i {
+  color: var(--brand-blue-hover);
+}
+
+.edit-portfolio-job-placeholder span {
+  color: var(--color-text-secondary);
+}
+
+.edit-portfolio-form .form-actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  margin: 1rem -1.6rem -1.5rem;
+  padding: 0.9rem 1.6rem calc(0.9rem + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.edit-portfolio-form .btn-cancel,
+.edit-portfolio-form .btn-save {
+  min-width: 140px;
+  min-height: 48px;
+  padding: 0.7rem 1rem;
+  border-radius: 12px !important;
+  font-size: 0.9rem;
+  font-weight: 730;
+}
+
+.edit-portfolio-form .btn-cancel {
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+}
+
+.edit-portfolio-form .btn-cancel:hover:not(:disabled) {
+  border-color: var(--color-border-strong);
+  background: var(--color-soft-cream);
+}
+
+.edit-portfolio-form .btn-save {
+  border: 1px solid var(--brand-blue);
+  background: var(--brand-blue);
+}
+
+.edit-portfolio-form .btn-save:hover:not(:disabled) {
+  transform: none;
+  border-color: var(--brand-blue-hover);
+  background: var(--brand-blue-hover);
+  box-shadow: none;
+}
+
+[data-theme='dark'] .edit-portfolio-modal,
+[data-theme='dark'] .edit-portfolio-form,
+[data-theme='dark'] .edit-portfolio-form .form-section {
+  background: var(--color-surface) !important;
+  border-color: var(--color-border);
+}
+
+[data-theme='dark'] .completed-job-linker,
+[data-theme='dark'] .add-image-section {
+  background: var(--color-surface-secondary);
+  border-color: var(--color-border);
+}
+
+@media (max-width: 600px) {
+  .edit-portfolio-overlay {
+    backdrop-filter: none;
+  }
+
+  .edit-portfolio-modal {
+    border-radius: 22px 22px 0 0 !important;
+  }
+
+  .edit-portfolio-header {
+    padding: 1.2rem 1rem 0;
+  }
+
+  .edit-portfolio-form {
+    padding: 0 1rem 1rem;
+  }
+
+  .edit-portfolio-form .form-section {
+    padding: 0.85rem;
+  }
+
+  .edit-portfolio-form .form-actions {
+    margin: 1rem -1rem -1rem;
+    padding: 0.8rem 1rem calc(0.8rem + env(safe-area-inset-bottom));
+  }
+
+  .edit-portfolio-modal .portfolio-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .provider-profile-photo-preview {
+    width: 84px;
+    height: 84px;
+    flex-basis: 84px;
+  }
+}
