@@ -14,6 +14,33 @@ function getInitials(name) {
     .toUpperCase();
 }
 
+
+function getMobilePageTitle(pathname, role, t) {
+  if (pathname === '/') return 'SerbisyoToledo';
+  if (pathname === '/about') return t('about');
+  if (pathname === '/feed') return t('browseServices');
+  if (pathname === '/notifications') return t('notifications');
+  if (pathname === '/messages') return t('messages');
+  if (pathname === '/requests') return role === 'client' ? t('myBookings') : t('requests');
+  if (pathname === '/client-dashboard') return t('dashboardShort');
+  if (pathname === '/dashboard') return t('dashboardShort');
+  if (pathname === '/client-settings') return t('clientSettings');
+  if (pathname === '/provider-settings') return t('settings');
+  if (pathname === '/provider-schedule') return t('schedule');
+  if (pathname === '/provider-availability') return t('providerSettingsNavAvailability');
+  if (pathname === '/provider-credentials') return t('credentials');
+  if (pathname.startsWith('/provider/')) return t('providerProfile');
+  if (pathname.startsWith('/admin/users')) return t('usersShort');
+  if (pathname.startsWith('/admin/verifications')) return t('verifyShort');
+  if (pathname.startsWith('/admin/credentials')) return t('credentials');
+  if (pathname.startsWith('/admin/reports')) return t('reports');
+  if (pathname.startsWith('/admin/settings')) return role === 'admin' ? 'System Status' : t('settings');
+  if (pathname.startsWith('/admin')) return t('dashboardShort');
+  if (pathname === '/login') return t('logIn');
+  if (pathname === '/register') return t('signUp');
+  return 'SerbisyoToledo';
+}
+
 export default function MobileTopBar({
   user,
   role = 'guest',
@@ -35,6 +62,7 @@ export default function MobileTopBar({
   const { isDark, toggleTheme } = useTheme();
   const { language, setLanguage, t } = useLanguage();
   const isLoggedIn = Boolean(user);
+  const pageTitle = getMobilePageTitle(location.pathname, role, t);
   const notificationsRoute = !isLoggedIn
     ? '/login'
     : role === 'admin'
@@ -91,10 +119,17 @@ export default function MobileTopBar({
           <span className="mobile-topbar-mark" aria-hidden="true">
             <img src={logo} alt="" className="mobile-topbar-logo non-draggable-image" draggable="false" />
           </span>
-          <div>
-            <p className="mobile-topbar-title mobile-brand-wordmark">
-              Serbisyo<span>Toledo</span>
-            </p>
+          <div className="mobile-topbar-copy">
+            {isLoggedIn ? (
+              <>
+                <p className="mobile-topbar-app-name">Serbisyo<span>Toledo</span></p>
+                <p className="mobile-topbar-page-title">{pageTitle}</p>
+              </>
+            ) : (
+              <p className="mobile-topbar-title mobile-brand-wordmark">
+                Serbisyo<span>Toledo</span>
+              </p>
+            )}
           </div>
         </div>
       </div>
