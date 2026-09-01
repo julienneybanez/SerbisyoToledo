@@ -306,3 +306,27 @@
     grid-row: 1 / span 2;
   }
 }
+
+
+/* Theme contrast audit: FullCalendar text and chrome should follow the
+   application theme instead of its default light palette. */
+.provider-calendar-card .fc {
+  --fc-neutral-text-color: var(--color-text-secondary);
+  --fc-button-text-color: var(--color-text-primary);
+  --fc-today-bg-color: color-mix(in srgb, var(--color-primary) 9%, var(--color-surface));
+  color: var(--color-text-primary);
+}
+
+.provider-calendar-card .fc .fc-col-header-cell-cushion,
+.provider-calendar-card .fc .fc-daygrid-day-number,
+.provider-calendar-card .fc .fc-timegrid-axis-cushion,
+.provider-calendar-card .fc .fc-timegrid-slot-label-cushion {
+  color: var(--color-text-secondary);
+}
+
+[data-theme='dark'] .provider-calendar-card .fc {
+  --fc-page-bg-color: var(--color-surface);
+  --fc-neutral-bg-color: var(--color-surface-secondary);
+  --fc-border-color: var(--color-border);
+  --fc-list-event-hover-bg-color: var(--color-surface-secondary);
+}
