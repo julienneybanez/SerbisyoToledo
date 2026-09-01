@@ -14,6 +14,7 @@ import HomeFaq from '../components/common/HomeFaq';
 import Reveal from '../components/common/Reveal';
 import { useLanguage } from '../context/LanguageContext';
 import useServiceTaxonomy from '../hooks/useServiceTaxonomy';
+import { AppButton } from '../components/ui';
 
 const CATEGORY_VISUALS = {
   plumbing: plumber,
@@ -150,14 +151,14 @@ function Home() {
               <LandingSearch />
 
               <div className="home-hero-secondary-action">
-                <button
-                  type="button"
-                  className="btn home-secondary-cta"
+                <AppButton
+                  variant="secondary"
+                  className="home-secondary-cta"
                   onClick={() => navigate('/register?role=provider')}
                 >
                   {t('howProviderCta')}
                   <i className="bi bi-arrow-right" aria-hidden="true"></i>
-                </button>
+                </AppButton>
               </div>
             </Reveal>
 
@@ -182,14 +183,15 @@ function Home() {
               </h2>
               <p className="section-subtitle">{t('popularServicesSubtitle')}</p>
             </div>
-            <button
-              type="button"
+            <AppButton
+              variant="ghost"
+              size="sm"
               className="home-text-action"
               onClick={() => navigate('/feed')}
             >
               {t('browseServices')}
               <i className="bi bi-arrow-right" aria-hidden="true"></i>
-            </button>
+            </AppButton>
           </Reveal>
 
           <div className="home-category-grid">
@@ -265,14 +267,13 @@ function Home() {
             <Reveal className="home-provider-copy">
               <h2 id="provider-cta-title" className="section-title">{copy.providerTitle}</h2>
               <p className="section-subtitle">{copy.providerText}</p>
-              <button
-                type="button"
-                className="btn btn-primary home-provider-cta"
+              <AppButton
+                className="home-provider-cta"
                 onClick={() => navigate('/register?role=provider')}
               >
                 {t('howProviderCta')}
                 <i className="bi bi-arrow-right" aria-hidden="true"></i>
-              </button>
+              </AppButton>
             </Reveal>
 
             <Reveal className="home-provider-media" variant="image" delay={120}>
