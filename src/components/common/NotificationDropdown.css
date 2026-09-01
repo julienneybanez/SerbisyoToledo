@@ -427,7 +427,7 @@
 }
 
 .notification-actions .action-btn {
-  min-height: 36px;
+  min-height: 44px;
   color: var(--brand-blue-hover);
   border-radius: 9px;
 }
@@ -516,7 +516,7 @@
 }
 
 .notification-footer button {
-  min-height: 40px;
+  min-height: 44px;
   color: var(--brand-blue-hover);
 }
 
