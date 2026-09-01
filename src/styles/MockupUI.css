@@ -1,0 +1,980 @@
+/* ===================================
+   AOXA × SHADCN MOCKUP COMPONENT SYSTEM
+   Canonical source: the standalone mockup created from the Aoxa references.
+   This file intentionally ports that mockup's component geometry instead of
+   approximating it page-by-page.
+   =================================== */
+
+:root {
+  --mock-bg: #f7f8fa;
+  --mock-surface: #ffffff;
+  --mock-surface-2: #f3f5f7;
+  --mock-ink: #101114;
+  --mock-muted: #6b7280;
+  --mock-line: #e5e7eb;
+  --mock-blue: #2563eb;
+  --mock-blue-2: #1d4ed8;
+  --mock-teal: #0f9f9a;
+  --mock-sky: #e8f5ff;
+  --mock-cream: #fbfbe9;
+  --mock-green: #16a34a;
+  --mock-red: #dc2626;
+  --mock-amber: #d97706;
+  --mock-shadow: 0 14px 45px rgba(17, 24, 39, 0.07);
+  --mock-radius-card: 22px;
+  --mock-radius-panel: 24px;
+  --mock-radius-control: 12px;
+}
+
+[data-theme='dark'] {
+  --mock-bg: #0d1117;
+  --mock-surface: #151a22;
+  --mock-surface-2: #1d2430;
+  --mock-ink: #f7f9fb;
+  --mock-muted: #9aa4b2;
+  --mock-line: #293241;
+  --mock-sky: #15293d;
+  --mock-cream: #27271c;
+  --mock-shadow: 0 14px 45px rgba(0, 0, 0, 0.26);
+}
+
+/* Canonical button from mockup */
+.mock-btn {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: 1px solid var(--mock-line);
+  border-radius: var(--mock-radius-control);
+  background: var(--mock-surface);
+  color: var(--mock-ink);
+  padding: 10px 15px;
+  font-weight: 750;
+  line-height: 1.2;
+  text-align: center;
+  box-shadow: none;
+  transition: transform 0.15s ease, background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.mock-btn:hover:not(:disabled) { transform: translateY(-1px); }
+.mock-btn--primary {
+  background: var(--mock-blue);
+  border-color: var(--mock-blue);
+  color: #fff;
+}
+.mock-btn--primary:hover:not(:disabled),
+.mock-btn--primary:focus-visible {
+  background: var(--mock-blue-2);
+  border-color: var(--mock-blue-2);
+  color: #fff;
+}
+.mock-btn--secondary,
+.mock-btn--outline {
+  background: var(--mock-surface);
+  border-color: var(--mock-line);
+  color: var(--mock-ink);
+}
+.mock-btn--ghost {
+  border-color: transparent;
+  background: transparent;
+  color: var(--mock-ink);
+}
+.mock-btn--danger {
+  color: var(--mock-red);
+  border-color: color-mix(in srgb, var(--mock-red) 36%, var(--mock-line));
+  background: var(--mock-surface);
+}
+.mock-btn--sm { min-height: 40px; padding: 7px 10px; border-radius: 10px; font-size: 12px; }
+.mock-btn--lg { min-height: 50px; padding: 12px 18px; }
+
+.mock-iconbtn {
+  width: 44px;
+  height: 44px;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid var(--mock-line);
+  border-radius: 12px;
+  background: var(--mock-surface);
+  color: var(--mock-ink);
+}
+
+/* Canonical card / panels */
+.mock-card {
+  background: var(--mock-surface);
+  border: 1px solid var(--mock-line);
+  border-radius: var(--mock-radius-card);
+  box-shadow: var(--mock-shadow);
+}
+.mock-card--flat { box-shadow: none; }
+.mock-card--interactive {
+  transition: transform .15s ease, border-color .15s ease, box-shadow .15s ease;
+}
+.mock-card--interactive:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--mock-blue) 22%, var(--mock-line));
+}
+.mock-soft-panel {
+  background: linear-gradient(120deg, var(--mock-sky), var(--mock-cream));
+  border: 1px solid color-mix(in srgb, var(--mock-blue) 12%, var(--mock-line));
+  border-radius: var(--mock-radius-panel);
+  padding: 22px;
+}
+
+/* Canonical page heading */
+.mock-pagehead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 28px;
+}
+.mock-page-title {
+  margin: 0;
+  color: var(--mock-ink);
+  font-size: clamp(2.2rem, 4vw, 40px);
+  line-height: 1;
+  letter-spacing: -2px;
+  font-weight: 820;
+}
+.mock-page-subtitle {
+  margin: 9px 0 0;
+  color: var(--mock-muted);
+  font-size: 14px;
+  line-height: 1.55;
+}
+.mock-page-actions { display: flex; gap: 8px; }
+
+/* Canonical field controls */
+.mock-input,
+.mock-select,
+.mock-textarea {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid var(--mock-line);
+  border-radius: 11px;
+  background: var(--mock-surface);
+  color: var(--mock-ink);
+  padding: 10px 11px;
+  outline: 0;
+  box-shadow: none;
+}
+.mock-textarea { min-height: 100px; resize: vertical; }
+.mock-input:focus,
+.mock-select:focus,
+.mock-textarea:focus {
+  border-color: var(--mock-blue);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--mock-blue) 12%, transparent);
+}
+
+/* Canonical chip */
+.mock-chip {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid var(--mock-line);
+  background: var(--mock-surface);
+  border-radius: 999px;
+  padding: 8px 12px;
+  color: var(--mock-ink);
+  font-size: 12px;
+  font-weight: 750;
+}
+.mock-chip.active {
+  background: var(--mock-blue);
+  border-color: var(--mock-blue);
+  color: #fff;
+}
+
+/* Canonical stat / list / status */
+.mock-stat {
+  min-height: 108px;
+  padding: 20px;
+  box-shadow: none;
+}
+.mock-stat small {
+  display: block;
+  color: var(--mock-muted);
+  font-weight: 650;
+}
+.mock-stat strong {
+  display: block;
+  margin-top: 12px;
+  color: var(--mock-ink);
+  font-size: 28px;
+  line-height: 1;
+}
+.mock-stat-icon { font-size: 20px; color: var(--mock-blue); }
+.mock-listrow {
+  background: var(--mock-surface);
+  border: 1px solid var(--mock-line);
+  border-radius: 15px;
+  padding: 14px;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+}
+.mock-status {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 6px 9px;
+  font-size: 10px;
+  font-weight: 850;
+  text-transform: capitalize;
+}
+.mock-status--pending { background: #fff3cf; color: #92400e; }
+.mock-status--accepted,
+.mock-status--verified,
+.mock-status--completed,
+.mock-status--success { background: #dcfce7; color: #166534; }
+.mock-status--on_the_way,
+.mock-status--in_progress,
+.mock-status--investigating,
+.mock-status--info { background: #dbeafe; color: #1d4ed8; }
+.mock-status--declined,
+.mock-status--cancelled,
+.mock-status--rejected,
+.mock-status--suspended,
+.mock-status--danger { background: #fee2e2; color: #991b1b; }
+
+/* Desktop authenticated workspace: exact mockup geometry */
+@media (min-width: 769px) {
+  .workspace-shell {
+    grid-template-columns: 246px minmax(0, 1fr) !important;
+    min-height: 100vh;
+    background: var(--mock-bg) !important;
+  }
+
+  .workspace-sidebar {
+    width: 246px;
+    padding: 20px 16px !important;
+    border-right: 1px solid var(--mock-line) !important;
+    background: var(--mock-surface) !important;
+  }
+
+  .workspace-brand {
+    min-height: 0 !important;
+    padding: 4px 8px 22px !important;
+    gap: 10px !important;
+  }
+
+  .workspace-brand-logo {
+    width: 34px !important;
+    height: 34px !important;
+    border: 0 !important;
+    border-radius: 10px !important;
+    background: transparent !important;
+  }
+
+  .workspace-brand-wordmark {
+    font-size: 19px !important;
+    font-weight: 900 !important;
+    letter-spacing: -0.4px !important;
+  }
+
+  .workspace-role-card {
+    min-height: 0 !important;
+    margin: 0 8px 12px !important;
+    padding: 10px 12px !important;
+    border: 1px solid var(--mock-line) !important;
+    border-radius: 11px !important;
+    background: var(--mock-surface-2) !important;
+  }
+
+  .workspace-nav-section-label {
+    margin: 0 !important;
+    padding: 18px 12px 8px !important;
+    color: var(--mock-muted) !important;
+    font-size: 10px !important;
+    font-weight: 750 !important;
+    letter-spacing: .12em !important;
+  }
+
+  .workspace-nav { gap: 4px !important; }
+
+  .workspace-nav-link {
+    min-height: 44px !important;
+    gap: 11px !important;
+    padding: 11px 12px !important;
+    border: 0 !important;
+    border-radius: 11px !important;
+    background: transparent !important;
+    color: var(--mock-ink) !important;
+    font-size: 0.88rem !important;
+    font-weight: 650 !important;
+  }
+
+  .workspace-nav-link:hover,
+  .workspace-nav-link:focus-visible {
+    background: var(--mock-surface-2) !important;
+    color: var(--mock-ink) !important;
+  }
+
+  .workspace-nav-link.active {
+    background: var(--mock-blue) !important;
+    color: #fff !important;
+    box-shadow: none !important;
+  }
+
+  .workspace-nav-link.active i { color: #fff !important; }
+
+  .workspace-nav-badge {
+    min-width: 20px !important;
+    height: 20px !important;
+    border-radius: 10px !important;
+    background: #dbeafe !important;
+    color: #1e40af !important;
+    font-size: 10px !important;
+  }
+
+  .workspace-nav-link.active .workspace-nav-badge {
+    background: #fff !important;
+    color: var(--mock-blue) !important;
+  }
+
+  .workspace-topbar {
+    min-height: 74px !important;
+    height: 74px !important;
+    padding: 0 32px !important;
+    border-bottom: 1px solid var(--mock-line) !important;
+    background: var(--mock-surface) !important;
+  }
+
+  .workspace-account-button,
+  .workspace-logout-button {
+    border-color: var(--mock-line) !important;
+    background: var(--mock-surface) !important;
+    border-radius: 999px !important;
+  }
+
+  .workspace-content {
+    max-width: 1500px;
+    width: 100%;
+    margin: 0 auto;
+  }
+
+  .workspace-content > :is(
+    .client-dashboard-page,
+    .dashboard-container,
+    .requests-container,
+    .messages-page,
+    .provider-schedule-page,
+    .provider-availability-page,
+    .user-settings-container,
+    .notifications-page-shell
+  ) {
+    padding-left: 34px !important;
+    padding-right: 34px !important;
+  }
+}
+
+/* Unify major current surfaces with the mockup card language */
+:is(
+  .client-dashboard-panel,
+  .client-stat-card,
+  .provider-stat-card,
+  .job-card,
+  .request-card,
+  .provider-card,
+  .provider-calendar-card,
+  .provider-upcoming-card,
+  .availability-card,
+  .settings-layout,
+  .notifications-list-page,
+  .notifications-state-card,
+  .provider-section,
+  .rating-summary,
+  .review-modal,
+  .request-details-modal,
+  .booking-modal,
+  .decline-dialog-card,
+  .edit-portfolio-modal,
+  .service-profile-form,
+  .admin-page .table-container,
+  .admin-page .request-card,
+  .admin-page .settings-card,
+  .messages-shell
+) {
+  border-color: var(--mock-line) !important;
+  background: var(--mock-surface) !important;
+  color: var(--mock-ink);
+  box-shadow: none !important;
+}
+
+:is(
+  .client-dashboard-panel,
+  .job-card,
+  .request-card,
+  .provider-card,
+  .provider-calendar-card,
+  .provider-upcoming-card,
+  .availability-card,
+  .settings-layout,
+  .notifications-list-page,
+  .notifications-state-card,
+  .provider-section,
+  .admin-page .table-container,
+  .admin-page .request-card
+) {
+  border-radius: 20px !important;
+}
+
+/* Match mockup stats */
+.client-dashboard-stats,
+.provider-stats-row,
+.stats-grid {
+  gap: 14px !important;
+}
+.client-stat-card,
+.provider-stat-card,
+.stat-card {
+  min-height: 108px !important;
+  padding: 20px !important;
+  border: 1px solid var(--mock-line) !important;
+  border-radius: 22px !important;
+  background: var(--mock-surface) !important;
+  box-shadow: none !important;
+}
+.client-stat-card strong,
+.provider-stat-copy strong,
+.stat-value {
+  color: var(--mock-ink) !important;
+  font-size: 28px !important;
+  line-height: 1 !important;
+}
+.client-stat-card small,
+.provider-stat-copy p,
+.provider-stat-copy small,
+.stat-label {
+  color: var(--mock-muted) !important;
+}
+
+/* Mockup-style split panels / lists */
+.client-dashboard-grid,
+.provider-dashboard-grid,
+.schedule-layout {
+  gap: 18px !important;
+}
+.client-panel-heading,
+.provider-upcoming-heading,
+.messages-list-header,
+.messages-thread-header {
+  border-color: var(--mock-line) !important;
+}
+.client-request-row,
+.dashboard-schedule-row,
+.provider-upcoming-row {
+  background: var(--mock-surface);
+  border-color: var(--mock-line) !important;
+}
+.client-request-row:hover,
+.dashboard-schedule-row:hover,
+.provider-upcoming-row:hover {
+  background: var(--mock-surface-2) !important;
+}
+
+/* Mockup provider cards */
+.providers-grid { gap: 15px !important; }
+.provider-card {
+  overflow: hidden;
+  border-radius: 22px !important;
+}
+.provider-card .provider-image { height: 160px !important; }
+.provider-card .provider-info { padding: 16px !important; }
+.provider-card .provider-tag {
+  border: 0 !important;
+  background: var(--mock-surface-2) !important;
+  color: var(--mock-muted) !important;
+  font-size: 10px !important;
+  padding: 5px 8px !important;
+}
+.provider-card .btn-view-profile {
+  min-height: 44px;
+  border-radius: 12px;
+  background: var(--mock-blue);
+  border-color: var(--mock-blue);
+  color: #fff;
+}
+
+/* Mockup messages */
+.messages-shell {
+  grid-template-columns: 330px minmax(0, 1fr) !important;
+  border-radius: 20px !important;
+  overflow: hidden;
+}
+.messages-list-panel {
+  background: var(--mock-surface) !important;
+  border-right-color: var(--mock-line) !important;
+}
+.messages-conversation-item {
+  border-color: var(--mock-line) !important;
+}
+.messages-conversation-item.active {
+  background: var(--mock-sky) !important;
+  box-shadow: none !important;
+}
+.messages-thread {
+  background: var(--mock-bg) !important;
+}
+.message-bubble {
+  max-width: 70% !important;
+  border-radius: 16px !important;
+  background: var(--mock-surface) !important;
+  border-color: var(--mock-line) !important;
+}
+.message-row.mine .message-bubble {
+  background: var(--mock-blue) !important;
+  border-color: var(--mock-blue) !important;
+  color: #fff !important;
+}
+
+/* Mockup settings */
+.settings-layout {
+  grid-template-columns: 210px minmax(0, 1fr) !important;
+  gap: 18px !important;
+  border: 0 !important;
+}
+.settings-nav {
+  height: max-content;
+  padding: 10px !important;
+  border: 1px solid var(--mock-line) !important;
+  border-radius: 22px !important;
+  background: var(--mock-surface) !important;
+}
+.settings-nav-item {
+  min-height: 44px !important;
+  padding: 11px !important;
+  border: 0 !important;
+  border-radius: 9px !important;
+  background: transparent !important;
+  color: var(--mock-ink) !important;
+  font-weight: 750 !important;
+}
+.settings-nav-item.active {
+  background: var(--mock-blue) !important;
+  color: #fff !important;
+}
+.settings-content {
+  border: 1px solid var(--mock-line);
+  border-radius: 22px;
+  background: var(--mock-surface) !important;
+  padding: 24px !important;
+}
+
+/* Mockup admin table */
+.admin-table {
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+  border: 1px solid var(--mock-line);
+  border-radius: 16px;
+  overflow: hidden;
+  background: var(--mock-surface);
+}
+.admin-table th,
+.admin-table td {
+  padding: 13px 14px !important;
+  border-color: var(--mock-line) !important;
+  font-size: 12px !important;
+}
+.admin-table th {
+  color: var(--mock-muted) !important;
+  font-size: 10px !important;
+  letter-spacing: .08em !important;
+}
+
+/* ===================================
+   MOBILE = PHONE-APP PRESENTATION
+   Uses the same mockup components, but the chrome behaves like an app:
+   fixed app bar, bottom tab bar, content safe areas, full-width cards,
+   horizontal tab strips, and bottom-sheet menus.
+   =================================== */
+@media (max-width: 800px) {
+  html, body, #root { min-height: 100%; }
+  body {
+    background: var(--mock-bg);
+    overscroll-behavior-y: none;
+  }
+
+  .mobile-auth-layout {
+    background: var(--mock-bg);
+  }
+
+  .mobile-topbar {
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1300;
+    min-height: calc(58px + env(safe-area-inset-top)) !important;
+    height: calc(58px + env(safe-area-inset-top));
+    padding: env(safe-area-inset-top) 14px 0 !important;
+    border-bottom: 1px solid var(--mock-line) !important;
+    background: color-mix(in srgb, var(--mock-surface) 96%, transparent) !important;
+    backdrop-filter: blur(18px) saturate(1.2) !important;
+  }
+
+  .mobile-topbar-left,
+  .mobile-topbar-actions {
+    height: 58px;
+  }
+
+  .mobile-topbar-brand {
+    gap: 9px;
+  }
+
+  .mobile-topbar-mark {
+    width: 34px !important;
+    height: 34px !important;
+    border: 0 !important;
+    border-radius: 10px !important;
+    background: transparent !important;
+  }
+
+  .mobile-topbar-title {
+    color: var(--mock-ink) !important;
+    font-size: 0.98rem !important;
+    font-weight: 850 !important;
+    letter-spacing: -0.03em !important;
+  }
+
+  .mobile-topbar-page-title {
+    margin: 0;
+    color: var(--mock-ink);
+    font-size: 0.95rem;
+    font-weight: 800;
+    line-height: 1.15;
+  }
+
+  .mobile-topbar-icon-btn,
+  .mobile-topbar-avatar {
+    width: 42px !important;
+    height: 42px !important;
+    border: 1px solid var(--mock-line) !important;
+    border-radius: 12px !important;
+    background: var(--mock-surface) !important;
+    color: var(--mock-ink) !important;
+  }
+
+  .mobile-bottom-nav {
+    position: fixed;
+    left: 10px !important;
+    right: 10px !important;
+    bottom: calc(8px + env(safe-area-inset-bottom)) !important;
+    width: auto !important;
+    min-height: 66px !important;
+    height: 66px;
+    padding: 6px !important;
+    gap: 2px !important;
+    border: 1px solid var(--mock-line) !important;
+    border-radius: 20px !important;
+    background: color-mix(in srgb, var(--mock-surface) 96%, transparent) !important;
+    backdrop-filter: blur(18px) saturate(1.2) !important;
+    box-shadow: 0 14px 36px rgba(17,24,39,.14) !important;
+    z-index: 1250;
+  }
+
+  .mobile-bottom-nav-item {
+    min-width: 0;
+    min-height: 54px;
+    border-radius: 14px !important;
+    color: var(--mock-muted) !important;
+    gap: 2px !important;
+  }
+
+  .mobile-bottom-nav-item.active {
+    background: var(--mock-blue) !important;
+    color: #fff !important;
+  }
+
+  .mobile-bottom-nav-item.active .mobile-bottom-nav-icon-wrap,
+  .mobile-bottom-nav-item.active .mobile-bottom-nav-label {
+    color: #fff !important;
+  }
+
+  .mobile-bottom-nav-icon-wrap i { font-size: 1.05rem; }
+  .mobile-bottom-nav-label {
+    font-size: 0.62rem !important;
+    font-weight: 750 !important;
+    line-height: 1.05 !important;
+  }
+
+  .main-content {
+    min-height: 100dvh;
+    padding-top: calc(58px + env(safe-area-inset-top));
+    padding-bottom: calc(84px + env(safe-area-inset-bottom));
+    background: var(--mock-bg);
+  }
+
+  .workspace-shell,
+  .workspace-stage,
+  .workspace-content {
+    display: contents !important;
+  }
+
+  :is(
+    .client-dashboard-page,
+    .dashboard-container,
+    .requests-container,
+    .messages-page,
+    .provider-schedule-page,
+    .provider-availability-page,
+    .user-settings-container,
+    .notifications-page-shell,
+    .portfolio-shell,
+    .feed-shell
+  ) {
+    min-height: auto !important;
+    padding: 16px 14px 100px !important;
+    background: var(--mock-bg) !important;
+  }
+
+  .mock-pagehead,
+  .st-page-header,
+  .feed-page-header,
+  .settings-page-heading,
+  .availability-page-header,
+  .provider-schedule-header {
+    display: block !important;
+    margin: 0 0 18px !important;
+    padding: 0 !important;
+  }
+
+  .mock-page-title,
+  .st-page-title,
+  .feed-page-title,
+  .settings-page-title,
+  .availability-page-header .st-page-title,
+  .provider-schedule-header .st-page-title {
+    font-size: 28px !important;
+    line-height: 1.05 !important;
+    letter-spacing: -1.25px !important;
+  }
+
+  .mock-page-subtitle,
+  .st-page-subtitle,
+  .feed-page-subtitle {
+    margin-top: 7px !important;
+    font-size: 13px !important;
+  }
+
+  .mock-page-actions,
+  .st-page-header-action {
+    width: 100%;
+    margin-top: 12px !important;
+  }
+
+  .mock-page-actions > *,
+  .st-page-header-action > * {
+    width: 100%;
+  }
+
+  /* Stats become horizontally scrollable app cards instead of tiny squeezed tiles. */
+  .client-dashboard-stats,
+  .provider-stats-row,
+  .stats-grid,
+  .provider-schedule-summary {
+    display: flex !important;
+    overflow-x: auto;
+    gap: 10px !important;
+    margin: 0 -14px 18px !important;
+    padding: 0 14px 4px !important;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+  }
+  .client-dashboard-stats::-webkit-scrollbar,
+  .provider-stats-row::-webkit-scrollbar,
+  .stats-grid::-webkit-scrollbar,
+  .provider-schedule-summary::-webkit-scrollbar { display: none; }
+
+  .client-stat-card,
+  .provider-stat-card,
+  .stat-card,
+  .provider-schedule-summary > div {
+    flex: 0 0 150px !important;
+    min-height: 102px !important;
+    padding: 16px !important;
+    border-radius: 18px !important;
+    scroll-snap-align: start;
+  }
+
+  .client-stat-card strong,
+  .provider-stat-copy strong,
+  .stat-value,
+  .provider-schedule-summary strong {
+    font-size: 24px !important;
+  }
+
+  .client-dashboard-grid,
+  .providers-grid,
+  .requests-grid,
+  .jobs-grid,
+  .provider-schedule-layout,
+  .profile-summary,
+  .profile-grid,
+  .settings-layout,
+  .filters-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  :is(
+    .client-dashboard-panel,
+    .request-card,
+    .job-card,
+    .provider-card,
+    .availability-card,
+    .provider-calendar-card,
+    .provider-upcoming-card,
+    .notifications-list-page,
+    .notifications-state-card,
+    .provider-section,
+    .settings-content
+  ) {
+    border-radius: 18px !important;
+  }
+
+  .provider-card .provider-image { height: 180px !important; }
+
+  /* Settings tabs become an app-style horizontal segment strip. */
+  .settings-layout {
+    gap: 12px !important;
+    border: 0 !important;
+  }
+  .settings-nav {
+    position: sticky;
+    top: calc(58px + env(safe-area-inset-top));
+    z-index: 30;
+    display: flex !important;
+    gap: 6px !important;
+    overflow-x: auto !important;
+    margin: 0 -14px;
+    padding: 8px 14px !important;
+    border: 0 !important;
+    border-bottom: 1px solid var(--mock-line) !important;
+    border-radius: 0 !important;
+    background: color-mix(in srgb, var(--mock-surface) 96%, transparent) !important;
+    backdrop-filter: blur(14px);
+    scrollbar-width: none;
+  }
+  .settings-nav::-webkit-scrollbar { display: none; }
+  .settings-nav-item {
+    flex: 0 0 auto;
+    width: auto !important;
+    white-space: nowrap;
+    border: 1px solid var(--mock-line) !important;
+    border-radius: 999px !important;
+    background: var(--mock-surface) !important;
+    padding: 9px 13px !important;
+  }
+  .settings-nav-item.active {
+    border-color: var(--mock-blue) !important;
+    background: var(--mock-blue) !important;
+    color: #fff !important;
+  }
+  .settings-content {
+    border-radius: 18px !important;
+    padding: 18px 16px !important;
+  }
+
+  /* Messages feel like a phone messaging screen. */
+  .messages-page {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+  .messages-page-heading {
+    padding: 0 14px;
+  }
+  .messages-shell {
+    display: block !important;
+    min-height: calc(100dvh - 154px) !important;
+    height: calc(100dvh - 154px) !important;
+    border-left: 0 !important;
+    border-right: 0 !important;
+    border-radius: 0 !important;
+  }
+  .messages-list-panel {
+    max-height: 38%;
+    border-right: 0 !important;
+    border-bottom: 1px solid var(--mock-line);
+  }
+  .messages-thread-panel {
+    min-height: 62%;
+  }
+  .message-bubble { max-width: 84% !important; }
+
+  /* Profile menu becomes a bottom sheet, not a desktop dropdown floating on a phone. */
+  .mobile-profile-menu {
+    position: fixed !important;
+    left: 10px !important;
+    right: 10px !important;
+    top: auto !important;
+    bottom: calc(82px + env(safe-area-inset-bottom)) !important;
+    width: auto !important;
+    max-height: min(70dvh, 620px);
+    overflow-y: auto;
+    padding: 10px !important;
+    border: 1px solid var(--mock-line) !important;
+    border-radius: 22px !important;
+    background: var(--mock-surface) !important;
+    box-shadow: 0 24px 70px rgba(0,0,0,.24) !important;
+  }
+
+  .mobile-profile-menu-item {
+    min-height: 48px !important;
+    border-radius: 12px !important;
+    padding: 11px 12px !important;
+  }
+
+  /* Dialogs are bottom sheets on phones. */
+  :is(
+    .booking-overlay,
+    .request-details-overlay,
+    .review-modal-overlay,
+    .decline-dialog-overlay,
+    .edit-portfolio-overlay,
+    .modal-overlay
+  ) {
+    align-items: flex-end !important;
+    padding: 0 !important;
+  }
+
+  :is(
+    .booking-modal,
+    .request-details-modal,
+    .review-modal,
+    .decline-dialog-card,
+    .edit-portfolio-modal,
+    .modal-overlay > .modal-content
+  ) {
+    width: 100% !important;
+    max-width: none !important;
+    max-height: 94dvh !important;
+    border-radius: 24px 24px 0 0 !important;
+    border-bottom: 0 !important;
+  }
+}
+
+@media (max-width: 360px) {
+  .mobile-bottom-nav {
+    left: 6px !important;
+    right: 6px !important;
+    gap: 0 !important;
+  }
+  .mobile-bottom-nav-label { font-size: 0.58rem !important; }
+  :is(
+    .client-dashboard-page,
+    .dashboard-container,
+    .requests-container,
+    .provider-schedule-page,
+    .provider-availability-page,
+    .user-settings-container,
+    .notifications-page-shell,
+    .portfolio-shell,
+    .feed-shell
+  ) {
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+  }
+}
