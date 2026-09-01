@@ -1051,7 +1051,7 @@
 
 .availability-date-actions button,
 .availability-date-editor button {
-  min-height: 40px;
+  min-height: 44px;
   border: 1px solid var(--color-border);
   border-radius: 10px;
   background: var(--color-surface);
