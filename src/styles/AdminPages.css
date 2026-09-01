@@ -421,95 +421,6 @@
   outline-offset: 2px;
 }
 
-/* Action Buttons */
-.admin-page .btn-approve {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  min-height: 44px;
-  padding: 0.75rem 1.1rem;
-  background: var(--primary);
-  color: white;
-  border: none;
-  border-radius: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.admin-page .btn-approve:hover {
-  background: var(--primary-hover);
-}
-
-.admin-page .btn-reject {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  min-height: 44px;
-  padding: 0.75rem 1.1rem;
-  background: transparent;
-  color: var(--admin-danger);
-  border: 1px solid color-mix(in srgb, var(--admin-danger) 38%, var(--admin-border));
-  border-radius: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.admin-page .btn-reject:hover {
-  background: color-mix(in srgb, var(--admin-danger) 10%, var(--admin-surface));
-}
-
-.admin-page .btn-investigate {
-  min-height: 44px;
-  padding: 0.65rem 1rem;
-  background: var(--primary);
-  color: white;
-  border: none;
-  border-radius: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.admin-page .btn-investigate:hover {
-  background: var(--primary-hover);
-}
-
-.admin-page .btn-dismiss {
-  min-height: 44px;
-  padding: 0.65rem 1rem;
-  background: transparent;
-  color: var(--admin-muted);
-  border: 1px solid var(--admin-border);
-  border-radius: 12px;
-  font-weight: 600;
-  font-size: 0.9rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.admin-page .btn-dismiss:hover {
-  background: var(--admin-surface-soft);
-}
-
-.admin-page .btn-ban {
-  min-height: 44px;
-  padding: 0.65rem 1rem;
-  background: transparent;
-  color: var(--admin-danger);
-  border: 1px solid color-mix(in srgb, var(--admin-danger) 38%, var(--admin-border));
-  border-radius: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.admin-page .btn-ban:hover {
-  background: color-mix(in srgb, var(--admin-danger) 10%, var(--admin-surface));
-}
 
 /* ===================================
    ADMIN DIALOG CARD
@@ -616,30 +527,6 @@
   padding: 0 1.1rem 1rem;
 }
 
-.admin-page .btn-view-details {
-  padding: 0.5rem 1rem;
-  background: #f3f8fd;
-  color: #35516f;
-  border: 1px solid #cfe0f0;
-  border-radius: 6px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.admin-page .btn-view-details:hover {
-  background: #e5f1fb;
-}
-
-.admin-page .btn-view-details:disabled,
-.admin-page .btn-approve:disabled,
-.admin-page .btn-reject:disabled,
-.admin-page .btn-investigate:disabled,
-.admin-page .btn-dismiss:disabled,
-.admin-page .btn-ban:disabled {
-  opacity: 0.65;
-  cursor: not-allowed;
-}
 
 /* ===================================
    VERIFICATION DOCUMENT PREVIEW
@@ -1045,44 +932,6 @@
   gap: 0.5rem;
 }
 
-.action-btn {
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  border-radius: var(--radius-control);
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.action-btn.view {
-  background: #e7f0ff;
-  color: #1f56ba;
-}
-
-.action-btn.view:hover {
-  background: #d8e6ff;
-}
-
-.action-btn.edit {
-  background: #dbeafe;
-  color: #2563eb;
-}
-
-.action-btn.edit:hover {
-  background: #bfdbfe;
-}
-
-.action-btn.delete {
-  background: #fee2e2;
-  color: #dc2626;
-}
-
-.action-btn.delete:hover {
-  background: #fecaca;
-}
 
 /* ===================================
    PAGINATION
@@ -1531,37 +1380,6 @@ input:checked + .slider:before {
   width: 36%;
 }
 
-.btn-save {
-  min-height: var(--control-height);
-  padding: 0.7rem 1.2rem;
-  background: var(--admin-primary);
-  color: white;
-  border: none;
-  border-radius: var(--radius-control);
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.btn-save:hover {
-  background: var(--admin-primary-dark);
-}
-
-.admin-page .btn-cancel {
-  min-height: var(--control-height);
-  padding: 0.7rem 1.2rem;
-  background: transparent;
-  color: var(--admin-muted);
-  border: 1px solid var(--admin-border);
-  border-radius: var(--radius-control);
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.admin-page .btn-cancel:hover {
-  background: var(--admin-surface-soft);
-}
 
 /* ===================================
    QUICK LINKS
@@ -1928,11 +1746,6 @@ input:checked + .slider:before {
     flex-direction: column;
   }
 
-  .admin-page .settings-actions .btn-save,
-  .admin-page .settings-actions .btn-cancel {
-    width: 100%;
-    min-height: 44px;
-  }
 }
 
 /* Mobile cards for users management */
@@ -1963,13 +1776,6 @@ input:checked + .slider:before {
   margin-top: 0.7rem;
 }
 
-.admin-page.admin-users-page .admin-user-mobile-actions .btn-users-action,
-.admin-page.admin-users-page .admin-user-mobile-actions .btn-investigate,
-.admin-page.admin-users-page .admin-user-mobile-actions .btn-approve {
-  width: 100%;
-  min-height: 46px;
-  font-size: 0.88rem;
-}
 
 .admin-page.admin-users-page .admin-user-mobile-body .request-detail {
   margin: 0 0 0.35rem;
@@ -2416,58 +2222,6 @@ input:checked + .slider:before {
   min-width: 132px;
 }
 
-.admin-page .btn-approve,
-.admin-page .btn-investigate,
-.admin-page .btn-view-details,
-.admin-page .btn-dismiss,
-.admin-page .btn-reject,
-.admin-page .btn-ban {
-  min-height: 44px;
-  padding: 0.55rem 0.75rem;
-  border-radius: 11px;
-  font-size: 0.83rem;
-  font-weight: 700;
-  box-shadow: none;
-}
-
-.admin-page .btn-approve,
-.admin-page .btn-investigate {
-  border: 1px solid var(--brand-blue);
-  background: var(--brand-blue);
-  color: #fff;
-}
-
-.admin-page .btn-approve:hover,
-.admin-page .btn-investigate:hover {
-  border-color: var(--brand-blue-hover);
-  background: var(--brand-blue-hover);
-}
-
-.admin-page .btn-view-details,
-.admin-page .btn-dismiss {
-  border: 1px solid var(--color-border);
-  background: var(--color-surface);
-  color: var(--color-text-primary);
-}
-
-.admin-page .btn-view-details:hover,
-.admin-page .btn-dismiss:hover {
-  border-color: var(--color-border-strong);
-  background: var(--color-soft-blue);
-  color: var(--color-text-primary);
-}
-
-.admin-page .btn-reject,
-.admin-page .btn-ban {
-  border-color: color-mix(in srgb, var(--color-danger) 28%, var(--color-border));
-  background: color-mix(in srgb, var(--color-danger) 5%, var(--color-surface));
-  color: var(--color-danger);
-}
-
-.admin-page .btn-reject:hover,
-.admin-page .btn-ban:hover {
-  background: color-mix(in srgb, var(--color-danger) 9%, var(--color-surface));
-}
 
 /* User management table */
 .admin-page .table-container {
@@ -2694,19 +2448,6 @@ input:checked + .slider:before {
   margin-bottom: 0.85rem;
 }
 
-.admin-page .settings-inline-actions .btn-save {
-  min-height: 44px;
-  border: 1px solid var(--brand-blue);
-  border-radius: 11px;
-  background: var(--brand-blue);
-  color: #fff;
-  font-weight: 720;
-}
-
-.admin-page .settings-inline-actions .btn-save:hover {
-  border-color: var(--brand-blue-hover);
-  background: var(--brand-blue-hover);
-}
 
 .admin-page .settings-card {
   padding: 1rem;
