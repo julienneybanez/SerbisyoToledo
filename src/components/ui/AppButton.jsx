@@ -15,7 +15,15 @@ export default function AppButton({
 
   return (
     <Component
-      className={['st-button', `st-button--${variant}`, `st-button--${size}`, className].filter(Boolean).join(' ')}
+      className={[
+        'st-button',
+        'mock-btn',
+        `st-button--${variant}`,
+        `mock-btn--${variant}`,
+        `st-button--${size}`,
+        `mock-btn--${size}`,
+        className,
+      ].filter(Boolean).join(' ')}
       {...componentProps}
     >
       {icon}
