@@ -7,7 +7,7 @@ import bootstrap5Plugin from '@fullcalendar/bootstrap5';
 import '@fullcalendar/react/skeleton.css';
 import '@fullcalendar/bootstrap5/theme.css';
 import { serviceRequestAPI } from '../services/api';
-import { PageHeader } from '../components/ui';
+import { AppButton, PageHeader } from '../components/ui';
 import { useLanguage } from '../context/LanguageContext';
 import './ProviderSchedule.css';
 
@@ -103,7 +103,7 @@ export default function ProviderSchedule() {
           title={t('schedule')}
           subtitle={t('providerScheduleSubtitle')}
           className="provider-schedule-header"
-          action={<Link to="/provider-availability" className="st-button st-button--secondary st-button--md"><i className="bi bi-calendar2-check" aria-hidden="true"></i> {t('providerScheduleManageAvailability')}</Link>}
+          action={<AppButton as={Link} to="/provider-availability" variant="secondary" icon={<i className="bi bi-calendar2-check" aria-hidden="true"></i>}>{t('providerScheduleManageAvailability')}</AppButton>}
         />
 
         <section className="provider-schedule-summary" aria-label={t('providerScheduleSummaryAria')}>
