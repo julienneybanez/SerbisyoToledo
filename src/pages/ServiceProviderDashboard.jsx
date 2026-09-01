@@ -7,7 +7,7 @@ import EditPortfolioModal from '../components/common/EditPortfolioModal';
 import VerificationRequestModal from '../components/common/VerificationRequestModal';
 import RequestDetailsModal from '../components/common/RequestDetailsModal';
 import NextStepHelp from '../components/common/NextStepHelp';
-import { AppButton, AppCard, SoftPanel, StatCard } from '../components/ui';
+import { AppButton, AppCard, AppTextarea, IconButton, SoftPanel, StatCard } from '../components/ui';
 import { REQUEST_STATUS } from '../constants/domain';
 import { useLanguage } from '../context/LanguageContext';
 import './ServiceProviderDashboard.css';
@@ -746,68 +746,67 @@ export default function ServiceProviderDashboard() {
                   <div className="job-actions">
                     {job.status === REQUEST_STATUS.PENDING && (
                       <>
-                        <button
-                          className="job-btn job-btn-primary"
+                        <AppButton
                           onClick={() => handleStatusUpdate(job.id, REQUEST_STATUS.ACCEPTED)}
                           disabled={actionLoading === job.id}
                         >
                           {actionLoading === job.id ? t('requestsProcessing') : t('requestsAcceptRequest')}
-                        </button>
-                        <button
-                          className="job-btn job-btn-secondary"
+                        </AppButton>
+                        <AppButton
+                          variant="secondary"
                           onClick={() => setSelectedRequest(job)}
                           disabled={actionLoading === job.id}
                         >
                           View Details
-                        </button>
-                        <button
-                          className="job-btn job-btn-decline-subtle"
+                        </AppButton>
+                        <AppButton
+                          variant="danger"
                           onClick={() => openDeclineDialog(job.id)}
                           disabled={actionLoading === job.id}
                         >
                           Decline Request
-                        </button>
+                        </AppButton>
                       </>
                     )}
 
                     {job.status === REQUEST_STATUS.ACCEPTED && (
                       <>
-                        <button
-                          className="job-btn job-btn-on-way"
+                        <AppButton
                           onClick={() => handleStatusUpdate(job.id, REQUEST_STATUS.ON_THE_WAY)}
                           disabled={actionLoading === job.id}
+                          icon={<i className="bi bi-truck" aria-hidden="true"></i>}
                         >
-                          <i className="bi bi-truck"></i> {t('requestsImOnMyWay')}
-                        </button>
-                        <button
-                          className="job-btn job-btn-secondary"
+                          {t('requestsImOnMyWay')}
+                        </AppButton>
+                        <AppButton
+                          variant="secondary"
                           onClick={() => setSelectedRequest(job)}
                           disabled={actionLoading === job.id}
                         >
                           View Details
-                        </button>
+                        </AppButton>
                       </>
                     )}
 
                     {job.status === REQUEST_STATUS.ON_THE_WAY && (
                       <>
-                        <button className="job-btn job-btn-on-way" onClick={() => handleStatusUpdate(job.id, REQUEST_STATUS.IN_PROGRESS)} disabled={actionLoading === job.id}>
-                          <i className="bi bi-play-circle"></i> {t('requestsStartService')}
-                        </button>
-                        <button className="job-btn job-btn-secondary" onClick={() => setSelectedRequest(job)} disabled={actionLoading === job.id}>
+                        <AppButton onClick={() => handleStatusUpdate(job.id, REQUEST_STATUS.IN_PROGRESS)} disabled={actionLoading === job.id} icon={<i className="bi bi-play-circle" aria-hidden="true"></i>}>
+                          {t('requestsStartService')}
+                        </AppButton>
+                        <AppButton variant="secondary" onClick={() => setSelectedRequest(job)} disabled={actionLoading === job.id}>
                           View Details
-                        </button>
+                        </AppButton>
                       </>
                     )}
 
                     {job.status === REQUEST_STATUS.IN_PROGRESS && (
                       <>
-                        <button className="job-btn job-btn-complete" onClick={() => handleStatusUpdate(job.id, REQUEST_STATUS.COMPLETED)} disabled={actionLoading === job.id}>
-                          <i className="bi bi-check-lg"></i> {t('requestsMarkServiceComplete')}
-                        </button>
-                        <button className="job-btn job-btn-secondary" onClick={() => setSelectedRequest(job)} disabled={actionLoading === job.id}>
+                        <AppButton onClick={() => handleStatusUpdate(job.id, REQUEST_STATUS.COMPLETED)} disabled={actionLoading === job.id} icon={<i className="bi bi-check-lg" aria-hidden="true"></i>}>
+                          {t('requestsMarkServiceComplete')}
+                        </AppButton>
+                        <AppButton variant="secondary" onClick={() => setSelectedRequest(job)} disabled={actionLoading === job.id}>
                           View Details
-                        </button>
+                        </AppButton>
                       </>
                     )}
                   </div>
@@ -856,9 +855,9 @@ export default function ServiceProviderDashboard() {
             )}
           </div>
           {!user?.isVerified && verificationStatus?.status !== 'pending' && (
-            <button className="btn-get-verified" onClick={() => setShowVerificationRequest(true)}>
+            <AppButton onClick={() => setShowVerificationRequest(true)}>
               {verificationStatus?.status === 'rejected' ? t('providerVerificationResubmit') : t('providerGetVerified')}
-            </button>
+            </AppButton>
           )}
         </section>
 
@@ -924,7 +923,7 @@ export default function ServiceProviderDashboard() {
             <div className="decline-dialog-card" onClick={(event) => event.stopPropagation()}>
               <div className="decline-dialog-header">
                 <h2 id="dashboard-decline-dialog-title">{t('requestsDeclineRequest')}</h2>
-                <button type="button" className="decline-dialog-close" onClick={closeDeclineDialog} aria-label={t('requestsCloseDeclineDialog')}>×</button>
+                <IconButton className="decline-dialog-close" onClick={closeDeclineDialog} aria-label={t('requestsCloseDeclineDialog')}>×</IconButton>
               </div>
               <div className="decline-dialog-body">
                 <label htmlFor="dashboard-decline-reason" className="decline-dialog-label">{t('reasonForDeclining')}</label>
@@ -939,10 +938,10 @@ export default function ServiceProviderDashboard() {
                 {declineDialog.error ? <p className="decline-dialog-error">{declineDialog.error}</p> : null}
               </div>
               <div className="decline-dialog-actions">
-                <button type="button" className="decline-btn-cancel" onClick={closeDeclineDialog} disabled={actionLoading === declineDialog.requestId}>{t('requestsCancelAction')}</button>
-                <button type="button" className="decline-btn-confirm" onClick={handleConfirmDecline} disabled={actionLoading === declineDialog.requestId}>
+                <AppButton variant="secondary" onClick={closeDeclineDialog} disabled={actionLoading === declineDialog.requestId}>{t('requestsCancelAction')}</AppButton>
+                <AppButton variant="danger" onClick={handleConfirmDecline} disabled={actionLoading === declineDialog.requestId}>
                   {actionLoading === declineDialog.requestId ? t('requestsDeclining') : t('requestsDeclineRequest')}
-                </button>
+                </AppButton>
               </div>
             </div>
           </div>
