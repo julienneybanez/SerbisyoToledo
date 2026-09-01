@@ -309,34 +309,6 @@
   color: var(--brand-accent-dark);
 }
 
-.availability-primary-button,
-.availability-save-button {
-  min-height: 48px;
-  border: 0;
-  border-radius: 12px;
-  background: var(--brand-primary);
-  color: #fff;
-  font: inherit;
-  font-size: 0.9rem;
-  font-weight: 800;
-  cursor: pointer;
-  box-shadow: 0 7px 16px color-mix(in srgb, var(--brand-primary) 24%, transparent);
-}
-
-.availability-primary-button {
-  width: 100%;
-  margin-top: 1rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.45rem;
-}
-
-.availability-primary-button:hover:not(:disabled),
-.availability-save-button:hover:not(:disabled) {
-  background: var(--brand-primary-dark);
-}
-
 .availability-calendar-heading {
   align-items: center;
   margin-bottom: 0.3rem;
@@ -613,15 +585,6 @@
   font-size: 0.76rem;
 }
 
-.availability-save-button {
-  min-width: 190px;
-  padding: 0.7rem 1rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.45rem;
-}
-
 .availability-spinner {
   width: 16px;
   height: 16px;
@@ -635,8 +598,7 @@
   to { transform: rotate(360deg); }
 }
 
-.availability-card button:disabled,
-.availability-save-button:disabled {
+.availability-card button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
   transform: none;
@@ -720,10 +682,6 @@
     bottom: calc(var(--mobile-nav-height) + 0.65rem);
     flex-direction: column;
     align-items: stretch;
-  }
-
-  .availability-save-button {
-    width: 100%;
   }
 
   .availability-date-adjustments > summary {
@@ -944,21 +902,6 @@
 
 .availability-system-rule i {
   color: var(--brand-teal-hover);
-}
-
-.availability-primary-button,
-.availability-save-button {
-  min-height: 48px;
-  border: 1px solid var(--brand-blue);
-  border-radius: 12px;
-  background: var(--brand-blue);
-  box-shadow: none;
-}
-
-.availability-primary-button:hover:not(:disabled),
-.availability-save-button:hover:not(:disabled) {
-  border-color: var(--brand-blue-hover);
-  background: var(--brand-blue-hover);
 }
 
 .availability-selected-count {
