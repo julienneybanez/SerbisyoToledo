@@ -24,7 +24,7 @@ const counterpartId = (request, userId) => (
 );
 
 const emitConversationUpdated = async (req, request, eventType) => {
-  const io = req.app.get('io');
+  const io = req.app?.get?.('io');
   if (!io) return;
 
   try {
