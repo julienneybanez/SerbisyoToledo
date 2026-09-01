@@ -288,3 +288,12 @@
   background: var(--color-surface);
   border-color: var(--color-border);
 }
+
+
+/* Mobile admin uses the app bottom navigation; avoid a second website-style
+   navigation footer. View Site remains in the mobile profile sheet. */
+@media (max-width: 800px) {
+  .admin-footer {
+    display: none !important;
+  }
+}
