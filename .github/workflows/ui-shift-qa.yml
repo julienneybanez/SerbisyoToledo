@@ -7,6 +7,26 @@ on:
   workflow_dispatch:
 
 jobs:
+  parity:
+    name: Functional source parity
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Verify UI shift did not edit application behavior files
+        shell: bash
+        run: |
+          BASE=65c2a1c6d3f8260357582d03ac5ca19d20bf7cf7
+          changed="$(git diff --name-only "$BASE"..HEAD -- '*.js' '*.jsx' | grep -v '^src/components/ui/' | grep -v '^src/pages/__tests__/TargetedCorrectness.test.jsx$' || true)"
+          if [ -n "$changed" ]; then
+            echo "Unexpected functional JavaScript/JSX changes:"
+            echo "$changed"
+            exit 1
+          fi
+          echo "No application behavior JS/JSX files changed from the locked UI baseline."
+
   frontend:
     name: Frontend lint, test, build
     runs-on: ubuntu-latest
@@ -23,7 +43,7 @@ jobs:
       - run: npm run build
 
   backend:
-    name: Backend tests
+    name: Backend non-DB tests
     runs-on: ubuntu-latest
     timeout-minutes: 15
     defaults:
@@ -37,4 +57,5 @@ jobs:
           cache: npm
           cache-dependency-path: backend/package-lock.json
       - run: npm ci
-      - run: npm test
+      - name: Run backend suite that does not require the local canonical MySQL socket
+        run: npx vitest run --exclude test/canonicalMySql.integration.test.js --exclude test/legacyProductionReconciliation.integration.test.js
