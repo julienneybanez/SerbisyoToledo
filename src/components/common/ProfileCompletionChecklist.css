@@ -35,25 +35,6 @@
   color: var(--color-text-secondary) !important;
 }
 
-.profile-checklist .btn-outline-secondary {
-  min-height: 44px;
-  color: var(--color-text-secondary);
-  border-color: var(--color-border);
-}
-
-.profile-checklist .btn-outline-secondary:hover {
-  background: var(--color-surface-secondary);
-  color: var(--color-text-primary);
-  border-color: var(--color-border-strong);
-}
-
-.profile-checklist .btn-outline-primary {
-  min-height: 44px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  white-space: nowrap;
-}
 
 .profile-checklist .alert-light {
   background: var(--color-surface-secondary);
@@ -133,27 +114,6 @@
   font-size: 0.95rem;
 }
 
-.checklist-continue-btn {
-  min-height: 44px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.65rem 1rem;
-  border: 1px solid var(--brand-primary);
-  border-radius: var(--radius-control);
-  background: var(--brand-primary);
-  color: #fff;
-  font-size: 0.9rem;
-  font-weight: 700;
-  text-decoration: none;
-  white-space: nowrap;
-}
-
-.checklist-continue-btn:hover {
-  background: var(--brand-primary-dark);
-  border-color: var(--brand-primary-dark);
-  color: #fff;
-}
 
 @media (max-width: 640px) {
   .checklist-header {
@@ -178,9 +138,6 @@
     align-items: stretch;
   }
 
-  .checklist-continue-btn {
-    width: 100%;
-  }
 }
 
 
@@ -221,39 +178,6 @@
   background: var(--brand-blue);
 }
 
-.profile-checklist .btn-outline-secondary,
-.profile-checklist .btn-outline-primary,
-.checklist-continue-btn {
-  min-height: 44px;
-  border-radius: 11px;
-  font-size: 0.86rem;
-  font-weight: 700;
-}
-
-.profile-checklist .btn-outline-primary,
-.checklist-continue-btn {
-  border-color: var(--brand-blue);
-  background: var(--brand-blue);
-  color: #fff;
-}
-
-.profile-checklist .btn-outline-primary:hover,
-.checklist-continue-btn:hover {
-  border-color: var(--brand-blue-hover);
-  background: var(--brand-blue-hover);
-  color: #fff;
-}
-
-.profile-checklist .btn-outline-secondary {
-  border-color: var(--color-border);
-  background: var(--color-surface);
-  color: var(--color-text-secondary);
-}
-
-.profile-checklist .btn-outline-secondary:hover {
-  border-color: var(--color-border-strong);
-  background: var(--color-soft-cream);
-}
 
 .profile-checklist .alert-light {
   border-color: var(--color-border);
