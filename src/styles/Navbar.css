@@ -626,3 +626,65 @@
 .navbar .navbar-language-select {
   font-size: 0.95rem;
 }
+
+
+/* ===================================
+   APPROVED MOCKUP AUTH BUTTONS
+   Keep the restored navbar structure, but use the Login / Sign Up button
+   treatment from the approved mockup.
+   =================================== */
+.navbar .login-btn,
+.navbar .signup-btn {
+  min-height: 44px !important;
+  height: auto !important;
+  padding: 0.62rem 0.95rem !important;
+  border-radius: 12px !important;
+  font-size: 0.9rem;
+  font-weight: 750;
+  line-height: 1.2;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+.navbar .login-btn {
+  border: 1px solid var(--color-border) !important;
+  background: var(--color-surface) !important;
+  color: var(--brand-blue-hover) !important;
+}
+
+.navbar .login-btn:hover,
+.navbar .login-btn:focus-visible,
+.navbar .login-btn.active-btn {
+  border-color: color-mix(in srgb, var(--brand-blue) 40%, var(--color-border)) !important;
+  background: var(--color-soft-blue) !important;
+  color: var(--brand-blue-hover) !important;
+}
+
+.navbar .signup-btn {
+  border: 1px solid var(--brand-blue) !important;
+  background: var(--brand-blue) !important;
+  color: #fff !important;
+}
+
+.navbar .signup-btn:hover,
+.navbar .signup-btn:focus-visible,
+.navbar .signup-btn.active-btn {
+  border-color: var(--brand-blue-hover) !important;
+  background: var(--brand-blue-hover) !important;
+  color: #fff !important;
+  opacity: 1;
+}
+
+[data-theme='dark'] .navbar .login-btn {
+  border-color: var(--color-border-strong) !important;
+  background: var(--color-surface) !important;
+  color: var(--color-primary-hover) !important;
+}
+
+[data-theme='dark'] .navbar .login-btn:hover,
+[data-theme='dark'] .navbar .login-btn:focus-visible,
+[data-theme='dark'] .navbar .login-btn.active-btn {
+  border-color: color-mix(in srgb, var(--color-primary) 45%, var(--color-border)) !important;
+  background: color-mix(in srgb, var(--color-primary) 12%, var(--color-surface)) !important;
+  color: var(--color-primary-hover) !important;
+}
