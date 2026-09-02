@@ -610,25 +610,33 @@ export default function ServiceProviderDashboard() {
         )}
 
         <section className="provider-stats-row" aria-label={t('providerQuickStatsAria')}>
-          <StatCard className="provider-stat-card" label={t(requestSummary.pending === 1 ? 'providerNewRequest' : 'providerNewRequests')} value={requestSummary.pending} icon={<i className="bi bi-inbox"></i>}>
-            <small>{requestSummary.pending > 0 ? t('providerNeedsResponse') : t('providerNoPendingRequests')}</small>
-          </StatCard>
+          <StatCard
+            className="provider-stat-card"
+            label={t(requestSummary.pending === 1 ? 'providerNewRequest' : 'providerNewRequests')}
+            value={requestSummary.pending}
+            icon={<i className="bi bi-inbox"></i>}
+          />
 
-          <StatCard className="provider-stat-card" label={t(requestSummary.upcoming === 1 ? 'providerUpcomingJob' : 'providerUpcomingJobs')} value={requestSummary.upcoming} icon={<i className="bi bi-calendar-event"></i>}>
-            <small>
-              {requestSummary.nextUpcoming
-                ? t('providerNext', { schedule: formatSchedule(requestSummary.nextUpcoming, true, locale, t('providerScheduleNotSet')) })
-                : t('providerNoUpcomingJobs')}
-            </small>
-          </StatCard>
+          <StatCard
+            className="provider-stat-card"
+            label={t(requestSummary.upcoming === 1 ? 'providerUpcomingJob' : 'providerUpcomingJobs')}
+            value={requestSummary.upcoming}
+            icon={<i className="bi bi-calendar-event"></i>}
+          />
 
-          <StatCard className="provider-stat-card" label={t(requestSummary.active === 1 ? 'providerActiveJob' : 'providerActiveJobs')} value={requestSummary.active} icon={<i className="bi bi-briefcase"></i>}>
-            <small>{t('providerActiveDescription')}</small>
-          </StatCard>
+          <StatCard
+            className="provider-stat-card"
+            label={t(requestSummary.active === 1 ? 'providerActiveJob' : 'providerActiveJobs')}
+            value={requestSummary.active}
+            icon={<i className="bi bi-briefcase"></i>}
+          />
 
-          <StatCard className="provider-stat-card" label={t(requestSummary.completed === 1 ? 'providerCompletedJob' : 'providerCompletedJobs')} value={requestSummary.completed} icon={<i className="bi bi-check2-circle"></i>}>
-            <small>{t('providerCompletedDescription')}</small>
-          </StatCard>
+          <StatCard
+            className="provider-stat-card"
+            label={t(requestSummary.completed === 1 ? 'providerCompletedJob' : 'providerCompletedJobs')}
+            value={requestSummary.completed}
+            icon={<i className="bi bi-check2-circle"></i>}
+          />
         </section>
 
         <ProfileCompletionChecklist

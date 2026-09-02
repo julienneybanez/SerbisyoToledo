@@ -14,9 +14,11 @@ export default function StatCard({
     { className: ['mock-card', 'mock-stat', className].filter(Boolean).join(' '), ...props },
     <>
       {icon && <span className="mock-stat-icon" aria-hidden="true">{icon}</span>}
-      <small>{label}</small>
-      <strong>{value}</strong>
-      {children}
+      <span className="mock-stat-copy">
+        <small>{label}</small>
+        <strong>{value}</strong>
+        {children}
+      </span>
     </>,
   );
 }

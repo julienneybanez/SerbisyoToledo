@@ -371,3 +371,111 @@
 [data-theme='dark'] .workspace-sidebar-footer {
   background: var(--color-surface);
 }
+
+
+/* Final workspace topbar alignment: mirror the authenticated mockup header. */
+@media (min-width: 769px) {
+  .workspace-topbar {
+    justify-content: space-between !important;
+    gap: 1.25rem !important;
+    padding-inline: clamp(1.5rem, 3vw, 2.25rem) !important;
+  }
+
+  .workspace-topbar-search {
+    width: min(640px, 52vw);
+    min-width: 260px;
+    min-height: 46px;
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    padding: 0 0.9rem;
+    border: 1px solid var(--color-border);
+    border-radius: 13px;
+    background: var(--color-surface);
+    color: var(--color-text-secondary);
+  }
+
+  .workspace-topbar-search:focus-within {
+    border-color: var(--brand-blue);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-blue) 11%, transparent);
+  }
+
+  .workspace-topbar-search input {
+    min-width: 0;
+    flex: 1;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: var(--color-text-primary);
+    font: inherit;
+    font-size: 0.94rem;
+  }
+
+  .workspace-topbar-search input::placeholder {
+    color: var(--color-text-muted);
+  }
+
+  .workspace-topbar-actions {
+    flex: 0 0 auto;
+    gap: 0.55rem !important;
+  }
+
+  .workspace-language-button,
+  .workspace-topbar .theme-toggle,
+  .workspace-account-button,
+  .workspace-logout-button,
+  .workspace-topbar .notification-trigger {
+    min-height: 46px !important;
+    border: 1px solid var(--color-border) !important;
+    border-radius: 13px !important;
+    background: var(--color-surface) !important;
+    color: var(--color-text-primary) !important;
+    box-shadow: none !important;
+  }
+
+  .workspace-language-button {
+    min-width: 52px;
+    padding: 0 0.8rem;
+    font: inherit;
+    font-size: 0.84rem;
+    font-weight: 760;
+    cursor: pointer;
+  }
+
+  .workspace-topbar .theme-toggle {
+    padding-inline: 0.75rem !important;
+  }
+
+  .workspace-topbar .theme-toggle-label {
+    display: inline !important;
+  }
+
+  .workspace-account-button {
+    padding: 0.35rem 0.75rem !important;
+    border-radius: 999px !important;
+  }
+
+  .workspace-logout-button {
+    width: 46px !important;
+  }
+
+  .workspace-language-button:hover,
+  .workspace-topbar .theme-toggle:hover,
+  .workspace-account-button:hover,
+  .workspace-logout-button:hover,
+  .workspace-topbar .notification-trigger:hover {
+    background: var(--color-soft-blue) !important;
+    border-color: color-mix(in srgb, var(--brand-blue) 24%, var(--color-border)) !important;
+  }
+}
+
+@media (max-width: 1040px) and (min-width: 769px) {
+  .workspace-topbar-search {
+    width: min(430px, 40vw);
+  }
+
+  .workspace-topbar .theme-toggle-label,
+  .workspace-topbar-name {
+    display: none !important;
+  }
+}
