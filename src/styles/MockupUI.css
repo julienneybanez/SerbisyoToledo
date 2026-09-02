@@ -532,9 +532,15 @@
 }
 
 /* Mockup settings */
-.settings-layout {
+.settings-layout:not(.settings-layout-single) {
   grid-template-columns: 210px minmax(0, 1fr) !important;
   gap: 18px !important;
+  border: 0 !important;
+}
+
+.settings-layout.settings-layout-single {
+  grid-template-columns: minmax(0, 1fr) !important;
+  gap: 0 !important;
   border: 0 !important;
 }
 .settings-nav {
@@ -2654,9 +2660,14 @@
     border-radius: 20px !important;
   }
 
-  .settings-layout {
+  .settings-layout:not(.settings-layout-single) {
     grid-template-columns: 210px minmax(0,1fr) !important;
     gap: 18px !important;
+  }
+
+  .settings-layout.settings-layout-single {
+    grid-template-columns: minmax(0,1fr) !important;
+    gap: 0 !important;
   }
 
   .settings-nav {
