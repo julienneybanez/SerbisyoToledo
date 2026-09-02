@@ -366,144 +366,182 @@ function ServiceProviderSettings() {
           )}
 
           {pageMode === 'credentials' && (
-            <div className="settings-section">
+            <div className="settings-section provider-credentials-section">
               <h2 className="settings-section-title">{t('credentials')}</h2>
-              
-              <h3 className="settings-subsection-title">{t('providerCredentialsCertificatesTitle')}</h3>
 
-              <div className="settings-group">
-                <label className="settings-label">{t('providerCredentialNameLabel')}</label>
-                <AppInput
-                  type="text"
-                  className="settings-input"
-                  value={newCredential.credentialName}
-                  onChange={(e) => setNewCredential((prev) => ({ ...prev, credentialName: e.target.value }))}
-                  disabled={credentialSaving}
-                />
-
-                <label className="settings-label">{t('providerCredentialTypeLabel')}</label>
-                <AppSelect
-                  className="settings-input"
-                  value={newCredential.credentialType}
-                  onChange={(e) => setNewCredential((prev) => ({ ...prev, credentialType: e.target.value }))}
-                  disabled={credentialSaving}
-                >
-                  <option value="">{t('providerCredentialTypePlaceholder')}</option>
-                  <option value="professional_license">{t('providerCredentialTypeProfessionalLicense')}</option>
-                  <option value="tesda_certification">{t('providerCredentialTypeTesda')}</option>
-                  <option value="safety_training">{t('providerCredentialTypeSafetyTraining')}</option>
-                  <option value="technical_certification">{t('providerCredentialTypeTechnicalCertification')}</option>
-                  <option value="government_accreditation">{t('providerCredentialTypeGovernmentAccreditation')}</option>
-                  <option value="manufacturer_certification">{t('providerCredentialTypeManufacturerCertification')}</option>
-                  <option value="training_certificate">{t('providerCredentialTypeTrainingCertificate')}</option>
-                  <option value="other">{t('providerCredentialTypeOther')}</option>
-                </AppSelect>
-
-                <label className="settings-label">{t('providerIssuingOrganizationLabel')}</label>
-                <AppInput
-                  type="text"
-                  className="settings-input"
-                  value={newCredential.issuingOrganization}
-                  onChange={(e) => setNewCredential((prev) => ({ ...prev, issuingOrganization: e.target.value }))}
-                  disabled={credentialSaving}
-                />
-
-                <label className="settings-label">{t('providerCredentialIdLabel')}</label>
-                <AppInput
-                  type="text"
-                  className="settings-input"
-                  value={newCredential.credentialId}
-                  onChange={(e) => setNewCredential((prev) => ({ ...prev, credentialId: e.target.value }))}
-                  disabled={credentialSaving}
-                />
-
-                <label className="settings-label">{t('providerIssueDateLabel')}</label>
-                <AppInput
-                  type="date"
-                  className="settings-input"
-                  value={newCredential.issueDate}
-                  onChange={(e) => setNewCredential((prev) => ({ ...prev, issueDate: e.target.value }))}
-                  disabled={credentialSaving}
-                />
-
-                <label className="settings-label">{t('providerExpirationDateLabel')}</label>
-                <AppInput
-                  type="date"
-                  className="settings-input"
-                  value={newCredential.expirationDate}
-                  onChange={(e) => setNewCredential((prev) => ({ ...prev, expirationDate: e.target.value }))}
-                  disabled={credentialSaving || newCredential.doesNotExpire}
-                />
-
-                <label className="settings-help" style={{ display: 'block' }}>
-                  <input
-                    type="checkbox"
-                    checked={newCredential.doesNotExpire}
-                    onChange={(e) => setNewCredential((prev) => ({ ...prev, doesNotExpire: e.target.checked }))}
-                    disabled={credentialSaving}
-                    style={{ marginRight: '0.45rem' }}
-                  />
-                  {t('providerCredentialDoesNotExpire')}
-                </label>
-
-                <label className="settings-label">{t('providerCredentialUrlLabel')}</label>
-                <AppInput
-                  type="url"
-                  className="settings-input"
-                  value={newCredential.credentialUrl}
-                  onChange={(e) => setNewCredential((prev) => ({ ...prev, credentialUrl: e.target.value }))}
-                  disabled={credentialSaving}
-                />
-
-                <label className="settings-label">{t('providerCredentialDocumentLabel')}</label>
-                <input
-                  type="file"
-                  className="settings-input"
-                  accept=".pdf,.jpg,.jpeg,.png,.webp"
-                  onChange={(e) => setCredentialFile(e.target.files?.[0] || null)}
-                  disabled={credentialSaving}
-                />
-              </div>
-
-              <div className="settings-actions">
-                <AppButton onClick={handleCreateCredential} disabled={credentialSaving}>
-                  {credentialSaving ? t('saving') : t('providerAddCredential')}
-                </AppButton>
-              </div>
-
-              <div className="settings-group">
-                <h4 className="settings-subsection-title" style={{ marginBottom: '0.5rem' }}>
-                  {t('providerSavedCredentialsTitle')}
-                </h4>
-                {credentialLoading && (
-                  <small className="settings-help">{t('providerLoadingCredentials')}</small>
-                )}
-                {!credentialLoading && credentials.length === 0 && (
-                  <small className="settings-help">{t('providerNoCredentialsYet')}</small>
-                )}
-                {credentials.map((credential) => (
-                  <div key={credential.id} className="settings-surface-block">
-                    <p className="settings-metadata-row settings-metadata-strong">
-                      {credential.credential_name}
-                    </p>
-                    <small className="settings-help">
-                      {credential.credential_type} • {credential.verification_status}
-                    </small>
-                    {credential.verification_notes && (
-                      <p className="settings-metadata-row">{credential.verification_notes}</p>
-                    )}
-                    <div className="settings-credential-actions">
-                      <AppButton
-                        onClick={() => handleSubmitCredential(credential.id)}
-                        disabled={credentialSaving || credential.verification_status === 'pending'}
-                      >
-                        {credential.verification_status === 'pending'
-                          ? t('providerPendingReview')
-                          : t('providerSubmitForReview')}
-                      </AppButton>
+              <div className="credentials-workspace-grid">
+                <section className="credential-form-card" aria-labelledby="credential-form-title">
+                  <div className="credential-card-heading">
+                    <div>
+                      <h3 id="credential-form-title" className="settings-subsection-title">{t('providerCredentialsCertificatesTitle')}</h3>
                     </div>
                   </div>
-                ))}
+
+                  <div className="credential-form-grid">
+                    <div className="credential-field">
+                      <label className="settings-label">{t('providerCredentialNameLabel')}</label>
+                      <AppInput
+                        type="text"
+                        className="settings-input"
+                        value={newCredential.credentialName}
+                        onChange={(e) => setNewCredential((prev) => ({ ...prev, credentialName: e.target.value }))}
+                        disabled={credentialSaving}
+                      />
+                    </div>
+
+                    <div className="credential-field">
+                      <label className="settings-label">{t('providerCredentialTypeLabel')}</label>
+                      <AppSelect
+                        className="settings-input"
+                        value={newCredential.credentialType}
+                        onChange={(e) => setNewCredential((prev) => ({ ...prev, credentialType: e.target.value }))}
+                        disabled={credentialSaving}
+                      >
+                        <option value="">{t('providerCredentialTypePlaceholder')}</option>
+                        <option value="professional_license">{t('providerCredentialTypeProfessionalLicense')}</option>
+                        <option value="tesda_certification">{t('providerCredentialTypeTesda')}</option>
+                        <option value="safety_training">{t('providerCredentialTypeSafetyTraining')}</option>
+                        <option value="technical_certification">{t('providerCredentialTypeTechnicalCertification')}</option>
+                        <option value="government_accreditation">{t('providerCredentialTypeGovernmentAccreditation')}</option>
+                        <option value="manufacturer_certification">{t('providerCredentialTypeManufacturerCertification')}</option>
+                        <option value="training_certificate">{t('providerCredentialTypeTrainingCertificate')}</option>
+                        <option value="other">{t('providerCredentialTypeOther')}</option>
+                      </AppSelect>
+                    </div>
+
+                    <div className="credential-field">
+                      <label className="settings-label">{t('providerIssuingOrganizationLabel')}</label>
+                      <AppInput
+                        type="text"
+                        className="settings-input"
+                        value={newCredential.issuingOrganization}
+                        onChange={(e) => setNewCredential((prev) => ({ ...prev, issuingOrganization: e.target.value }))}
+                        disabled={credentialSaving}
+                      />
+                    </div>
+
+                    <div className="credential-field">
+                      <label className="settings-label">{t('providerCredentialIdLabel')}</label>
+                      <AppInput
+                        type="text"
+                        className="settings-input"
+                        value={newCredential.credentialId}
+                        onChange={(e) => setNewCredential((prev) => ({ ...prev, credentialId: e.target.value }))}
+                        disabled={credentialSaving}
+                      />
+                    </div>
+
+                    <div className="credential-field">
+                      <label className="settings-label">{t('providerIssueDateLabel')}</label>
+                      <AppInput
+                        type="date"
+                        className="settings-input"
+                        value={newCredential.issueDate}
+                        onChange={(e) => setNewCredential((prev) => ({ ...prev, issueDate: e.target.value }))}
+                        disabled={credentialSaving}
+                      />
+                    </div>
+
+                    <div className="credential-field">
+                      <label className="settings-label">{t('providerExpirationDateLabel')}</label>
+                      <AppInput
+                        type="date"
+                        className="settings-input"
+                        value={newCredential.expirationDate}
+                        onChange={(e) => setNewCredential((prev) => ({ ...prev, expirationDate: e.target.value }))}
+                        disabled={credentialSaving || newCredential.doesNotExpire}
+                      />
+                    </div>
+
+                    <div className="credential-field credential-field-full credential-checkbox-field">
+                      <label className="credential-checkbox">
+                        <input
+                          type="checkbox"
+                          checked={newCredential.doesNotExpire}
+                          onChange={(e) => setNewCredential((prev) => ({ ...prev, doesNotExpire: e.target.checked }))}
+                          disabled={credentialSaving}
+                        />
+                        <span>{t('providerCredentialDoesNotExpire')}</span>
+                      </label>
+                    </div>
+
+                    <div className="credential-field credential-field-full">
+                      <label className="settings-label">{t('providerCredentialUrlLabel')}</label>
+                      <AppInput
+                        type="url"
+                        className="settings-input"
+                        value={newCredential.credentialUrl}
+                        onChange={(e) => setNewCredential((prev) => ({ ...prev, credentialUrl: e.target.value }))}
+                        disabled={credentialSaving}
+                      />
+                    </div>
+
+                    <div className="credential-field credential-field-full">
+                      <label className="settings-label">{t('providerCredentialDocumentLabel')}</label>
+                      <input
+                        type="file"
+                        className="settings-input credential-file-input"
+                        accept=".pdf,.jpg,.jpeg,.png,.webp"
+                        onChange={(e) => setCredentialFile(e.target.files?.[0] || null)}
+                        disabled={credentialSaving}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="settings-actions credential-form-actions">
+                    <AppButton onClick={handleCreateCredential} disabled={credentialSaving}>
+                      {credentialSaving ? t('saving') : t('providerAddCredential')}
+                    </AppButton>
+                  </div>
+                </section>
+
+                <section className="credential-list-card" aria-labelledby="saved-credentials-title">
+                  <div className="credential-card-heading">
+                    <div>
+                      <h3 id="saved-credentials-title" className="settings-subsection-title">{t('providerSavedCredentialsTitle')}</h3>
+                    </div>
+                  </div>
+
+                  {credentialLoading && (
+                    <div className="credential-empty-state">
+                      <span className="spinner-small" aria-hidden="true"></span>
+                      <small className="settings-help">{t('providerLoadingCredentials')}</small>
+                    </div>
+                  )}
+
+                  {!credentialLoading && credentials.length === 0 && (
+                    <div className="credential-empty-state">
+                      <i className="bi bi-patch-check" aria-hidden="true"></i>
+                      <small className="settings-help">{t('providerNoCredentialsYet')}</small>
+                    </div>
+                  )}
+
+                  <div className="credentials-list">
+                    {credentials.map((credential) => (
+                      <div key={credential.id} className="settings-surface-block credential-list-item">
+                        <p className="settings-metadata-row settings-metadata-strong">
+                          {credential.credential_name}
+                        </p>
+                        <small className="settings-help">
+                          {credential.credential_type} • {credential.verification_status}
+                        </small>
+                        {credential.verification_notes && (
+                          <p className="settings-metadata-row">{credential.verification_notes}</p>
+                        )}
+                        <div className="settings-credential-actions">
+                          <AppButton
+                            onClick={() => handleSubmitCredential(credential.id)}
+                            disabled={credentialSaving || credential.verification_status === 'pending'}
+                          >
+                            {credential.verification_status === 'pending'
+                              ? t('providerPendingReview')
+                              : t('providerSubmitForReview')}
+                          </AppButton>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </section>
               </div>
             </div>
           )}
