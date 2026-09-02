@@ -99,3 +99,19 @@
     padding: 0.75rem 0.65rem calc(var(--mobile-nav-height) + 1rem);
   }
 }
+
+
+/* Final admin page canvas: one continuous surface in each theme. */
+.admin-layout,
+.admin-content {
+  background: #fff !important;
+}
+
+[data-theme='dark'] .admin-layout,
+[data-theme='dark'] .admin-content {
+  background: var(--color-page-bg) !important;
+}
+
+.admin-content {
+  padding: clamp(1.2rem, 2.6vw, 2rem) !important;
+}

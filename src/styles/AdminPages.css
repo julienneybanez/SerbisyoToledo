@@ -2649,3 +2649,67 @@ input:checked + .slider:before {
     padding: 0;
   }
 }
+
+
+/* Final admin canvas cleanup and centered empty states. */
+.admin-page,
+[data-theme='dark'] .admin-page {
+  max-width: 1440px;
+  padding: 0.5rem 0.25rem 2rem;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.admin-page-header {
+  padding-inline: 0;
+}
+
+.admin-page .empty-state {
+  width: 100%;
+  min-height: clamp(260px, 38vh, 440px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  padding: 2.5rem 1.5rem;
+  border: 1px dashed var(--admin-border);
+  border-radius: 20px;
+  background: transparent;
+  color: var(--admin-muted);
+  text-align: center;
+}
+
+.admin-page .empty-state h3,
+.admin-page .empty-state p {
+  margin: 0;
+}
+
+.admin-page .empty-state h3 {
+  color: var(--admin-text);
+  font-size: 1.1rem;
+  font-weight: 760;
+}
+
+.admin-page .empty-state p {
+  max-width: 520px;
+  color: var(--admin-muted);
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+
+[data-theme='dark'] .admin-page .empty-state {
+  background: transparent;
+  border-color: var(--admin-border);
+}
+
+.admin-page .filters-bar,
+.admin-page .stats-grid,
+.admin-page .mini-stats,
+.admin-page .table-container,
+.admin-page .requests-list {
+  position: relative;
+  z-index: 1;
+}

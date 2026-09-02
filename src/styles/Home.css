@@ -605,3 +605,42 @@
     max-width: none;
   }
 }
+
+
+/* Final homepage canvas: one continuous page instead of alternating section bands. */
+.home-page,
+.home-hero,
+.home-popular-section,
+.home-trust-section,
+.home-provider-section,
+.home-page .how-it-works-section {
+  background: #fff !important;
+}
+
+.home-page {
+  min-height: 100vh;
+}
+
+[data-theme='dark'] .home-page,
+[data-theme='dark'] .home-hero,
+[data-theme='dark'] .home-popular-section,
+[data-theme='dark'] .home-trust-section,
+[data-theme='dark'] .home-provider-section,
+[data-theme='dark'] .home-page .how-it-works-section {
+  background: var(--color-page-bg) !important;
+}
+
+.home-hero {
+  padding-top: 1.1rem;
+}
+
+.home-provider-section > .container {
+  box-shadow: none;
+}
+
+[data-theme='dark'] .home-hero > .container,
+[data-theme='dark'] .home-provider-section > .container {
+  background:
+    radial-gradient(circle at 88% 12%, color-mix(in srgb, var(--brand-blue) 10%, transparent), transparent 34%),
+    linear-gradient(135deg, var(--color-soft-blue), var(--color-soft-mint), var(--color-soft-cream));
+}

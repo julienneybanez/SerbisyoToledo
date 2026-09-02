@@ -345,3 +345,138 @@
     padding: 0.5rem 0.75rem;
   }
 }
+
+
+/* Final admin topbar: use the same authenticated header language as client/provider. */
+.admin-navbar {
+  min-height: 74px;
+  padding: 0.7rem clamp(1.25rem, 2.5vw, 2rem) !important;
+  gap: 1.25rem;
+  border-bottom: 1px solid var(--color-border) !important;
+  background: var(--color-surface) !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+}
+
+.admin-navbar-left {
+  min-width: 0;
+  flex: 1;
+  gap: 0.85rem;
+}
+
+.admin-navbar-search {
+  width: min(640px, 52vw);
+  min-width: 260px;
+  min-height: 46px;
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0 0.9rem;
+  border: 1px solid var(--color-border);
+  border-radius: 13px;
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+}
+
+.admin-navbar-search:focus-within {
+  border-color: var(--brand-blue);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-blue) 11%, transparent);
+}
+
+.admin-navbar-search input {
+  min-width: 0;
+  flex: 1;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--color-text-primary);
+  font: inherit;
+  font-size: 0.94rem;
+}
+
+.admin-navbar-search input::placeholder {
+  color: var(--color-text-muted);
+}
+
+.admin-navbar-right {
+  flex: 0 0 auto;
+  gap: 0.55rem !important;
+}
+
+.admin-language-button,
+.admin-navbar .theme-toggle,
+.admin-profile-panel,
+.admin-navbar .notification-trigger,
+.sidebar-toggle {
+  min-height: 46px !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: 13px !important;
+  background: var(--color-surface) !important;
+  color: var(--color-text-primary) !important;
+  box-shadow: none !important;
+}
+
+.admin-language-button {
+  min-width: 52px;
+  padding: 0 0.8rem;
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 760;
+  cursor: pointer;
+}
+
+.admin-navbar .theme-toggle {
+  padding-inline: 0.75rem !important;
+}
+
+.admin-navbar .theme-toggle-label {
+  display: inline !important;
+}
+
+.admin-profile-panel {
+  padding: 0.35rem 0.75rem !important;
+  border-radius: 999px !important;
+}
+
+.admin-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: var(--color-soft-blue);
+  color: var(--brand-blue-hover);
+}
+
+.admin-language-button:hover,
+.admin-navbar .theme-toggle:hover,
+.admin-profile-panel:hover,
+.admin-navbar .notification-trigger:hover,
+.sidebar-toggle:hover {
+  background: var(--color-soft-blue) !important;
+  border-color: color-mix(in srgb, var(--brand-blue) 24%, var(--color-border)) !important;
+}
+
+@media (max-width: 1100px) {
+  .admin-navbar-search {
+    width: min(430px, 40vw);
+  }
+
+  .admin-navbar .theme-toggle-label,
+  .admin-name {
+    display: none !important;
+  }
+}
+
+@media (max-width: 991px) {
+  .admin-navbar-search {
+    min-width: 0;
+    width: min(520px, 60vw);
+  }
+}
+
+@media (max-width: 767px) {
+  .admin-navbar-search,
+  .admin-language-button,
+  .admin-navbar-right {
+    display: none;
+  }
+}
