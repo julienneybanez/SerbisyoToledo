@@ -1161,3 +1161,173 @@ button.auth-layout-back {
     grid-template-columns: 1fr;
   }
 }
+
+
+/* Final auth migration: use the same clean surface/spacing language as the app. */
+.auth-layout,
+.auth-page,
+.auth-page-login,
+.auth-page-register,
+.auth-page-compact {
+  background: #fff !important;
+}
+
+.auth-split-card {
+  width: min(1160px, 100%);
+  min-height: 680px;
+  border: 1px solid var(--color-border);
+  border-radius: 26px;
+  background: var(--color-surface);
+  box-shadow: none;
+}
+
+.auth-form-pane {
+  padding: clamp(2rem, 5vw, 4.5rem);
+}
+
+.auth-heading {
+  margin-bottom: 1.8rem;
+}
+
+.auth-page-logo {
+  width: 64px;
+  height: 64px;
+  margin: 0 0 0.7rem;
+}
+
+.auth-brand-wordmark {
+  width: auto;
+  margin: 0 0 1.45rem;
+  text-align: left;
+  font-size: 1rem;
+}
+
+.auth-heading h1 {
+  max-width: 620px;
+  color: var(--color-ink);
+  font-size: clamp(2.15rem, 4vw, 3.35rem);
+  font-weight: 820;
+  line-height: 1.02;
+  letter-spacing: -0.045em;
+}
+
+.auth-heading p:last-child {
+  max-width: 560px;
+  margin-top: 0.75rem;
+  color: var(--color-text-secondary);
+  font-size: 0.98rem;
+}
+
+.auth-visual-pane {
+  margin: 1rem;
+  min-height: 0;
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at 80% 10%, color-mix(in srgb, var(--brand-blue) 14%, transparent), transparent 34%),
+    linear-gradient(135deg, var(--color-soft-blue), var(--color-soft-mint), var(--color-soft-cream));
+}
+
+.auth-visual-image {
+  min-height: 648px;
+  border-radius: 22px;
+}
+
+.auth-layout .form-control,
+.auth-layout .form-select,
+.auth-agreement-label,
+.auth-language-option,
+.auth-layout .professional-details {
+  border-color: var(--color-border);
+  border-radius: 12px;
+}
+
+.auth-layout .form-control,
+.auth-layout .form-select {
+  min-height: 50px;
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+}
+
+.auth-submit {
+  min-height: 50px;
+  border-radius: 12px;
+  background: var(--brand-blue);
+  border-color: var(--brand-blue);
+}
+
+.auth-submit:hover,
+.auth-submit:focus-visible {
+  background: var(--brand-blue-hover);
+  border-color: var(--brand-blue-hover);
+}
+
+.auth-card,
+.auth-compact-card {
+  border-radius: 22px;
+  box-shadow: none;
+}
+
+.auth-compact-card {
+  max-width: 560px;
+}
+
+.auth-page-compact .auth-heading {
+  text-align: left;
+}
+
+.auth-page-compact .auth-page-logo,
+.auth-page-compact .auth-brand-wordmark {
+  margin-left: 0;
+  margin-right: 0;
+  text-align: left;
+}
+
+[data-theme='dark'] .auth-layout,
+[data-theme='dark'] .auth-page,
+[data-theme='dark'] .auth-page-login,
+[data-theme='dark'] .auth-page-register,
+[data-theme='dark'] .auth-page-compact {
+  background: var(--color-page-bg) !important;
+}
+
+[data-theme='dark'] .auth-split-card,
+[data-theme='dark'] .auth-card {
+  background: var(--color-surface);
+  border-color: var(--color-border);
+}
+
+[data-theme='dark'] .auth-visual-pane {
+  background:
+    radial-gradient(circle at 80% 10%, color-mix(in srgb, var(--brand-blue) 12%, transparent), transparent 34%),
+    linear-gradient(135deg, var(--color-soft-blue), var(--color-soft-mint), var(--color-soft-cream));
+}
+
+@media (max-width: 767.98px) {
+  .auth-page {
+    padding: 0.75rem;
+    align-items: flex-start;
+  }
+
+  .auth-split-card {
+    min-height: 0;
+    grid-template-columns: 1fr;
+    border-radius: 20px;
+  }
+
+  .auth-visual-pane {
+    display: none;
+  }
+
+  .auth-form-pane {
+    padding: 1.5rem 1.1rem 1.75rem;
+  }
+
+  .auth-page-logo {
+    width: 54px;
+    height: 54px;
+  }
+
+  .auth-heading h1 {
+    font-size: clamp(2rem, 10vw, 2.65rem);
+  }
+}

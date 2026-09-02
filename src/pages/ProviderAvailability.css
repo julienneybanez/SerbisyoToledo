@@ -1091,3 +1091,61 @@
   color: var(--color-primary-hover);
   background: var(--color-surface);
 }
+
+
+/* Final availability calendar layout: use the available desktop width intentionally. */
+.provider-availability-inner {
+  width: min(1180px, 100%) !important;
+}
+
+.availability-calendar-shell {
+  display: flex;
+  justify-content: center;
+  padding: clamp(1rem, 2.5vw, 1.5rem) !important;
+  overflow: visible;
+}
+
+.availability-calendar-shell .rdp-root {
+  width: min(820px, 100%) !important;
+  max-width: none;
+  margin: 0 auto !important;
+  --rdp-day-width: clamp(44px, 5.2vw, 64px);
+  --rdp-day-height: clamp(44px, 5.2vw, 64px);
+}
+
+.availability-calendar-shell .rdp-months,
+.availability-calendar-shell .rdp-month,
+.availability-calendar-shell .rdp-month_grid {
+  width: 100% !important;
+  max-width: none !important;
+}
+
+.availability-calendar-shell .rdp-month_grid {
+  table-layout: fixed;
+}
+
+.availability-calendar-shell .rdp-weekday,
+.availability-calendar-shell .rdp-day {
+  text-align: center;
+}
+
+.availability-calendar-shell .rdp-day_button {
+  width: min(100%, var(--rdp-day-width)) !important;
+  height: var(--rdp-day-height) !important;
+  margin: 0 auto;
+  font-size: 0.92rem;
+}
+
+@media (max-width: 760px) {
+  .availability-calendar-shell {
+    padding: 0.75rem !important;
+    overflow-x: auto;
+  }
+
+  .availability-calendar-shell .rdp-root {
+    width: 100% !important;
+    min-width: 0;
+    --rdp-day-width: 40px;
+    --rdp-day-height: 40px;
+  }
+}

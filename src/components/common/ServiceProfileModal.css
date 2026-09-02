@@ -749,3 +749,97 @@
   }
 
 }
+
+
+/* Final service/profile modal cleanup: one surface, intentional header spacing. */
+.modal-overlay:has(> .modal-content > .service-profile-form) > .modal-content {
+  border: 1px solid var(--color-border) !important;
+  border-radius: 24px !important;
+  background: var(--color-surface) !important;
+  box-shadow: 0 28px 72px rgba(7, 18, 33, 0.24) !important;
+}
+
+.service-profile-form {
+  padding: clamp(1.25rem, 3vw, 2rem) !important;
+  border-radius: 24px !important;
+  background: var(--color-surface) !important;
+  color: var(--color-text-primary) !important;
+}
+
+.service-profile-form .modal-header {
+  display: block !important;
+  margin: 0 0 1.5rem !important;
+  padding: 0 4rem 0 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+
+.service-profile-form .modal-title {
+  margin: 0 !important;
+  color: var(--color-ink) !important;
+  font-size: clamp(1.8rem, 3.5vw, 2.55rem) !important;
+  font-weight: 820 !important;
+  line-height: 1.05 !important;
+  letter-spacing: -0.04em;
+}
+
+.service-profile-form .modal-subtitle {
+  margin: 0.55rem 0 0 !important;
+  color: var(--color-text-secondary) !important;
+  font-size: 0.94rem !important;
+  line-height: 1.55 !important;
+}
+
+.service-profile-form .form-section {
+  margin-bottom: 1rem !important;
+  padding: 1.1rem !important;
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  background: transparent !important;
+}
+
+.service-profile-form .section-header {
+  margin-bottom: 0.85rem !important;
+  color: var(--color-text-primary) !important;
+  font-size: 1rem !important;
+  font-weight: 760 !important;
+  letter-spacing: -0.01em !important;
+  text-transform: none !important;
+}
+
+.modal-overlay:has(> .modal-content > .service-profile-form) > .modal-content > .modal-close {
+  top: 1rem !important;
+  right: 1rem !important;
+  width: 44px !important;
+  height: 44px !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: 12px !important;
+  background: var(--color-surface) !important;
+  color: var(--color-text-secondary) !important;
+}
+
+.service-profile-form .form-input,
+.service-profile-form .category-pill,
+.service-profile-form .upload-area,
+.service-profile-form .important-notes {
+  border-color: var(--color-border) !important;
+}
+
+[data-theme='dark'] .modal-overlay:has(> .modal-content > .service-profile-form) > .modal-content,
+[data-theme='dark'] .service-profile-form,
+[data-theme='dark'] .service-profile-form .modal-header,
+[data-theme='dark'] .service-profile-form .form-section {
+  background: var(--color-surface) !important;
+}
+
+[data-theme='dark'] .service-profile-form .form-input,
+[data-theme='dark'] .service-profile-form .category-pill {
+  background: var(--color-surface-secondary) !important;
+  color: var(--color-text-primary) !important;
+  border-color: var(--color-border) !important;
+}
+
+[data-theme='dark'] .service-profile-form .modal-title,
+[data-theme='dark'] .service-profile-form .section-header {
+  color: var(--color-text-primary) !important;
+}
