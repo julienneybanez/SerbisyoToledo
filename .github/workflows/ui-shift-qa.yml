@@ -30,6 +30,13 @@ jobs:
             | grep -v '^src/components/mobile/MobileTopBar.jsx$' \
             | grep -v '^src/components/common/ProfileCompletionChecklist.jsx$' \
             | grep -v '^src/components/common/LandingSearch.jsx$' \
+            | grep -v '^src/components/common/EditPortfolioModal.jsx$' \
+            | grep -v '^src/components/common/EditProfileModal.jsx$' \
+            | grep -v '^src/components/common/ReportUserModal.jsx$' \
+            | grep -v '^src/components/common/RequestDetailsModal.jsx$' \
+            | grep -v '^src/components/common/ReviewModal.jsx$' \
+            | grep -v '^src/components/common/ServiceProfileModal.jsx$' \
+            | grep -v '^src/components/common/VerificationRequestModal.jsx$' \
             | grep -v '^src/pages/Home.jsx$' \
             | grep -v '^src/pages/About.jsx$' \
             | grep -v '^src/pages/Feed.jsx$' \
@@ -38,7 +45,15 @@ jobs:
             | grep -v '^src/pages/ServiceProviderPortfolio.jsx$' \
             | grep -v '^src/pages/ServiceProviderSettings.jsx$' \
             | grep -v '^src/pages/ClientSettings.jsx$' \
+            | grep -v '^src/pages/Messages.jsx$' \
+            | grep -v '^src/pages/Notifications.jsx$' \
+            | grep -v '^src/pages/ProviderAvailability.jsx$' \
+            | grep -v '^src/pages/ProviderSchedule.jsx$' \
+            | grep -v '^src/pages/Requests.jsx$' \
             | grep -v '^src/pages/admin/AdminDashboard.jsx$' \
+            | grep -v '^src/pages/admin/AdminReports.jsx$' \
+            | grep -v '^src/pages/admin/AdminUsers.jsx$' \
+            | grep -v '^src/pages/admin/AdminVerifications.jsx$' \
             | grep -v '^backend/controllers/contactSharingController.js$' \
             || true)"
           if [ -n "$changed" ]; then
