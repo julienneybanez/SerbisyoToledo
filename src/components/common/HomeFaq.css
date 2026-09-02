@@ -1,6 +1,13 @@
 .home-faq-section {
   padding: clamp(3.8rem, 7vw, 6.2rem) 0;
-  background: var(--color-surface);
+  background: var(--color-public-bg);
+}
+
+.home-faq-section > .container,
+.home-faq-shell {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
 }
 
 .home-faq-shell {
@@ -92,7 +99,7 @@
 }
 
 [data-theme='dark'] .home-faq-section {
-  background: var(--color-surface);
+  background: var(--color-public-bg);
 }
 
 @media (max-width: 900px) {
