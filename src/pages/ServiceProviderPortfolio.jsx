@@ -391,6 +391,8 @@ const ProviderCard = ({ provider, profile, onBack, hideBackLink = false, isPrevi
               mode="single"
               month={calendarMonth}
               onMonthChange={setCalendarMonth}
+              startMonth={fromDateKey(availableDateKeys[0])}
+              endMonth={fromDateKey(availableDateKeys[availableDateKeys.length - 1])}
               selected={fromDateKey(selectedAvailabilityDate)}
               onSelect={(date) => {
                 const key = toDateKey(date);

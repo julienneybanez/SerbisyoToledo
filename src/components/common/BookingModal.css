@@ -1743,3 +1743,37 @@
     grid-template-columns: 1fr;
   }
 }
+
+
+/* Final booking modal dark-surface consistency. */
+[data-theme='dark'] .booking-modal,
+[data-theme='dark'] .booking-content,
+[data-theme='dark'] .booking-calendar,
+[data-theme='dark'] .booking-hint-card,
+[data-theme='dark'] .booking-input,
+[data-theme='dark'] .booking-textarea,
+[data-theme='dark'] .time-slot,
+[data-theme='dark'] .booking-type-option,
+[data-theme='dark'] .booking-btn-outline {
+  background: var(--color-surface) !important;
+  color: var(--color-text-primary);
+  border-color: var(--color-border) !important;
+}
+
+[data-theme='dark'] .booking-sidebar,
+[data-theme='dark'] .booking-time-panel {
+  background: var(--color-surface-secondary) !important;
+  border-color: var(--color-border) !important;
+}
+
+[data-theme='dark'] .booking-title,
+[data-theme='dark'] .booking-provider-name,
+[data-theme='dark'] .booking-calendar-intro strong {
+  color: var(--color-text-primary) !important;
+}
+
+[data-theme='dark'] .booking-subtitle,
+[data-theme='dark'] .booking-provider-bio,
+[data-theme='dark'] .booking-field-help {
+  color: var(--color-text-secondary) !important;
+}
