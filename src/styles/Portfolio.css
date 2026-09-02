@@ -1669,3 +1669,401 @@
     flex: 1 1 0;
   }
 }
+
+
+/* Final provider profile composition: mirror the approved desktop reference. */
+.portfolio-shell {
+  background: #fff !important;
+}
+
+.portfolio-container {
+  max-width: 1360px !important;
+  padding-top: clamp(1.25rem, 2.5vw, 2rem) !important;
+}
+
+.portfolio-shell .provider-section {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(330px, 390px);
+  column-gap: 1.5rem;
+  align-items: start;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.portfolio-shell .provider-section > .st-button:first-child {
+  grid-column: 1 / -1;
+  justify-self: start;
+  margin-bottom: 0.9rem;
+}
+
+.portfolio-shell .profile-summary {
+  grid-column: 1 / -1;
+  width: 100%;
+  margin-bottom: 1.5rem;
+  padding: clamp(1.25rem, 2.5vw, 1.8rem);
+  border: 1px solid var(--color-border);
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at 90% 12%, color-mix(in srgb, var(--color-soft-cream) 88%, transparent), transparent 38%),
+    linear-gradient(135deg, var(--color-soft-blue), var(--color-soft-mint), var(--color-soft-cream));
+}
+
+.portfolio-shell .profile-summary-actions {
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  align-items: stretch;
+}
+
+.portfolio-shell .profile-summary-price {
+  text-align: right;
+  font-size: 1rem;
+}
+
+.portfolio-shell .profile-summary-request-btn {
+  min-height: 48px;
+  border-radius: 12px;
+}
+
+.portfolio-shell .provider-availability-panel {
+  grid-column: 2;
+  grid-row: 3 / span 9;
+  position: sticky;
+  top: 92px;
+  min-width: 0;
+  padding: 1.15rem;
+  border: 1px solid var(--color-border);
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at 15% 5%, color-mix(in srgb, var(--brand-blue) 8%, transparent), transparent 36%),
+    linear-gradient(145deg, var(--color-soft-blue), var(--color-soft-cream));
+}
+
+.provider-availability-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.provider-availability-heading h2 {
+  margin: 0;
+  color: var(--color-ink);
+  font-size: 1.4rem;
+  font-weight: 820;
+  letter-spacing: -0.035em;
+}
+
+.provider-availability-heading p {
+  margin: 0.3rem 0 0;
+  color: var(--color-text-secondary);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.provider-availability-status {
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
+  display: grid;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--brand-blue) 18%, var(--color-border));
+  border-radius: 11px;
+  background: var(--color-surface);
+  color: var(--brand-blue);
+}
+
+.provider-profile-calendar {
+  min-height: 300px;
+  padding: 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  background: var(--color-surface);
+}
+
+.provider-profile-calendar .rdp-root {
+  --rdp-accent-color: var(--brand-blue);
+  --rdp-accent-background-color: var(--color-soft-blue);
+  width: 100%;
+  margin: 0;
+  color: var(--color-text-primary);
+}
+
+.provider-profile-calendar .rdp-months,
+.provider-profile-calendar .rdp-month,
+.provider-profile-calendar .rdp-month_grid {
+  width: 100%;
+  max-width: none;
+}
+
+.provider-profile-calendar .rdp-month_grid {
+  table-layout: fixed;
+}
+
+.provider-profile-calendar .rdp-month_caption {
+  min-height: 44px;
+  color: var(--color-ink);
+  font-weight: 800;
+}
+
+.provider-profile-calendar .rdp-button_previous,
+.provider-profile-calendar .rdp-button_next {
+  width: 38px;
+  height: 38px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-surface);
+  color: var(--brand-blue);
+}
+
+.provider-profile-calendar .rdp-weekday {
+  color: var(--color-text-secondary);
+  font-size: 0.72rem;
+  font-weight: 760;
+  text-align: center;
+}
+
+.provider-profile-calendar .rdp-day {
+  text-align: center;
+}
+
+.provider-profile-calendar .rdp-day_button {
+  width: 38px;
+  height: 38px;
+  margin: 0 auto;
+  border-radius: 10px;
+  color: var(--color-text-primary);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.provider-profile-calendar .rdp-day:not(.rdp-disabled) .rdp-day_button:hover {
+  background: var(--color-soft-blue);
+}
+
+.provider-profile-calendar .rdp-selected .rdp-day_button {
+  border-color: var(--brand-blue);
+  background: var(--brand-blue);
+  color: #fff;
+}
+
+.provider-profile-calendar .rdp-disabled {
+  opacity: 0.28;
+}
+
+.provider-availability-state {
+  min-height: 270px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  color: var(--color-text-secondary);
+  text-align: center;
+  font-size: 0.84rem;
+}
+
+.provider-availability-state > i {
+  color: var(--brand-blue);
+  font-size: 1.35rem;
+}
+
+.provider-availability-state-error > i {
+  color: var(--color-danger);
+}
+
+.provider-available-times {
+  margin-top: 1rem;
+}
+
+.provider-available-times h3 {
+  margin: 0 0 0.65rem;
+  color: var(--color-ink);
+  font-size: 0.95rem;
+  font-weight: 780;
+}
+
+.provider-time-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.provider-time-chip {
+  min-height: 36px;
+  padding: 0.42rem 0.7rem;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 720;
+  cursor: pointer;
+}
+
+.provider-time-chip:hover,
+.provider-time-chip:focus-visible {
+  border-color: var(--brand-blue);
+  background: var(--color-soft-blue);
+}
+
+.provider-time-chip.active {
+  border-color: var(--brand-blue);
+  background: var(--brand-blue);
+  color: #fff;
+}
+
+.provider-time-state {
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--color-text-secondary);
+  font-size: 0.78rem;
+}
+
+.provider-time-empty {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+.provider-availability-request {
+  width: 100%;
+  min-height: 46px;
+  margin-top: 1rem;
+}
+
+.portfolio-shell .about-section,
+.portfolio-shell .skills-section,
+.portfolio-shell .portfolio-tabs,
+.portfolio-shell .portfolio-grid,
+.portfolio-shell .portfolio-empty-copy,
+.portfolio-shell .reviews-panel,
+.portfolio-shell .contact-section {
+  grid-column: 1;
+}
+
+.portfolio-shell .about-section,
+.portfolio-shell .skills-section,
+.portfolio-shell .contact-section {
+  margin-top: 0 !important;
+  margin-bottom: 1rem;
+  padding: 1.25rem !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: 20px;
+  background: var(--color-surface) !important;
+}
+
+.portfolio-shell .portfolio-tabs {
+  margin: 0 0 0.8rem !important;
+  padding: 1rem 1rem 0 !important;
+  border: 1px solid var(--color-border);
+  border-bottom: 0;
+  border-radius: 20px 20px 0 0;
+  background: var(--color-surface);
+}
+
+.portfolio-shell .portfolio-grid,
+.portfolio-shell .reviews-panel,
+.portfolio-shell .portfolio-empty-copy {
+  margin-top: 0 !important;
+  margin-bottom: 1rem;
+  padding: 0 1rem 1rem;
+  border: 1px solid var(--color-border);
+  border-top: 0;
+  border-radius: 0 0 20px 20px;
+  background: var(--color-surface);
+}
+
+.portfolio-shell .contact-section {
+  margin-bottom: 0;
+}
+
+[data-theme='dark'] .portfolio-shell {
+  background: var(--color-page-bg) !important;
+}
+
+[data-theme='dark'] .portfolio-shell .profile-summary,
+[data-theme='dark'] .portfolio-shell .provider-availability-panel {
+  border-color: var(--color-border);
+  background:
+    radial-gradient(circle at 90% 12%, color-mix(in srgb, var(--brand-blue) 8%, transparent), transparent 38%),
+    linear-gradient(135deg, var(--color-soft-blue), var(--color-soft-mint), var(--color-soft-cream));
+}
+
+[data-theme='dark'] .provider-profile-calendar,
+[data-theme='dark'] .provider-time-chip,
+[data-theme='dark'] .portfolio-shell .about-section,
+[data-theme='dark'] .portfolio-shell .skills-section,
+[data-theme='dark'] .portfolio-shell .contact-section,
+[data-theme='dark'] .portfolio-shell .portfolio-tabs,
+[data-theme='dark'] .portfolio-shell .portfolio-grid,
+[data-theme='dark'] .portfolio-shell .reviews-panel,
+[data-theme='dark'] .portfolio-shell .portfolio-empty-copy {
+  background: var(--color-surface) !important;
+  border-color: var(--color-border) !important;
+}
+
+[data-theme='dark'] .provider-availability-heading h2,
+[data-theme='dark'] .provider-available-times h3,
+[data-theme='dark'] .provider-profile-calendar .rdp-month_caption {
+  color: var(--color-text-primary);
+}
+
+@media (max-width: 980px) {
+  .portfolio-shell .provider-section {
+    display: block;
+  }
+
+  .portfolio-shell .provider-availability-panel {
+    position: static;
+    margin-bottom: 1rem;
+  }
+
+  .portfolio-shell .profile-summary {
+    margin-bottom: 1rem;
+  }
+
+  .portfolio-shell .portfolio-tabs {
+    margin-top: 0 !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .portfolio-shell .provider-section {
+    padding: 0 !important;
+  }
+
+  .portfolio-shell .profile-summary,
+  .portfolio-shell .provider-availability-panel,
+  .portfolio-shell .about-section,
+  .portfolio-shell .skills-section,
+  .portfolio-shell .contact-section {
+    border-radius: 18px;
+  }
+
+  .portfolio-shell .profile-summary {
+    padding: 1rem;
+  }
+
+  .provider-profile-calendar {
+    min-height: 285px;
+  }
+
+  .provider-profile-calendar .rdp-day_button {
+    width: 34px;
+    height: 34px;
+    font-size: 0.76rem;
+  }
+
+  .provider-availability-request {
+    display: none;
+  }
+}

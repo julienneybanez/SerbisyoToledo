@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { DayPicker } from 'react-day-picker';
+import 'react-day-picker/style.css';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import BookingModal from '../components/common/BookingModal';
 import MobileStickyAction from '../components/mobile/MobileStickyAction';
@@ -93,12 +95,52 @@ const formatPublicAvailabilitySummary = (apiProfile, t) => {
   return apiProfile.acceptingRequests ? t('availabilityAcceptingRequests') : '';
 };
 
+const padDatePart = (value) => String(value).padStart(2, '0');
+
+const toDateKey = (date) => {
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) return '';
+  return `${date.getFullYear()}-${padDatePart(date.getMonth() + 1)}-${padDatePart(date.getDate())}`;
+};
+
+const fromDateKey = (value) => {
+  const match = String(value || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return undefined;
+  const parsed = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+  return Number.isNaN(parsed.getTime()) ? undefined : parsed;
+};
+
+const addCalendarDays = (date, amount) => {
+  const next = new Date(date);
+  next.setDate(next.getDate() + amount);
+  return next;
+};
+
+const formatAvailabilityTime = (value) => {
+  const match = String(value || '').match(/^(\d{1,2}):(\d{2})/);
+  if (!match) return value || '';
+  const date = new Date(2000, 0, 1, Number(match[1]), Number(match[2]));
+  return new Intl.DateTimeFormat('en-PH', {
+    hour: 'numeric',
+    minute: '2-digit',
+  }).format(date);
+};
+
 const ProviderCard = ({ provider, profile, onBack, hideBackLink = false, isPreviewMode = false }) => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [activeTab, setActiveTab] = useState('portfolio');
   const [showBooking, setShowBooking] = useState(false);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [expandedImage, setExpandedImage] = useState(null);
+  const [availableDateKeys, setAvailableDateKeys] = useState([]);
+  const [selectedAvailabilityDate, setSelectedAvailabilityDate] = useState(provider?.nextAvailableDate || '');
+  const [availabilitySlots, setAvailabilitySlots] = useState([]);
+  const [availabilityLoading, setAvailabilityLoading] = useState(false);
+  const [slotLoading, setSlotLoading] = useState(false);
+  const [availabilityError, setAvailabilityError] = useState('');
+  const [selectedPreviewTime, setSelectedPreviewTime] = useState('');
+  const [calendarMonth, setCalendarMonth] = useState(
+    () => fromDateKey(provider?.nextAvailableDate) || new Date()
+  );
   const navigate = useNavigate();
   const canRequestService = provider?.isPublished !== false
     && provider?.acceptingRequests !== false
@@ -138,6 +180,103 @@ const ProviderCard = ({ provider, profile, onBack, hideBackLink = false, isPrevi
   const rateUnitSuffix = rateUnitKey ? `/${t(rateUnitKey)}` : '';
   const rateValue = hasRate ? `₱${numericRate.toLocaleString()}${rateUnitSuffix}` : t('priceOnRequest');
   const summaryPrice = hasRate ? `${t('startingAt')} ${rateValue}` : rateValue;
+
+  useEffect(() => {
+    let mounted = true;
+
+    const loadPublicAvailability = async () => {
+      if (!provider?.id || provider?.acceptingRequests === false) {
+        setAvailableDateKeys([]);
+        setSelectedAvailabilityDate('');
+        setAvailabilitySlots([]);
+        return;
+      }
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const end = addCalendarDays(today, 60);
+
+      try {
+        setAvailabilityLoading(true);
+        setAvailabilityError('');
+        const response = await serviceProfileAPI.getAvailableDates(provider.id, {
+          fromDate: toDateKey(today),
+          toDate: toDateKey(end),
+          duration: 120,
+        });
+
+        if (!mounted) return;
+
+        const dates = response?.success && Array.isArray(response.data?.dates)
+          ? response.data.dates
+          : [];
+        setAvailableDateKeys(dates);
+
+        const preferred = dates.includes(provider.nextAvailableDate)
+          ? provider.nextAvailableDate
+          : dates[0] || '';
+
+        setSelectedAvailabilityDate(preferred);
+        if (preferred) {
+          const preferredDate = fromDateKey(preferred);
+          if (preferredDate) setCalendarMonth(preferredDate);
+        }
+      } catch {
+        if (!mounted) return;
+        setAvailableDateKeys([]);
+        setSelectedAvailabilityDate('');
+        setAvailabilitySlots([]);
+        setAvailabilityError(
+          language === 'ceb'
+            ? 'Dili ma-load ang availability karon.'
+            : 'Availability could not be loaded right now.'
+        );
+      } finally {
+        if (mounted) setAvailabilityLoading(false);
+      }
+    };
+
+    loadPublicAvailability();
+    return () => { mounted = false; };
+  }, [language, provider?.acceptingRequests, provider?.id, provider?.nextAvailableDate]);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const loadTimes = async () => {
+      if (!provider?.id || !selectedAvailabilityDate) {
+        setAvailabilitySlots([]);
+        setSelectedPreviewTime('');
+        return;
+      }
+
+      try {
+        setSlotLoading(true);
+        const response = await serviceProfileAPI.getAvailableSlots(provider.id, {
+          date: selectedAvailabilityDate,
+          duration: 120,
+          bookingType: 'one_day',
+        });
+
+        if (!mounted) return;
+
+        const slots = response?.success && Array.isArray(response.data?.slots)
+          ? response.data.slots
+          : [];
+        setAvailabilitySlots(slots);
+        setSelectedPreviewTime(slots[0]?.time || '');
+      } catch {
+        if (!mounted) return;
+        setAvailabilitySlots([]);
+        setSelectedPreviewTime('');
+      } finally {
+        if (mounted) setSlotLoading(false);
+      }
+    };
+
+    loadTimes();
+    return () => { mounted = false; };
+  }, [provider?.id, selectedAvailabilityDate]);
 
   const handleBack = () => {
     if (onBack) {
@@ -219,6 +358,89 @@ const ProviderCard = ({ provider, profile, onBack, hideBackLink = false, isPrevi
           )}
         </aside>
       </div>
+
+      <aside className="provider-availability-panel" aria-label={t('availabilityPageTitle')}>
+        <div className="provider-availability-heading">
+          <div>
+            <h2>{t('availabilityPageTitle')}</h2>
+            <p>{availabilitySummary || t('availabilityAcceptingRequests')}</p>
+          </div>
+          <span className="provider-availability-status" aria-hidden="true">
+            <i className="bi bi-calendar-check"></i>
+          </span>
+        </div>
+
+        <div className="provider-profile-calendar">
+          {availabilityLoading ? (
+            <div className="provider-availability-state">
+              <span className="spinner-small" aria-hidden="true"></span>
+              <span>{t('bookingLoadingAvailability')}</span>
+            </div>
+          ) : availabilityError ? (
+            <div className="provider-availability-state provider-availability-state-error">
+              <i className="bi bi-exclamation-circle" aria-hidden="true"></i>
+              <span>{availabilityError}</span>
+            </div>
+          ) : availableDateKeys.length === 0 ? (
+            <div className="provider-availability-state">
+              <i className="bi bi-calendar-x" aria-hidden="true"></i>
+              <span>{t('availabilityNoBookableDates')}</span>
+            </div>
+          ) : (
+            <DayPicker
+              mode="single"
+              month={calendarMonth}
+              onMonthChange={setCalendarMonth}
+              selected={fromDateKey(selectedAvailabilityDate)}
+              onSelect={(date) => {
+                const key = toDateKey(date);
+                if (key && availableDateKeys.includes(key)) {
+                  setSelectedAvailabilityDate(key);
+                }
+              }}
+              disabled={(date) => !availableDateKeys.includes(toDateKey(date))}
+              modifiers={{ available: availableDateKeys.map(fromDateKey).filter(Boolean) }}
+              showOutsideDays={false}
+            />
+          )}
+        </div>
+
+        <div className="provider-available-times">
+          <h3>{language === 'ceb' ? 'Available nga oras' : 'Available times'}</h3>
+          {slotLoading ? (
+            <div className="provider-time-state">
+              <span className="spinner-small" aria-hidden="true"></span>
+              <span>{t('bookingLoadingAvailability')}</span>
+            </div>
+          ) : availabilitySlots.length > 0 ? (
+            <div className="provider-time-chips">
+              {availabilitySlots.map((slot) => (
+                <button
+                  key={`${selectedAvailabilityDate}-${slot.time}`}
+                  type="button"
+                  className={`provider-time-chip ${selectedPreviewTime === slot.time ? 'active' : ''}`}
+                  onClick={() => setSelectedPreviewTime(slot.time)}
+                  aria-pressed={selectedPreviewTime === slot.time}
+                >
+                  {formatAvailabilityTime(slot.time)}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <p className="provider-time-empty">
+              {selectedAvailabilityDate
+                ? (language === 'ceb' ? 'Walay available nga oras niini nga petsa.' : 'No available times for this date.')
+                : t('availabilityNoBookableDates')}
+            </p>
+          )}
+        </div>
+
+        {!isPreviewMode && canRequestService && (
+          <AppButton className="provider-availability-request" onClick={handleRequestService}>
+            {t('requestService')}
+          </AppButton>
+        )}
+      </aside>
 
       <div className="about-section">
         <h3 className="about-title">{t('providerAboutTitle')}</h3>
@@ -523,6 +745,7 @@ const ServiceProviderPortfolio = () => {
             acceptingRequests: apiProfile.acceptingRequests !== false,
             hasFutureBookableSlot: apiProfile.hasFutureBookableSlot !== false,
             nextAvailableDate: apiProfile.nextAvailableDate || null,
+            nextAvailableTime: apiProfile.nextAvailableTime || null,
           };
           
           const transformedProfile = {
