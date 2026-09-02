@@ -1370,3 +1370,68 @@
   }
 
 }
+
+
+/* Final provider summary cards: remove duplicated explanatory copy and align counts. */
+.provider-stat-card {
+  display: grid !important;
+  grid-template-columns: 46px minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  gap: 0.9rem !important;
+}
+
+.provider-stat-card > .mock-stat-icon {
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  background: var(--color-surface);
+  color: var(--brand-blue);
+  font-size: 1.05rem;
+}
+
+.provider-stat-card > .mock-stat-copy {
+  grid-column: 2 / -1;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 1rem;
+}
+
+.provider-stat-card .mock-stat-copy small,
+.provider-stat-card .mock-stat-copy strong {
+  margin: 0 !important;
+}
+
+.provider-stat-card .mock-stat-copy small {
+  color: var(--color-text-secondary);
+  font-size: 0.88rem;
+  font-weight: 720;
+  line-height: 1.25;
+}
+
+.provider-stat-card .mock-stat-copy strong {
+  justify-self: end;
+  color: var(--color-ink);
+  font-size: 2rem !important;
+  font-weight: 820;
+}
+
+@media (max-width: 600px) {
+  .provider-stat-card {
+    grid-template-columns: 42px minmax(0, 1fr) auto !important;
+    min-height: 88px !important;
+    padding: 0.85rem !important;
+  }
+
+  .provider-stat-card > .mock-stat-icon {
+    width: 42px;
+    height: 42px;
+  }
+
+  .provider-stat-card .mock-stat-copy strong {
+    font-size: 1.7rem !important;
+  }
+}

@@ -278,3 +278,54 @@
     max-width: 88%;
   }
 }
+
+
+/* Final message readability pass. */
+.message-text {
+  color: inherit;
+}
+
+.message-meta,
+.messages-thread-header > div span,
+.messages-preview,
+.messages-conversation-topline time {
+  color: var(--color-text-secondary) !important;
+}
+
+.message-row.mine .message-bubble {
+  border-color: var(--brand-blue) !important;
+  background: var(--brand-blue) !important;
+  color: #fff !important;
+}
+
+.message-row.mine .message-meta {
+  color: rgba(255, 255, 255, 0.82) !important;
+}
+
+.message-row.mine .message-text,
+.message-row.mine .messages-shared-phone {
+  color: #fff;
+}
+
+.message-row:not(.mine) .message-bubble {
+  background: var(--color-surface) !important;
+  color: var(--color-text-primary) !important;
+}
+
+.message-system-event {
+  color: var(--color-text-secondary) !important;
+}
+
+.message-system-event time {
+  color: var(--color-text-secondary) !important;
+  opacity: 0.9;
+}
+
+[data-theme='dark'] .message-row.mine .message-bubble {
+  background: var(--brand-blue) !important;
+  border-color: color-mix(in srgb, var(--brand-blue) 78%, #fff 22%) !important;
+}
+
+[data-theme='dark'] .message-row:not(.mine) .message-bubble {
+  background: var(--color-surface-secondary) !important;
+}
