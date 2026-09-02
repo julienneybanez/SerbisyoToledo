@@ -198,3 +198,46 @@ test('canonical mockup components render on migrated screens', async ({ browser 
   await expect(feed.page.locator('.mock-chip').first()).toBeVisible();
   await feed.context.close();
 });
+
+
+test('provider credentials desktop layout keeps the form full-width and fields usable', async ({ browser }) => {
+  const { context, page } = await openPage(browser, {
+    role: 'provider',
+    path: '/provider-credentials',
+    width: 1440,
+    height: 1000,
+  });
+
+  const formCard = page.locator('.credential-form-card');
+  const savedCard = page.locator('.credential-list-card');
+  await expect(formCard).toBeVisible();
+  await expect(savedCard).toBeVisible();
+
+  const geometry = await page.evaluate(() => {
+    const form = document.querySelector('.credential-form-card')?.getBoundingClientRect();
+    const saved = document.querySelector('.credential-list-card')?.getBoundingClientRect();
+    const fields = [...document.querySelectorAll('.credential-field .settings-input')]
+      .map((element) => element.getBoundingClientRect());
+
+    return {
+      formWidth: form?.width || 0,
+      savedWidth: saved?.width || 0,
+      savedBelowForm: Boolean(form && saved && saved.top >= form.bottom - 2),
+      minFieldWidth: fields.length ? Math.min(...fields.map((field) => field.width)) : 0,
+      fieldCount: fields.length,
+    };
+  });
+
+  expect(geometry.formWidth).toBeGreaterThan(700);
+  expect(geometry.savedWidth).toBeGreaterThan(700);
+  expect(geometry.savedBelowForm).toBe(true);
+  expect(geometry.fieldCount).toBeGreaterThanOrEqual(8);
+  expect(geometry.minFieldWidth).toBeGreaterThan(280);
+
+  await page.screenshot({
+    path: 'artifacts/ui-phone/provider-credentials-desktop.png',
+    fullPage: true,
+  });
+
+  await context.close();
+});

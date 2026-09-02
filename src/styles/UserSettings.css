@@ -893,92 +893,21 @@ input:checked + .slider:before {
 
 
 /* ===================================
-   PROVIDER CREDENTIALS / ACCOUNT TOOL POLISH
-   Existing credential fields, document upload, add credential, review submit,
-   verification feedback, account save/reset and password actions remain.
+   PROVIDER ACCOUNT / CREDENTIALS TOOLS
    =================================== */
 .provider-tool-page {
-  max-width: 1120px;
-}
-
-.provider-tool-page .settings-page-heading,
-.provider-tool-page .settings-layout-single {
-  max-width: 900px;
-}
-
-.provider-tool-page .settings-layout-single {
-  border-radius: 20px;
+  width: 100%;
+  max-width: 1180px;
 }
 
 .provider-tool-page .settings-content {
-  padding: clamp(1.3rem, 3vw, 2rem);
+  padding: clamp(1.25rem, 2.6vw, 2rem);
 }
 
-.provider-tool-page .settings-section-title {
-  color: var(--color-ink);
-  font-size: 1.35rem;
-  font-weight: 790;
+.provider-tool-account .settings-page-heading,
+.provider-tool-account .settings-layout-single {
+  max-width: 900px;
 }
-
-.provider-tool-page .settings-subsection-title {
-  color: var(--color-text-primary);
-  font-weight: 740;
-}
-
-.provider-tool-credentials .settings-section > .settings-group:first-of-type {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.35rem 0.85rem;
-  padding: 1rem;
-  border: 1px solid var(--color-border);
-  border-radius: 16px;
-  background: var(--color-soft-cream);
-}
-
-.provider-tool-credentials .settings-section > .settings-group:first-of-type .settings-label,
-.provider-tool-credentials .settings-section > .settings-group:first-of-type .settings-help,
-.provider-tool-credentials .settings-section > .settings-group:first-of-type .settings-input {
-  grid-column: auto;
-}
-
-.provider-tool-credentials .settings-section > .settings-group:first-of-type .settings-label {
-  align-self: end;
-  margin-top: 0.45rem;
-}
-
-.provider-tool-credentials .settings-section > .settings-group:first-of-type .settings-input {
-  min-width: 0;
-}
-
-.provider-tool-credentials .settings-section > .settings-group:first-of-type input[type='file'] {
-  padding: 0.55rem;
-  background: var(--color-surface);
-}
-
-.provider-tool-credentials .settings-actions {
-  margin-top: 0.9rem;
-  padding-top: 0;
-  border-top: 0;
-}
-
-
-.provider-tool-credentials .settings-surface-block {
-  padding: 1rem;
-  border: 1px solid var(--color-border);
-  border-radius: 14px;
-  background: var(--color-surface);
-}
-
-.provider-tool-credentials .settings-surface-block + .settings-surface-block {
-  margin-top: 0.7rem;
-}
-
-.provider-tool-credentials .settings-metadata-strong {
-  color: var(--color-ink);
-  font-size: 0.96rem;
-  font-weight: 750;
-}
-
 
 .provider-tool-account .settings-card {
   border-bottom-color: var(--color-border);
@@ -988,67 +917,202 @@ input:checked + .slider:before {
   padding: 0.9rem 0 1rem;
 }
 
-
-[data-theme='dark'] .provider-tool-credentials .settings-section > .settings-group:first-of-type {
-  background: var(--color-surface-secondary);
-  border-color: var(--color-border);
+.provider-tool-credentials .settings-page-heading,
+.provider-tool-credentials .settings-layout-single {
+  width: 100%;
+  max-width: 1120px;
 }
 
-[data-theme='dark'] .provider-tool-credentials .settings-surface-block {
-  background: var(--color-surface-secondary);
-  border-color: var(--color-border);
+.provider-tool-credentials .settings-layout-single {
+  overflow: visible;
 }
 
-@media (max-width: 700px) {
-  .provider-tool-credentials .settings-section > .settings-group:first-of-type {
-    grid-template-columns: 1fr;
-  }
-
-}
-
-
-/* ===================================
-   PROVIDER CREDENTIALS RESPONSIVE FIX
-   The credential form is intentionally single-column because the provider
-   workspace sidebar can leave a narrow content region on medium displays.
-   =================================== */
-.provider-tool-credentials .settings-section > .settings-group:first-of-type {
-  display: grid !important;
-  grid-template-columns: minmax(0, 1fr) !important;
-  gap: 0.42rem !important;
-  padding: clamp(0.9rem, 2vw, 1.1rem) !important;
-}
-
-.provider-tool-credentials .settings-section > .settings-group:first-of-type > .settings-label {
-  margin-top: 0.72rem;
-  min-width: 0;
-  overflow-wrap: anywhere;
-}
-
-.provider-tool-credentials .settings-section > .settings-group:first-of-type > .settings-label:first-child {
-  margin-top: 0;
-}
-
-.provider-tool-credentials .settings-section > .settings-group:first-of-type > .settings-input,
-.provider-tool-credentials .settings-section > .settings-group:first-of-type > input,
-.provider-tool-credentials .settings-section > .settings-group:first-of-type > select {
+.provider-tool-credentials .settings-content {
   width: 100%;
   min-width: 0;
+}
+
+.provider-tool-credentials .settings-content > .settings-flash {
   max-width: none;
 }
 
-.provider-tool-credentials .settings-section > .settings-group:first-of-type > .settings-help {
+.provider-credentials-section {
   width: 100%;
+  max-width: none;
   min-width: 0;
-  margin: 0.25rem 0 0;
 }
 
-.provider-tool-credentials input[type='date'],
-.provider-tool-credentials input[type='url'],
-.provider-tool-credentials input[type='file'],
-.provider-tool-credentials select {
+.credentials-page-stack {
   width: 100%;
-  max-width: 100%;
+  display: grid;
+  gap: 1rem;
+}
+
+.credential-form-card,
+.credential-list-card {
+  width: 100%;
+  min-width: 0;
+  padding: clamp(1rem, 2.2vw, 1.35rem);
+  border: 1px solid var(--color-border);
+  border-radius: 18px;
+  background: var(--color-surface);
+}
+
+.credential-card-heading {
+  margin-bottom: 1rem;
+  padding-bottom: 0.85rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.credential-card-heading h2 {
+  margin: 0;
+  color: var(--color-ink);
+  font-size: 1.12rem;
+  font-weight: 780;
+  letter-spacing: -0.015em;
+}
+
+.credential-form-grid {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem 1.1rem;
+}
+
+.credential-field {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.credential-field-full {
+  grid-column: 1 / -1;
+}
+
+.credential-field .settings-label {
+  margin: 0;
+  color: var(--color-text-primary);
+  font-size: 0.88rem;
+  font-weight: 680;
+}
+
+.credential-field .settings-input,
+.credential-field > input,
+.credential-field > select {
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+  min-height: 48px;
+}
+
+.credential-checkbox {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-soft-cream);
+  color: var(--color-text-primary);
+  font-size: 0.88rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.credential-checkbox input {
+  width: 19px;
+  height: 19px;
+  flex: 0 0 19px;
+  accent-color: var(--brand-blue);
+}
+
+.credential-file-input {
+  padding: 0.55rem 0.7rem !important;
+}
+
+.credential-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.credential-list-card {
+  min-height: 210px;
+}
+
+.credential-empty-state {
+  min-height: 135px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  padding: 1rem;
+  text-align: center;
+  color: var(--color-text-secondary);
+}
+
+.credential-empty-state > i {
+  font-size: 1.55rem;
+  color: var(--brand-blue);
+}
+
+.credential-empty-state p {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 0.9rem;
+}
+
+.credentials-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+
+.credential-list-item {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 0.9rem;
+  padding: 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  background: var(--color-soft-cream);
+}
+
+.credential-list-name,
+.credential-list-meta,
+.credential-list-note {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.credential-list-name {
+  color: var(--color-ink);
+  font-size: 0.96rem;
+  font-weight: 750;
+}
+
+.credential-list-meta {
+  margin-top: 0.25rem;
+  color: var(--color-text-secondary);
+  font-size: 0.8rem;
+}
+
+.credential-list-note {
+  margin-top: 0.5rem;
+  color: var(--color-text-secondary);
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.settings-credential-actions {
+  margin-top: 0;
 }
 
 .client-settings-onboarding {
@@ -1060,150 +1124,6 @@ input:checked + .slider:before {
   margin: 0;
 }
 
-[data-theme='dark'] .provider-tool-credentials .settings-section > .settings-group:first-of-type {
-  background: var(--color-surface-secondary) !important;
-}
-
-
-/* Final provider credentials workspace: structured form + saved credential panel. */
-.provider-tool-page .settings-page-heading,
-.provider-tool-page .settings-layout-single {
-  max-width: 1120px !important;
-}
-
-.provider-tool-credentials .settings-content > .provider-credentials-section {
-  max-width: none !important;
-}
-
-.provider-tool-credentials .settings-layout-single {
-  overflow: visible;
-}
-
-.credentials-workspace-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1.35fr) minmax(300px, 0.65fr);
-  gap: 1rem;
-  align-items: start;
-}
-
-.credential-form-card,
-.credential-list-card {
-  min-width: 0;
-  padding: 1.15rem;
-  border: 1px solid var(--color-border);
-  border-radius: 18px;
-  background: var(--color-surface);
-}
-
-.credential-card-heading {
-  margin-bottom: 1rem;
-}
-
-.credential-card-heading .settings-subsection-title {
-  margin: 0;
-  color: var(--color-ink);
-  font-size: 1.05rem;
-  font-weight: 760;
-}
-
-.credential-form-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1rem;
-}
-
-.credential-field {
-  min-width: 0;
-  display: grid;
-  align-content: start;
-  gap: 0.45rem;
-}
-
-.credential-field .settings-label {
-  margin: 0;
-}
-
-.credential-field .settings-input {
-  width: 100%;
-  max-width: none;
-  min-width: 0;
-}
-
-.credential-field-full {
-  grid-column: 1 / -1;
-}
-
-.credential-checkbox-field {
-  padding: 0.2rem 0;
-}
-
-.credential-checkbox {
-  min-height: 46px;
-  display: flex;
-  align-items: center;
-  gap: 0.65rem;
-  padding: 0.7rem 0.8rem;
-  border: 1px solid var(--color-border);
-  border-radius: 12px;
-  background: var(--color-soft-cream);
-  color: var(--color-text-primary);
-  font-size: 0.9rem;
-  font-weight: 650;
-  cursor: pointer;
-}
-
-.credential-checkbox input {
-  width: 19px;
-  height: 19px;
-  accent-color: var(--brand-blue);
-}
-
-.credential-file-input {
-  padding: 0.55rem 0.7rem !important;
-}
-
-.credential-form-actions {
-  max-width: none !important;
-  margin-top: 1rem !important;
-  padding-top: 1rem !important;
-}
-
-.credential-list-card {
-  position: sticky;
-  top: 90px;
-}
-
-.credentials-list {
-  display: grid;
-  gap: 0.75rem;
-  max-height: 620px;
-  overflow-y: auto;
-  scrollbar-width: thin;
-}
-
-.credential-list-item {
-  margin: 0 !important;
-  background: var(--color-soft-cream) !important;
-}
-
-.credential-empty-state {
-  min-height: 180px;
-  display: grid;
-  place-items: center;
-  align-content: center;
-  gap: 0.55rem;
-  text-align: center;
-}
-
-.credential-empty-state > i {
-  font-size: 1.6rem;
-  color: var(--brand-blue);
-}
-
-.credential-empty-state .settings-help {
-  margin: 0;
-}
-
 [data-theme='dark'] .credential-form-card,
 [data-theme='dark'] .credential-list-card {
   background: var(--color-surface);
@@ -1212,21 +1132,23 @@ input:checked + .slider:before {
 
 [data-theme='dark'] .credential-checkbox,
 [data-theme='dark'] .credential-list-item {
-  background: var(--color-surface-secondary) !important;
+  background: var(--color-surface-secondary);
+  border-color: var(--color-border);
 }
 
-@media (max-width: 980px) {
-  .credentials-workspace-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .credential-list-card {
-    position: static;
-  }
+[data-theme='dark'] .credential-card-heading h2,
+[data-theme='dark'] .credential-list-name {
+  color: var(--color-text-primary);
 }
 
-@media (max-width: 620px) {
-  .credential-form-grid {
+@media (max-width: 760px) {
+  .provider-tool-credentials .settings-page-heading,
+  .provider-tool-credentials .settings-layout-single {
+    max-width: none;
+  }
+
+  .credential-form-grid,
+  .credentials-list {
     grid-template-columns: 1fr;
   }
 
@@ -1234,9 +1156,25 @@ input:checked + .slider:before {
     grid-column: auto;
   }
 
+  .credential-form-actions {
+    justify-content: stretch;
+  }
+
+  .credential-form-actions .st-button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 576px) {
   .credential-form-card,
   .credential-list-card {
     padding: 0.9rem;
     border-radius: 16px;
   }
+
+  .credential-card-heading {
+    margin-bottom: 0.85rem;
+    padding-bottom: 0.75rem;
+  }
 }
+

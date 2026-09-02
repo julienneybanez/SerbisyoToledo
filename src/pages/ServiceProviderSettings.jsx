@@ -366,15 +366,11 @@ function ServiceProviderSettings() {
           )}
 
           {pageMode === 'credentials' && (
-            <div className="settings-section provider-credentials-section">
-              <h2 className="settings-section-title">{t('credentials')}</h2>
-
-              <div className="credentials-workspace-grid">
+            <div className="provider-credentials-section">
+              <div className="credentials-page-stack">
                 <section className="credential-form-card" aria-labelledby="credential-form-title">
                   <div className="credential-card-heading">
-                    <div>
-                      <h3 id="credential-form-title" className="settings-subsection-title">{t('providerCredentialsCertificatesTitle')}</h3>
-                    </div>
+                    <h2 id="credential-form-title">{t('providerCredentialsCertificatesTitle')}</h2>
                   </div>
 
                   <div className="credential-form-grid">
@@ -453,7 +449,7 @@ function ServiceProviderSettings() {
                       />
                     </div>
 
-                    <div className="credential-field credential-field-full credential-checkbox-field">
+                    <div className="credential-field credential-field-full">
                       <label className="credential-checkbox">
                         <input
                           type="checkbox"
@@ -488,7 +484,7 @@ function ServiceProviderSettings() {
                     </div>
                   </div>
 
-                  <div className="settings-actions credential-form-actions">
+                  <div className="credential-form-actions">
                     <AppButton onClick={handleCreateCredential} disabled={credentialSaving}>
                       {credentialSaving ? t('saving') : t('providerAddCredential')}
                     </AppButton>
@@ -497,50 +493,46 @@ function ServiceProviderSettings() {
 
                 <section className="credential-list-card" aria-labelledby="saved-credentials-title">
                   <div className="credential-card-heading">
-                    <div>
-                      <h3 id="saved-credentials-title" className="settings-subsection-title">{t('providerSavedCredentialsTitle')}</h3>
-                    </div>
+                    <h2 id="saved-credentials-title">{t('providerSavedCredentialsTitle')}</h2>
                   </div>
 
-                  {credentialLoading && (
+                  {credentialLoading ? (
                     <div className="credential-empty-state">
                       <span className="spinner-small" aria-hidden="true"></span>
-                      <small className="settings-help">{t('providerLoadingCredentials')}</small>
+                      <p>{t('providerLoadingCredentials')}</p>
                     </div>
-                  )}
-
-                  {!credentialLoading && credentials.length === 0 && (
+                  ) : credentials.length === 0 ? (
                     <div className="credential-empty-state">
                       <i className="bi bi-patch-check" aria-hidden="true"></i>
-                      <small className="settings-help">{t('providerNoCredentialsYet')}</small>
+                      <p>{t('providerNoCredentialsYet')}</p>
+                    </div>
+                  ) : (
+                    <div className="credentials-list">
+                      {credentials.map((credential) => (
+                        <article key={credential.id} className="credential-list-item">
+                          <div className="credential-list-copy">
+                            <p className="credential-list-name">{credential.credential_name}</p>
+                            <p className="credential-list-meta">
+                              {credential.credential_type} • {credential.verification_status}
+                            </p>
+                            {credential.verification_notes && (
+                              <p className="credential-list-note">{credential.verification_notes}</p>
+                            )}
+                          </div>
+                          <div className="settings-credential-actions">
+                            <AppButton
+                              onClick={() => handleSubmitCredential(credential.id)}
+                              disabled={credentialSaving || credential.verification_status === 'pending'}
+                            >
+                              {credential.verification_status === 'pending'
+                                ? t('providerPendingReview')
+                                : t('providerSubmitForReview')}
+                            </AppButton>
+                          </div>
+                        </article>
+                      ))}
                     </div>
                   )}
-
-                  <div className="credentials-list">
-                    {credentials.map((credential) => (
-                      <div key={credential.id} className="settings-surface-block credential-list-item">
-                        <p className="settings-metadata-row settings-metadata-strong">
-                          {credential.credential_name}
-                        </p>
-                        <small className="settings-help">
-                          {credential.credential_type} • {credential.verification_status}
-                        </small>
-                        {credential.verification_notes && (
-                          <p className="settings-metadata-row">{credential.verification_notes}</p>
-                        )}
-                        <div className="settings-credential-actions">
-                          <AppButton
-                            onClick={() => handleSubmitCredential(credential.id)}
-                            disabled={credentialSaving || credential.verification_status === 'pending'}
-                          >
-                            {credential.verification_status === 'pending'
-                              ? t('providerPendingReview')
-                              : t('providerSubmitForReview')}
-                          </AppButton>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
                 </section>
               </div>
             </div>
