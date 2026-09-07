@@ -1,0 +1,202 @@
+/* ===================================
+   PUBLIC VIEWPORT CONSISTENCY
+   Fluid large-screen composition + one continuous dark public canvas.
+   This stylesheet intentionally loads last.
+   =================================== */
+
+/* Public routes should sit on one canvas, including the space around the footer. */
+[data-theme='dark'] body:has(.home-page),
+[data-theme='dark'] body:has(.about-page),
+[data-theme='dark'] body:has(.feed-page),
+[data-theme='dark'] body:has(.portfolio-shell),
+[data-theme='dark'] body:has(.auth-page),
+[data-theme='dark'] body:has(.policy-page),
+[data-theme='dark'] body:has(.footer.public-route-footer) {
+  background: var(--color-public-bg) !important;
+}
+
+[data-theme='dark'] body:has(.home-page) .app,
+[data-theme='dark'] body:has(.about-page) .app,
+[data-theme='dark'] body:has(.feed-page) .app,
+[data-theme='dark'] body:has(.portfolio-shell) .app,
+[data-theme='dark'] body:has(.auth-page) .app,
+[data-theme='dark'] body:has(.policy-page) .app,
+[data-theme='dark'] body:has(.home-page) .main-content,
+[data-theme='dark'] body:has(.about-page) .main-content,
+[data-theme='dark'] body:has(.feed-page) .main-content,
+[data-theme='dark'] body:has(.portfolio-shell) .main-content,
+[data-theme='dark'] body:has(.auth-page) .main-content,
+[data-theme='dark'] body:has(.policy-page) .main-content {
+  background: var(--color-public-bg) !important;
+}
+
+/* Public navbar belongs to the same dark canvas; the border supplies separation. */
+[data-theme='dark'] body:has(.home-page) .navbar,
+[data-theme='dark'] body:has(.about-page) .navbar,
+[data-theme='dark'] body:has(.feed-page) .navbar,
+[data-theme='dark'] body:has(.portfolio-shell) .navbar,
+[data-theme='dark'] body:has(.policy-page) .navbar {
+  background: color-mix(in srgb, var(--color-public-bg) 96%, transparent) !important;
+  border-bottom-color: color-mix(in srgb, #ffffff 10%, transparent) !important;
+  box-shadow: none !important;
+}
+
+[data-theme='dark'] body:has(.home-page) .navbar.navbar-scrolled,
+[data-theme='dark'] body:has(.about-page) .navbar.navbar-scrolled,
+[data-theme='dark'] body:has(.feed-page) .navbar.navbar-scrolled,
+[data-theme='dark'] body:has(.portfolio-shell) .navbar.navbar-scrolled,
+[data-theme='dark'] body:has(.policy-page) .navbar.navbar-scrolled {
+  background: color-mix(in srgb, var(--color-public-bg) 98%, transparent) !important;
+}
+
+/* Homepage/About are continuous pages: no full-width dark bands between sections. */
+[data-theme='dark'] .home-page .home-hero,
+[data-theme='dark'] .home-page .home-popular-section,
+[data-theme='dark'] .home-page .home-trust-section,
+[data-theme='dark'] .home-page .home-provider-section,
+[data-theme='dark'] .home-page .how-it-works-section,
+[data-theme='dark'] .home-page .home-faq-section,
+[data-theme='dark'] .about-page > section {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Keep the footer card intentional, but remove the accidental outer color band. */
+[data-theme='dark'] body:has(.footer.public-route-footer) .footer.public-route-footer {
+  margin-bottom: 30px;
+}
+
+/* ===================================
+   LARGE DESKTOP / MONITOR SCALING
+   Keep laptop proportions, then grow composition once the viewport is truly wide.
+   =================================== */
+@media (min-width: 1500px) {
+  :root {
+    --public-monitor-width: min(90vw, 2200px);
+    --public-monitor-gutter: clamp(2rem, 4vw, 5.5rem);
+  }
+
+  .home-page .container,
+  .about-page .container,
+  .feed-page .container,
+  .home-faq-section > .container,
+  .portfolio-container {
+    width: var(--public-monitor-width) !important;
+    max-width: none !important;
+  }
+
+  .navbar .container,
+  .navbar .container-fluid,
+  .navbar-shell {
+    width: min(94vw, 2280px) !important;
+    max-width: none !important;
+    margin-inline: auto !important;
+  }
+
+  .home-hero > .container,
+  .home-provider-section > .container,
+  .about-hero > .container {
+    padding: clamp(3.2rem, 4.2vw, 6rem) !important;
+  }
+
+  .home-hero-grid,
+  .about-hero-grid {
+    gap: clamp(3.2rem, 4.6vw, 6.5rem) !important;
+  }
+
+  .home-hero-title,
+  .about-hero h1 {
+    max-width: 900px !important;
+    font-size: clamp(4.8rem, 4.7vw, 6.4rem) !important;
+  }
+
+  .home-hero-subtitle,
+  .about-hero-copy p {
+    max-width: 760px !important;
+    font-size: clamp(1.12rem, 1vw, 1.3rem) !important;
+  }
+
+  .home-page .section-title,
+  .about-section-heading h2,
+  .about-local-copy h2 {
+    font-size: clamp(2.7rem, 2.8vw, 4rem) !important;
+  }
+
+  .home-category-grid,
+  .about-feature-grid {
+    gap: clamp(1.35rem, 1.7vw, 2.25rem) !important;
+  }
+
+  .home-popular-section,
+  .home-trust-section,
+  .home-provider-section,
+  .home-page .how-it-works-section,
+  .home-faq-section,
+  .about-mission-section,
+  .about-help-section,
+  .about-local-section,
+  .about-cta-section {
+    padding-block: clamp(5rem, 6vw, 8rem) !important;
+  }
+
+  .footer.public-route-footer,
+  .footer {
+    width: var(--public-monitor-width) !important;
+    max-width: none !important;
+    margin: clamp(76px, 5vw, 112px) auto clamp(30px, 2vw, 48px) !important;
+    padding: clamp(48px, 3.5vw, 76px) !important;
+    border-radius: clamp(28px, 2vw, 38px) !important;
+  }
+
+  .footer .footer-grid {
+    grid-template-columns: minmax(340px, 1.55fr) repeat(3, minmax(150px, 1fr)) !important;
+    gap: clamp(42px, 3.3vw, 80px) !important;
+  }
+
+  .footer .footer-logo-static {
+    width: 46px !important;
+    height: 46px !important;
+    flex-basis: 46px !important;
+  }
+
+  .footer .footer-wordmark {
+    font-size: clamp(1.35rem, 1.15vw, 1.65rem) !important;
+  }
+
+  .footer .footer-description {
+    max-width: 430px !important;
+    font-size: 1rem !important;
+  }
+
+  .footer .footer-brand-meta {
+    max-width: 460px !important;
+    font-size: 0.88rem !important;
+  }
+
+  .footer .footer-heading {
+    font-size: 1.04rem !important;
+  }
+
+  .footer .footer-link {
+    font-size: 0.9rem !important;
+  }
+
+  .footer .footer-bottom-row p {
+    font-size: 0.84rem !important;
+  }
+}
+
+/* Wider monitors get slightly more breathing room without turning into edge-to-edge UI. */
+@media (min-width: 2200px) {
+  :root {
+    --public-monitor-width: min(92vw, 2480px);
+  }
+
+  .home-hero-grid {
+    grid-template-columns: minmax(0, 1.08fr) minmax(520px, 0.92fr) !important;
+  }
+
+  .portfolio-shell .provider-section {
+    grid-template-columns: minmax(0, 1fr) minmax(390px, 440px) !important;
+  }
+}
