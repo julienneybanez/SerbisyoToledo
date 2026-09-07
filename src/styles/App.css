@@ -24,6 +24,7 @@
 @import './MockupUI.css';
 @import './FinalVisualSystem.css';
 @import './ResponsiveComposition.css';
+@import './PublicBubbles.css';
 
 body {
   line-height: 1.55;
