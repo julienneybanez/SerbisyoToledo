@@ -26,6 +26,7 @@
 @import './ResponsiveComposition.css';
 @import './PublicBubbles.css';
 @import './PublicViewportConsistency.css';
+@import './PublicDarkCanvasBody.css';
 
 body {
   line-height: 1.55;
