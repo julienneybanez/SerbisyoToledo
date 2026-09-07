@@ -122,9 +122,16 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Install Chromium QA tooling
+        shell: bash
         run: |
-          npm install --no-save --package-lock=false @playwright/test@1.55.0
+          rm -rf /tmp/serbisyo-playwright
+          mkdir -p /tmp/serbisyo-playwright
+          cd /tmp/serbisyo-playwright
+          npm init -y >/dev/null 2>&1
+          npm install --no-package-lock @playwright/test@1.55.0
           npx playwright install --with-deps chromium
+          echo "NODE_PATH=/tmp/serbisyo-playwright/node_modules" >> "$GITHUB_ENV"
+          echo "/tmp/serbisyo-playwright/node_modules/.bin" >> "$GITHUB_PATH"
       - run: npm run build
       - name: Start local production preview
         shell: bash
@@ -139,7 +146,7 @@ jobs:
           cat /tmp/serbisyo-preview.log
           exit 1
       - name: Run phone-app browser matrix
-        run: npx playwright test --config=qa/playwright.config.cjs --reporter=line
+        run: playwright test --config=qa/playwright.config.cjs --reporter=line
       - name: Upload phone-app screenshots
         if: always()
         uses: actions/upload-artifact@v4
