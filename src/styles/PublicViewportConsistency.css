@@ -4,17 +4,18 @@
    This stylesheet intentionally loads last.
    =================================== */
 
-/* Public routes should sit on one canvas, including the space around the footer. */
+[data-theme='dark'] {
+  --public-dark-canvas: #0b1220;
+}
+
+/* Public routes should sit on one exact canvas, including the space around the footer. */
 [data-theme='dark'] body:has(.home-page),
 [data-theme='dark'] body:has(.about-page),
 [data-theme='dark'] body:has(.feed-page),
 [data-theme='dark'] body:has(.portfolio-shell),
 [data-theme='dark'] body:has(.auth-page),
 [data-theme='dark'] body:has(.policy-page),
-[data-theme='dark'] body:has(.footer.public-route-footer) {
-  background: var(--color-public-bg) !important;
-}
-
+[data-theme='dark'] body:has(.footer.public-route-footer),
 [data-theme='dark'] body:has(.home-page) .app,
 [data-theme='dark'] body:has(.about-page) .app,
 [data-theme='dark'] body:has(.feed-page) .app,
@@ -26,8 +27,19 @@
 [data-theme='dark'] body:has(.feed-page) .main-content,
 [data-theme='dark'] body:has(.portfolio-shell) .main-content,
 [data-theme='dark'] body:has(.auth-page) .main-content,
-[data-theme='dark'] body:has(.policy-page) .main-content {
-  background: var(--color-public-bg) !important;
+[data-theme='dark'] body:has(.policy-page) .main-content,
+[data-theme='dark'] .home-page,
+[data-theme='dark'] .about-page,
+[data-theme='dark'] .feed-page,
+[data-theme='dark'] .portfolio-shell,
+[data-theme='dark'] .auth-page,
+[data-theme='dark'] .policy-page {
+  background-color: var(--public-dark-canvas) !important;
+}
+
+/* Preserve decorative bubbles while pinning their base color to that same canvas. */
+[data-theme='dark'] :is(.home-page, .about-page, .feed-page, .portfolio-shell, .auth-page, .policy-page) {
+  background-color: var(--public-dark-canvas) !important;
 }
 
 /* Public navbar belongs to the same dark canvas; the border supplies separation. */
@@ -36,7 +48,7 @@
 [data-theme='dark'] body:has(.feed-page) .navbar,
 [data-theme='dark'] body:has(.portfolio-shell) .navbar,
 [data-theme='dark'] body:has(.policy-page) .navbar {
-  background: color-mix(in srgb, var(--color-public-bg) 96%, transparent) !important;
+  background: color-mix(in srgb, var(--public-dark-canvas) 96%, transparent) !important;
   border-bottom-color: color-mix(in srgb, #ffffff 10%, transparent) !important;
   box-shadow: none !important;
 }
@@ -46,7 +58,7 @@
 [data-theme='dark'] body:has(.feed-page) .navbar.navbar-scrolled,
 [data-theme='dark'] body:has(.portfolio-shell) .navbar.navbar-scrolled,
 [data-theme='dark'] body:has(.policy-page) .navbar.navbar-scrolled {
-  background: color-mix(in srgb, var(--color-public-bg) 98%, transparent) !important;
+  background: color-mix(in srgb, var(--public-dark-canvas) 98%, transparent) !important;
 }
 
 /* Homepage/About are continuous pages: no full-width dark bands between sections. */
