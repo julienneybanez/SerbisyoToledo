@@ -1,0 +1,56 @@
+/* Responsive corrections verified against generated phone screenshots. */
+
+@media (max-width: 768px) {
+  .client-dashboard-stats,
+  .provider-stats-row,
+  .stats-grid {
+    width: 100% !important;
+    max-width: 100% !important;
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    grid-auto-flow: row !important;
+    gap: 0.75rem !important;
+    overflow: visible !important;
+    overflow-x: visible !important;
+    scroll-snap-type: none !important;
+  }
+
+  .client-dashboard-stats > *,
+  .provider-stats-row > *,
+  .stats-grid > * {
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    flex: none !important;
+    scroll-snap-align: unset !important;
+  }
+
+  /* Three client metrics become a balanced 2 + 1 layout rather than a clipped carousel. */
+  .client-dashboard-stats > :last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+
+  .client-dashboard-stats > :last-child:nth-child(odd) .mock-stat-copy {
+    grid-template-columns: minmax(0, 1fr) auto !important;
+  }
+}
+
+@media (max-width: 360px) {
+  .client-dashboard-stats,
+  .provider-stats-row,
+  .stats-grid {
+    gap: 0.6rem !important;
+  }
+
+  .client-stat-card,
+  .provider-stat-card,
+  .stat-card {
+    padding: 0.75rem !important;
+  }
+
+  .client-stat-card > .mock-stat-icon,
+  .provider-stat-card > .mock-stat-icon {
+    width: 38px !important;
+    height: 38px !important;
+  }
+}
