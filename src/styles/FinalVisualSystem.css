@@ -1,0 +1,696 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
+
+/* ===================================
+   FINAL VISUAL SYSTEM
+   PaPrint structure + Aoxa polish + SerbisyoToledo brand.
+   This stylesheet intentionally loads after MockupUI.css and owns the
+   responsive finishing layer without changing application behavior.
+   =================================== */
+
+:root,
+[data-theme='light'],
+[data-theme='dark'] {
+  --font-sans: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --ui-page-gutter: clamp(1rem, 2.5vw, 2rem);
+  --ui-card-radius: 20px;
+  --ui-card-border: 1px solid var(--color-border);
+  --ui-card-shadow: 0 10px 32px color-mix(in srgb, var(--color-shadow) 48%, transparent);
+}
+
+html,
+body,
+button,
+input,
+select,
+textarea {
+  font-family: var(--font-sans) !important;
+}
+
+body {
+  overflow-x: clip;
+}
+
+/* Keep the product wordmark typographically consistent everywhere. */
+.navbar-brand-text,
+.workspace-brand-wordmark,
+.auth-brand-wordmark,
+.about-visual-wordmark,
+.mobile-brand-wordmark,
+.brand-name,
+.logo-text {
+  font-family: var(--font-sans) !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.04em !important;
+}
+
+/* ===================================
+   PUBLIC CANVAS + BLUE/TEAL BUBBLES
+   =================================== */
+:is(.home-page, .about-page, .feed-page, .portfolio-shell, .auth-page) {
+  position: relative;
+  isolation: isolate;
+  min-width: 0;
+  background-color: #fff !important;
+  background-image:
+    radial-gradient(circle at 4% 10%, rgba(47, 128, 237, 0.13) 0 80px, transparent 230px),
+    radial-gradient(circle at 95% 18%, rgba(10, 166, 143, 0.12) 0 90px, transparent 250px),
+    radial-gradient(circle at 7% 48%, rgba(10, 166, 143, 0.08) 0 65px, transparent 210px),
+    radial-gradient(circle at 94% 68%, rgba(47, 128, 237, 0.10) 0 75px, transparent 225px),
+    radial-gradient(circle at 15% 91%, rgba(47, 128, 237, 0.07) 0 55px, transparent 190px) !important;
+  background-repeat: no-repeat !important;
+}
+
+[data-theme='dark'] :is(.home-page, .about-page, .feed-page, .portfolio-shell, .auth-page) {
+  background-color: var(--color-public-bg) !important;
+  background-image:
+    radial-gradient(circle at 4% 10%, rgba(47, 128, 237, 0.16) 0 72px, transparent 225px),
+    radial-gradient(circle at 95% 18%, rgba(10, 166, 143, 0.14) 0 82px, transparent 245px),
+    radial-gradient(circle at 8% 50%, rgba(10, 166, 143, 0.09) 0 58px, transparent 205px),
+    radial-gradient(circle at 94% 70%, rgba(47, 128, 237, 0.12) 0 68px, transparent 215px) !important;
+}
+
+/* Home must read as one long page; hierarchy comes from content, not bands. */
+.home-page :is(
+  .home-hero,
+  .home-popular-section,
+  .home-trust-section,
+  .home-provider-section,
+  .how-it-works-section,
+  .home-faq-section
+) {
+  background: transparent !important;
+}
+
+.home-page .home-faq-section > .container,
+.home-page .home-faq-shell {
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Public content widths should use the screen instead of floating in a narrow strip. */
+.home-page .container,
+.about-page .container,
+.feed-page .container,
+.home-faq-section > .container {
+  width: min(1240px, calc(100% - (2 * var(--ui-page-gutter)))) !important;
+  max-width: none !important;
+}
+
+/* ===================================
+   AUTH / LOGIN / SIGN UP
+   =================================== */
+.auth-page {
+  padding: clamp(1rem, 3vw, 2.25rem) !important;
+}
+
+.auth-split-card {
+  width: min(1180px, 100%) !important;
+  border-radius: 26px !important;
+  border: var(--ui-card-border) !important;
+  background: color-mix(in srgb, var(--color-surface) 96%, transparent) !important;
+  box-shadow: var(--ui-card-shadow) !important;
+}
+
+.auth-heading .auth-page-logo {
+  display: block !important;
+  width: 60px !important;
+  height: 60px !important;
+  margin: 0 auto 0.45rem !important;
+  object-fit: contain;
+}
+
+.auth-heading .auth-brand-wordmark {
+  width: 100% !important;
+  margin: 0 0 1.45rem !important;
+  text-align: center !important;
+  font-size: 1.04rem !important;
+  line-height: 1.15 !important;
+  color: var(--brand-blue) !important;
+}
+
+.auth-heading .auth-brand-wordmark .brand-toledo {
+  color: var(--brand-teal) !important;
+}
+
+.auth-heading h1 {
+  font-family: var(--font-sans) !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.045em !important;
+}
+
+.auth-visual-pane {
+  position: relative;
+  overflow: hidden !important;
+  background:
+    radial-gradient(circle at 18% 18%, rgba(47,128,237,.18), transparent 34%),
+    radial-gradient(circle at 82% 80%, rgba(10,166,143,.16), transparent 35%),
+    linear-gradient(135deg, var(--color-soft-blue), var(--color-soft-mint)) !important;
+}
+
+.auth-visual-image {
+  object-fit: cover !important;
+}
+
+/* Move the focal crop rightward so the worker/action is visible. */
+.auth-login-visual-image {
+  object-position: 68% center !important;
+}
+
+.auth-register-visual-image {
+  object-position: 58% center !important;
+}
+
+.auth-form .form-control,
+.auth-form .form-select,
+.auth-language-option,
+.auth-agreement-label,
+.professional-details {
+  border-radius: 13px !important;
+}
+
+/* ===================================
+   STRUCTURED INTERNAL SURFACES
+   =================================== */
+:is(
+  .mock-card,
+  .client-dashboard-panel,
+  .provider-upcoming-card,
+  .availability-card,
+  .request-card,
+  .job-card,
+  .settings-content,
+  .settings-surface-block,
+  .credential-form-card,
+  .credential-list-card,
+  .admin-page .filters-bar,
+  .admin-page .table-container,
+  .admin-page .requests-list,
+  .notifications-list-page,
+  .messages-shell
+) {
+  border: var(--ui-card-border) !important;
+  border-radius: var(--ui-card-radius) !important;
+  background: var(--color-surface) !important;
+  box-shadow: var(--ui-card-shadow) !important;
+}
+
+:is(.client-stat-card, .provider-stat-card, .stat-card) {
+  border: var(--ui-card-border) !important;
+  border-radius: 20px !important;
+  background: var(--color-surface) !important;
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--color-shadow) 40%, transparent) !important;
+}
+
+:is(.status-badge, .request-status, .job-status, .badge, .verification-status, .credential-status) {
+  border-radius: 999px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0 !important;
+}
+
+/* Filters should read as a deliberate control surface. */
+:is(.feed-filters, .request-filters, .admin-page .filters-bar, .filter-bar, .filters-bar) {
+  padding: 1rem !important;
+  border: var(--ui-card-border) !important;
+  border-radius: 18px !important;
+  background: var(--color-surface) !important;
+}
+
+/* ===================================
+   WORKSPACE WIDTH / TABLET BEHAVIOR
+   =================================== */
+.workspace-content,
+.admin-content {
+  min-width: 0;
+}
+
+.workspace-content {
+  width: 100% !important;
+  max-width: 1540px !important;
+  padding-inline: clamp(1rem, 2.2vw, 2rem) !important;
+}
+
+@media (min-width: 769px) and (max-width: 1180px) {
+  .workspace-shell {
+    grid-template-columns: 214px minmax(0, 1fr) !important;
+  }
+
+  .workspace-sidebar {
+    width: 214px !important;
+    padding-inline: 12px !important;
+  }
+
+  .workspace-brand-wordmark {
+    font-size: 1rem !important;
+  }
+
+  .workspace-role-card {
+    padding-inline: 0.7rem !important;
+  }
+
+  .workspace-topbar {
+    padding-inline: 1rem !important;
+  }
+
+  .workspace-topbar-search {
+    width: min(390px, 38vw) !important;
+    min-width: 200px !important;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 920px) {
+  .workspace-shell {
+    grid-template-columns: 188px minmax(0, 1fr) !important;
+  }
+
+  .workspace-sidebar {
+    width: 188px !important;
+  }
+
+  .workspace-nav-link {
+    gap: 0.55rem !important;
+    padding-inline: 0.7rem !important;
+    font-size: 0.78rem !important;
+  }
+
+  .workspace-brand-wordmark,
+  .workspace-role-card-copy,
+  .workspace-topbar-name,
+  .workspace-topbar .theme-toggle-label {
+    display: none !important;
+  }
+}
+
+/* ===================================
+   PROVIDER PUBLIC PROFILE
+   =================================== */
+.portfolio-container {
+  width: min(1380px, calc(100% - (2 * var(--ui-page-gutter)))) !important;
+  max-width: none !important;
+  margin-inline: auto !important;
+}
+
+.portfolio-shell .provider-section {
+  grid-template-columns: minmax(0, 1fr) minmax(350px, 400px) !important;
+  column-gap: clamp(1.25rem, 2.4vw, 2rem) !important;
+}
+
+.portfolio-shell .profile-summary {
+  padding: clamp(1.15rem, 2vw, 1.6rem) !important;
+  border-radius: 24px !important;
+  box-shadow: 0 10px 28px color-mix(in srgb, var(--color-shadow) 38%, transparent) !important;
+}
+
+.portfolio-shell .about-section,
+.portfolio-shell .skills-section,
+.portfolio-shell .contact-section,
+.portfolio-shell .portfolio-tabs,
+.portfolio-shell .portfolio-grid,
+.portfolio-shell .reviews-panel,
+.portfolio-shell .portfolio-empty-copy {
+  border-radius: 20px !important;
+}
+
+.portfolio-shell .provider-availability-panel {
+  width: 100% !important;
+  border-radius: 24px !important;
+  box-shadow: 0 10px 30px color-mix(in srgb, var(--color-shadow) 38%, transparent) !important;
+}
+
+.provider-profile-calendar .rdp-month_grid {
+  width: 100% !important;
+  table-layout: fixed !important;
+}
+
+.provider-profile-calendar .rdp-day_button {
+  max-width: 42px !important;
+  margin-inline: auto !important;
+}
+
+/* ===================================
+   DASHBOARD / FORM GRIDS
+   =================================== */
+.client-dashboard-stats,
+.provider-stats-row,
+.stats-grid {
+  gap: 1rem !important;
+}
+
+.client-dashboard-grid,
+.provider-dashboard-grid {
+  grid-template-columns: minmax(0, 1.45fr) minmax(280px, 0.55fr) !important;
+  gap: 1.15rem !important;
+}
+
+.settings-layout,
+.credentials-page-stack,
+.credential-form-grid,
+.form-grid,
+.admin-page .stats-grid {
+  min-width: 0;
+}
+
+.credential-form-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+}
+
+/* ===================================
+   MODALS
+   =================================== */
+.modal-overlay,
+.booking-modal-overlay,
+.edit-profile-overlay,
+.edit-portfolio-overlay {
+  padding: clamp(0.75rem, 2vw, 1.5rem) !important;
+}
+
+.modal-content,
+.booking-modal,
+.edit-profile-modal,
+.edit-portfolio-modal {
+  max-width: min(920px, calc(100vw - 2rem)) !important;
+  max-height: min(90vh, 920px) !important;
+  border-radius: 22px !important;
+}
+
+/* ===================================
+   RESPONSIVE TABLETS
+   =================================== */
+@media (max-width: 1100px) {
+  .client-dashboard-grid,
+  .provider-dashboard-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .portfolio-shell .provider-section {
+    grid-template-columns: minmax(0, 1fr) minmax(320px, 360px) !important;
+  }
+
+  .home-editorial-split,
+  .home-provider-split,
+  .about-hero-grid,
+  .about-mission-grid {
+    gap: clamp(2rem, 4vw, 3rem) !important;
+  }
+}
+
+@media (max-width: 980px) {
+  .portfolio-shell .provider-section {
+    display: block !important;
+  }
+
+  .portfolio-shell .provider-availability-panel {
+    position: static !important;
+    width: 100% !important;
+    margin: 0 0 1rem !important;
+  }
+
+  .credential-form-grid,
+  .auth-two-column {
+    grid-template-columns: 1fr !important;
+  }
+
+  .credential-field-full {
+    grid-column: auto !important;
+  }
+}
+
+/* ===================================
+   MOBILE: INTENTIONAL COMPOSITION
+   =================================== */
+@media (max-width: 768px) {
+  :root {
+    --ui-page-gutter: 0.9rem;
+  }
+
+  :is(.home-page, .about-page, .feed-page, .portfolio-shell, .auth-page) {
+    background-image:
+      radial-gradient(circle at -4% 7%, rgba(47,128,237,.12) 0 54px, transparent 150px),
+      radial-gradient(circle at 105% 30%, rgba(10,166,143,.10) 0 58px, transparent 160px),
+      radial-gradient(circle at -3% 78%, rgba(47,128,237,.08) 0 44px, transparent 140px) !important;
+  }
+
+  .workspace-content,
+  .admin-content {
+    width: 100% !important;
+    padding: 0.9rem 0.85rem calc(var(--mobile-nav-height) + 1.2rem) !important;
+  }
+
+  .mock-page-title,
+  .st-page-title,
+  .feed-page-title,
+  .settings-page-title {
+    font-size: clamp(1.7rem, 8vw, 2.25rem) !important;
+    line-height: 1.05 !important;
+    letter-spacing: -0.045em !important;
+  }
+
+  .client-dashboard-stats,
+  .provider-stats-row,
+  .stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 0.75rem !important;
+  }
+
+  .client-stat-card,
+  .provider-stat-card,
+  .stat-card {
+    min-width: 0 !important;
+    min-height: 92px !important;
+    padding: 0.85rem !important;
+  }
+
+  .client-stat-card .mock-stat-copy,
+  .provider-stat-card .mock-stat-copy {
+    grid-template-columns: 1fr !important;
+    gap: 0.15rem !important;
+  }
+
+  .client-stat-card .mock-stat-copy strong,
+  .provider-stat-card .mock-stat-copy strong {
+    justify-self: start !important;
+  }
+
+  .request-card,
+  .job-card,
+  .client-dashboard-panel,
+  .provider-upcoming-card,
+  .availability-card,
+  .settings-content,
+  .credential-form-card,
+  .credential-list-card {
+    border-radius: 16px !important;
+    box-shadow: 0 6px 18px color-mix(in srgb, var(--color-shadow) 30%, transparent) !important;
+  }
+
+  .request-card :is(.request-actions, .request-card-actions, .job-actions),
+  .job-card :is(.request-actions, .request-card-actions, .job-actions) {
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 0.55rem !important;
+  }
+
+  .request-card :is(button, .st-button),
+  .job-card :is(button, .st-button) {
+    max-width: 100%;
+  }
+
+  .settings-layout,
+  .settings-layout.settings-layout-single,
+  .credential-form-grid,
+  .credentials-list {
+    grid-template-columns: 1fr !important;
+  }
+
+  .settings-content {
+    padding: 1rem !important;
+  }
+
+  .home-page .container,
+  .about-page .container,
+  .feed-page .container,
+  .home-faq-section > .container,
+  .portfolio-container {
+    width: calc(100% - 1.8rem) !important;
+  }
+
+  .home-section-heading {
+    align-items: flex-start !important;
+    flex-direction: column !important;
+    gap: 0.9rem !important;
+  }
+
+  .home-browse-all,
+  .home-provider-cta {
+    width: 100% !important;
+  }
+
+  .home-category-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .home-editorial-split,
+  .home-provider-split,
+  .about-hero-grid,
+  .about-mission-grid,
+  .about-feature-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .auth-page {
+    padding: 0.75rem !important;
+  }
+
+  .auth-split-card {
+    border-radius: 20px !important;
+    box-shadow: 0 8px 22px color-mix(in srgb, var(--color-shadow) 32%, transparent) !important;
+  }
+
+  .auth-form-pane {
+    padding: 1.25rem 1rem 1.5rem !important;
+  }
+
+  .auth-heading .auth-page-logo {
+    width: 52px !important;
+    height: 52px !important;
+  }
+
+  .auth-heading .auth-brand-wordmark {
+    font-size: 0.94rem !important;
+    margin-bottom: 1.15rem !important;
+  }
+
+  .auth-heading h1 {
+    font-size: clamp(1.9rem, 9vw, 2.45rem) !important;
+  }
+
+  .auth-visual-pane {
+    display: none !important;
+  }
+
+  .portfolio-shell .profile-summary,
+  .portfolio-shell .provider-availability-panel,
+  .portfolio-shell .about-section,
+  .portfolio-shell .skills-section,
+  .portfolio-shell .contact-section {
+    border-radius: 16px !important;
+  }
+
+  .provider-profile-calendar {
+    min-width: 0 !important;
+    overflow: hidden !important;
+  }
+
+  .provider-profile-calendar .rdp-root,
+  .provider-profile-calendar .rdp-months,
+  .provider-profile-calendar .rdp-month,
+  .provider-profile-calendar .rdp-month_grid {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .provider-profile-calendar .rdp-day_button {
+    width: clamp(30px, 9vw, 38px) !important;
+    height: clamp(30px, 9vw, 38px) !important;
+  }
+
+  .provider-time-chips {
+    gap: 0.4rem !important;
+  }
+
+  .provider-time-chip {
+    flex: 0 0 auto;
+    min-height: 38px !important;
+  }
+
+  .modal-overlay,
+  .booking-modal-overlay,
+  .edit-profile-overlay,
+  .edit-portfolio-overlay {
+    align-items: flex-end !important;
+    padding: 0 !important;
+  }
+
+  .modal-content,
+  .booking-modal,
+  .edit-profile-modal,
+  .edit-portfolio-modal {
+    width: 100% !important;
+    max-width: none !important;
+    max-height: 92dvh !important;
+    margin: 0 !important;
+    border-radius: 22px 22px 0 0 !important;
+    overflow-y: auto !important;
+  }
+
+  .admin-table,
+  .table-responsive,
+  .admin-page .table-container {
+    max-width: 100%;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .admin-page .filters-bar,
+  .feed-filters,
+  .request-filters {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 0.7rem !important;
+  }
+
+  .admin-page .filters-bar :is(input, select, .form-control, .form-select),
+  .feed-filters :is(input, select, .form-control, .form-select),
+  .request-filters :is(input, select, .form-control, .form-select) {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+}
+
+@media (max-width: 430px) {
+  .client-dashboard-stats,
+  .provider-stats-row,
+  .stats-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .client-stat-card,
+  .provider-stat-card,
+  .stat-card {
+    min-height: 84px !important;
+  }
+
+  .home-page .container,
+  .about-page .container,
+  .feed-page .container,
+  .home-faq-section > .container,
+  .portfolio-container {
+    width: calc(100% - 1.5rem) !important;
+  }
+
+  .home-page .section-title,
+  .about-page h2 {
+    font-size: clamp(1.8rem, 9vw, 2.25rem) !important;
+  }
+
+  .home-faq-question {
+    min-height: 58px !important;
+    font-size: 0.92rem !important;
+  }
+
+  .credential-form-card,
+  .credential-list-card {
+    padding: 0.85rem !important;
+  }
+}
+
+@media (min-width: 1600px) {
+  .workspace-content {
+    max-width: 1640px !important;
+  }
+
+  .portfolio-container {
+    width: min(1440px, calc(100% - 4rem)) !important;
+  }
+}
