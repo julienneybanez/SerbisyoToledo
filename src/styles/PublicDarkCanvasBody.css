@@ -1,41 +1,39 @@
-/* Dark-theme context is currently applied to body in the app. Keep the
-   public shell on the exact same canvas token as the page and sections. */
-body[data-theme='dark']:has(.home-page),
-body[data-theme='dark']:has(.about-page),
-body[data-theme='dark']:has(.feed-page),
-body[data-theme='dark']:has(.portfolio-shell),
-body[data-theme='dark']:has(.auth-page),
-body[data-theme='dark']:has(.policy-page),
-body[data-theme='dark']:has(.footer.public-route-footer),
-body[data-theme='dark']:has(.home-page) .app,
-body[data-theme='dark']:has(.about-page) .app,
-body[data-theme='dark']:has(.feed-page) .app,
-body[data-theme='dark']:has(.portfolio-shell) .app,
-body[data-theme='dark']:has(.auth-page) .app,
-body[data-theme='dark']:has(.policy-page) .app,
-body[data-theme='dark']:has(.home-page) .main-content,
-body[data-theme='dark']:has(.about-page) .main-content,
-body[data-theme='dark']:has(.feed-page) .main-content,
-body[data-theme='dark']:has(.portfolio-shell) .main-content,
-body[data-theme='dark']:has(.auth-page) .main-content,
-body[data-theme='dark']:has(.policy-page) .main-content {
-  background-color: #0b1220 !important;
+/* ThemeContext applies data-theme to the document root (<html>).
+   Keep the visible body canvas identical to the public page canvas so gaps
+   around sections/footer cannot reveal a second dark tone. */
+html[data-theme='dark'] body {
+  background: #0b1220 !important;
 }
 
-body[data-theme='dark']:has(.home-page) .navbar,
-body[data-theme='dark']:has(.about-page) .navbar,
-body[data-theme='dark']:has(.feed-page) .navbar,
-body[data-theme='dark']:has(.portfolio-shell) .navbar,
-body[data-theme='dark']:has(.policy-page) .navbar {
+html[data-theme='dark'] body:has(.home-page) .app,
+html[data-theme='dark'] body:has(.about-page) .app,
+html[data-theme='dark'] body:has(.feed-page) .app,
+html[data-theme='dark'] body:has(.portfolio-shell) .app,
+html[data-theme='dark'] body:has(.auth-page) .app,
+html[data-theme='dark'] body:has(.policy-page) .app,
+html[data-theme='dark'] body:has(.home-page) .main-content,
+html[data-theme='dark'] body:has(.about-page) .main-content,
+html[data-theme='dark'] body:has(.feed-page) .main-content,
+html[data-theme='dark'] body:has(.portfolio-shell) .main-content,
+html[data-theme='dark'] body:has(.auth-page) .main-content,
+html[data-theme='dark'] body:has(.policy-page) .main-content {
+  background: #0b1220 !important;
+}
+
+html[data-theme='dark'] body:has(.home-page) .navbar,
+html[data-theme='dark'] body:has(.about-page) .navbar,
+html[data-theme='dark'] body:has(.feed-page) .navbar,
+html[data-theme='dark'] body:has(.portfolio-shell) .navbar,
+html[data-theme='dark'] body:has(.policy-page) .navbar {
   background: color-mix(in srgb, #0b1220 96%, transparent) !important;
   border-bottom-color: color-mix(in srgb, #ffffff 10%, transparent) !important;
   box-shadow: none !important;
 }
 
-body[data-theme='dark']:has(.home-page) .navbar.navbar-scrolled,
-body[data-theme='dark']:has(.about-page) .navbar.navbar-scrolled,
-body[data-theme='dark']:has(.feed-page) .navbar.navbar-scrolled,
-body[data-theme='dark']:has(.portfolio-shell) .navbar.navbar-scrolled,
-body[data-theme='dark']:has(.policy-page) .navbar.navbar-scrolled {
+html[data-theme='dark'] body:has(.home-page) .navbar.navbar-scrolled,
+html[data-theme='dark'] body:has(.about-page) .navbar.navbar-scrolled,
+html[data-theme='dark'] body:has(.feed-page) .navbar.navbar-scrolled,
+html[data-theme='dark'] body:has(.portfolio-shell) .navbar.navbar-scrolled,
+html[data-theme='dark'] body:has(.policy-page) .navbar.navbar-scrolled {
   background: color-mix(in srgb, #0b1220 98%, transparent) !important;
 }
