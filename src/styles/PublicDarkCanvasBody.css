@@ -1,0 +1,41 @@
+/* Dark-theme context is currently applied to body in the app. Keep the
+   public shell on the exact same canvas token as the page and sections. */
+body[data-theme='dark']:has(.home-page),
+body[data-theme='dark']:has(.about-page),
+body[data-theme='dark']:has(.feed-page),
+body[data-theme='dark']:has(.portfolio-shell),
+body[data-theme='dark']:has(.auth-page),
+body[data-theme='dark']:has(.policy-page),
+body[data-theme='dark']:has(.footer.public-route-footer),
+body[data-theme='dark']:has(.home-page) .app,
+body[data-theme='dark']:has(.about-page) .app,
+body[data-theme='dark']:has(.feed-page) .app,
+body[data-theme='dark']:has(.portfolio-shell) .app,
+body[data-theme='dark']:has(.auth-page) .app,
+body[data-theme='dark']:has(.policy-page) .app,
+body[data-theme='dark']:has(.home-page) .main-content,
+body[data-theme='dark']:has(.about-page) .main-content,
+body[data-theme='dark']:has(.feed-page) .main-content,
+body[data-theme='dark']:has(.portfolio-shell) .main-content,
+body[data-theme='dark']:has(.auth-page) .main-content,
+body[data-theme='dark']:has(.policy-page) .main-content {
+  background-color: #0b1220 !important;
+}
+
+body[data-theme='dark']:has(.home-page) .navbar,
+body[data-theme='dark']:has(.about-page) .navbar,
+body[data-theme='dark']:has(.feed-page) .navbar,
+body[data-theme='dark']:has(.portfolio-shell) .navbar,
+body[data-theme='dark']:has(.policy-page) .navbar {
+  background: color-mix(in srgb, #0b1220 96%, transparent) !important;
+  border-bottom-color: color-mix(in srgb, #ffffff 10%, transparent) !important;
+  box-shadow: none !important;
+}
+
+body[data-theme='dark']:has(.home-page) .navbar.navbar-scrolled,
+body[data-theme='dark']:has(.about-page) .navbar.navbar-scrolled,
+body[data-theme='dark']:has(.feed-page) .navbar.navbar-scrolled,
+body[data-theme='dark']:has(.portfolio-shell) .navbar.navbar-scrolled,
+body[data-theme='dark']:has(.policy-page) .navbar.navbar-scrolled {
+  background: color-mix(in srgb, #0b1220 98%, transparent) !important;
+}
