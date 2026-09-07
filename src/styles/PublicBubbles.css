@@ -1,0 +1,148 @@
+/* ===================================
+   PUBLIC BLUE / TEAL BUBBLE IDENTITY
+   Loads after the finishing system so the decorative shapes stay visibly
+   present instead of dissolving into a faint background wash.
+   =================================== */
+
+:is(
+  .home-page,
+  .about-page,
+  .feed-page,
+  .portfolio-shell,
+  .auth-page,
+  .policy-page
+) {
+  background-color: #ffffff !important;
+  background-image:
+    radial-gradient(circle 170px at 1% 8%,
+      rgba(47, 128, 237, 0.20) 0 67%,
+      rgba(47, 128, 237, 0.10) 68% 76%,
+      transparent 77%),
+    radial-gradient(circle 135px at 97% 19%,
+      rgba(10, 166, 143, 0.20) 0 66%,
+      rgba(10, 166, 143, 0.09) 67% 75%,
+      transparent 76%),
+    radial-gradient(circle 105px at 8% 43%,
+      rgba(10, 166, 143, 0.14) 0 66%,
+      rgba(10, 166, 143, 0.06) 67% 76%,
+      transparent 77%),
+    radial-gradient(circle 155px at 101% 63%,
+      rgba(47, 128, 237, 0.17) 0 67%,
+      rgba(47, 128, 237, 0.07) 68% 76%,
+      transparent 77%),
+    radial-gradient(circle 92px at 16% 88%,
+      rgba(47, 128, 237, 0.12) 0 66%,
+      rgba(47, 128, 237, 0.05) 67% 76%,
+      transparent 77%),
+    radial-gradient(circle 110px at 86% 95%,
+      rgba(10, 166, 143, 0.13) 0 66%,
+      rgba(10, 166, 143, 0.05) 67% 76%,
+      transparent 77%) !important;
+  background-repeat: no-repeat !important;
+}
+
+/* Keep homepage sections on the same continuous decorated canvas. */
+.home-page :is(
+  .home-hero,
+  .home-popular-section,
+  .home-trust-section,
+  .home-provider-section,
+  .how-it-works-section,
+  .home-faq-section
+),
+.about-page > section {
+  background-color: transparent !important;
+  background-image: none !important;
+}
+
+[data-theme='dark'] :is(
+  .home-page,
+  .about-page,
+  .feed-page,
+  .portfolio-shell,
+  .auth-page,
+  .policy-page
+) {
+  background-color: var(--color-public-bg) !important;
+  background-image:
+    radial-gradient(circle 170px at 1% 8%,
+      rgba(64, 151, 255, 0.20) 0 67%,
+      rgba(64, 151, 255, 0.08) 68% 76%,
+      transparent 77%),
+    radial-gradient(circle 135px at 97% 19%,
+      rgba(32, 201, 177, 0.18) 0 66%,
+      rgba(32, 201, 177, 0.07) 67% 75%,
+      transparent 76%),
+    radial-gradient(circle 105px at 8% 43%,
+      rgba(32, 201, 177, 0.12) 0 66%,
+      rgba(32, 201, 177, 0.05) 67% 76%,
+      transparent 77%),
+    radial-gradient(circle 155px at 101% 63%,
+      rgba(64, 151, 255, 0.15) 0 67%,
+      rgba(64, 151, 255, 0.06) 68% 76%,
+      transparent 77%),
+    radial-gradient(circle 92px at 16% 88%,
+      rgba(64, 151, 255, 0.11) 0 66%,
+      rgba(64, 151, 255, 0.04) 67% 76%,
+      transparent 77%),
+    radial-gradient(circle 110px at 86% 95%,
+      rgba(32, 201, 177, 0.11) 0 66%,
+      rgba(32, 201, 177, 0.04) 67% 76%,
+      transparent 77%) !important;
+}
+
+@media (max-width: 768px) {
+  :is(
+    .home-page,
+    .about-page,
+    .feed-page,
+    .portfolio-shell,
+    .auth-page,
+    .policy-page
+  ) {
+    background-image:
+      radial-gradient(circle 105px at -5% 7%,
+        rgba(47, 128, 237, 0.19) 0 67%,
+        rgba(47, 128, 237, 0.08) 68% 76%,
+        transparent 77%),
+      radial-gradient(circle 92px at 105% 27%,
+        rgba(10, 166, 143, 0.18) 0 67%,
+        rgba(10, 166, 143, 0.07) 68% 76%,
+        transparent 77%),
+      radial-gradient(circle 78px at -4% 67%,
+        rgba(10, 166, 143, 0.12) 0 67%,
+        rgba(10, 166, 143, 0.05) 68% 76%,
+        transparent 77%),
+      radial-gradient(circle 88px at 101% 91%,
+        rgba(47, 128, 237, 0.14) 0 67%,
+        rgba(47, 128, 237, 0.05) 68% 76%,
+        transparent 77%) !important;
+  }
+
+  [data-theme='dark'] :is(
+    .home-page,
+    .about-page,
+    .feed-page,
+    .portfolio-shell,
+    .auth-page,
+    .policy-page
+  ) {
+    background-image:
+      radial-gradient(circle 105px at -5% 7%,
+        rgba(64, 151, 255, 0.18) 0 67%,
+        rgba(64, 151, 255, 0.07) 68% 76%,
+        transparent 77%),
+      radial-gradient(circle 92px at 105% 27%,
+        rgba(32, 201, 177, 0.16) 0 67%,
+        rgba(32, 201, 177, 0.06) 68% 76%,
+        transparent 77%),
+      radial-gradient(circle 78px at -4% 67%,
+        rgba(32, 201, 177, 0.10) 0 67%,
+        rgba(32, 201, 177, 0.04) 68% 76%,
+        transparent 77%),
+      radial-gradient(circle 88px at 101% 91%,
+        rgba(64, 151, 255, 0.12) 0 67%,
+        rgba(64, 151, 255, 0.04) 68% 76%,
+        transparent 77%) !important;
+  }
+}
