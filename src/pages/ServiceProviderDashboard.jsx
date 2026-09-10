@@ -10,80 +10,20 @@ import './ProviderDashboardSimple.css';
 
 const COPY = {
   en: {
-    greeting: 'Good day',
-    subtitle: 'Manage requests, your calendar, and the profile clients see.',
-    setupTitle: 'Get your provider profile ready',
-    setupHelp: 'Complete these four steps so clients can confidently find and book you.',
-    stepVerify: 'Verify your identity',
-    stepVerifyHelp: 'Complete provider verification before publishing services.',
-    stepProfile: 'Complete your provider profile',
-    stepProfileHelp: 'Add services, pricing, About Me, skills, languages, and optional credentials.',
-    stepAvailability: 'Set your availability',
-    stepAvailabilityHelp: 'Choose the dates and hours clients are allowed to book.',
-    stepPreview: 'Preview your profile',
-    stepPreviewHelp: 'Check exactly what clients will see before you start receiving bookings.',
-    done: 'Done',
-    next: 'Next step',
-    startVerification: 'Start Verification',
-    editProfile: 'Open Profile',
-    setAvailability: 'Set Availability',
-    preview: 'Preview as Client',
-    pendingRequests: 'New Requests',
-    activeJobs: 'Active Jobs',
-    upcomingJobs: 'Upcoming Jobs',
-    completedJobs: 'Completed Jobs',
-    needsAttention: 'What needs your attention',
-    noUrgent: 'Nothing urgent right now',
-    noUrgentHelp: 'Keep your profile and availability current. New requests will appear here.',
-    reviewRequests: 'Review Requests',
-    nextJob: 'Next scheduled job',
-    openCalendar: 'Open Calendar',
-    recentRequests: 'Recent requests',
-    noRequests: 'No requests yet',
-    noRequestsHelp: 'Once a client books you, the request will appear here.',
-    viewAll: 'View all requests',
-    scheduleNotSet: 'Schedule not set',
-    verificationPending: 'Verification is under review. You can continue preparing your profile while you wait.',
-    verificationRejected: 'Verification needs changes. Open the verification form to submit clearer or corrected information.',
-    resubmitVerification: 'Update Verification',
+    greeting: 'Good day', subtitle: 'Manage requests, your calendar, and the profile clients see.', setupTitle: 'Get your provider profile ready', setupHelp: 'Complete these four steps so clients can confidently find and book you.',
+    stepVerify: 'Verify your identity', stepVerifyHelp: 'Complete provider verification before publishing services.', stepProfile: 'Complete your provider profile', stepProfileHelp: 'Add services, pricing, About Me, skills, languages, and optional credentials.',
+    stepAvailability: 'Set your availability', stepAvailabilityHelp: 'Choose the dates and hours clients are allowed to book.', stepPreview: 'Preview your profile', stepPreviewHelp: 'Check exactly what clients will see before you start receiving bookings.',
+    done: 'Done', next: 'Next step', startVerification: 'Start Verification', editProfile: 'Open Profile', setAvailability: 'Set Availability', preview: 'Preview as Client', pendingRequests: 'New Requests', activeJobs: 'Active Jobs', upcomingJobs: 'Upcoming Jobs', completedJobs: 'Completed Jobs',
+    needsAttention: 'What needs your attention', noUrgent: 'Nothing urgent right now', noUrgentHelp: 'Keep your profile and availability current. New requests will appear here.', reviewRequests: 'Review Requests', nextJob: 'Next scheduled job', openCalendar: 'Open Calendar', recentRequests: 'Recent requests', noRequests: 'No requests yet', noRequestsHelp: 'Once a client books you, the request will appear here.', viewAll: 'View all requests', scheduleNotSet: 'Schedule not set',
+    verificationPending: 'Verification is under review. You can continue preparing your profile while you wait.', verificationRejected: 'Verification needs changes. Open the verification form to submit clearer or corrected information.', resubmitVerification: 'Update Verification',
   },
   ceb: {
-    greeting: 'Maayong adlaw',
-    subtitle: 'I-manage ang requests, imong kalendaryo, ug ang profile nga makita sa kliyente.',
-    setupTitle: 'Andama ang imong provider profile',
-    setupHelp: 'Kompletoha kining upat ka lakang aron mas sayon ka makita ug ma-book sa kliyente.',
-    stepVerify: 'I-verify ang imong identity',
-    stepVerifyHelp: 'Kompletoha ang provider verification sa dili pa ipakita ang imong mga serbisyo.',
-    stepProfile: 'Kompletoha ang imong provider profile',
-    stepProfileHelp: 'Ibutang ang serbisyo, presyo, About Me, skills, pinulongan, ug opsyonal nga credentials.',
-    stepAvailability: 'I-set ang imong availability',
-    stepAvailabilityHelp: 'Pilia ang mga petsa ug oras nga mahimong i-book sa kliyente.',
-    stepPreview: 'Tan-awa ang imong profile',
-    stepPreviewHelp: 'Susiha unsa gyud ang makita sa kliyente sa dili pa ka modawat og booking.',
-    done: 'Human',
-    next: 'Sunod nga lakang',
-    startVerification: 'Sugdi ang Verification',
-    editProfile: 'Ablihi ang Profile',
-    setAvailability: 'I-set ang Availability',
-    preview: 'Tan-awa Ingon Kliyente',
-    pendingRequests: 'Bag-ong Requests',
-    activeJobs: 'Active nga Trabaho',
-    upcomingJobs: 'Umaabot nga Trabaho',
-    completedJobs: 'Nahuman nga Trabaho',
-    needsAttention: 'Kinahanglan nimong tan-awon',
-    noUrgent: 'Walay urgent karon',
-    noUrgentHelp: 'Padayona nga updated ang imong profile ug availability. Dinhi makita ang bag-ong requests.',
-    reviewRequests: 'Tan-awa ang Requests',
-    nextJob: 'Sunod nga naka-schedule nga trabaho',
-    openCalendar: 'Ablihi ang Kalendaryo',
-    recentRequests: 'Bag-ong requests',
-    noRequests: 'Wala pay request',
-    noRequestsHelp: 'Kung adunay kliyente nga mo-book, dinhi makita ang request.',
-    viewAll: 'Tan-awa tanang request',
-    scheduleNotSet: 'Wala pay schedule',
-    verificationPending: 'Gi-review pa ang verification. Mahimo nimong ipadayon ang pag-andam sa profile samtang naghulat.',
-    verificationRejected: 'Kinahanglan usbon ang verification. Ablihi ang verification form ug isumite ang mas klaro o sakto nga impormasyon.',
-    resubmitVerification: 'Usba ang Verification',
+    greeting: 'Maayong adlaw', subtitle: 'I-manage ang requests, imong kalendaryo, ug ang profile nga makita sa kliyente.', setupTitle: 'Andama ang imong provider profile', setupHelp: 'Kompletoha kining upat ka lakang aron mas sayon ka makita ug ma-book sa kliyente.',
+    stepVerify: 'I-verify ang imong identity', stepVerifyHelp: 'Kompletoha ang provider verification sa dili pa ipakita ang imong mga serbisyo.', stepProfile: 'Kompletoha ang imong provider profile', stepProfileHelp: 'Ibutang ang serbisyo, presyo, About Me, skills, pinulongan, ug opsyonal nga credentials.',
+    stepAvailability: 'I-set ang imong availability', stepAvailabilityHelp: 'Pilia ang mga petsa ug oras nga mahimong i-book sa kliyente.', stepPreview: 'Tan-awa ang imong profile', stepPreviewHelp: 'Susiha unsa gyud ang makita sa kliyente sa dili pa ka modawat og booking.',
+    done: 'Human', next: 'Sunod nga lakang', startVerification: 'Sugdi ang Verification', editProfile: 'Ablihi ang Profile', setAvailability: 'I-set ang Availability', preview: 'Tan-awa Ingon Kliyente', pendingRequests: 'Bag-ong Requests', activeJobs: 'Active nga Trabaho', upcomingJobs: 'Umaabot nga Trabaho', completedJobs: 'Nahuman nga Trabaho',
+    needsAttention: 'Kinahanglan nimong tan-awon', noUrgent: 'Walay urgent karon', noUrgentHelp: 'Padayona nga updated ang imong profile ug availability. Dinhi makita ang bag-ong requests.', reviewRequests: 'Tan-awa ang Requests', nextJob: 'Sunod nga naka-schedule nga trabaho', openCalendar: 'Ablihi ang Kalendaryo', recentRequests: 'Bag-ong requests', noRequests: 'Wala pay request', noRequestsHelp: 'Kung adunay kliyente nga mo-book, dinhi makita ang request.', viewAll: 'Tan-awa tanang request', scheduleNotSet: 'Wala pay schedule',
+    verificationPending: 'Gi-review pa ang verification. Mahimo nimong ipadayon ang pag-andam sa profile samtang naghulat.', verificationRejected: 'Kinahanglan usbon ang verification. Ablihi ang verification form ug isumite ang mas klaro o sakto nga impormasyon.', resubmitVerification: 'Usba ang Verification',
   },
 };
 
@@ -122,11 +62,7 @@ export default function ServiceProviderDashboard() {
   useEffect(() => {
     let mounted = true;
     Promise.allSettled([
-      serviceRequestAPI.getProviderRequests(),
-      serviceProfileAPI.getMyProfile(),
-      serviceProfileAPI.getMyPortfolio(),
-      serviceProfileAPI.getMyAvailability(),
-      userProfileAPI.getVerificationStatus(),
+      serviceRequestAPI.getProviderRequests(), serviceProfileAPI.getMyProfile(), serviceProfileAPI.getMyPortfolio(), serviceProfileAPI.getMyAvailability(), userProfileAPI.getVerificationStatus(),
     ]).then((results) => {
       if (!mounted) return;
       const value = (index) => results[index].status === 'fulfilled' && results[index].value?.success ? results[index].value.data : null;
@@ -146,19 +82,11 @@ export default function ServiceProviderDashboard() {
     const active = requests.filter((request) => activeStatuses.includes(request.status)).length;
     const completed = requests.filter((request) => request.status === REQUEST_STATUS.COMPLETED).length;
     const now = Date.now();
-    const upcoming = requests
-      .filter((request) => activeStatuses.includes(request.status) && requestStart(request)?.getTime() > now)
-      .sort((a, b) => requestStart(a) - requestStart(b));
+    const upcoming = requests.filter((request) => activeStatuses.includes(request.status) && requestStart(request)?.getTime() > now).sort((a, b) => requestStart(a) - requestStart(b));
     return { pending, active, completed, upcomingCount: upcoming.length, nextUpcoming: upcoming[0] || null };
   }, [requests]);
 
-  const serviceReady = Boolean(
-    profile?.id
-    && Array.isArray(profile?.categories)
-    && profile.categories.length > 0
-    && Number(profile?.startingPrice) > 0
-    && String(profile?.location || '').trim()
-  );
+  const serviceReady = Boolean(profile?.id && Array.isArray(profile?.categories) && profile.categories.length > 0 && Number(profile?.startingPrice) > 0 && String(profile?.location || '').trim());
   const aboutReady = Boolean(String(portfolio?.aboutMe || profile?.aboutMe || '').trim());
   const profileReady = serviceReady && aboutReady;
   const availabilityEntries = availability?.availableSlots || availability?.availability || availability?.specificAvailability || availability?.weeklyBlocks || [];
@@ -169,45 +97,14 @@ export default function ServiceProviderDashboard() {
   const verificationPending = verification?.status === 'pending';
 
   const setupSteps = [
-    {
-      key: 'verification',
-      title: text.stepVerify,
-      help: verificationPending ? text.verificationPending : verification?.status === 'rejected' ? text.verificationRejected : text.stepVerifyHelp,
-      complete: verified,
-      onAction: verificationPending ? null : () => setShowVerification(true),
-      action: verification?.status === 'rejected' ? text.resubmitVerification : text.startVerification,
-    },
-    {
-      key: 'profile',
-      title: text.stepProfile,
-      help: text.stepProfileHelp,
-      complete: profileReady,
-      to: '/provider-profile',
-      action: text.editProfile,
-    },
-    {
-      key: 'availability',
-      title: text.stepAvailability,
-      help: text.stepAvailabilityHelp,
-      complete: availabilityReady,
-      to: '/provider-schedule?tab=availability',
-      action: text.setAvailability,
-    },
-    {
-      key: 'preview',
-      title: text.stepPreview,
-      help: text.stepPreviewHelp,
-      complete: previewReady,
-      to: publicRoute || '/provider-profile',
-      action: text.preview,
-    },
+    { key: 'verification', title: text.stepVerify, help: verificationPending ? text.verificationPending : verification?.status === 'rejected' ? text.verificationRejected : text.stepVerifyHelp, complete: verified, onAction: verificationPending ? null : () => setShowVerification(true), action: verification?.status === 'rejected' ? text.resubmitVerification : text.startVerification },
+    { key: 'profile', title: text.stepProfile, help: text.stepProfileHelp, complete: profileReady, to: '/provider-credentials', action: text.editProfile },
+    { key: 'availability', title: text.stepAvailability, help: text.stepAvailabilityHelp, complete: availabilityReady, to: '/provider-schedule?tab=availability', action: text.setAvailability },
+    { key: 'preview', title: text.stepPreview, help: text.stepPreviewHelp, complete: previewReady, to: publicRoute || '/provider-credentials', action: text.preview },
   ];
   const setupComplete = setupSteps.every((step) => step.complete);
   const nextStepKey = setupSteps.find((step) => !step.complete)?.key;
-
-  const recentRequests = requests
-    .filter((request) => [REQUEST_STATUS.PENDING, REQUEST_STATUS.ACCEPTED, REQUEST_STATUS.ON_THE_WAY, REQUEST_STATUS.IN_PROGRESS].includes(request.status))
-    .slice(0, 4);
+  const recentRequests = requests.filter((request) => [REQUEST_STATUS.PENDING, REQUEST_STATUS.ACCEPTED, REQUEST_STATUS.ON_THE_WAY, REQUEST_STATUS.IN_PROGRESS].includes(request.status)).slice(0, 4);
 
   return (
     <div className="provider-dashboard-simple">
@@ -217,7 +114,7 @@ export default function ServiceProviderDashboard() {
           <h1>{text.greeting}, <span>{user?.fullName || t('serviceProvider')}</span></h1>
           <p>{text.subtitle}</p>
         </div>
-        <AppButton as={Link} to="/provider-profile" icon={<i className="bi bi-person-vcard" aria-hidden="true" />}>{text.editProfile}</AppButton>
+        <AppButton as={Link} to="/provider-credentials" icon={<i className="bi bi-person-vcard" aria-hidden="true" />}>{text.editProfile}</AppButton>
       </SoftPanel>
 
       {!setupComplete && (
@@ -231,12 +128,8 @@ export default function ServiceProviderDashboard() {
               <article key={step.key} className={`${step.complete ? 'complete' : ''} ${step.key === nextStepKey ? 'next' : ''}`}>
                 <span className="provider-setup-step-number">{step.complete ? <i className="bi bi-check-lg" /> : index + 1}</span>
                 <div><strong>{step.title}</strong><p>{step.help}</p></div>
-                {!step.complete && step.key === nextStepKey && step.onAction && (
-                  <AppButton onClick={step.onAction} size="sm" variant="secondary">{step.action}</AppButton>
-                )}
-                {!step.complete && step.key === nextStepKey && !step.onAction && step.to && (
-                  <AppButton as={Link} to={step.to} size="sm" variant="secondary">{step.action}</AppButton>
-                )}
+                {!step.complete && step.key === nextStepKey && step.onAction && <AppButton onClick={step.onAction} size="sm" variant="secondary">{step.action}</AppButton>}
+                {!step.complete && step.key === nextStepKey && !step.onAction && step.to && <AppButton as={Link} to={step.to} size="sm" variant="secondary">{step.action}</AppButton>}
                 {step.complete && <span className="provider-setup-done">{text.done}</span>}
               </article>
             ))}
@@ -268,11 +161,7 @@ export default function ServiceProviderDashboard() {
               <AppButton as={Link} to="/provider-schedule" variant="secondary">{text.openCalendar}</AppButton>
             </div>
           ) : (
-            <div className="provider-dashboard-empty-state">
-              <i className="bi bi-check-circle" />
-              <strong>{text.noUrgent}</strong>
-              <p>{text.noUrgentHelp}</p>
-            </div>
+            <div className="provider-dashboard-empty-state"><i className="bi bi-check-circle" /><strong>{text.noUrgent}</strong><p>{text.noUrgentHelp}</p></div>
           )}
         </div>
 
@@ -297,11 +186,7 @@ export default function ServiceProviderDashboard() {
         </div>
       </section>
 
-      {showVerification && (
-        <VerificationRequestModal
-          onClose={() => setShowVerification(false)}
-        />
-      )}
+      {showVerification && <VerificationRequestModal onClose={() => setShowVerification(false)} />}
     </div>
   );
 }
