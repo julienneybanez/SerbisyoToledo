@@ -58,6 +58,7 @@ export default function ServiceProviderDashboard() {
   const [availability, setAvailability] = useState(null);
   const [verification, setVerification] = useState(null);
   const [showVerification, setShowVerification] = useState(false);
+  const [referenceTime, setReferenceTime] = useState(0);
 
   useEffect(() => {
     let mounted = true;
@@ -71,6 +72,7 @@ export default function ServiceProviderDashboard() {
       setPortfolio(value(2));
       setAvailability(value(3));
       setVerification(value(4));
+      setReferenceTime(Date.now());
       setLoading(false);
     });
     return () => { mounted = false; };
@@ -81,10 +83,9 @@ export default function ServiceProviderDashboard() {
     const pending = requests.filter((request) => request.status === REQUEST_STATUS.PENDING).length;
     const active = requests.filter((request) => activeStatuses.includes(request.status)).length;
     const completed = requests.filter((request) => request.status === REQUEST_STATUS.COMPLETED).length;
-    const now = Date.now();
-    const upcoming = requests.filter((request) => activeStatuses.includes(request.status) && requestStart(request)?.getTime() > now).sort((a, b) => requestStart(a) - requestStart(b));
+    const upcoming = requests.filter((request) => activeStatuses.includes(request.status) && requestStart(request)?.getTime() > referenceTime).sort((a, b) => requestStart(a) - requestStart(b));
     return { pending, active, completed, upcomingCount: upcoming.length, nextUpcoming: upcoming[0] || null };
-  }, [requests]);
+  }, [referenceTime, requests]);
 
   const serviceReady = Boolean(profile?.id && Array.isArray(profile?.categories) && profile.categories.length > 0 && Number(profile?.startingPrice) > 0 && String(profile?.location || '').trim());
   const aboutReady = Boolean(String(portfolio?.aboutMe || profile?.aboutMe || '').trim());
@@ -109,20 +110,13 @@ export default function ServiceProviderDashboard() {
   return (
     <div className="provider-dashboard-simple">
       <SoftPanel className="provider-dashboard-simple-hero">
-        <div>
-          <span className="provider-dashboard-eyebrow">{t('serviceProvider')}</span>
-          <h1>{text.greeting}, <span>{user?.fullName || t('serviceProvider')}</span></h1>
-          <p>{text.subtitle}</p>
-        </div>
+        <div><span className="provider-dashboard-eyebrow">{t('serviceProvider')}</span><h1>{text.greeting}, <span>{user?.fullName || t('serviceProvider')}</span></h1><p>{text.subtitle}</p></div>
         <AppButton as={Link} to="/provider-credentials" icon={<i className="bi bi-person-vcard" aria-hidden="true" />}>{text.editProfile}</AppButton>
       </SoftPanel>
 
       {!setupComplete && (
         <section className="provider-setup-simple-card">
-          <div className="provider-setup-simple-heading">
-            <div><span>{text.next}</span><h2>{text.setupTitle}</h2><p>{text.setupHelp}</p></div>
-            <strong>{setupSteps.filter((step) => step.complete).length}/4</strong>
-          </div>
+          <div className="provider-setup-simple-heading"><div><span>{text.next}</span><h2>{text.setupTitle}</h2><p>{text.setupHelp}</p></div><strong>{setupSteps.filter((step) => step.complete).length}/4</strong></div>
           <div className="provider-setup-simple-steps">
             {setupSteps.map((step, index) => (
               <article key={step.key} className={`${step.complete ? 'complete' : ''} ${step.key === nextStepKey ? 'next' : ''}`}>
@@ -138,51 +132,18 @@ export default function ServiceProviderDashboard() {
       )}
 
       <section className="provider-dashboard-simple-stats" aria-label={t('providerQuickStatsAria')}>
-        <StatCard label={text.pendingRequests} value={summary.pending} icon={<i className="bi bi-inbox" />} />
-        <StatCard label={text.activeJobs} value={summary.active} icon={<i className="bi bi-briefcase" />} />
-        <StatCard label={text.upcomingJobs} value={summary.upcomingCount} icon={<i className="bi bi-calendar-event" />} />
-        <StatCard label={text.completedJobs} value={summary.completed} icon={<i className="bi bi-check-circle" />} />
+        <StatCard label={text.pendingRequests} value={summary.pending} icon={<i className="bi bi-inbox" />} /><StatCard label={text.activeJobs} value={summary.active} icon={<i className="bi bi-briefcase" />} /><StatCard label={text.upcomingJobs} value={summary.upcomingCount} icon={<i className="bi bi-calendar-event" />} /><StatCard label={text.completedJobs} value={summary.completed} icon={<i className="bi bi-check-circle" />} />
       </section>
 
       <section className="provider-dashboard-simple-grid">
         <div className="provider-dashboard-attention-card">
           <div className="provider-dashboard-card-heading"><span><i className="bi bi-lightning-charge" /></span><div><h2>{text.needsAttention}</h2></div></div>
-          {summary.pending > 0 ? (
-            <div className="provider-dashboard-attention-content">
-              <strong>{summary.pending} {summary.pending === 1 ? text.pendingRequests.toLowerCase().replace(/s$/, '') : text.pendingRequests.toLowerCase()}</strong>
-              <p>{t('providerPendingDescription')}</p>
-              <AppButton as={Link} to="/requests">{text.reviewRequests}</AppButton>
-            </div>
-          ) : summary.nextUpcoming ? (
-            <div className="provider-dashboard-attention-content">
-              <span>{text.nextJob}</span>
-              <strong>{summary.nextUpcoming.service_display_label || summary.nextUpcoming.service_type_label || t('providerServiceRequestFallback')}</strong>
-              <p>{formatRequestSchedule(summary.nextUpcoming, locale, text.scheduleNotSet)}</p>
-              <AppButton as={Link} to="/provider-schedule" variant="secondary">{text.openCalendar}</AppButton>
-            </div>
-          ) : (
-            <div className="provider-dashboard-empty-state"><i className="bi bi-check-circle" /><strong>{text.noUrgent}</strong><p>{text.noUrgentHelp}</p></div>
-          )}
+          {summary.pending > 0 ? <div className="provider-dashboard-attention-content"><strong>{summary.pending} {summary.pending === 1 ? text.pendingRequests.toLowerCase().replace(/s$/, '') : text.pendingRequests.toLowerCase()}</strong><p>{t('providerPendingDescription')}</p><AppButton as={Link} to="/requests">{text.reviewRequests}</AppButton></div> : summary.nextUpcoming ? <div className="provider-dashboard-attention-content"><span>{text.nextJob}</span><strong>{summary.nextUpcoming.service_display_label || summary.nextUpcoming.service_type_label || t('providerServiceRequestFallback')}</strong><p>{formatRequestSchedule(summary.nextUpcoming, locale, text.scheduleNotSet)}</p><AppButton as={Link} to="/provider-schedule" variant="secondary">{text.openCalendar}</AppButton></div> : <div className="provider-dashboard-empty-state"><i className="bi bi-check-circle" /><strong>{text.noUrgent}</strong><p>{text.noUrgentHelp}</p></div>}
         </div>
 
         <div className="provider-dashboard-recent-card">
           <div className="provider-dashboard-card-heading split"><div><span><i className="bi bi-inbox" /></span><div><h2>{text.recentRequests}</h2></div></div><Link to="/requests">{text.viewAll}</Link></div>
-          {loading ? (
-            <div className="provider-dashboard-empty-state"><span className="spinner-small" /><p>{t('providerLoadingSchedule')}</p></div>
-          ) : recentRequests.length === 0 ? (
-            <div className="provider-dashboard-empty-state"><i className="bi bi-inbox" /><strong>{text.noRequests}</strong><p>{text.noRequestsHelp}</p></div>
-          ) : (
-            <div className="provider-dashboard-request-list">
-              {recentRequests.map((request) => (
-                <Link key={request.id} to={`/requests?request=${request.id}`} className="provider-dashboard-request-row">
-                  <span className={`provider-dashboard-request-status status-${request.status}`} />
-                  <div><strong>{request.service_display_label || request.service_type_label || t('providerServiceRequestFallback')}</strong><small>{request.client_name || t('client')} · {formatRequestSchedule(request, locale, text.scheduleNotSet)}</small></div>
-                  <span className="provider-dashboard-request-badge">{request.status?.replaceAll('_', ' ')}</span>
-                  <i className="bi bi-chevron-right" />
-                </Link>
-              ))}
-            </div>
-          )}
+          {loading ? <div className="provider-dashboard-empty-state"><span className="spinner-small" /><p>{t('providerLoadingSchedule')}</p></div> : recentRequests.length === 0 ? <div className="provider-dashboard-empty-state"><i className="bi bi-inbox" /><strong>{text.noRequests}</strong><p>{text.noRequestsHelp}</p></div> : <div className="provider-dashboard-request-list">{recentRequests.map((request) => <Link key={request.id} to={`/requests?request=${request.id}`} className="provider-dashboard-request-row"><span className={`provider-dashboard-request-status status-${request.status}`} /><div><strong>{request.service_display_label || request.service_type_label || t('providerServiceRequestFallback')}</strong><small>{request.client_name || t('client')} · {formatRequestSchedule(request, locale, text.scheduleNotSet)}</small></div><span className="provider-dashboard-request-badge">{request.status?.replaceAll('_', ' ')}</span><i className="bi bi-chevron-right" /></Link>)}</div>}
         </div>
       </section>
 
