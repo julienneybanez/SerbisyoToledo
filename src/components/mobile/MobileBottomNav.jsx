@@ -20,9 +20,9 @@ const ROLE_ITEMS = {
   tradesperson: [
     { to: '/dashboard', labelKey: 'dashboardShort', icon: 'bi-speedometer2' },
     { to: '/requests', labelKey: 'requests', icon: 'bi-inbox' },
+    { to: '/provider-schedule', labelEn: 'Calendar', labelCeb: 'Kalendaryo', icon: 'bi-calendar3' },
     { to: '/messages', labelKey: 'messages', icon: 'bi-chat-dots' },
-    { to: '/provider-schedule', labelKey: 'schedule', icon: 'bi-calendar3' },
-    { action: 'profile-menu', labelKey: 'profile', icon: 'bi-person-circle' },
+    { to: '/provider-credentials', labelKey: 'profile', icon: 'bi-person-vcard' },
   ],
   admin: [
     { to: '/admin/dashboard', labelKey: 'dashboardShort', icon: 'bi-speedometer2' },
@@ -34,80 +34,47 @@ const ROLE_ITEMS = {
 };
 
 export default function MobileBottomNav({ role = 'client', profileMenuOpen = false, onProfileTap }) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [pendingRequests, setPendingRequests] = useState(0);
   const [unreadMessages, setUnreadMessages] = useState(0);
   const items = useMemo(() => ROLE_ITEMS[role] || ROLE_ITEMS.client, [role]);
 
   useEffect(() => {
+    if (role !== 'tradesperson') return undefined;
     let mounted = true;
-
-    const loadPending = async () => {
-      if (role !== 'tradesperson') {
-        if (mounted) setPendingRequests(0);
-        return;
-      }
-
-      try {
-        const response = await serviceRequestAPI.getProviderRequests();
-        if (!mounted || !response?.success) {
-          return;
-        }
-
-        const pending = (response.data.requests || []).filter((req) => req.status === 'pending').length;
-        setPendingRequests(pending);
-      } catch {
-        if (mounted) {
-          setPendingRequests(0);
-        }
-      }
-    };
-
-    loadPending();
-
-    return () => {
-      mounted = false;
-    };
+    serviceRequestAPI.getProviderRequests()
+      .then((response) => {
+        if (!mounted || !response?.success) return;
+        setPendingRequests((response.data.requests || []).filter((request) => request.status === 'pending').length);
+      })
+      .catch(() => mounted && setPendingRequests(0));
+    return () => { mounted = false; };
   }, [role]);
 
   useEffect(() => {
-    if (!['client', 'tradesperson'].includes(role)) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- reset badge when role no longer messaging-eligible
-      setUnreadMessages(0);
-      return undefined;
-    }
-
+    if (!['client', 'tradesperson'].includes(role)) return undefined;
     let mounted = true;
+    let socket = null;
+
     const loadUnread = async () => {
       try {
         const response = await messageAPI.getUnreadCount();
-        if (mounted && response?.success) {
-          setUnreadMessages(Number(response.data?.count || 0));
-        }
+        if (mounted && response?.success) setUnreadMessages(Number(response.data?.count || 0));
       } catch {
         if (mounted) setUnreadMessages(0);
       }
     };
 
     loadUnread();
-
-    let socket = null;
     const handleUnreadChanged = () => loadUnread();
-
-    const connect = async () => {
-      try {
-        const connectedSocket = await connectMessagingSocket();
+    connectMessagingSocket()
+      .then((connectedSocket) => {
         if (!mounted || !connectedSocket) return;
-
         socket = connectedSocket;
         socket.on('messages:unread-changed', handleUnreadChanged);
         socket.on('message:new', handleUnreadChanged);
-      } catch {
-        // The badge can continue using REST data if realtime is unavailable.
-      }
-    };
-
-    connect();
+      })
+      .catch(() => {});
 
     return () => {
       mounted = false;
@@ -117,46 +84,38 @@ export default function MobileBottomNav({ role = 'client', profileMenuOpen = fal
     };
   }, [role]);
 
+  const labelFor = (item) => item.labelKey ? t(item.labelKey) : (language === 'ceb' ? item.labelCeb : item.labelEn);
+
   return (
     <nav className="mobile-bottom-nav" aria-label="Mobile navigation">
       {items.map((item) => {
-        const label = t(item.labelKey || item.label || '');
+        const label = labelFor(item);
 
-        if (item.action === 'profile-menu' || item.action === 'edit-profile') {
+        if (item.action === 'edit-profile') {
           return (
-          <button
-            key={label}
-            type="button"
-            className={`mobile-bottom-nav-item mobile-bottom-nav-action ${profileMenuOpen ? 'active' : ''}`}
-            onClick={onProfileTap}
-            aria-label={item.action === 'edit-profile' ? t('editProfile') : t('openProfileMenu')}
-            aria-pressed={profileMenuOpen}
-          >
-            <span className="mobile-bottom-nav-icon-wrap">
-              <i className={`bi ${item.icon}`} aria-hidden="true"></i>
-            </span>
-            <span className="mobile-bottom-nav-label">{label}</span>
-          </button>
+            <button
+              key={label}
+              type="button"
+              className={`mobile-bottom-nav-item mobile-bottom-nav-action ${profileMenuOpen ? 'active' : ''}`}
+              onClick={onProfileTap}
+              aria-label={t('editProfile')}
+              aria-pressed={profileMenuOpen}
+            >
+              <span className="mobile-bottom-nav-icon-wrap"><i className={`bi ${item.icon}`} aria-hidden="true" /></span>
+              <span className="mobile-bottom-nav-label">{label}</span>
+            </button>
           );
         }
 
         return (
-          <NavLink
-            key={label}
-            to={item.to}
-            className={({ isActive }) => `mobile-bottom-nav-item ${isActive ? 'active' : ''}`}
-          >
+          <NavLink key={item.to} to={item.to} className={({ isActive }) => `mobile-bottom-nav-item ${isActive ? 'active' : ''}`}>
             <span className="mobile-bottom-nav-icon-wrap">
-              <i className={`bi ${item.icon}`} aria-hidden="true"></i>
-              {role === 'tradesperson' && item.labelKey === 'requests' && pendingRequests > 0 && (
-                <span className="mobile-bottom-nav-badge" aria-label={String(pendingRequests) + ' pending requests'}>
-                  {pendingRequests > 99 ? '99+' : pendingRequests}
-                </span>
+              <i className={`bi ${item.icon}`} aria-hidden="true" />
+              {role === 'tradesperson' && item.to === '/requests' && pendingRequests > 0 && (
+                <span className="mobile-bottom-nav-badge" aria-label={`${pendingRequests} pending requests`}>{pendingRequests > 99 ? '99+' : pendingRequests}</span>
               )}
               {item.to === '/messages' && unreadMessages > 0 && (
-                <span className="mobile-bottom-nav-badge" aria-label={String(unreadMessages) + ' unread messages'}>
-                  {unreadMessages > 99 ? '99+' : unreadMessages}
-                </span>
+                <span className="mobile-bottom-nav-badge" aria-label={`${unreadMessages} unread messages`}>{unreadMessages > 99 ? '99+' : unreadMessages}</span>
               )}
             </span>
             <span className="mobile-bottom-nav-label">{label}</span>
