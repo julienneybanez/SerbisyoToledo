@@ -18,13 +18,10 @@ const PROVIDER_ITEMS = [
   { to: '/requests', labelKey: 'requests', icon: 'bi-inbox' },
   { to: '/provider-schedule', labelEn: 'Calendar', labelCeb: 'Kalendaryo', icon: 'bi-calendar3' },
   { to: '/messages', labelKey: 'messages', icon: 'bi-chat-dots' },
-  { to: '/provider-credentials', labelKey: 'profile', icon: 'bi-person-vcard' },
+  { to: '/provider-profile', labelKey: 'profile', icon: 'bi-person-vcard' },
 ];
 
-export default function WorkspaceSidebar({
-  role,
-  onEditClientProfile,
-}) {
+export default function WorkspaceSidebar({ role, onEditClientProfile }) {
   const navigate = useNavigate();
   const { t, language } = useLanguage();
   const isProvider = role === 'tradesperson';
@@ -37,10 +34,7 @@ export default function WorkspaceSidebar({
   };
 
   useEffect(() => {
-    if (!['client', 'tradesperson'].includes(role)) {
-      setUnreadMessages(0);
-      return undefined;
-    }
+    if (!['client', 'tradesperson'].includes(role)) return undefined;
 
     let mounted = true;
     let socket = null;
@@ -74,10 +68,7 @@ export default function WorkspaceSidebar({
     };
   }, [role]);
 
-  const getLabel = (item) => {
-    if (item.labelKey) return t(item.labelKey);
-    return language === 'ceb' ? item.labelCeb : item.labelEn;
-  };
+  const getLabel = (item) => item.labelKey ? t(item.labelKey) : (language === 'ceb' ? item.labelCeb : item.labelEn);
 
   return (
     <aside className="workspace-sidebar" aria-label={`${t(isProvider ? 'serviceProvider' : 'client')} ${t('navigation')}`}>
