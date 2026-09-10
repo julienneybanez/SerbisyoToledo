@@ -18,7 +18,7 @@ const PROVIDER_ITEMS = [
   { to: '/requests', labelKey: 'requests', icon: 'bi-inbox' },
   { to: '/provider-schedule', labelEn: 'Calendar', labelCeb: 'Kalendaryo', icon: 'bi-calendar3' },
   { to: '/messages', labelKey: 'messages', icon: 'bi-chat-dots' },
-  { to: '/provider-profile', labelKey: 'profile', icon: 'bi-person-vcard' },
+  { to: '/provider-credentials', labelKey: 'profile', icon: 'bi-person-vcard' },
 ];
 
 export default function WorkspaceSidebar({ role, onEditClientProfile }) {
