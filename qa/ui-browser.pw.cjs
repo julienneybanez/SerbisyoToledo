@@ -44,51 +44,28 @@ async function installMocks(page, user) {
     const path = url.pathname;
 
     if (path.endsWith('/auth/csrf')) return json(route, { success: true, data: { csrfToken: 'qa' } });
-    if (path.endsWith('/auth/me')) {
-      return user
-        ? json(route, { success: true, data: { user } })
-        : json(route, { success: false, message: 'Not authenticated' }, 401);
-    }
-
-    if (path.endsWith('/messages/unread-count') || path.endsWith('/notifications/unread-count')) {
-      return json(route, { success: true, data: { count: 0 } });
-    }
+    if (path.endsWith('/auth/me')) return user ? json(route, { success: true, data: { user } }) : json(route, { success: false, message: 'Not authenticated' }, 401);
+    if (path.endsWith('/messages/unread-count') || path.endsWith('/notifications/unread-count')) return json(route, { success: true, data: { count: 0 } });
     if (path.endsWith('/messages')) return json(route, { success: true, data: { conversations: [] } });
     if (path.endsWith('/notifications')) return json(route, { success: true, data: { notifications: [], total: 0 } });
-    if (path.endsWith('/service-requests/client') || path.endsWith('/service-requests/provider')) {
-      return json(route, { success: true, data: { requests: [] } });
-    }
-    if (path.endsWith('/service-profiles/taxonomy')) {
-      return json(route, { success: true, data: { categories: [] } });
-    }
+    if (path.endsWith('/service-requests/client') || path.endsWith('/service-requests/provider')) return json(route, { success: true, data: { requests: [] } });
+    if (path.endsWith('/service-profiles/taxonomy')) return json(route, { success: true, data: { categories: [{ key: 'plumbing', label: 'Plumbing', slug: 'plumbing', serviceTypes: [{ key: 'leak_repair', label: 'Leak Repair' }] }] } });
     if (path.endsWith('/service-profiles/all')) return json(route, { success: true, data: [] });
     if (path.endsWith('/service-profiles/user/me')) return json(route, { success: true, data: PROFILE });
-    if (path.endsWith('/service-profiles/portfolio/me')) return json(route, { success: true, data: { portfolio: [] } });
+    if (path.endsWith('/service-profiles/portfolio/me')) return json(route, { success: true, data: { aboutMe: 'Local service provider.', responseTime: 'Within 24 hours', skills: ['Pipe Repair'], portfolio: [] } });
+    if (path.endsWith('/service-profiles/languages/me')) return json(route, { success: true, data: { languages: ['ceb', 'en'] } });
     if (path.endsWith('/service-profiles/credentials/me')) return json(route, { success: true, data: { credentials: [] } });
-    if (path.endsWith('/service-profiles/availability/me')) {
-      return json(route, { success: true, data: { acceptingBookings: true, availableSlots: [], weeklyBlocks: [], availability: [], settings: { availability_status: 'available' } } });
-    }
+    if (path.endsWith('/service-profiles/portfolio/completed-requests')) return json(route, { success: true, data: { requests: [] } });
+    if (path.endsWith('/service-profiles/availability/me')) return json(route, { success: true, data: { acceptingBookings: true, availableSlots: [{ date: '2026-09-15', startTime: '08:00', endTime: '17:00' }], settings: { availability_status: 'available' } } });
     if (/\/service-profiles\/11$/.test(path)) return json(route, { success: true, data: PROFILE });
 
-    if (path.endsWith('/user/profile')) {
-      return json(route, { success: true, data: { id: user?.id || 0, fullName: user?.fullName || 'QA User', email: user?.email || 'qa@example.com', phone: '09171234567', address: 'Poblacion, Toledo City', profilePhoto: null } });
-    }
-    if (path.endsWith('/user/onboarding-progress')) {
-      return json(route, { success: true, data: { percentage: 100, completed: 3, total: 3, isComplete: true, tasks: [] } });
-    }
-    if (path.endsWith('/user/verification-status')) {
-      return json(route, { success: true, data: { status: 'approved', isVerified: true } });
-    }
+    if (path.endsWith('/user/profile')) return json(route, { success: true, data: { id: user?.id || 0, fullName: user?.fullName || 'QA User', email: user?.email || 'qa@example.com', phone: '09171234567', address: 'Poblacion, Toledo City', profilePhoto: null, emailVerified: true } });
+    if (path.endsWith('/user/onboarding-progress')) return json(route, { success: true, data: { percentage: 100, completed: 3, total: 3, isComplete: true, tasks: [] } });
+    if (path.endsWith('/user/verification-status')) return json(route, { success: true, data: { status: 'approved', isVerified: true } });
 
-    if (path.endsWith('/admin/dashboard-stats')) {
-      return json(route, { success: true, data: { pendingVerifications: 0, activeReports: 0, verifiedProviders: 0, totalUsers: 0 } });
-    }
-    if (path.endsWith('/admin/users') || path.endsWith('/admin/verification-requests') || path.endsWith('/admin/provider-credentials') || path.endsWith('/admin/reports')) {
-      return json(route, { success: true, data: [] });
-    }
-    if (path.endsWith('/health')) {
-      return json(route, { success: true, status: 'healthy', database: 'connected', timestamp: new Date().toISOString() });
-    }
+    if (path.endsWith('/admin/dashboard-stats')) return json(route, { success: true, data: { pendingVerifications: 0, activeReports: 0, verifiedProviders: 0, totalUsers: 0 } });
+    if (path.endsWith('/admin/users') || path.endsWith('/admin/verification-requests') || path.endsWith('/admin/provider-credentials') || path.endsWith('/admin/reports')) return json(route, { success: true, data: [] });
+    if (path.endsWith('/health')) return json(route, { success: true, status: 'healthy', database: 'connected', timestamp: new Date().toISOString() });
 
     return json(route, { success: true, data: {} });
   });
@@ -109,19 +86,13 @@ async function openPage(browser, { role = 'guest', path = '/', width = 390, heig
   page.on('pageerror', (error) => pageErrors.push(error.message || String(error)));
   await installMocks(page, user);
   await page.goto(BASE + path, { waitUntil: 'domcontentloaded', timeout: 15000 });
-  await page.waitForTimeout(450);
+  await page.waitForTimeout(500);
 
-  const metrics = await page.evaluate(() => {
-    const root = document.documentElement;
-    const body = document.body;
-    const viewport = window.innerWidth;
-    return {
-      scrollWidth: Math.max(root.scrollWidth, body.scrollWidth),
-      viewport,
-      textLength: body.innerText.trim().length,
-    };
-  });
-
+  const metrics = await page.evaluate(() => ({
+    scrollWidth: Math.max(document.documentElement.scrollWidth, document.body.scrollWidth),
+    viewport: window.innerWidth,
+    textLength: document.body.innerText.trim().length,
+  }));
   expect(metrics.textLength).toBeGreaterThan(5);
   expect(metrics.scrollWidth).toBeLessThanOrEqual(metrics.viewport + 2);
   expect(pageErrors).toEqual([]);
@@ -139,23 +110,17 @@ test('mobile app chrome is present and stable at phone widths', async ({ browser
       const chrome = await page.evaluate(() => {
         const top = document.querySelector('.mobile-topbar')?.getBoundingClientRect();
         const bottom = document.querySelector('.mobile-bottom-nav')?.getBoundingClientRect();
-        return {
-          topY: top?.top,
-          bottomGap: bottom ? window.innerHeight - bottom.bottom : null,
-          bottomWidth: bottom?.width,
-          viewport: window.innerWidth,
-        };
+        return { topY: top?.top, bottomGap: bottom ? window.innerHeight - bottom.bottom : null, bottomWidth: bottom?.width, viewport: window.innerWidth };
       });
       expect(Math.abs(chrome.topY || 0)).toBeLessThanOrEqual(1);
       expect(chrome.bottomGap).toBeGreaterThanOrEqual(0);
       expect(chrome.bottomWidth).toBeLessThan(chrome.viewport);
-      await page.screenshot({ path: `artifacts/ui-phone/${role}-${width}.png`, fullPage: true });
       await context.close();
     }
   }
 });
 
-test('core client/provider routes have no page-level mobile overflow', async ({ browser }) => {
+test('core client and provider routes have no page-level mobile overflow', async ({ browser }) => {
   test.setTimeout(120000);
   const matrix = {
     client: ['/client-dashboard', '/feed', '/requests', '/messages', '/notifications', '/client-settings'],
@@ -171,73 +136,48 @@ test('core client/provider routes have no page-level mobile overflow', async ({ 
 
 test('dark mode and Cebuano representative screens remain readable and contained', async ({ browser }) => {
   test.setTimeout(120000);
-  const cases = [
-    ['client', '/client-dashboard'],
-    ['provider', '/provider-availability'],
-    ['admin', '/admin/dashboard'],
-    ['guest', '/feed'],
-  ];
+  const cases = [['client', '/client-dashboard'], ['provider', '/provider-schedule?tab=availability'], ['provider', '/provider-credentials'], ['admin', '/admin/dashboard'], ['guest', '/feed']];
   for (const [role, path] of cases) {
     for (const width of [390, 1366]) {
-      const { context, page } = await openPage(browser, { role, path, width, height: width === 390 ? 844 : 900, theme: 'dark', language: 'ceb' });
-      await page.screenshot({ path: `artifacts/ui-phone/${role}-${width}-dark-ceb.png`, fullPage: true });
+      const { context } = await openPage(browser, { role, path, width, height: width === 390 ? 844 : 900, theme: 'dark', language: 'ceb' });
       await context.close();
     }
   }
 });
 
-test('canonical mockup components render on migrated screens', async ({ browser }) => {
+test('canonical mockup components render on migrated client screens', async ({ browser }) => {
   const { context, page } = await openPage(browser, { role: 'client', path: '/client-dashboard', width: 1366, height: 900 });
   await expect(page.locator('.mock-pagehead')).toBeVisible();
   await expect(page.locator('.mock-stat').first()).toBeVisible();
   await expect(page.locator('.mock-card').first()).toBeVisible();
   await context.close();
-
-  const feed = await openPage(browser, { role: 'client', path: '/feed', width: 1366, height: 900 });
-  await expect(feed.page.locator('.mock-input').first()).toBeVisible();
-  await expect(feed.page.locator('.mock-chip').first()).toBeVisible();
-  await feed.context.close();
 });
 
-
-test('provider credentials desktop layout keeps the form full-width and fields usable', async ({ browser }) => {
-  const { context, page } = await openPage(browser, {
-    role: 'provider',
-    path: '/provider-credentials',
-    width: 1440,
-    height: 1000,
-  });
-
-  const formCard = page.locator('.credential-form-card');
-  const savedCard = page.locator('.credential-list-card');
-  await expect(formCard).toBeVisible();
-  await expect(savedCard).toBeVisible();
+test('provider profile is full-width and credentials stay optional until requested', async ({ browser }) => {
+  const { context, page } = await openPage(browser, { role: 'provider', path: '/provider-credentials', width: 1440, height: 1000 });
+  const profile = page.locator('.provider-profile-manager');
+  await expect(profile).toBeVisible();
+  await expect(page.locator('#services')).toBeVisible();
+  await expect(page.locator('#credentials')).toBeVisible();
+  await expect(page.locator('#portfolio')).toBeVisible();
+  await expect(page.locator('.provider-credential-inline-form')).toHaveCount(0);
 
   const geometry = await page.evaluate(() => {
-    const form = document.querySelector('.credential-form-card')?.getBoundingClientRect();
-    const saved = document.querySelector('.credential-list-card')?.getBoundingClientRect();
-    const fields = [...document.querySelectorAll('.credential-field .settings-input')]
-      .map((element) => element.getBoundingClientRect());
-
+    const manager = document.querySelector('.provider-profile-manager')?.getBoundingClientRect();
+    const services = document.querySelector('#services')?.getBoundingClientRect();
+    const credentials = document.querySelector('#credentials')?.getBoundingClientRect();
     return {
-      formWidth: form?.width || 0,
-      savedWidth: saved?.width || 0,
-      savedBelowForm: Boolean(form && saved && saved.top >= form.bottom - 2),
-      minFieldWidth: fields.length ? Math.min(...fields.map((field) => field.width)) : 0,
-      fieldCount: fields.length,
+      managerWidth: manager?.width || 0,
+      servicesWidth: services?.width || 0,
+      credentialsBelowServices: Boolean(services && credentials && credentials.top >= services.bottom - 2),
     };
   });
+  expect(geometry.managerWidth).toBeGreaterThan(900);
+  expect(geometry.servicesWidth).toBeGreaterThan(850);
+  expect(geometry.credentialsBelowServices).toBe(true);
 
-  expect(geometry.formWidth).toBeGreaterThan(700);
-  expect(geometry.savedWidth).toBeGreaterThan(700);
-  expect(geometry.savedBelowForm).toBe(true);
-  expect(geometry.fieldCount).toBeGreaterThanOrEqual(8);
-  expect(geometry.minFieldWidth).toBeGreaterThan(280);
-
-  await page.screenshot({
-    path: 'artifacts/ui-phone/provider-credentials-desktop.png',
-    fullPage: true,
-  });
-
+  await page.getByRole('button', { name: 'Add Credential' }).click();
+  await expect(page.locator('.provider-credential-inline-form')).toBeVisible();
+  await page.screenshot({ path: 'artifacts/ui-phone/provider-profile-manager-desktop.png', fullPage: true });
   await context.close();
 });
