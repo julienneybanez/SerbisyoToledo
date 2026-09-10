@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { getUser, serviceProfileAPI, serviceRequestAPI, userProfileAPI } from '../services/api';
+import VerificationRequestModal from '../components/common/VerificationRequestModal';
 import { AppButton, SoftPanel, StatCard } from '../components/ui';
 import { useLanguage } from '../context/LanguageContext';
 import { REQUEST_STATUS } from '../constants/domain';
@@ -22,7 +23,6 @@ const COPY = {
     stepPreview: 'Preview your profile',
     stepPreviewHelp: 'Check exactly what clients will see before you start receiving bookings.',
     done: 'Done',
-    ready: 'Ready',
     next: 'Next step',
     startVerification: 'Start Verification',
     editProfile: 'Open Profile',
@@ -43,8 +43,9 @@ const COPY = {
     noRequestsHelp: 'Once a client books you, the request will appear here.',
     viewAll: 'View all requests',
     scheduleNotSet: 'Schedule not set',
-    verificationPending: 'Verification is under review',
-    verificationRejected: 'Verification needs changes',
+    verificationPending: 'Verification is under review. You can continue preparing your profile while you wait.',
+    verificationRejected: 'Verification needs changes. Open the verification form to submit clearer or corrected information.',
+    resubmitVerification: 'Update Verification',
   },
   ceb: {
     greeting: 'Maayong adlaw',
@@ -60,7 +61,6 @@ const COPY = {
     stepPreview: 'Tan-awa ang imong profile',
     stepPreviewHelp: 'Susiha unsa gyud ang makita sa kliyente sa dili pa ka modawat og booking.',
     done: 'Human',
-    ready: 'Andam',
     next: 'Sunod nga lakang',
     startVerification: 'Sugdi ang Verification',
     editProfile: 'Ablihi ang Profile',
@@ -81,8 +81,9 @@ const COPY = {
     noRequestsHelp: 'Kung adunay kliyente nga mo-book, dinhi makita ang request.',
     viewAll: 'Tan-awa tanang request',
     scheduleNotSet: 'Wala pay schedule',
-    verificationPending: 'Gi-review pa ang verification',
-    verificationRejected: 'Kinahanglan usbon ang verification',
+    verificationPending: 'Gi-review pa ang verification. Mahimo nimong ipadayon ang pag-andam sa profile samtang naghulat.',
+    verificationRejected: 'Kinahanglan usbon ang verification. Ablihi ang verification form ug isumite ang mas klaro o sakto nga impormasyon.',
+    resubmitVerification: 'Usba ang Verification',
   },
 };
 
@@ -116,6 +117,7 @@ export default function ServiceProviderDashboard() {
   const [portfolio, setPortfolio] = useState(null);
   const [availability, setAvailability] = useState(null);
   const [verification, setVerification] = useState(null);
+  const [showVerification, setShowVerification] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -164,22 +166,23 @@ export default function ServiceProviderDashboard() {
   const verified = Boolean(user?.isVerified || verification?.isVerified || verification?.status === 'approved');
   const previewReady = Boolean(profile?.id && profile?.isPublished);
   const publicRoute = previewReady ? `/provider/${profile.id}` : '';
+  const verificationPending = verification?.status === 'pending';
 
   const setupSteps = [
     {
       key: 'verification',
       title: text.stepVerify,
-      help: verification?.status === 'pending' ? text.verificationPending : verification?.status === 'rejected' ? text.verificationRejected : text.stepVerifyHelp,
+      help: verificationPending ? text.verificationPending : verification?.status === 'rejected' ? text.verificationRejected : text.stepVerifyHelp,
       complete: verified,
-      to: '/provider-settings',
-      action: text.startVerification,
+      onAction: verificationPending ? null : () => setShowVerification(true),
+      action: verification?.status === 'rejected' ? text.resubmitVerification : text.startVerification,
     },
     {
       key: 'profile',
       title: text.stepProfile,
       help: text.stepProfileHelp,
       complete: profileReady,
-      to: '/provider-credentials',
+      to: '/provider-profile',
       action: text.editProfile,
     },
     {
@@ -195,7 +198,7 @@ export default function ServiceProviderDashboard() {
       title: text.stepPreview,
       help: text.stepPreviewHelp,
       complete: previewReady,
-      to: publicRoute || '/provider-credentials',
+      to: publicRoute || '/provider-profile',
       action: text.preview,
     },
   ];
@@ -214,7 +217,7 @@ export default function ServiceProviderDashboard() {
           <h1>{text.greeting}, <span>{user?.fullName || t('serviceProvider')}</span></h1>
           <p>{text.subtitle}</p>
         </div>
-        <AppButton as={Link} to="/provider-credentials" icon={<i className="bi bi-person-vcard" aria-hidden="true" />}>{text.editProfile}</AppButton>
+        <AppButton as={Link} to="/provider-profile" icon={<i className="bi bi-person-vcard" aria-hidden="true" />}>{text.editProfile}</AppButton>
       </SoftPanel>
 
       {!setupComplete && (
@@ -228,7 +231,10 @@ export default function ServiceProviderDashboard() {
               <article key={step.key} className={`${step.complete ? 'complete' : ''} ${step.key === nextStepKey ? 'next' : ''}`}>
                 <span className="provider-setup-step-number">{step.complete ? <i className="bi bi-check-lg" /> : index + 1}</span>
                 <div><strong>{step.title}</strong><p>{step.help}</p></div>
-                {!step.complete && step.key === nextStepKey && (
+                {!step.complete && step.key === nextStepKey && step.onAction && (
+                  <AppButton onClick={step.onAction} size="sm" variant="secondary">{step.action}</AppButton>
+                )}
+                {!step.complete && step.key === nextStepKey && !step.onAction && step.to && (
                   <AppButton as={Link} to={step.to} size="sm" variant="secondary">{step.action}</AppButton>
                 )}
                 {step.complete && <span className="provider-setup-done">{text.done}</span>}
@@ -290,6 +296,12 @@ export default function ServiceProviderDashboard() {
           )}
         </div>
       </section>
+
+      {showVerification && (
+        <VerificationRequestModal
+          onClose={() => setShowVerification(false)}
+        />
+      )}
     </div>
   );
 }
